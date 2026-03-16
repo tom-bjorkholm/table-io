@@ -1,27 +1,23 @@
 # mformat
 
+## Early protoype
+
+This package is still an early prototype. This means that major changes to the APIs are expected.
+
+## Use
+
 > **👤 Looking to use this in your program**  
 > This repository is for developers of the package. If you want to install and use `mformat` or `mformat-ext` including writing programs that use them, please visit the **PyPI project page [https://pypi.org/project/mformat](https://pypi.org/project/mformat) or [https://pypi.org/project/mformat-ext](https://pypi.org/project/mformat-ext)** for installation instructions and user documentation.
 
 ## What is it
 
-The mformat package contains a number of classes providing a uniform way for a python program to write to a number of different file formats.
+The tableio package contains a number of classes providing a uniform way for
+a python program to write table data (rows of columns) to and read table data
+from a number of different common file formats.
 
-The primary intended use is for text output from a python program, where the programmer would like the user to be able to select the output file formats. Some users may want the text as a Microsoft Word file, others as a LibreOffice Open Document Text file, while still others might want it as Markdown. By using the uniform way of writing provided by mformat the same python code can produce output in a number of different formats.
-
-This is intended to provide an easy and uniform way to produce information in different formats. The emphasis is on getting the same information into the different formats. This will allow you to get a correct (but perhaps rudimentary) document in several formats. If you want to produce the most estetically pleasing document in a particular format, this is not the correct library to use.
-
-### mformat base package
-
-The base package contains support for the output formats that are supported with a minimum of dependencies. The base folder contains the source code and tests of the base package.
-
-### mformat-ext extended package
-
-The extended package contains also support for additional output formats that require additional dependencies. The extend folder contains the source code and tests of the extended package.
-
-### Examples
-
-To make it easy for a programmer new to mformat to start using it there are a number of example programs. The example folder contains the example programs, as well as the output produced by running the example programs. There is currently very few tests of the example programs in the automatic test suite.
+The primary intended use is for text output from a python program, where the
+programmer would like the user to be able to select the input and output file
+formats.
 
 ## For developers
 
@@ -30,7 +26,7 @@ To make it easy for a programmer new to mformat to start using it there are a nu
 The mformat repo uses submodules. To clone it use the command:
 
 ````sh
-git clone --recurse-submodules git@bitbucket.org:tom-bjorkholm/mformat.git
+git clone --recurse-submodules git@bitbucket.org:tom-bjorkholm/table-io.git
 ````
 
 If you forgot to include the `--recurse-submodules` in your `git clone` command
@@ -58,7 +54,8 @@ Please see README_pypi.md for information on needed python version. Main develop
 
 #### Zsh
 
-The scripts are all zsh. zsh is available by default on modern macs. zsh can easily be installed on Linux (on Ubuntu: `sudo apt install zsh`).
+Most scripts are Python.
+Some scripts are zsh. zsh is available by default on modern macs. zsh can easily be installed on Linux (on Ubuntu: `sudo apt install zsh`).
 
 ### Quick start
 
@@ -93,15 +90,10 @@ The file `./common_build_tools/README.md` (in git submodule - see above) contain
 information about the build system. This README can also be viewed at
 [https://bitbucket.org/tom-bjorkholm/common_build_tools/src/master/README.md](https://bitbucket.org/tom-bjorkholm/common_build_tools/src/master/README.md)
 
-### The readme files for PyPI
-
-The script `build_helpers/create_pypi_readme.py` creates the 2 readme files for PyPI:
-`base/README_pypi.md` and `extend/README_pypi.org`.
-
 ## Test summary
 
-- Test result: 2 failed, 139 passed in 5s
-- Flake8 errors/warnings.
+- Test result: 141 passed in 4s
+- No Flake8 warnings.
 - No mypy errors found.
 - Built version(s): 0.0.1
 - Build and test using Python 3.14.3
