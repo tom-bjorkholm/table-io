@@ -62,5 +62,73 @@ class Capabilities(NamedTuple):
 
     can_write: SingleCapability = SingleCapability()
     """The reader/writer class can write to the file format."""
+
     can_read: SingleCapability = SingleCapability()
     """The reader/writer class can read from the file format."""
+
+    can_fmt_row: SingleCapability = SingleCapability()
+    """The writer class can apply a format to a row."""
+
+    can_fmt_value: SingleCapability = SingleCapability()
+    """The writer class can apply a format to a value."""
+
+    filtered_data_range: SingleCapability = SingleCapability()
+    """The writer class can mark a table as a filterable data range."""
+
+
+def single_capability_match(offered: SingleCapability,
+                            will_use: SingleCapability,
+                            ignore_allowed: bool = True) -> bool:
+    """Check if the offered single capability matches the will use.
+
+    Args:
+        offered: The offered single capability. Does the reader/writer
+                 class support this capability?
+        will_use: The will use single capability. Does the requester intend to
+                  use this capability?
+        ignore_allowed: If False: when the offered single capability would
+                        ignore the will use single capability it is
+                        considered a mismatch, and will return False.
+                        If False: when the offered single capability would
+                        ignore the will use single capability it is
+                        considered a match, and will return True.
+    Returns:
+        True if the offered single capability matches the will use,
+        False otherwise.
+    """
+    if not will_use.supported:
+        return True
+    if offered.supported:
+        return True
+    if Strictness.STRICT in (offered.strictness, will_use.strictness):
+        return False
+    if ignore_allowed:
+        return True
+    return False
+
+
+def capability_match(offered: Capabilities,
+                     will_use: Capabilities,
+                     ignore_allowed: bool = False) -> bool:
+    """Check if the offered capabilities match the required capabilities.
+
+    Args:
+        offered: The offered capabilities. What capabilities does the
+                 reader/writer class support?
+        will_use: The recuested capabilities. What capabilities
+                  does the requester intend to use?
+        ignore_allowed: If False: when an offered capability would ignore a
+                        will use capability it is considered a mismatch, and
+                        considered a mismatch, and will return False.
+                        If True: when an offered capability would ignore a
+                        will use capability it is considered a match, and
+                        will return True.
+    Returns:
+        True if the offered capabilities match the will_use capabilities,
+        False otherwise.
+    """
+    for single_offered, single_will_use in zip(offered, will_use):
+        if not single_capability_match(single_offered, single_will_use,
+                                       ignore_allowed):
+            return False
+    return True
