@@ -87,9 +87,26 @@ def str_list_to_num_row(row: list[str]) -> NumRow:
     return cast(NumRow, row)
 
 
-def get_checked_type[T](value: Optional[object],
-                        expected_type: type[T]) -> T:
-    """Get value narrowed to be of type expected_type."""
+# flake8-docstrings/pydocstyle misses the docstring on `def func[T](...)`.
+T = TypeVar('T')
+
+
+def get_checked_type(value: Optional[object],
+                     expected_type: type[T]) -> T:
+    """Return value unchanged while narrowing it to the expected type.
+
+    This helper is a non-raising cast for code that has already established
+    the runtime type by other means. The expected_type argument exists so
+    static type checkers can infer the target type.
+    Any runtime mismatch will raise an AssertionError as this will be
+    an internal programming error.
+
+    Args:
+        value: The value to check. Must not be None.
+        expected_type: The expected type.
+    Returns:
+        The value unchanged, narrowed to the expected type.
+    """
     assert value is not None
     assert isinstance(value, expected_type)
     return value

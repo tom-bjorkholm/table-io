@@ -1,4 +1,4 @@
-# mformat
+# tableio
 
 ## Early protoype
 
@@ -7,7 +7,7 @@ This package is still an early prototype. This means that major changes to the A
 ## Use
 
 > **👤 Looking to use this in your program**  
-> This repository is for developers of the package. If you want to install and use `mformat` or `mformat-ext` including writing programs that use them, please visit the **PyPI project page [https://pypi.org/project/mformat](https://pypi.org/project/mformat) or [https://pypi.org/project/mformat-ext](https://pypi.org/project/mformat-ext)** for installation instructions and user documentation.
+> This repository is for developers of the package. If you want to install and use `tableio` including writing programs that use them, please visit the **PyPI project page [https://pypi.org/project/tableio](https://pypi.org/project/tableio) for installation instructions and user documentation.
 
 ## What is it
 
@@ -23,7 +23,7 @@ formats.
 
 ### Cloning
 
-The mformat repo uses submodules. To clone it use the command:
+The tableio repo uses submodules. To clone it use the command:
 
 ````sh
 git clone --recurse-submodules git@bitbucket.org:tom-bjorkholm/table-io.git
@@ -92,8 +92,8 @@ information about the build system. This README can also be viewed at
 
 ## Test summary
 
-- Test result: 141 passed in 4s
-- No Flake8 warnings.
+- Test result: 199 passed in 5s
+- Flake8 errors/warnings.
 - No mypy errors found.
 - Built version(s): 0.0.1
 - Build and test using Python 3.14.3
