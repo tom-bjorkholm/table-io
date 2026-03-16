@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tableio"
+version = "0.0.1"
+authors = [
+  { name="Tom Björkholm", email="klausuler_linnet0q@icloud.com" },
+]
+description = "Uniform way to write table data to and read from different file formats"
+readme = "README_pypi.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Development Status :: 2 - Pre-Alpha"
+]
+dynamic = ["dependencies"]
+
+[project.urls]
+"Source code" = "https://bitbucket.org/tom-bjorkholm/table-io"
