@@ -9,7 +9,7 @@ from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
 from tableio.capability import Capabilities, SingleCapability, Strictness
 from tableio.value_type import CellT, ListDataSeq, DictDataMap, \
-    normalize_dict_data
+    normalize_dict_data, ReadResult, ListData, Value, DictData
 
 
 class Descriptor(NamedTuple):
@@ -244,6 +244,40 @@ class TableIO:
         c_box = self._check_box_write(box)
         return self._write_table_dictdata(ndata, column_order, c_box)
 
+    def read_table_listdata(self, box: Optional[Box] = None) \
+            -> ReadResult[ListData[Value]]:
+        """Read a table of list data from the file.
+
+        If a box is provided the data will be read from the box, and the
+        reading is restricted to the box.
+        Anything found in the leftmost column that does form a table of at
+        least 2 cells in size is considered to be a heading and is returned
+        as a list of headings.
+        Args:
+            box: The box to read the data from.
+        Returns:
+            The data read from the table and the headings before the table.
+        """
+        c_box = self._check_box_read(box)
+        return self._read_table_listdata(c_box)
+
+    def read_table_dictdata(self, box: Optional[Box] = None) \
+            -> ReadResult[DictData[Value]]:
+        """Read a table of dict data from the file.
+
+        If a box is provided the data will be read from the box, and the
+        reading is restricted to the box.
+        Anything found in the leftmost column that does form a table of
+        at least 2 cells in size is considered to be a heading and is
+        returned as a list of headings.
+        Args:
+            box: The box to read the data from.
+        Returns:
+            The data read from the table and the headings before the table.
+        """
+        c_box = self._check_box_read(box)
+        return self._read_table_dictdata(c_box)
+
     def open(self) -> None:
         """Open the file.
 
@@ -308,7 +342,17 @@ class TableIO:
             ValueError: If the data does not have the same number of columns in
                         each row.
             ValueError: If the data does not fit into the box.
+            ValueError: If the data is not at least 2 cells in size.
         """
+        if not data:
+            err = 'Data is empty'
+            raise ValueError(err)
+        if not data[0]:
+            err = 'First row is empty'
+            raise ValueError(err)
+        if len(data[0]) < 2 and len(data) < 2:
+            err = 'Data is not at least 2 cells in size'
+            raise ValueError(err)
         for row in data:
             if len(row) != len(data[0]):
                 err = 'All rows must have the same number of columns'
@@ -329,7 +373,19 @@ class TableIO:
             data: The dict data to check.
             column_order: The order of the columns.
             box: The box to check the data into.
+        Raises:
+            ValueError: If the data does not fit into the box.
+            ValueError: If the data is not at least 2 cells in size.
         """
+        if not data:
+            err = 'Data is empty'
+            raise ValueError(err)
+        if not data[0]:
+            err = 'First row is empty'
+            raise ValueError(err)
+        if len(data[0]) < 2 and len(data) < 2:
+            err = 'Data is not at least 2 cells in size'
+            raise ValueError(err)
         if box is None:
             return
         if box.bottom is not None and (len(data)+1) > box.bottom - box.top:
@@ -409,4 +465,42 @@ class TableIO:
         _ = column_order  # avoid unused variable warning
         _ = box  # avoid unused variable warning
         err = 'Subclass must implement _write_table_dictdata method'
+        raise NotImplementedError(err)
+
+    def _read_table_listdata(self, box: Optional[Box] = None) \
+            -> ReadResult[ListData[Value]]:
+        """Read a table of list data from the file.
+
+        Must be implemented by derived classes.
+        If a box is provided the data will be read from the box, and the
+        reading is restricted to the box.
+        Anything found in the leftmost column that does form a table of at
+        least 2 cells in size is considered to be a heading and is returned
+        as a list of headings.
+        Args:
+            box: The box to read the data from.
+        Returns:
+            The data read from the table and the headings before the table.
+        """
+        err = 'Subclass must implement _read_table_listdata method'
+        _ = box  # avoid unused variable warning
+        raise NotImplementedError(err)
+
+    def _read_table_dictdata(self, box: Optional[Box] = None) \
+            -> ReadResult[DictData[Value]]:
+        """Read a table of dict data from the file.
+
+        Must be implemented by derived classes.
+        If a box is provided the data will be read from the box, and the
+        reading is restricted to the box.
+        Anything found in the leftmost column that does form a table of at
+        least 2 cells in size is considered to be a heading and is returned
+        as a list of headings.
+        Args:
+            box: The box to read the data from.
+        Returns:
+            The data read from the table and the headings before the table.
+        """
+        err = 'Subclass must implement _read_table_dictdata method'
+        _ = box  # avoid unused variable warning
         raise NotImplementedError(err)

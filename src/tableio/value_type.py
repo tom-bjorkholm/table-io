@@ -71,6 +71,16 @@ type FmtListData = Sequence[FmtListRow]
 type FmtDictData = Sequence[FmtDictRow]
 
 
+class ReadResult[Data: (ListData[Value], DictData[Value])](NamedTuple):
+    """Result of reading data from a file."""
+
+    data: Data
+    """The data read from the table in the file."""
+
+    headings: list[str]
+    """The headings read from the file before the table with the data."""
+
+
 # ----------------------------------------------------------------------------
 # helper functions to convert between different types of data
 # ----------------------------------------------------------------------------
