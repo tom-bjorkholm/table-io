@@ -11,8 +11,9 @@ import pytest
 from pytest import CaptureFixture
 
 from tableio.value_type import Fmt, ValueFmt, \
-    FmtListRow, FmtDictRow, \
-    get_checked_type, list_row_to_str_list, str_list_to_list_row
+    FmtListRow, FmtDictRow, Value, dict_row_to_str_dict, \
+    get_checked_type, list_row_to_str_list, strip_format_list, \
+    str_list_to_list_row
 
 from .check_capsys import check_capsys
 
@@ -43,6 +44,53 @@ def test_list_row_to_str_list_rejects_none(
     """Test that list_row_to_str_list raises for None values."""
     with pytest.raises(ValueError, match='Found None when expecting str.'):
         list_row_to_str_list(['value', None])
+    check_capsys(capsys)
+
+
+def test_list_row_to_str_list_converts_formatted_values(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that list_row_to_str_list unwraps formatted values."""
+    fmt = Fmt(bold=True)
+    row = [ValueFmt(value='text', fmt=fmt), ValueFmt(value=2, fmt=fmt)]
+    assert list_row_to_str_list(row) == ['text', '2']
+    check_capsys(capsys)
+
+
+def test_list_row_to_str_list_converts_none_to_empty_string(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that list_row_to_str_list can convert None to empty strings."""
+    fmt = Fmt(italic=True)
+    row = [ValueFmt(value='value', fmt=fmt), ValueFmt(value=None, fmt=fmt)]
+    assert list_row_to_str_list(row, none_is_empty=True) == ['value', '']
+    check_capsys(capsys)
+
+
+def test_dict_row_to_str_dict_converts_values(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that dict_row_to_str_dict converts supported values."""
+    fmt = Fmt(bold=True)
+    row = {
+        'name': ValueFmt(value='cell', fmt=fmt),
+        'count': ValueFmt(value=2, fmt=fmt)
+    }
+    assert dict_row_to_str_dict(row) == {'name': 'cell', 'count': '2'}
+    check_capsys(capsys)
+
+
+def test_dict_row_to_str_dict_rejects_none(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that dict_row_to_str_dict raises for None values."""
+    with pytest.raises(ValueError, match='Found None when expecting str.'):
+        dict_row_to_str_dict({'value': None})
+    check_capsys(capsys)
+
+
+def test_dict_row_to_str_dict_converts_none_to_empty_string(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that dict_row_to_str_dict can convert None to empty strings."""
+    fmt = Fmt(italic=True)
+    row = {'value': ValueFmt(value=None, fmt=fmt)}
+    assert dict_row_to_str_dict(row, none_is_empty=True) == {'value': ''}
     check_capsys(capsys)
 
 
@@ -123,4 +171,30 @@ def test_value_type_named_tuples_require_explicit_values(
         inspect.Parameter.empty
     assert fmt_name_row_signature.parameters['fmt'].default is \
         inspect.Parameter.empty
+    check_capsys(capsys)
+
+
+def test_strip_format_list_returns_plain_data_unchanged(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that strip_format_list preserves plain list data objects."""
+    data: list[list[Value]] = [['cell', 1], [None, 2.5]]
+    stripped = strip_format_list(data)
+    assert stripped is data
+    assert stripped == [['cell', 1], [None, 2.5]]
+    check_capsys(capsys)
+
+
+def test_strip_format_list_strips_formatted_data(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that strip_format_list unwraps formatted list data."""
+    fmt = Fmt(bold=True)
+    data = (
+        (ValueFmt(value='cell', fmt=fmt), ValueFmt(value=None, fmt=fmt)),
+        (ValueFmt(value=2, fmt=fmt), ValueFmt(value=3.5, fmt=fmt)),
+    )
+    stripped = strip_format_list(data)
+    assert stripped == [['cell', None], [2, 3.5]]
+    assert id(stripped) != id(data)
+    assert isinstance(stripped, list)
+    assert isinstance(stripped[0], list)
     check_capsys(capsys)
