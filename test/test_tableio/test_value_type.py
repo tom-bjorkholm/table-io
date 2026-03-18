@@ -7,15 +7,16 @@
 import inspect
 from datetime import datetime
 from types import MappingProxyType
-from typing import Mapping
+from typing import Any, Mapping, cast
 
 import pytest
 from pytest import CaptureFixture
 
 from tableio.value_type import Fmt, ValueFmt, \
-    FmtListRow, FmtDictRow, Value, dict_row_to_str_dict, \
-    format_each_cell_dict, format_each_cell_list, get_checked_type, \
-    list_row_to_str_list, row_format_each_cell_dict, \
+    FmtListRow, FmtDictRow, Value, DataForExtraColumn, \
+    MissingDataForColumn, dict_row_to_str_dict, format_each_cell_dict, \
+    format_each_cell_list, get_checked_type, list_row_to_str_list, \
+    normalize_dict_data, row_format_each_cell_dict, \
     row_format_each_cell_list, row_strip_format_dict, \
     row_strip_format_list, strip_format_dict, strip_format_list, \
     str_list_to_list_row
@@ -424,4 +425,152 @@ def test_format_each_cell_dict(
     assert formatted == expected
     if formatted:
         assert list(formatted[0].keys()) == ['beta', 'alpha']
+    check_capsys(capsys)
+
+
+def test_normalize_dict_data_returns_matching_data_unchanged(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data keeps already matching data unchanged."""
+    data: list[dict[str, Value]] = [
+        {'beta': 2, 'alpha': 'cell'},
+        {'alpha': None, 'beta': 3.5}
+    ]
+    normalized = normalize_dict_data(data, ['alpha', 'beta'])
+    assert normalized is data
+    assert normalized == data
+    check_capsys(capsys)
+
+
+def test_normalize_dict_data_rejects_duplicate_column_order(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data rejects duplicate column names."""
+    data: list[dict[str, Value]] = []
+    with pytest.raises(ValueError, match='Duplicate column name'):
+        normalize_dict_data(data, ['alpha', 'alpha'])
+    check_capsys(capsys)
+
+
+def test_normalize_dict_data_rejects_empty_column_order(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data rejects empty column_order."""
+    data: list[dict[str, Value]] = []
+    with pytest.raises(ValueError, match='column_order'):
+        normalize_dict_data(data, [])
+    check_capsys(capsys)
+
+
+def test_normalize_dict_data_rejects_missing_column(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data rejects missing required columns."""
+    data: list[dict[str, Value]] = [{'alpha': 'cell'}]
+    with pytest.raises(MissingDataForColumn, match='beta') as exc_info:
+        normalize_dict_data(data, ['alpha', 'beta'])
+    assert exc_info.value.key == 'beta'
+    check_capsys(capsys)
+
+
+def test_normalize_dict_data_rejects_extra_column(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data rejects extra columns."""
+    data: list[dict[str, Value]] = [{'alpha': 'cell', 'beta': 2}]
+    with pytest.raises(DataForExtraColumn, match='beta') as exc_info:
+        normalize_dict_data(data, ['alpha'])
+    assert exc_info.value.key == 'beta'
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('data', 'row_index'),
+    [
+        pytest.param([{}, {'alpha': 'cell'}], 0, id='first-row'),
+        pytest.param([{'alpha': 'cell'}, {}], 1, id='later-row')
+    ]
+)
+def test_normalize_dict_data_rejects_empty_rows(
+        data: list[dict[str, Value]], row_index: int,
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data rejects empty rows."""
+    with pytest.raises(ValueError, match=f'index {row_index}'):
+        normalize_dict_data(data, ['alpha'], missing_ok=True, extra_ok=True)
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('data', 'row_index'),
+    [
+        pytest.param(
+            [
+                {'alpha': 'cell'},
+                {'alpha': ValueFmt(value='next', fmt=Fmt(bold=True))}
+            ],
+            1,
+            id='plain-then-formatted'
+        ),
+        pytest.param(
+            [
+                {'alpha': ValueFmt(value='cell', fmt=Fmt(bold=True))},
+                {'alpha': 'next'}
+            ],
+            1,
+            id='formatted-then-plain'
+        )
+    ]
+)
+def test_normalize_dict_data_rejects_mixed_cell_types(
+        data: list[dict[str, object]], row_index: int,
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data rejects mixed plain and formatted rows."""
+    mixed_data = cast(
+        list[dict[str, Value]] | list[dict[str, ValueFmt]],
+        data
+    )
+    with pytest.raises(TypeError, match=f'row {row_index}'):
+        normalize_dict_data(cast(Any, mixed_data), ['alpha'])
+    check_capsys(capsys)
+
+
+def test_normalize_dict_data_normalizes_plain_rows(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data adds and removes plain row cells."""
+    data: list[dict[str, Value]] = [
+        {'alpha': 'cell', 'extra': 2},
+        {'beta': 3.5}
+    ]
+    normalized = normalize_dict_data(
+        data,
+        ['alpha', 'beta'],
+        missing_ok=True,
+        extra_ok=True
+    )
+    assert normalized == [
+        {'alpha': 'cell', 'beta': None},
+        {'alpha': None, 'beta': 3.5}
+    ]
+    assert normalized is not data
+    check_capsys(capsys)
+
+
+def test_normalize_dict_data_normalizes_formatted_rows(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that normalize_dict_data fills formatted missing cells."""
+    fmt = Fmt(bold=True)
+    missing_cell = ValueFmt(value=None, fmt=Fmt())
+    data: list[dict[str, ValueFmt]] = [
+        {
+            'alpha': ValueFmt(value='cell', fmt=fmt),
+            'extra': ValueFmt(value=2, fmt=fmt)
+        },
+        {'beta': ValueFmt(value=3.5, fmt=fmt)}
+    ]
+    normalized = normalize_dict_data(
+        data,
+        ['alpha', 'beta'],
+        missing_ok=True,
+        extra_ok=True
+    )
+    assert normalized == [
+        {'alpha': ValueFmt(value='cell', fmt=fmt), 'beta': missing_cell},
+        {'alpha': missing_cell, 'beta': ValueFmt(value=3.5, fmt=fmt)}
+    ]
+    assert normalized is not data
     check_capsys(capsys)

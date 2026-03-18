@@ -350,12 +350,117 @@ class DataForExtraColumn(ValueError):
         super().__init__(f'Data is present for extra key (column name) {key}.')
 
 
+def _validate_column_order(column_order: list[str]) -> None:
+    """Raise if column_order is empty or contains duplicate names."""
+    if not column_order:
+        raise ValueError('column_order must not be empty.')
+    seen_columns: set[str] = set()
+    for column_name in column_order:
+        if column_name in seen_columns:
+            err = f'Duplicate column name in column_order: {column_name}.'
+            raise ValueError(err)
+        seen_columns.add(column_name)
+
+
+def _raise_empty_row_error(row_index: int) -> None:
+    """Raise the empty-row error with the row index in the message."""
+    err = f'Empty rows are not allowed. Found empty row at index {row_index}.'
+    raise ValueError(err)
+
+
+def _first_row_is_plain_dict_data(
+        data: DictDataMap[Value] | DictDataMap[ValueFmt]
+) -> TypeGuard[DictDataMap[Value]]:
+    """Return whether the first cell in the first row is a plain value."""
+    first_row = data[0]
+    first_cell = next(iter(first_row.values()))
+    return not isinstance(first_cell, ValueFmt)
+
+
+def _first_row_is_formatted_dict_data(
+        data: DictDataMap[Value] | DictDataMap[ValueFmt]
+) -> TypeGuard[DictDataMap[ValueFmt]]:
+    """Return whether the first cell in the first row is formatted."""
+    first_row = data[0]
+    first_cell = next(iter(first_row.values()))
+    return isinstance(first_cell, ValueFmt)
+
+
+def _normalize_dict_data_with_missing_cell(data: DictDataMap[CellT],
+                                           column_order: list[str],
+                                           missing_ok: bool,
+                                           extra_ok: bool,
+                                           missing_cell: CellT) -> \
+        DictDataMap[CellT]:
+    """Normalize dict data using the provided missing-cell value."""
+    column_names = set(column_order)
+    needs_normalization = False
+    expect_formatted = isinstance(missing_cell, ValueFmt)
+    for row_index, row in enumerate(data):
+        if not row:
+            _raise_empty_row_error(row_index)
+        for key, value in row.items():
+            if isinstance(value, ValueFmt) != expect_formatted:
+                expected = 'ValueFmt' if expect_formatted else 'plain value'
+                err = 'Mixed plain and formatted cells are not allowed. ' \
+                    f'Found {type(value).__name__} when expecting ' \
+                    f'{expected} in row {row_index}.'
+                raise TypeError(err)
+            if key not in column_names:
+                if not extra_ok:
+                    raise DataForExtraColumn(key)
+                needs_normalization = True
+        for column_name in column_order:
+            if column_name not in row:
+                if not missing_ok:
+                    raise MissingDataForColumn(column_name)
+                needs_normalization = True
+                break
+    if not needs_normalization:
+        return data
+    return [{key: row[key] if key in row else missing_cell
+             for key in column_order}
+            for row in data]
+
+
+def _normalize_dict_data_impl(data: DictDataMap[Value] | DictDataMap[ValueFmt],
+                              column_order: list[str],
+                              missing_ok: bool = False,
+                              extra_ok: bool = False) -> \
+        DictDataMap[Value] | DictDataMap[ValueFmt]:
+    """Normalize dict data for one concrete cell-kind input."""
+    _validate_column_order(column_order)
+    if not data:
+        return data
+    if not data[0]:
+        _raise_empty_row_error(0)
+    if _first_row_is_plain_dict_data(data):
+        return _normalize_dict_data_with_missing_cell(
+            data,
+            column_order,
+            missing_ok,
+            extra_ok,
+            None
+        )
+    if _first_row_is_formatted_dict_data(data):
+        return _normalize_dict_data_with_missing_cell(
+            data,
+            column_order,
+            missing_ok,
+            extra_ok,
+            ValueFmt(value=None, fmt=Fmt())
+        )
+    raise AssertionError('Unreachable code reached in normalize_dict_data.')
+
+
 def normalize_dict_data(data: DictDataMap[CellT],
                         column_order: list[str],
                         missing_ok: bool = False,
                         extra_ok: bool = False) -> DictDataMap[CellT]:
     """Check and normalize a dict data to have specified columns.
 
+    The column_order must not be empty.
+    Empty rows are not allowed.
     If all columns in column_order are present as keys in every row,
     and no other keys are present, the original data is returned unchanged.
     If missing_ok is False and data is missing for a column in the
@@ -363,7 +468,8 @@ def normalize_dict_data(data: DictDataMap[CellT],
     If extra_ok is False and data is present for a key not in the
     column_order, an exception is raised.
     The data is normalized by adding None values for missing columns if
-    missing_ok is True.
+    missing_ok is True. For formatted data, missing cells are added as
+    ValueFmt(value=None, fmt=Fmt()).
     The data is normalized by removing extra columns if extra_ok is True.
     When normalizing the data, the order of the rows is preserved.
     When data is added of removed, the modification are done on a copy of the
@@ -371,7 +477,7 @@ def normalize_dict_data(data: DictDataMap[CellT],
     Args:
         data: The dict data to normalize.
         column_order: The order of the columns, that will be present in the
-                      keys of the normalized data.
+                      keys of the normalized data. Must not be empty.
         missing_ok: If True, missing data for a column in the column_order
                     is OK, and None is added for the key (column name) in the
                     row.
@@ -382,13 +488,18 @@ def normalize_dict_data(data: DictDataMap[CellT],
                   If False, an exception is raised if data is present for a
                   key (column name) not in the column_order in any row.
     Raises:
+        ValueError: If column_order is empty, contains duplicate column
+                    names, or if any row is empty.
         MissingDataForColumn: If missing_ok is False and data is missing for a
                               key (column name) in the column_order in any row.
         DataForExtraColumn: If extra_ok is False and data is present for a
                             key (column name) not in the column_order in any
                             row.
+        TypeError: If plain and formatted cells are mixed in the same input.
     Returns:
         The normalized data that may be the same object as the input data.
     """
-    # TODO: Implement this function and write comprehensive tests for it.
-    return data  # to keep the linter happy until the function is implemented.
+    return cast(
+        DictDataMap[CellT],
+        _normalize_dict_data_impl(data, column_order, missing_ok, extra_ok)
+    )
