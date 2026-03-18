@@ -5,7 +5,7 @@
 # MIT License
 
 from typing import Optional, cast, Sequence, Mapping, TypeVar, \
-    NamedTuple, overload, TypeGuard
+    NamedTuple, overload, TypeGuard, Generic
 from datetime import datetime
 from tableio.color import Color
 
@@ -47,6 +47,7 @@ type ListDataSeq[CellValue: (Value, ValueFmt)] = \
 type DictData[CellValue: (Value, ValueFmt)] = list[DictRow[CellValue]]
 type DictDataMap[CellValue: (Value, ValueFmt)] = \
     Sequence[DictRowMap[CellValue]]
+DataT = TypeVar('DataT', bound='ListData[Value] | DictData[Value]')
 
 
 class FmtListRow(NamedTuple):
@@ -71,10 +72,10 @@ type FmtListData = Sequence[FmtListRow]
 type FmtDictData = Sequence[FmtDictRow]
 
 
-class ReadResult[Data: (ListData[Value], DictData[Value])](NamedTuple):
+class ReadResult(NamedTuple, Generic[DataT]):
     """Result of reading data from a file."""
 
-    data: Data
+    data: DataT
     """The data read from the table in the file."""
 
     headings: list[str]
