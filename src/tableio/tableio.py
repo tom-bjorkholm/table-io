@@ -8,7 +8,7 @@ from types import TracebackType
 from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
 from tableio.capability import Capabilities
-from tableio.value_type import ListData, Valuetype
+from tableio.value_type import ListDataSeq, Valuetype
 
 
 class Descriptor(NamedTuple):
@@ -182,7 +182,7 @@ class TableIO:
         self.heading_written = True
         return self._write_heading(heading, level)
 
-    def write_table_listdata[Valuetype](self, data: ListData[Valuetype],
+    def write_table_listdata[Valuetype](self, data: ListDataSeq[Valuetype],
                                         box: Optional[Box] = None) -> Position:
         """Write a table of list data to the file.
 
@@ -236,7 +236,7 @@ class TableIO:
         err = 'Subclass must implement _close method'
         raise NotImplementedError(err)
 
-    def _write_table_listdata[Valuetype](self, data: ListData[Valuetype],
+    def _write_table_listdata[Valuetype](self, data: ListDataSeq[Valuetype],
                                          box: Optional[Box] = None) \
             -> Position:
         """Write a table of list data to the file.
@@ -252,7 +252,7 @@ class TableIO:
         raise NotImplementedError(err)
 
     def _check_listdimensions[Valuetype](self,
-                                         data: ListData[Valuetype],
+                                         data: ListDataSeq[Valuetype],
                                          box: Optional[Box] = None) -> None:
         """Check the dimensions of the list data.
         Args:
