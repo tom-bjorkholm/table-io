@@ -6,6 +6,8 @@
 
 import inspect
 from datetime import datetime
+from types import MappingProxyType
+from typing import Mapping
 
 import pytest
 from pytest import CaptureFixture
@@ -14,7 +16,8 @@ from tableio.value_type import Fmt, ValueFmt, \
     FmtListRow, FmtDictRow, Value, dict_row_to_str_dict, \
     format_each_cell_dict, format_each_cell_list, get_checked_type, \
     list_row_to_str_list, row_format_each_cell_dict, \
-    row_format_each_cell_list, strip_format_dict, strip_format_list, \
+    row_format_each_cell_list, row_strip_format_dict, \
+    row_strip_format_list, strip_format_dict, strip_format_list, \
     str_list_to_list_row
 
 from .check_capsys import check_capsys
@@ -240,6 +243,66 @@ def test_strip_format_dict_strips_formatted_data(
     assert id(stripped) != id(data)
     assert isinstance(stripped, list)
     assert isinstance(stripped[0], dict)
+    check_capsys(capsys)
+
+
+def test_row_strip_format_list_returns_empty_list(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_strip_format_list returns an empty outer list."""
+    data: tuple[FmtListRow, ...] = ()
+    stripped = row_strip_format_list(data)
+    assert stripped == []
+    assert isinstance(stripped, list)
+    check_capsys(capsys)
+
+
+def test_row_strip_format_list_preserves_inner_row_objects(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_strip_format_list preserves each row value sequence."""
+    tuple_values: tuple[Value, ...] = ('left', 1)
+    list_values: list[Value] = [None, 2.5]
+    data = (
+        FmtListRow(values=tuple_values, fmt=Fmt(bold=True)),
+        FmtListRow(values=list_values, fmt=Fmt(italic=True))
+    )
+    stripped = row_strip_format_list(data)
+    assert stripped == [tuple_values, list_values]
+    assert isinstance(stripped, list)
+    assert id(stripped) != id(data)
+    assert stripped[0] is tuple_values
+    assert stripped[1] is list_values
+    check_capsys(capsys)
+
+
+def test_row_strip_format_dict_returns_empty_list(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_strip_format_dict returns an empty outer list."""
+    data: tuple[FmtDictRow, ...] = ()
+    stripped = row_strip_format_dict(data)
+    assert stripped == []
+    assert isinstance(stripped, list)
+    check_capsys(capsys)
+
+
+def test_row_strip_format_dict_preserves_inner_mapping_objects(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_strip_format_dict preserves each row value mapping."""
+    dict_values: dict[str, Value] = {'beta': 2, 'alpha': 'cell'}
+    proxy_values: Mapping[str, Value] = MappingProxyType({'only': None})
+    data = (
+        FmtDictRow(values=dict_values, fmt=Fmt(bold=True)),
+        FmtDictRow(values=proxy_values, fmt=Fmt(italic=True))
+    )
+    stripped = row_strip_format_dict(data)
+    assert [dict(row) for row in stripped] == [
+        {'beta': 2, 'alpha': 'cell'},
+        {'only': None}
+    ]
+    assert isinstance(stripped, list)
+    assert id(stripped) != id(data)
+    assert stripped[0] is dict_values
+    assert stripped[1] is proxy_values
+    assert list(stripped[0].keys()) == ['beta', 'alpha']
     check_capsys(capsys)
 
 

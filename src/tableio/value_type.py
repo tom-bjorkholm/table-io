@@ -252,6 +252,28 @@ def strip_format_dict(data: DictDataMap[CellT]) -> DictDataMap[Value]:
             for row in data]
 
 
+def row_strip_format_list(data: FmtListData) -> ListDataSeq[Value]:
+    """Return list row data without the row format wrappers.
+
+    Args:
+        data: The list data to strip.
+    Returns:
+        A new outer list containing the original row value sequences.
+    """
+    return [row.values for row in data]
+
+
+def row_strip_format_dict(data: FmtDictData) -> DictDataMap[Value]:
+    """Return dict row data without the row format wrappers.
+
+    Args:
+        data: The dict data to strip.
+    Returns:
+        A new outer list containing the original row value mappings.
+    """
+    return [row.values for row in data]
+
+
 def row_format_each_cell_list(data: FmtListData) -> ListData[ValueFmt]:
     """Format each cell individually with the format of the row.
 
