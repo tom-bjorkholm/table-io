@@ -183,14 +183,19 @@ class TableIO:
                    If level is None and it is first heading, level 1 is used.
                    If level is None and it is not first heading,
                    level 2 is used.
+        Raises:
+            ValueError: If level is outside the range 1 to 3.
         Returns:
             The position of the last cell written.
         """
-        if not level:
+        if level is None:
             if self.heading_written:
                 level = 2
             else:
                 level = 1
+        if not 1 <= level <= 3:
+            err = 'Heading level must be in range 1 to 3.'
+            raise ValueError(err)
         self.heading_written = True
         return self._write_heading(heading, level)
 
@@ -293,13 +298,19 @@ class TableIO:
         Avoid using this method directly.
         Use MultiFormat as a context manager instead, using a with statement.
         """
-        try:  # we need to close the file even if an exception is raised
+        try:
             self._end_state()
             self._write_file_suffix()
-            self._close()
-        finally:
-            self._close()
-        # The _close method should internally guard against multiple closes.
+        # pylint: disable-next=broad-exception-caught
+        except Exception as err:
+            try:
+                self._close()
+            # pylint: disable-next=broad-exception-caught
+            except Exception as close_err:
+                err.add_note(
+                    f'Additionally, _close() raised: {close_err}')
+            raise
+        self._close()
 
     def _end_state(self) -> None:
         """End the state of the file."""
@@ -402,7 +413,7 @@ class TableIO:
             box: The box to check.
         """
         cap_box = self.get_capabilities().can_write_box
-        return self._check_box_impl(box, cap_box)
+        return self._check_box_impl(box, cap_box, 'writing')
 
     def _check_box_read(self, box: Optional[Box]) -> Optional[Box]:
         """Check if the box is OK to use for reading.
@@ -411,22 +422,24 @@ class TableIO:
             box: The box to check.
         """
         cap_box = self.get_capabilities().can_read_box
-        return self._check_box_impl(box, cap_box)
+        return self._check_box_impl(box, cap_box, 'reading')
 
     @staticmethod
     def _check_box_impl(box: Optional[Box],
-                        cap: SingleCapability) -> Optional[Box]:
+                        cap: SingleCapability,
+                        action: str) -> Optional[Box]:
         """Check if the box is OK to use for the given capability.
 
         Args:
             box: The box to check.
             cap: The capability to check.
+            action: The action the box is requested for.
         """
         if box is None or cap.supported:
             return box
         if cap.strictness == Strictness.IGNORE:
             return None
-        err = 'Box is not supported for reading.'
+        err = f'Box is not supported for {action}.'
         raise ValueError(err)
 
     def _write_heading(self, heading: str, level: int) -> Position:
