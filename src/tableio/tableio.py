@@ -8,7 +8,7 @@ from types import TracebackType
 from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
 from tableio.capability import Capabilities
-from tableio.value_type import ListDataSeq, Valuetype
+from tableio.value_type import CellT, ListDataSeq
 
 
 class Descriptor(NamedTuple):
@@ -182,8 +182,8 @@ class TableIO:
         self.heading_written = True
         return self._write_heading(heading, level)
 
-    def write_table_listdata[Valuetype](self, data: ListDataSeq[Valuetype],
-                                        box: Optional[Box] = None) -> Position:
+    def write_table_listdata(self, data: ListDataSeq[CellT],
+                             box: Optional[Box] = None) -> Position:
         """Write a table of list data to the file.
 
         Write a table of unformatted list data to the file.
@@ -236,10 +236,10 @@ class TableIO:
         err = 'Subclass must implement _close method'
         raise NotImplementedError(err)
 
-    def _write_table_listdata[Valuetype](self, data: ListDataSeq[Valuetype],
-                                         box: Optional[Box] = None) \
-            -> Position:
+    def _write_table_listdata(self, data: ListDataSeq[CellT],
+                              box: Optional[Box] = None) -> Position:
         """Write a table of list data to the file.
+
         Args:
             data: The list data to write.
             box: The box to write the data into.
@@ -251,10 +251,10 @@ class TableIO:
         err = 'Subclass must implement _write_table_listdata method'
         raise NotImplementedError(err)
 
-    def _check_listdimensions[Valuetype](self,
-                                         data: ListDataSeq[Valuetype],
-                                         box: Optional[Box] = None) -> None:
+    def _check_listdimensions(self, data: ListDataSeq[CellT],
+                              box: Optional[Box] = None) -> None:
         """Check the dimensions of the list data.
+
         Args:
             data: The list data to check.
             box: The box to check the data into.

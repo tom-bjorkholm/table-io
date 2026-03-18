@@ -9,6 +9,12 @@ from typing import Optional, cast, Sequence, Mapping, TypeVar, \
 from datetime import datetime
 from tableio.color import Color
 
+# ----------------------------------------------------------------------------
+# types used to describe input and output data
+# ----------------------------------------------------------------------------
+
+type Value = Optional[str | int | float | datetime]
+
 
 class Fmt(NamedTuple):
     """Format specification for value(s)."""
@@ -30,21 +36,17 @@ class ValueFmt(NamedTuple):
     """The format specification."""
 
 
-# types used to describe input and output data
-type Value = Optional[str | int | float | datetime]
-Valuetype = TypeVar('Valuetype', Value, ValueFmt)
-type ListRow[Valuetype] = list[Valuetype]
-type ListRowSeq[Valuetype] = Sequence[Valuetype]
-type DictRow[Valuetype] = dict[str, Valuetype]
-# Row = TypeVar('Row', ListRow[Valuetype], DictRow[Valuetype])
-type DictRowMap[Valuetype] = Mapping[str, Valuetype]
-type ListData[Valuetype] = list[ListRow[Valuetype]]
-type ListDataSeq[Valuetype] = Sequence[ListRowSeq[Valuetype]]
-type DictData[Valuetype] = list[DictRow[Valuetype]]
-type DictDataMap[Valuetype] = Sequence[DictRowMap[Valuetype]]
-# type Data = list[Row[Valuetype]]
-# DataCov = TypeVar('DataCov', ListDataSeq[Valuetype],
-#                  DictDataMap[Valuetype])
+CellT = TypeVar('CellT', Value, ValueFmt)
+type ListRow[CellValue: (Value, ValueFmt)] = list[CellValue]
+type ListRowSeq[CellValue: (Value, ValueFmt)] = Sequence[CellValue]
+type DictRow[CellValue: (Value, ValueFmt)] = dict[str, CellValue]
+type DictRowMap[CellValue: (Value, ValueFmt)] = Mapping[str, CellValue]
+type ListData[CellValue: (Value, ValueFmt)] = list[ListRow[CellValue]]
+type ListDataSeq[CellValue: (Value, ValueFmt)] = \
+    Sequence[ListRowSeq[CellValue]]
+type DictData[CellValue: (Value, ValueFmt)] = list[DictRow[CellValue]]
+type DictDataMap[CellValue: (Value, ValueFmt)] = \
+    Sequence[DictRowMap[CellValue]]
 
 
 class FmtListRow(NamedTuple):
@@ -69,6 +71,10 @@ type FmtListData = Sequence[FmtListRow]
 type FmtDictData = Sequence[FmtDictRow]
 
 
+# ----------------------------------------------------------------------------
+# helper functions to convert between different types of data
+# ----------------------------------------------------------------------------
+
 def list_row_to_str_list(row: ListRowSeq[Value]) -> list[str]:
     """Convert ListRow to list of str."""
     ret: list[str] = []
@@ -87,7 +93,7 @@ def str_list_to_list_row(row: list[str]) -> ListRow[Value]:
     return cast(ListRow[Value], row)
 
 
-# flake8-docstrings/pydocstyle misses the docstring on `def func[T](...)`.
+# flake8-docstrings/pydocstyle misses docstrings on PEP 695 functions.
 T = TypeVar('T')
 
 
