@@ -330,3 +330,65 @@ def format_each_cell_dict(data: DictDataMap[Value],
     """
     return [{key: ValueFmt(value=value, fmt=fmt) for key, value in row.items()}
             for row in data]
+
+
+class MissingDataForColumn(ValueError):
+    """Exception for when data is missing for a needed key (column name)."""
+
+    def __init__(self, key: str):
+        """Initialize the exception."""
+        self.key = key
+        super().__init__(f'Data is missing for key (column name) {key}.')
+
+
+class DataForExtraColumn(ValueError):
+    """Exception for when data is present for key not in the column_order."""
+
+    def __init__(self, key: str):
+        """Initialize the exception."""
+        self.key = key
+        super().__init__(f'Data is present for extra key (column name) {key}.')
+
+
+def normalize_dict_data(data: DictDataMap[CellT],
+                        column_order: list[str],
+                        missing_ok: bool = False,
+                        extra_ok: bool = False) -> DictDataMap[CellT]:
+    """Check and normalize a dict data to have specified columns.
+
+    If all columns in column_order are present as keys in every row,
+    and no other keys are present, the original data is returned unchanged.
+    If missing_ok is False and data is missing for a column in the
+    column_order then an exception is raised.
+    If extra_ok is False and data is present for a key not in the
+    column_order, an exception is raised.
+    The data is normalized by adding None values for missing columns if
+    missing_ok is True.
+    The data is normalized by removing extra columns if extra_ok is True.
+    When normalizing the data, the order of the rows is preserved.
+    When data is added of removed, the modification are done on a copy of the
+    data and the original data object in argument list is not modified.
+    Args:
+        data: The dict data to normalize.
+        column_order: The order of the columns, that will be present in the
+                      keys of the normalized data.
+        missing_ok: If True, missing data for a column in the column_order
+                    is OK, and None is added for the key (column name) in the
+                    row.
+                    If False, an exception is raised if data is missing for a
+                    key (column name) in the column_order in any row.
+        extra_ok: If True, data for a key (column name) not in the column_order
+                  is OK, and the key (column name) is removed from the row.
+                  If False, an exception is raised if data is present for a
+                  key (column name) not in the column_order in any row.
+    Raises:
+        MissingDataForColumn: If missing_ok is False and data is missing for a
+                              key (column name) in the column_order in any row.
+        DataForExtraColumn: If extra_ok is False and data is present for a
+                            key (column name) not in the column_order in any
+                            row.
+    Returns:
+        The normalized data that may be the same object as the input data.
+    """
+    # TODO: Implement this function and write comprehensive tests for it.
+    return data  # to keep the linter happy until the function is implemented.

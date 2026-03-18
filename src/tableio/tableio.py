@@ -7,8 +7,9 @@
 from types import TracebackType
 from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
-from tableio.capability import Capabilities
-from tableio.value_type import CellT, ListDataSeq
+from tableio.capability import Capabilities, SingleCapability, Strictness
+from tableio.value_type import CellT, ListDataSeq, DictDataMap, \
+    normalize_dict_data
 
 
 class Descriptor(NamedTuple):
@@ -110,6 +111,17 @@ class TableIO:
                           capabilities=Capabilities(),
                           optional_args=['file_exists_callback'])
 
+    @classmethod
+    def get_capabilities(cls) -> Capabilities:
+        """Return the capabilities of the reader/writer class.
+
+        Must be overridden by subclasses.
+        """
+        err = 'Subclass must implement get_capabilities method'
+        raise NotImplementedError(err)
+        # pylint: disable=unreachable
+        return Capabilities()
+
     @staticmethod
     def file_name_with_extension(file_name: PathLike,
                                  extension: str) -> str:
@@ -186,7 +198,7 @@ class TableIO:
                              box: Optional[Box] = None) -> Position:
         """Write a table of list data to the file.
 
-        Write a table of unformatted list data to the file.
+        Write a table of list data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
         Args:
@@ -196,7 +208,41 @@ class TableIO:
             The position of the last cell written.
         """
         self._check_listdimensions(data, box)
-        return self._write_table_listdata(data, box)
+        c_box = self._check_box_write(box)
+        return self._write_table_listdata(data, c_box)
+
+    def write_table_dictdata(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
+                             data: DictDataMap[CellT],
+                             column_order: list[str],
+                             missing_ok: bool = False,
+                             extra_ok: bool = False,
+                             box: Optional[Box] = None) -> Position:
+        """Write a table of dict data to the file.
+
+        Write a table of dict data to the file.
+        If a box is provided the data will be written into the box.
+        The data must fit into the box.
+        Args:
+            data: The dict data to write.
+            box: The box to write the data into.
+            column_order: The order of the columns.
+            missing_ok: If True, None is inserted for missing column data.
+                        If False, an exception is raised.
+            extra_ok: If True, data for extra columns are ignored.
+                      If False, an exception is raised if data for extra
+                      columns are present.
+        Raises:
+            ValueError: If missing_ok is False and data is missing for a
+                        column in the column_order.
+            ValueError: If extra_ok is False and data is present for a
+                        key not in the column_order.
+        Returns:
+            The position of the last cell written.
+        """
+        ndata = normalize_dict_data(data, column_order, missing_ok, extra_ok)
+        self._check_dictdimensions(ndata, box)
+        c_box = self._check_box_write(box)
+        return self._write_table_dictdata(ndata, column_order, c_box)
 
     def open(self) -> None:
         """Open the file.
@@ -258,6 +304,10 @@ class TableIO:
         Args:
             data: The list data to check.
             box: The box to check the data into.
+        Raises:
+            ValueError: If the data does not have the same number of columns in
+                        each row.
+            ValueError: If the data does not fit into the box.
         """
         for row in data:
             if len(row) != len(data[0]):
@@ -270,6 +320,58 @@ class TableIO:
             if box.right is not None and len(data[0]) > box.right - box.left:
                 err = 'Data does not fit into box. Too many columns.'
                 raise ValueError(err)
+
+    def _check_dictdimensions(self, data: DictDataMap[CellT],
+                              box: Optional[Box] = None) -> None:
+        """Check the dimensions of the dict data.
+
+        Args:
+            data: The dict data to check.
+            column_order: The order of the columns.
+            box: The box to check the data into.
+        """
+        if box is None:
+            return
+        if box.bottom is not None and (len(data)+1) > box.bottom - box.top:
+            err = 'Data does not fit into box. Too many rows.'
+            raise ValueError(err)
+        if box.right is not None and len(data[0]) > box.right - box.left:
+            err = 'Data does not fit into box. Too many columns.'
+            raise ValueError(err)
+
+    def _check_box_write(self, box: Optional[Box]) -> Optional[Box]:
+        """Check if the box is OK to use for writing.
+
+        Args:
+            box: The box to check.
+        """
+        cap_box = self.get_capabilities().can_write_box
+        return self._check_box_impl(box, cap_box)
+
+    def _check_box_read(self, box: Optional[Box]) -> Optional[Box]:
+        """Check if the box is OK to use for reading.
+
+        Args:
+            box: The box to check.
+        """
+        cap_box = self.get_capabilities().can_read_box
+        return self._check_box_impl(box, cap_box)
+
+    @staticmethod
+    def _check_box_impl(box: Optional[Box],
+                        cap: SingleCapability) -> Optional[Box]:
+        """Check if the box is OK to use for the given capability.
+
+        Args:
+            box: The box to check.
+            cap: The capability to check.
+        """
+        if box is None or cap.supported:
+            return box
+        if cap.strictness == Strictness.IGNORE:
+            return None
+        err = 'Box is not supported for reading.'
+        raise ValueError(err)
 
     def _write_heading(self, heading: str, level: int) -> Position:
         """Write a heading to the file.
@@ -289,4 +391,22 @@ class TableIO:
         err = 'Subclass must implement _write_heading method'
         _ = heading  # avoid unused variable warning
         _ = level  # avoid unused variable warning
+        raise NotImplementedError(err)
+
+    def _write_table_dictdata(self, data: DictDataMap[CellT],
+                              column_order: list[str],
+                              box: Optional[Box] = None) -> Position:
+        """Write a table of dict data to the file.
+
+        Args:
+            data: The dict data to write.
+            column_order: The order of the columns.
+            box: The box to write the data into.
+        Returns:
+            The position of the last cell written.
+        """
+        _ = data  # avoid unused variable warning
+        _ = column_order  # avoid unused variable warning
+        _ = box  # avoid unused variable warning
+        err = 'Subclass must implement _write_table_dictdata method'
         raise NotImplementedError(err)
