@@ -10,8 +10,9 @@ from datetime import datetime
 import pytest
 from pytest import CaptureFixture
 
-from tableio.value_type import Fmt, FmtNameRow, FmtNumRow, ValueFmt, \
-    get_checked_type, num_row_to_str_list, str_list_to_num_row
+from tableio.value_type import Fmt, ValueFmt, \
+    FmtListRow, FmtDictRow, \
+    get_checked_type, list_row_to_str_list, str_list_to_list_row
 
 from .check_capsys import check_capsys
 
@@ -28,28 +29,28 @@ from .check_capsys import check_capsys
         ),
     ],
 )
-def test_num_row_to_str_list_converts_values(
+def test_list_row_to_str_list_converts_values(
         row: tuple[str | int | float | datetime, ...] |
         list[str | int | float | datetime], expected: list[str],
         capsys: CaptureFixture[str]) -> None:
-    """Test that num_row_to_str_list converts supported values to strings."""
-    assert num_row_to_str_list(row) == expected
+    """Test that list_row_to_str_list converts supported values to strings."""
+    assert list_row_to_str_list(row) == expected
     check_capsys(capsys)
 
 
-def test_num_row_to_str_list_rejects_none(
+def test_list_row_to_str_list_rejects_none(
         capsys: CaptureFixture[str]) -> None:
-    """Test that num_row_to_str_list raises for None values."""
+    """Test that list_row_to_str_list raises for None values."""
     with pytest.raises(TypeError, match='Found None when expecting str.'):
-        num_row_to_str_list(['value', None])
+        list_row_to_str_list(['value', None])
     check_capsys(capsys)
 
 
-def test_str_list_to_num_row_returns_same_list_object(
+def test_str_list_to_list_row_returns_same_list_object(
         capsys: CaptureFixture[str]) -> None:
-    """Test that str_list_to_num_row preserves the original list object."""
+    """Test that str_list_to_list_row preserves the original list object."""
     row = ['first', 'second']
-    converted = str_list_to_num_row(row)
+    converted = str_list_to_list_row(row)
     assert converted is row
     assert converted == ['first', 'second']
     check_capsys(capsys)
@@ -86,14 +87,13 @@ def test_get_checked_type_nok(
     check_capsys(capsys)
 
 
-
 def test_value_type_named_tuples_store_runtime_values(
         capsys: CaptureFixture[str]) -> None:
     """Test that the public NamedTuple types preserve their stored values."""
     fmt = Fmt(bold=True, italic=False)
     value_fmt = ValueFmt(value='cell', fmt=fmt)
-    fmt_num_row = FmtNumRow(values=('cell', 2), fmt=fmt)
-    fmt_name_row = FmtNameRow(values={'first': 'cell'}, fmt=fmt)
+    fmt_num_row = FmtListRow(values=('cell', 2), fmt=fmt)
+    fmt_name_row = FmtDictRow(values={'first': 'cell'}, fmt=fmt)
     assert fmt.bold is True
     assert fmt.italic is False
     assert value_fmt.value == 'cell'
@@ -108,13 +108,9 @@ def test_value_type_named_tuples_store_runtime_values(
 def test_value_type_named_tuples_require_explicit_values(
         capsys: CaptureFixture[str]) -> None:
     """Test that the public NamedTuple types define no runtime defaults."""
-    fmt_signature = inspect.signature(Fmt)
     value_fmt_signature = inspect.signature(ValueFmt)
-    fmt_num_row_signature = inspect.signature(FmtNumRow)
-    fmt_name_row_signature = inspect.signature(FmtNameRow)
-    assert fmt_signature.parameters['bold'].default is inspect.Parameter.empty
-    assert fmt_signature.parameters['italic'].default is \
-        inspect.Parameter.empty
+    fmt_num_row_signature = inspect.signature(FmtListRow)
+    fmt_name_row_signature = inspect.signature(FmtDictRow)
     assert value_fmt_signature.parameters['value'].default is \
         inspect.Parameter.empty
     assert value_fmt_signature.parameters['fmt'].default is \

@@ -7,29 +7,18 @@
 from typing import Optional, cast, Sequence, Mapping, TypeVar, \
     NamedTuple
 from datetime import datetime
-
-# types used to describe input and output data
-type Value = Optional[str | int | float | datetime]
-type NumRow = list[Value]
-type NumRowSeq = Sequence[Value]
-type NameRow = dict[str, Value]
-Row = TypeVar('Row', NumRow, NameRow)
-type NameRowMap = Mapping[str, Value]
-type NumData = list[NumRow]
-type NumDataSeq = Sequence[NumRowSeq]
-type NameData = list[NameRow]
-type NameDataMap = Sequence[NameRowMap]
-type Data[Row] = list[Row]
-DataCov = TypeVar('DataCov', NumDataSeq, NameDataMap)
+from tableio.color import Color
 
 
 class Fmt(NamedTuple):
     """Format specification for value(s)."""
 
-    bold: bool
+    bold: bool = False
     """If the value(s) should be bold."""
-    italic: bool
+    italic: bool = False
     """If the value(s) should be italic."""
+    highlight: Color = Color.NONE
+    """The highlight color."""
 
 
 class ValueFmt(NamedTuple):
@@ -41,36 +30,47 @@ class ValueFmt(NamedTuple):
     """The format specification."""
 
 
-type NumRowFmt = Sequence[ValueFmt]
-type NameRowFmt = Mapping[str, ValueFmt]
-type NumDataFmt = Sequence[NumRowFmt]
-type NameDataFmt = Sequence[NameRowFmt]
+# types used to describe input and output data
+type Value = Optional[str | int | float | datetime]
+Valuetype = TypeVar('Valuetype', Value, ValueFmt)
+type ListRow[Valuetype] = list[Valuetype]
+type ListRowSeq[Valuetype] = Sequence[Valuetype]
+type DictRow[Valuetype] = dict[str, Valuetype]
+# Row = TypeVar('Row', ListRow[Valuetype], DictRow[Valuetype])
+type DictRowMap[Valuetype] = Mapping[str, Valuetype]
+type ListData[Valuetype] = list[ListRow[Valuetype]]
+type ListDataSeq[Valuetype] = Sequence[ListRowSeq[Valuetype]]
+type DictData[Valuetype] = list[DictRow[Valuetype]]
+type DictDataMap[Valuetype] = Sequence[DictRowMap[Valuetype]]
+# type Data = list[Row[Valuetype]]
+# DataCov = TypeVar('DataCov', ListDataSeq[Valuetype],
+#                  DictDataMap[Valuetype])
 
 
-class FmtNumRow(NamedTuple):
-    """Formatted number row."""
+class FmtListRow(NamedTuple):
+    """Formatted Listber row."""
 
-    values: NumRowSeq
+    values: ListRowSeq[Value]
     """The sequence of values in the row."""
     fmt: Fmt
     """The format specification for the row."""
 
 
-class FmtNameRow(NamedTuple):
-    """Formatted name row."""
+class FmtDictRow(NamedTuple):
+    """Formatted Dict row."""
 
-    values: NameRowMap
+    values: DictRowMap[Value]
     """The mapping of value names to values in the row."""
     fmt: Fmt
     """The format specification for the row."""
 
 
-type FmtNumData = Sequence[FmtNumRow]
-type FmtNameData = Sequence[FmtNameRow]
+type FmtListData = Sequence[FmtListRow]
+type FmtDictData = Sequence[FmtDictRow]
 
 
-def num_row_to_str_list(row: NumRowSeq) -> list[str]:
-    """Convert NumRow to list of str."""
+def list_row_to_str_list(row: ListRowSeq[Value]) -> list[str]:
+    """Convert ListRow to list of str."""
     ret: list[str] = []
     for i in row:
         if isinstance(i, str):
@@ -82,9 +82,9 @@ def num_row_to_str_list(row: NumRowSeq) -> list[str]:
     return ret
 
 
-def str_list_to_num_row(row: list[str]) -> NumRow:
-    """Convert list of str to NumRow."""
-    return cast(NumRow, row)
+def str_list_to_list_row(row: list[str]) -> ListRow[Value]:
+    """Convert list of str to ListRow."""
+    return cast(ListRow[Value], row)
 
 
 # flake8-docstrings/pydocstyle misses the docstring on `def func[T](...)`.

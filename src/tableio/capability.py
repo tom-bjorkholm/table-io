@@ -75,6 +75,15 @@ class Capabilities(NamedTuple):
     filtered_data_range: SingleCapability = SingleCapability()
     """The writer class can mark a table as a filterable data range."""
 
+    can_write_box: SingleCapability = SingleCapability()
+    """The writer class can write to position given by a box."""
+
+    can_read_box: SingleCapability = SingleCapability()
+    """The reader class can read from position given by a box."""
+
+    can_write_highlight: SingleCapability = SingleCapability()
+    """The writer class can write highlight according to format."""
+
 
 def single_capability_match(offered: SingleCapability,
                             will_use: SingleCapability,

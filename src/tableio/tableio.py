@@ -5,22 +5,71 @@
 # MIT License
 
 from types import TracebackType
-from typing import TypedDict, Callable, Optional
+from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
 from tableio.capability import Capabilities
+from tableio.value_type import ListData, Valuetype
 
 
-class Descriptor(TypedDict):
-    """Descriptors of the reader/writer class for a file format."""
+class Descriptor(NamedTuple):
+    """Descriptors of the reader/writer class for a file format.
 
-    name: str
+    A descriptor is holds the metadata about a reader/writer
+    class for a file format and is used by the factory.
+    There may be several reader/writer classes for the same file
+    as long as they have different values for the implementation.
+
+    The capabilities describe what the reader/writer class can do.
+    The mandatory and optional arguments describe the arguments that
+    the reader/writer class expects.
+    """
+
+    format_name: str
+    """The name of the file format."""
+    implementation: str
+    """The implementation of the reader/writer class."""
     capabilities: Capabilities
+    """The capabilities of the reader/writer class."""
     mandatory_args: list[str]
+    """The mandatory arguments of the reader/writer class."""
     optional_args: list[str]
+    """The optional arguments of the reader/writer class."""
+    priority: int = 10
+    """The priority of this implementation. 0 = lowest, 100 = highest."""
+
+
+class Box(NamedTuple):
+    """A rectangular area in a file.
+
+    The box is defined by the edges.
+     - top: top row, that is first row inside the box.
+     - left: left column, that is leftmost column in the box.
+     - bottom: bottom edge, first row below the box.
+     - right: right edge, first column to the right of the box.
+    Row and column indices are 0-based.
+    If bottom or right is None, the box will expand according to the data.
+    """
+
+    top: int
+    left: int
+    bottom: Optional[int]
+    right: Optional[int]
+
+
+class Position(NamedTuple):
+    """A position in a file.
+
+    The position is defined by the row and column.
+    Row and column indices are 0-based.
+    This is used to report the position of the last cell written.
+    """
+
+    row: int
+    column: int
 
 
 class TableIO:
-    """Reader/writer base class for a file format."""
+    """File format reader/writer base class for table data."""
 
     def __init__(self, file_name: PathLike,
                  file_exists_callback: Optional[Callable[[str], None]]
@@ -42,12 +91,17 @@ class TableIO:
         self.file_name: str = \
             self.file_name_with_extension(file_name,
                                           self.file_name_extension())
+        self.heading_written: bool = False
 
     @classmethod
     def get_desciption(cls) -> Descriptor:
         """Get the description of the reader/writer class.
 
         Must be overridden by subclasses.
+        An implementation that produce the same file format but with
+        stricter adherance to the file format specification or
+        better compatibitity with other software should have
+        a higher priority (even it has fewer capabilities).
         """
         err = 'Subclass must implement get_desciption method'
         raise NotImplementedError(err)
@@ -102,6 +156,48 @@ class TableIO:
                 f'Additionally, close() raised: {close_exc}')
         return False
 
+    def write_heading(self, heading: str,
+                      level: Optional[int] = None) -> Position:
+        """Write a heading to the file.
+
+        Write a heading to the file. Headings are a line between tables.
+        For example in CSV format the heading has an empty line before and
+        after and it starts with one or more '#' characters.
+        Do not confuse the heading with the first row of a table,
+        with the names of the columns.
+        Args:
+            heading: The heading text to write.
+            level: The level of the heading. 1 = highest, 3 = lowest.
+                   If level is None and it is first heading, level 1 is used.
+                   If level is None and it is not first heading,
+                   level 2 is used.
+        Returns:
+            The position of the last cell written.
+        """
+        if not level:
+            if self.heading_written:
+                level = 2
+            else:
+                level = 1
+        self.heading_written = True
+        return self._write_heading(heading, level)
+
+    def write_table_listdata[Valuetype](self, data: ListData[Valuetype],
+                                        box: Optional[Box] = None) -> Position:
+        """Write a table of list data to the file.
+
+        Write a table of unformatted list data to the file.
+        If a box is provided the data will be written into the box.
+        The data must fit into the box.
+        Args:
+            data: The list data to write.
+            box: The box to write the data into.
+        Returns:
+            The position of the last cell written.
+        """
+        self._check_listdimensions(data, box)
+        return self._write_table_listdata(data, box)
+
     def open(self) -> None:
         """Open the file.
 
@@ -138,4 +234,59 @@ class TableIO:
     def _close(self) -> None:
         """Close the file."""
         err = 'Subclass must implement _close method'
+        raise NotImplementedError(err)
+
+    def _write_table_listdata[Valuetype](self, data: ListData[Valuetype],
+                                         box: Optional[Box] = None) \
+            -> Position:
+        """Write a table of list data to the file.
+        Args:
+            data: The list data to write.
+            box: The box to write the data into.
+        Returns:
+            The position of the last cell written.
+        """
+        _ = data  # avoid unused variable warning
+        _ = box  # avoid unused variable warning
+        err = 'Subclass must implement _write_table_listdata method'
+        raise NotImplementedError(err)
+
+    def _check_listdimensions[Valuetype](self,
+                                         data: ListData[Valuetype],
+                                         box: Optional[Box] = None) -> None:
+        """Check the dimensions of the list data.
+        Args:
+            data: The list data to check.
+            box: The box to check the data into.
+        """
+        for row in data:
+            if len(row) != len(data[0]):
+                err = 'All rows must have the same number of columns'
+                raise ValueError(err)
+        if box is not None:
+            if box.bottom is not None and len(data) > box.bottom - box.top:
+                err = 'Data does not fit into box. Too many rows.'
+                raise ValueError(err)
+            if box.right is not None and len(data[0]) > box.right - box.left:
+                err = 'Data does not fit into box. Too many columns.'
+                raise ValueError(err)
+
+    def _write_heading(self, heading: str, level: int) -> Position:
+        """Write a heading to the file.
+
+        Write a heading to the file. Headings are a line between tables.
+        For example in CSV format the heading has an empty line before and
+        after, and it starts with one or more '#' characters.
+        Do not confuse the heading with the first row of a table,
+        with the names of the columns.
+
+        Args:
+            heading: The heading text to write.
+            level: The level of the heading. 1 = highest, 3 = lowest.
+        Returns:
+            The position of the last cell written.
+        """
+        err = 'Subclass must implement _write_heading method'
+        _ = heading  # avoid unused variable warning
+        _ = level  # avoid unused variable warning
         raise NotImplementedError(err)
