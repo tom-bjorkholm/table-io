@@ -75,14 +75,28 @@ type FmtDictData = Sequence[FmtDictRow]
 # helper functions to convert between different types of data
 # ----------------------------------------------------------------------------
 
-def list_row_to_str_list(row: ListRowSeq[Value]) -> list[str]:
-    """Convert ListRow to list of str."""
+def list_row_to_str_list(row: ListRowSeq[Value],
+                         none_is_empty: bool = False) -> list[str]:
+    """Convert ListRow to list of str.
+
+    Args:
+        row: The row to convert.
+        none_is_empty: If True, None values are converted to empty strings.
+                       If False, None values will raise ValueError.
+    Raises:
+        ValueError: If none_is_empty is False and a None value is found.
+    Returns:
+        The converted row.
+    """
     ret: list[str] = []
     for i in row:
         if isinstance(i, str):
             ret.append(i)
         elif i is None:
-            raise TypeError('Found None when expecting str.')
+            if none_is_empty:
+                ret.append('')
+            else:
+                raise ValueError('Found None when expecting str.')
         else:
             ret.append(str(i))
     return ret

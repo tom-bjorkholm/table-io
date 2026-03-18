@@ -41,7 +41,7 @@ def test_list_row_to_str_list_converts_values(
 def test_list_row_to_str_list_rejects_none(
         capsys: CaptureFixture[str]) -> None:
     """Test that list_row_to_str_list raises for None values."""
-    with pytest.raises(TypeError, match='Found None when expecting str.'):
+    with pytest.raises(ValueError, match='Found None when expecting str.'):
         list_row_to_str_list(['value', None])
     check_capsys(capsys)
 
