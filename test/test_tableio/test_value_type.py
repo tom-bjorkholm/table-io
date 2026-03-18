@@ -12,7 +12,9 @@ from pytest import CaptureFixture
 
 from tableio.value_type import Fmt, ValueFmt, \
     FmtListRow, FmtDictRow, Value, dict_row_to_str_dict, \
-    get_checked_type, list_row_to_str_list, strip_format_list, \
+    format_each_cell_dict, format_each_cell_list, get_checked_type, \
+    list_row_to_str_list, row_format_each_cell_dict, \
+    row_format_each_cell_list, strip_format_dict, strip_format_list, \
     str_list_to_list_row
 
 from .check_capsys import check_capsys
@@ -197,4 +199,166 @@ def test_strip_format_list_strips_formatted_data(
     assert id(stripped) != id(data)
     assert isinstance(stripped, list)
     assert isinstance(stripped[0], list)
+    check_capsys(capsys)
+
+
+def test_strip_format_dict_returns_plain_data_unchanged(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that strip_format_dict preserves plain dict data objects."""
+    data: list[dict[str, Value]] = [
+        {'name': 'cell', 'count': 1},
+        {'name': None, 'count': 2.5}
+    ]
+    stripped = strip_format_dict(data)
+    assert stripped is data
+    assert stripped == [
+        {'name': 'cell', 'count': 1},
+        {'name': None, 'count': 2.5}
+    ]
+    check_capsys(capsys)
+
+
+def test_strip_format_dict_strips_formatted_data(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that strip_format_dict unwraps formatted dict data."""
+    fmt = Fmt(bold=True)
+    data = (
+        {
+            'name': ValueFmt(value='cell', fmt=fmt),
+            'count': ValueFmt(value=None, fmt=fmt)
+        },
+        {
+            'name': ValueFmt(value='next', fmt=fmt),
+            'count': ValueFmt(value=3.5, fmt=fmt)
+        }
+    )
+    stripped = strip_format_dict(data)
+    assert stripped == [
+        {'name': 'cell', 'count': None},
+        {'name': 'next', 'count': 3.5}
+    ]
+    assert id(stripped) != id(data)
+    assert isinstance(stripped, list)
+    assert isinstance(stripped[0], dict)
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('data', 'expected'),
+    [
+        pytest.param([], [], id='empty'),
+        pytest.param(
+            [
+                FmtListRow(values=('left', 1), fmt=Fmt(bold=True)),
+                FmtListRow(values=(None,), fmt=Fmt(italic=True))
+            ],
+            [
+                [
+                    ValueFmt(value='left', fmt=Fmt(bold=True)),
+                    ValueFmt(value=1, fmt=Fmt(bold=True))
+                ],
+                [ValueFmt(value=None, fmt=Fmt(italic=True))]
+            ],
+            id='rows'
+        )
+    ]
+)
+def test_row_format_each_cell_list(
+        data: list[FmtListRow], expected: list[list[ValueFmt]],
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_format_each_cell_list applies each row format."""
+    assert row_format_each_cell_list(data) == expected
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('data', 'expected'),
+    [
+        pytest.param([], [], id='empty'),
+        pytest.param(
+            [
+                FmtDictRow(
+                    values={'beta': 2, 'alpha': 'cell'},
+                    fmt=Fmt(bold=True)
+                ),
+                FmtDictRow(values={'only': None}, fmt=Fmt(italic=True))
+            ],
+            [
+                {
+                    'beta': ValueFmt(value=2, fmt=Fmt(bold=True)),
+                    'alpha': ValueFmt(value='cell', fmt=Fmt(bold=True))
+                },
+                {'only': ValueFmt(value=None, fmt=Fmt(italic=True))}
+            ],
+            id='rows'
+        )
+    ]
+)
+def test_row_format_each_cell_dict(
+        data: list[FmtDictRow], expected: list[dict[str, ValueFmt]],
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_format_each_cell_dict applies each row format."""
+    formatted = row_format_each_cell_dict(data)
+    assert formatted == expected
+    if formatted:
+        assert list(formatted[0].keys()) == ['beta', 'alpha']
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('data', 'fmt', 'expected'),
+    [
+        pytest.param([], Fmt(), [], id='empty'),
+        pytest.param(
+            [('left', 1), (None,)],
+            Fmt(bold=True),
+            [
+                [
+                    ValueFmt(value='left', fmt=Fmt(bold=True)),
+                    ValueFmt(value=1, fmt=Fmt(bold=True))
+                ],
+                [ValueFmt(value=None, fmt=Fmt(bold=True))]
+            ],
+            id='values'
+        )
+    ]
+)
+def test_format_each_cell_list(
+        data: list[tuple[Value, ...]], fmt: Fmt,
+        expected: list[list[ValueFmt]], capsys: CaptureFixture[str]) -> None:
+    """Test that format_each_cell_list applies the provided format."""
+    assert format_each_cell_list(data, fmt) == expected
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('data', 'fmt', 'expected'),
+    [
+        pytest.param([], Fmt(), [], id='empty'),
+        pytest.param(
+            [
+                {'beta': 2, 'alpha': 'cell'},
+                {'only': None}
+            ],
+            Fmt(italic=True),
+            [
+                {
+                    'beta': ValueFmt(value=2, fmt=Fmt(italic=True)),
+                    'alpha': ValueFmt(value='cell', fmt=Fmt(italic=True))
+                },
+                {'only': ValueFmt(value=None, fmt=Fmt(italic=True))}
+            ],
+            id='values'
+        )
+    ]
+)
+def test_format_each_cell_dict(
+        data: list[dict[str, Value]], fmt: Fmt,
+        expected: list[dict[str, ValueFmt]],
+        capsys: CaptureFixture[str]) -> None:
+    """Test that format_each_cell_dict applies the provided format."""
+    formatted = format_each_cell_dict(data, fmt)
+    assert formatted == expected
+    if formatted:
+        assert list(formatted[0].keys()) == ['beta', 'alpha']
     check_capsys(capsys)

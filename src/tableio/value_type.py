@@ -207,3 +207,104 @@ def strip_format_list(data: ListDataSeq[CellT]) -> ListDataSeq[Value]:
     if is_plain_list_data(data):
         return data
     return [[get_plain_value(cell) for cell in row] for row in data]
+
+
+def has_format_dict(data: DictDataMap[CellT]) -> bool:
+    """Return whether any cell in the dict data carries formatting."""
+    for row in data:
+        for cell in row.values():
+            if isinstance(cell, ValueFmt):
+                return True
+    return False
+
+
+def is_plain_dict_data(
+        data: DictDataMap[CellT]) -> TypeGuard[DictDataMap[Value]]:
+    """Return whether the dict data contains plain values only."""
+    return not has_format_dict(data)
+
+
+@overload
+def strip_format_dict(data: DictDataMap[Value]) -> DictDataMap[Value]:
+    ...
+
+
+@overload
+def strip_format_dict(data: DictDataMap[ValueFmt]) -> DictData[Value]:
+    ...
+
+
+def strip_format_dict(data: DictDataMap[CellT]) -> DictDataMap[Value]:
+    """Return dict data with any cell formatting removed.
+
+    If the input already contains plain values only, the original data object
+    is returned unchanged. Formatted data is converted to a new list of dicts
+    containing the plain values.
+
+    Args:
+        data: The dict data to convert.
+    Returns:
+        The plain-value dict data.
+    """
+    if is_plain_dict_data(data):
+        return data
+    return [{key: get_plain_value(value) for key, value in row.items()}
+            for row in data]
+
+
+def row_format_each_cell_list(data: FmtListData) -> ListData[ValueFmt]:
+    """Format each cell individually with the format of the row.
+
+    For each each row in the input data use the format of the row to format
+    the value of each cell in the row. Return the formatted data as a list of
+    lists of ValueFmt.
+    Args:
+        data: The list data to format.
+    Returns:
+        The formatted list data.
+    """
+    return [[ValueFmt(value=cell, fmt=row.fmt) for cell in row.values]
+            for row in data]
+
+
+def row_format_each_cell_dict(data: FmtDictData) -> DictData[ValueFmt]:
+    """Format each cell individually with the format of the row.
+
+    For each each row in the input data use the format of the row to format
+    the value of each cell in the row. Return the formatted data as a list of
+    dicts of ValueFmt.
+    Args:
+        data: The dict data to format.
+    Returns:
+        The formatted dict data.
+    """
+    return [{key: ValueFmt(value=value, fmt=row.fmt)
+             for key, value in row.values.items()}
+            for row in data]
+
+
+def format_each_cell_list(data: ListDataSeq[Value],
+                          fmt: Fmt = Fmt()) -> ListData[ValueFmt]:
+    """Format each cell in the list data with the specified format.
+
+    Args:
+        data: The list data to format.
+        fmt: The format to apply to the cells.
+    Returns:
+        The formatted list data.
+    """
+    return [[ValueFmt(value=cell, fmt=fmt) for cell in row] for row in data]
+
+
+def format_each_cell_dict(data: DictDataMap[Value],
+                          fmt: Fmt = Fmt()) -> DictData[ValueFmt]:
+    """Format each cell in the dict data with the specified format.
+
+    Args:
+        data: The dict data to format.
+        fmt: The format to apply to the cells.
+    Returns:
+        The formatted dict data.
+    """
+    return [{key: ValueFmt(value=value, fmt=fmt) for key, value in row.items()}
+            for row in data]
