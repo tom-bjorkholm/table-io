@@ -522,8 +522,7 @@ def _normalize_dict_data_with_missing_cell(data: DictDataMap[CellT],
     if not needs_normalization:
         return data
     return [{key: row[key] if key in row else missing_cell
-             for key in column_order}
-            for row in data]
+             for key in column_order} for row in data]
 
 
 def _normalize_dict_data_impl(data: DictDataMap[Value] | DictDataMap[ValueFmt],
@@ -538,21 +537,14 @@ def _normalize_dict_data_impl(data: DictDataMap[Value] | DictDataMap[ValueFmt],
     if not data[0]:
         _raise_empty_row_error(0)
     if _first_row_is_plain_dict_data(data):
-        return _normalize_dict_data_with_missing_cell(
-            data,
-            column_order,
-            missing_ok,
-            extra_ok,
-            None
-        )
+        return _normalize_dict_data_with_missing_cell(data, column_order,
+                                                      missing_ok, extra_ok,
+                                                      None)
     if _first_row_is_formatted_dict_data(data):
-        return _normalize_dict_data_with_missing_cell(
-            data,
-            column_order,
-            missing_ok,
-            extra_ok,
-            ValueFmt(value=None, fmt=Fmt())
-        )
+        return _normalize_dict_data_with_missing_cell(data, column_order,
+                                                      missing_ok, extra_ok,
+                                                      ValueFmt(value=None,
+                                                               fmt=Fmt()))
     raise AssertionError('Unreachable code reached in normalize_dict_data.')
 
 

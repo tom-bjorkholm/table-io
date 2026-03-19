@@ -10,7 +10,9 @@ from mformat.mformat import PathLike
 from tableio.capability import Capabilities, SingleCapability, Strictness, \
     CapabilityNotSupported
 from tableio.value_type import CellT, ListDataSeq, DictDataMap, \
-    normalize_dict_data, ReadResult, ListData, Value, DictData
+    normalize_dict_data, ReadResult, ListData, Value, DictData, \
+    FmtListData, FmtDictData, FmtDictRow, row_strip_format_list, \
+    row_strip_format_dict
 
 
 class Descriptor(NamedTuple):
@@ -227,6 +229,33 @@ class TableIO:
                                           filtered_data_range=c_filt_range,
                                           box=c_box)
 
+    def write_table_fmtlistdata(self, data: FmtListData,
+                                filtered_data_range: bool = False,
+                                box: Optional[Box] = None) -> Position:
+        """Write a table of list data to the file.
+
+        Write a table of list data to the file.
+        If a box is provided the data will be written into the box.
+        The data must fit into the box.
+        Args:
+            data: The list data to write.
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
+            box: The box to write the data into.
+        Raises:
+            ValueError: If the data shape is invalid or does not fit in box.
+            CapabilityNotSupported: If a requested capability is unsupported
+                                    and strict.
+        Returns:
+            The position of the last cell written.
+        """
+        self._check_listdimensions(row_strip_format_list(data), box)
+        c_box = self._check_box_write(box)
+        c_filt_range = self._check_filtered_data_range(filtered_data_range)
+        return self._write_table_fmtlistdata(data=data,
+                                             filtered_data_range=c_filt_range,
+                                             box=c_box)
+
     def write_table_dictdata(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                              data: DictDataMap[CellT],
                              column_order: list[str],
@@ -269,6 +298,58 @@ class TableIO:
                                           column_order=column_order,
                                           filtered_data_range=c_filt_range,
                                           box=c_box)
+
+    def write_table_fmtdictdata(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
+                                data: FmtDictData,
+                                column_order: list[str],
+                                missing_ok: bool = False,
+                                extra_ok: bool = False,
+                                filtered_data_range: bool = False,
+                                box: Optional[Box] = None) -> Position:
+        """Write a table of dict data to the file.
+
+        Write a table of dict data to the file.
+        If a box is provided the data will be written into the box.
+        The data must fit into the box.
+        Args:
+            data: The dict data to write.
+            column_order: The order of the columns.
+            missing_ok: If True, None is inserted for missing column data.
+                        If False, an exception is raised.
+            extra_ok: If True, data for extra columns are ignored.
+                      If False, an exception is raised if data for extra
+                      columns are present.
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
+            box: The box to write the data into.
+        Raises:
+            ValueError: If missing_ok is False and data is missing for a
+                        column in the column_order.
+            ValueError: If extra_ok is False and data is present for a
+                        key not in the column_order.
+            ValueError: If the data shape is invalid or does not fit in box.
+            CapabilityNotSupported: If a requested capability is unsupported
+                                    and strict.
+        Returns:
+            The position of the last cell written.
+        """
+        stripped_data = row_strip_format_dict(data)
+        normalized_values = normalize_dict_data(stripped_data, column_order,
+                                                missing_ok, extra_ok)
+        self._check_dictdimensions(normalized_values, box)
+        if normalized_values is stripped_data:
+            normalized_data = data
+        else:
+            normalized_data = [
+                FmtDictRow(values=row_values, fmt=row.fmt)
+                for row, row_values in zip(data, normalized_values,
+                                           strict=True)]
+        c_box = self._check_box_write(box)
+        c_filt_range = self._check_filtered_data_range(filtered_data_range)
+        return self._write_table_fmtdictdata(data=normalized_data,
+                                             column_order=column_order,
+                                             filtered_data_range=c_filt_range,
+                                             box=c_box)
 
     def read_table_listdata(self, box: Optional[Box] = None) \
             -> ReadResult[ListData[Value]]:
@@ -531,6 +612,25 @@ class TableIO:
         err = 'Subclass must implement _write_table_listdata method'
         raise NotImplementedError(err)
 
+    def _write_table_fmtlistdata(self, data: FmtListData,
+                                 filtered_data_range: bool = False,
+                                 box: Optional[Box] = None) -> Position:
+        """Write a table of list data to the file.
+
+        Args:
+            data: The list data to write.
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
+            box: The box to write the data into.
+        Returns:
+            The position of the last cell written.
+        """
+        _ = data  # avoid unused variable warning
+        _ = filtered_data_range  # avoid unused variable warning
+        _ = box  # avoid unused variable warning
+        err = 'Subclass must implement _write_table_fmtlistdata method'
+        raise NotImplementedError(err)
+
     def _write_table_dictdata(self, data: DictDataMap[CellT],
                               column_order: list[str],
                               filtered_data_range: bool = False,
@@ -551,6 +651,28 @@ class TableIO:
         _ = filtered_data_range  # avoid unused variable warning
         _ = box  # avoid unused variable warning
         err = 'Subclass must implement _write_table_dictdata method'
+        raise NotImplementedError(err)
+
+    def _write_table_fmtdictdata(self, data: FmtDictData,
+                                 column_order: list[str],
+                                 filtered_data_range: bool = False,
+                                 box: Optional[Box] = None) -> Position:
+        """Write a table of dict data to the file.
+
+        Args:
+            data: The dict data to write.
+            column_order: The order of the columns.
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
+            box: The box to write the data into.
+        Returns:
+            The position of the last cell written.
+        """
+        _ = data  # avoid unused variable warning
+        _ = column_order  # avoid unused variable warning
+        _ = filtered_data_range  # avoid unused variable warning
+        _ = box  # avoid unused variable warning
+        err = 'Subclass must implement _write_table_fmtdictdata method'
         raise NotImplementedError(err)
 
     def _read_table_listdata(self, box: Optional[Box] = None) \

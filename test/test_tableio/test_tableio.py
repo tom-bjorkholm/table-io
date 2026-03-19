@@ -13,8 +13,9 @@ from pytest import CaptureFixture
 from tableio.capability import Capabilities, CapabilityNotSupported, \
     SingleCapability, Strictness
 from tableio.tableio import Box, Descriptor, Position, TableIO
-from tableio.value_type import CellT, DictDataMap, ListDataSeq, \
-    ReadResult, Value, ValueFmt
+from tableio.value_type import CellT, DictDataMap, Fmt, FmtDictData, \
+    FmtDictRow, FmtListData, FmtListRow, ListDataSeq, ReadResult, Value, \
+    ValueFmt
 
 from .check_capsys import check_capsys
 
@@ -60,11 +61,18 @@ class RecordingTableIO(TableIO):
         self.last_list_write_data: list[list[Value | ValueFmt]] | None = None
         self.last_list_filtered_data_range: bool | None = None
         self.last_list_write_box: Box | None = None
+        self.last_fmtlist_write_data: list[FmtListRow] | None = None
+        self.last_fmtlist_filtered_data_range: bool | None = None
+        self.last_fmtlist_write_box: Box | None = None
         self.last_dict_write_data: list[dict[str, Value | ValueFmt]] | None = \
             None
         self.last_column_order: list[str] | None = None
         self.last_dict_filtered_data_range: bool | None = None
         self.last_dict_write_box: Box | None = None
+        self.last_fmtdict_write_data: list[FmtDictRow] | None = None
+        self.last_fmtdict_column_order: list[str] | None = None
+        self.last_fmtdict_filtered_data_range: bool | None = None
+        self.last_fmtdict_write_box: Box | None = None
         self.last_list_read_box: Box | None = None
         self.last_dict_read_box: Box | None = None
         self.fail_end_state: bool = False
@@ -140,6 +148,16 @@ class RecordingTableIO(TableIO):
         self.last_heading = (heading, level)
         return Position(row=level, column=len(heading))
 
+    def _write_table_fmtlistdata(self, data: FmtListData,
+                                 filtered_data_range: bool = False,
+                                 box: Box | None = None) -> Position:
+        """Record formatted list-data writes."""
+        self.events.append('write_table_fmtlistdata')
+        self.last_fmtlist_write_data = list(data)
+        self.last_fmtlist_filtered_data_range = filtered_data_range
+        self.last_fmtlist_write_box = box
+        return Position(row=len(data) - 1, column=len(data[0].values) - 1)
+
     def _write_table_dictdata(self, data: DictDataMap[CellT],
                               column_order: list[str],
                               filtered_data_range: bool = False,
@@ -150,6 +168,18 @@ class RecordingTableIO(TableIO):
         self.last_column_order = list(column_order)
         self.last_dict_filtered_data_range = filtered_data_range
         self.last_dict_write_box = box
+        return Position(row=len(data), column=len(column_order) - 1)
+
+    def _write_table_fmtdictdata(self, data: FmtDictData,
+                                 column_order: list[str],
+                                 filtered_data_range: bool = False,
+                                 box: Box | None = None) -> Position:
+        """Record formatted dict-data writes."""
+        self.events.append('write_table_fmtdictdata')
+        self.last_fmtdict_write_data = list(data)
+        self.last_fmtdict_column_order = list(column_order)
+        self.last_fmtdict_filtered_data_range = filtered_data_range
+        self.last_fmtdict_write_box = box
         return Position(row=len(data), column=len(column_order) - 1)
 
     def _read_table_listdata(self, box: Box | None = None) -> \
@@ -221,10 +251,20 @@ class MinimalTableIO(TableIO):
         """Expose the inherited _write_table_listdata method for tests."""
         return self._write_table_listdata(data)
 
+    def run_write_table_fmtlistdata(self, data: FmtListData) -> Position:
+        """Expose the inherited _write_table_fmtlistdata method."""
+        return self._write_table_fmtlistdata(data)
+
     def run_write_table_dictdata(self, data: DictDataMap[CellT],
                                  column_order: list[str]) -> Position:
         """Expose the inherited _write_table_dictdata method for tests."""
         return self._write_table_dictdata(data, column_order)
+
+    def run_write_table_fmtdictdata(
+            self, data: FmtDictData,
+            column_order: list[str]) -> Position:
+        """Expose the inherited _write_table_fmtdictdata method."""
+        return self._write_table_fmtdictdata(data, column_order)
 
     def run_read_table_listdata(self) -> ReadResult[list[list[Value]]]:
         """Expose the inherited _read_table_listdata method for tests."""
@@ -760,7 +800,14 @@ def test_base_class_not_implemented_instance_methods_raise(
     """Test the inherited instance-level abstract methods."""
     table_io = MinimalTableIO('sample')
     list_data: list[list[Value]] = [['alpha', 1]]
+    fmt_list_data = [FmtListRow(values=('alpha', 1), fmt=Fmt(bold=True))]
     dict_data: list[dict[str, Value]] = [{'alpha': 'left', 'beta': 1}]
+    fmt_dict_data = [
+        FmtDictRow(
+            values={'alpha': 'left', 'beta': 1},
+            fmt=Fmt(italic=True)
+        )
+    ]
     with pytest.raises(NotImplementedError, match='open method'):
         table_io.open()
     with pytest.raises(NotImplementedError, match='_end_state method'):
@@ -775,8 +822,17 @@ def test_base_class_not_implemented_instance_methods_raise(
                        match='_write_table_listdata method'):
         table_io.run_write_table_listdata(list_data)
     with pytest.raises(NotImplementedError,
+                       match='_write_table_fmtlistdata method'):
+        table_io.run_write_table_fmtlistdata(fmt_list_data)
+    with pytest.raises(NotImplementedError,
                        match='_write_table_dictdata method'):
         table_io.run_write_table_dictdata(dict_data, ['alpha', 'beta'])
+    with pytest.raises(NotImplementedError,
+                       match='_write_table_fmtdictdata method'):
+        table_io.run_write_table_fmtdictdata(
+            fmt_dict_data,
+            ['alpha', 'beta']
+        )
     with pytest.raises(NotImplementedError,
                        match='_read_table_listdata method'):
         table_io.run_read_table_listdata()
