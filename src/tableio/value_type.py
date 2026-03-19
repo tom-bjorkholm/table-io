@@ -86,6 +86,48 @@ class ReadResult(NamedTuple, Generic[DataT]):
 # helper functions to convert between different types of data
 # ----------------------------------------------------------------------------
 
+
+def fmt_set_in_both(fmt1: Fmt, fmt2: Fmt) -> Fmt:
+    """Return the format attributes that are set the same in both formats.
+
+    Bold and italic remain enabled only when they are enabled in both input
+    formats. Highlight is preserved only when both input formats use the same
+    highlight color; otherwise the result uses Color.NONE.
+
+    Args:
+        fmt1: The first argument format.
+        fmt2: The second argument format.
+    Returns:
+        The format that is set in both argument formats.
+    """
+    return Fmt(bold=fmt1.bold and fmt2.bold,
+               italic=fmt1.italic and fmt2.italic,
+               highlight=fmt1.highlight if fmt1.highlight == fmt2.highlight
+               else Color.NONE)
+
+
+def fmt_set_in_all(fmts: Sequence[Fmt]) -> Fmt:
+    """Return a new format that is set in all argument formats.
+
+    Bold and italic remain enabled only when they are enabled in every input
+    format. Highlight is preserved only when every input format uses the same
+    highlight color; otherwise the result uses Color.NONE.
+
+    Args:
+        fmts: The sequence of formats to merge.
+    Returns:
+        The format that is set in all argument formats.
+    Raises:
+        ValueError: If the sequence is empty.
+    """
+    if not fmts:
+        raise ValueError('fmts must not be empty.')
+    ret = fmts[0]
+    for fmt in fmts[1:]:
+        ret = fmt_set_in_both(ret, fmt)
+    return ret
+
+
 def get_plain_value(cell: CellT) -> Value:
     """Return the plain value stored in a cell."""
     if isinstance(cell, ValueFmt):
@@ -341,6 +383,56 @@ def format_each_cell_dict(data: DictDataMap[Value],
     """
     return [{key: ValueFmt(value=value, fmt=fmt) for key, value in row.items()}
             for row in data]
+
+
+def row_fmt_from_cell_fmt_list(data: ListData[ValueFmt]) -> FmtListData:
+    """Create a list of formatted rows from a list of cell formatted rows.
+
+    For each row in the input data, create a new formatted row with the
+    format of the row. The format is the merge of the formats of the cells
+    in the row. The merge is done so that a formatting is applied to the row
+    if and only if that formatting is applied to all cells in the row.
+
+    Args:
+        data: The list of cell formatted rows to create formatted rows from.
+    Returns:
+        A list of formatted rows.
+    Raises:
+        ValueError: If any row is empty.
+    """
+    ret: list[FmtListRow] = []
+    for row_index, row in enumerate(data):
+        if not row:
+            _raise_empty_row_error(row_index)
+        vals = [cell.value for cell in row]
+        fmt = fmt_set_in_all([cell.fmt for cell in row])
+        ret.append(FmtListRow(values=vals, fmt=fmt))
+    return ret
+
+
+def row_fmt_from_cell_fmt_dict(data: DictData[ValueFmt]) -> FmtDictData:
+    """Create formatted dict rows from cell-formatted dict rows.
+
+    For each row in the input data, create a new formatted row with the
+    format of the row. The format is the merge of the formats of the cells
+    in the row. The merge is done so that a formatting is applied to the row
+    if and only if that formatting is applied to all cells in the row.
+
+    Args:
+        data: The dict rows with cell formatting to convert.
+    Returns:
+        A list of formatted dict rows.
+    Raises:
+        ValueError: If any row is empty.
+    """
+    ret: list[FmtDictRow] = []
+    for row_index, row in enumerate(data):
+        if not row:
+            _raise_empty_row_error(row_index)
+        vals = {key: cell.value for key, cell in row.items()}
+        fmt = fmt_set_in_all([cell.fmt for cell in row.values()])
+        ret.append(FmtDictRow(values=vals, fmt=fmt))
+    return ret
 
 
 class MissingDataForColumn(ValueError):

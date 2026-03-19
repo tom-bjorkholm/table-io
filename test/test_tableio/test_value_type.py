@@ -12,14 +12,16 @@ from typing import Any, Mapping, cast
 import pytest
 from pytest import CaptureFixture
 
+from tableio.color import Color
 from tableio.value_type import Fmt, ValueFmt, \
     FmtListRow, FmtDictRow, Value, DataForExtraColumn, \
-    MissingDataForColumn, dict_row_to_str_dict, format_each_cell_dict, \
-    format_each_cell_list, get_checked_type, list_row_to_str_list, \
-    normalize_dict_data, row_format_each_cell_dict, \
-    row_format_each_cell_list, row_strip_format_dict, \
-    row_strip_format_list, strip_format_dict, strip_format_list, \
-    str_list_to_list_row
+    MissingDataForColumn, dict_row_to_str_dict, fmt_set_in_all, \
+    fmt_set_in_both, format_each_cell_dict, format_each_cell_list, \
+    get_checked_type, list_row_to_str_list, normalize_dict_data, \
+    row_fmt_from_cell_fmt_dict, row_fmt_from_cell_fmt_list, \
+    row_format_each_cell_dict, row_format_each_cell_list, \
+    row_strip_format_dict, row_strip_format_list, strip_format_dict, \
+    strip_format_list, str_list_to_list_row
 
 from .check_capsys import check_capsys
 
@@ -573,4 +575,145 @@ def test_normalize_dict_data_normalizes_formatted_rows(
         {'alpha': missing_cell, 'beta': ValueFmt(value=3.5, fmt=fmt)}
     ]
     assert normalized is not data
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('fmt1', 'fmt2', 'expected'),
+    [
+        pytest.param(
+            Fmt(bold=True, italic=True, highlight=Color.RED),
+            Fmt(bold=True, italic=False, highlight=Color.RED),
+            Fmt(bold=True, italic=False, highlight=Color.RED),
+            id='shared-highlight'
+        ),
+        pytest.param(
+            Fmt(bold=False, italic=True, highlight=Color.GREEN),
+            Fmt(bold=True, italic=True, highlight=Color.YELLOW),
+            Fmt(bold=False, italic=True, highlight=Color.NONE),
+            id='different-highlight'
+        )
+    ]
+)
+def test_fmt_set_in_both(
+        fmt1: Fmt, fmt2: Fmt, expected: Fmt,
+        capsys: CaptureFixture[str]) -> None:
+    """Test that fmt_set_in_both keeps only shared formatting."""
+    assert fmt_set_in_both(fmt1, fmt2) == expected
+    check_capsys(capsys)
+
+
+def test_fmt_set_in_all_rejects_empty_sequence(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that fmt_set_in_all rejects an empty sequence."""
+    with pytest.raises(ValueError, match='fmts must not be empty'):
+        fmt_set_in_all([])
+    check_capsys(capsys)
+
+
+def test_fmt_set_in_all_merges_all_formats(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that fmt_set_in_all keeps only formatting shared by all."""
+    fmts = [
+        Fmt(bold=True, italic=True, highlight=Color.YELLOW),
+        Fmt(bold=True, italic=True, highlight=Color.YELLOW),
+        Fmt(bold=True, italic=False, highlight=Color.GREEN)
+    ]
+    assert fmt_set_in_all(fmts) == Fmt(
+        bold=True,
+        italic=False,
+        highlight=Color.NONE
+    )
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_list_returns_empty_list(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_fmt_from_cell_fmt_list preserves an empty outer list."""
+    assert not row_fmt_from_cell_fmt_list([])
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_list_merges_formats(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_fmt_from_cell_fmt_list merges each row format."""
+    data: list[list[ValueFmt]] = [
+        [
+            ValueFmt(value='left', fmt=Fmt(bold=True, highlight=Color.RED)),
+            ValueFmt(value=1, fmt=Fmt(bold=True, highlight=Color.RED))
+        ],
+        [
+            ValueFmt(value='next', fmt=Fmt(italic=True, highlight=Color.RED)),
+            ValueFmt(value=None,
+                     fmt=Fmt(italic=True, highlight=Color.GREEN))
+        ]
+    ]
+    assert row_fmt_from_cell_fmt_list(data) == [
+        FmtListRow(values=['left', 1],
+                   fmt=Fmt(bold=True, highlight=Color.RED)),
+        FmtListRow(values=['next', None],
+                   fmt=Fmt(italic=True, highlight=Color.NONE))
+    ]
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_list_rejects_empty_row(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_fmt_from_cell_fmt_list rejects empty rows."""
+    with pytest.raises(ValueError, match='index 1'):
+        row_fmt_from_cell_fmt_list([
+            [ValueFmt(value='left', fmt=Fmt())],
+            []
+        ])
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_dict_returns_empty_list(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_fmt_from_cell_fmt_dict preserves an empty outer list."""
+    assert not row_fmt_from_cell_fmt_dict([])
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_dict_merges_formats(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_fmt_from_cell_fmt_dict merges each row format."""
+    data: list[dict[str, ValueFmt]] = [
+        {
+            'beta': ValueFmt(value=2,
+                             fmt=Fmt(bold=True, highlight=Color.YELLOW)),
+            'alpha': ValueFmt(value='cell',
+                              fmt=Fmt(bold=True,
+                                      highlight=Color.YELLOW))
+        },
+        {
+            'only': ValueFmt(value=None,
+                             fmt=Fmt(italic=True, highlight=Color.GREEN)),
+            'other': ValueFmt(value='text',
+                              fmt=Fmt(italic=True, highlight=Color.RED))
+        }
+    ]
+    merged = row_fmt_from_cell_fmt_dict(data)
+    assert merged == [
+        FmtDictRow(
+            values={'beta': 2, 'alpha': 'cell'},
+            fmt=Fmt(bold=True, highlight=Color.YELLOW)
+        ),
+        FmtDictRow(
+            values={'only': None, 'other': 'text'},
+            fmt=Fmt(italic=True, highlight=Color.NONE)
+        )
+    ]
+    assert list(cast(dict[str, Value], merged[0].values).keys()) == [
+        'beta',
+        'alpha'
+    ]
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_dict_rejects_empty_row(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_fmt_from_cell_fmt_dict rejects empty rows."""
+    with pytest.raises(ValueError, match='index 0'):
+        row_fmt_from_cell_fmt_dict([{}])
     check_capsys(capsys)

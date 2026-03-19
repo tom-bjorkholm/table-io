@@ -7,7 +7,8 @@
 from types import TracebackType
 from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
-from tableio.capability import Capabilities, SingleCapability, Strictness
+from tableio.capability import Capabilities, SingleCapability, Strictness, \
+    CapabilityNotSupported
 from tableio.value_type import CellT, ListDataSeq, DictDataMap, \
     normalize_dict_data, ReadResult, ListData, Value, DictData
 
@@ -200,6 +201,7 @@ class TableIO:
         return self._write_heading(heading, level)
 
     def write_table_listdata(self, data: ListDataSeq[CellT],
+                             filtered_data_range: bool = False,
                              box: Optional[Box] = None) -> Position:
         """Write a table of list data to the file.
 
@@ -208,19 +210,29 @@ class TableIO:
         The data must fit into the box.
         Args:
             data: The list data to write.
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
             box: The box to write the data into.
+        Raises:
+            ValueError: If the data shape is invalid or does not fit in box.
+            CapabilityNotSupported: If a requested capability is unsupported
+                                    and strict.
         Returns:
             The position of the last cell written.
         """
         self._check_listdimensions(data, box)
         c_box = self._check_box_write(box)
-        return self._write_table_listdata(data, c_box)
+        c_filt_range = self._check_filtered_data_range(filtered_data_range)
+        return self._write_table_listdata(data=data,
+                                          filtered_data_range=c_filt_range,
+                                          box=c_box)
 
     def write_table_dictdata(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                              data: DictDataMap[CellT],
                              column_order: list[str],
                              missing_ok: bool = False,
                              extra_ok: bool = False,
+                             filtered_data_range: bool = False,
                              box: Optional[Box] = None) -> Position:
         """Write a table of dict data to the file.
 
@@ -229,25 +241,34 @@ class TableIO:
         The data must fit into the box.
         Args:
             data: The dict data to write.
-            box: The box to write the data into.
             column_order: The order of the columns.
             missing_ok: If True, None is inserted for missing column data.
                         If False, an exception is raised.
             extra_ok: If True, data for extra columns are ignored.
                       If False, an exception is raised if data for extra
                       columns are present.
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
+            box: The box to write the data into.
         Raises:
             ValueError: If missing_ok is False and data is missing for a
                         column in the column_order.
             ValueError: If extra_ok is False and data is present for a
                         key not in the column_order.
+            ValueError: If the data shape is invalid or does not fit in box.
+            CapabilityNotSupported: If a requested capability is unsupported
+                                    and strict.
         Returns:
             The position of the last cell written.
         """
         ndata = normalize_dict_data(data, column_order, missing_ok, extra_ok)
         self._check_dictdimensions(ndata, box)
         c_box = self._check_box_write(box)
-        return self._write_table_dictdata(ndata, column_order, c_box)
+        c_filt_range = self._check_filtered_data_range(filtered_data_range)
+        return self._write_table_dictdata(data=ndata,
+                                          column_order=column_order,
+                                          filtered_data_range=c_filt_range,
+                                          box=c_box)
 
     def read_table_listdata(self, box: Optional[Box] = None) \
             -> ReadResult[ListData[Value]]:
@@ -260,6 +281,9 @@ class TableIO:
         as a list of headings.
         Args:
             box: The box to read the data from.
+        Raises:
+            CapabilityNotSupported: If reading from a box is unsupported and
+                                    strict.
         Returns:
             The data read from the table and the headings before the table.
         """
@@ -277,6 +301,9 @@ class TableIO:
         returned as a list of headings.
         Args:
             box: The box to read the data from.
+        Raises:
+            CapabilityNotSupported: If reading from a box is unsupported and
+                                    strict.
         Returns:
             The data read from the table and the headings before the table.
         """
@@ -327,21 +354,6 @@ class TableIO:
         err = 'Subclass must implement _close method'
         raise NotImplementedError(err)
 
-    def _write_table_listdata(self, data: ListDataSeq[CellT],
-                              box: Optional[Box] = None) -> Position:
-        """Write a table of list data to the file.
-
-        Args:
-            data: The list data to write.
-            box: The box to write the data into.
-        Returns:
-            The position of the last cell written.
-        """
-        _ = data  # avoid unused variable warning
-        _ = box  # avoid unused variable warning
-        err = 'Subclass must implement _write_table_listdata method'
-        raise NotImplementedError(err)
-
     def _check_listdimensions(self, data: ListDataSeq[CellT],
                               box: Optional[Box] = None) -> None:
         """Check the dimensions of the list data.
@@ -382,7 +394,6 @@ class TableIO:
 
         Args:
             data: The dict data to check.
-            column_order: The order of the columns.
             box: The box to check the data into.
         Raises:
             ValueError: If the data does not fit into the box.
@@ -411,18 +422,30 @@ class TableIO:
 
         Args:
             box: The box to check.
+        Raises:
+            CapabilityNotSupported: If writing to a box is unsupported and
+                                    strict.
+        Returns:
+            The box if it is supported.
+            None if it is not supported and ignored.
         """
         cap_box = self.get_capabilities().can_write_box
-        return self._check_box_impl(box, cap_box, 'writing')
+        return self._check_box_impl(box, cap_box, 'write to a box')
 
     def _check_box_read(self, box: Optional[Box]) -> Optional[Box]:
         """Check if the box is OK to use for reading.
 
         Args:
             box: The box to check.
+        Raises:
+            CapabilityNotSupported: If reading from a box is unsupported and
+                                    strict.
+        Returns:
+            The box if it is supported.
+            None if it is not supported and ignored.
         """
         cap_box = self.get_capabilities().can_read_box
-        return self._check_box_impl(box, cap_box, 'reading')
+        return self._check_box_impl(box, cap_box, 'read from a box')
 
     @staticmethod
     def _check_box_impl(box: Optional[Box],
@@ -434,13 +457,40 @@ class TableIO:
             box: The box to check.
             cap: The capability to check.
             action: The action the box is requested for.
+        Raises:
+            CapabilityNotSupported: If the box is not supported and strict.
+        Returns:
+            The box if it is supported.
+            None if it is not supported and ignored.
         """
         if box is None or cap.supported:
             return box
         if cap.strictness == Strictness.IGNORE:
             return None
-        err = f'Box is not supported for {action}.'
-        raise ValueError(err)
+        raise CapabilityNotSupported(action)
+
+    def _check_filtered_data_range(self, filtered_data_range: bool) -> bool:
+        """Check if the filtered data range is supported.
+
+        Args:
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
+        Returns:
+            True if the filtered data range is requested and supported.
+            False if the filtered data range is not requested.
+            False if the filtered data range is not supported and ignored.
+        Raises:
+            CapabilityNotSupported: If writing a filtered data range is not
+                                    supported and strict.
+        """
+        if not filtered_data_range:
+            return False
+        cap_filtered_data_range = self.get_capabilities().filtered_data_range
+        if cap_filtered_data_range.supported:
+            return filtered_data_range
+        if cap_filtered_data_range.strictness == Strictness.IGNORE:
+            return False
+        raise CapabilityNotSupported('write a filtered data range')
 
     def _write_heading(self, heading: str, level: int) -> Position:
         """Write a heading to the file.
@@ -462,20 +512,43 @@ class TableIO:
         _ = level  # avoid unused variable warning
         raise NotImplementedError(err)
 
+    def _write_table_listdata(self, data: ListDataSeq[CellT],
+                              filtered_data_range: bool = False,
+                              box: Optional[Box] = None) -> Position:
+        """Write a table of list data to the file.
+
+        Args:
+            data: The list data to write.
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
+            box: The box to write the data into.
+        Returns:
+            The position of the last cell written.
+        """
+        _ = data  # avoid unused variable warning
+        _ = filtered_data_range  # avoid unused variable warning
+        _ = box  # avoid unused variable warning
+        err = 'Subclass must implement _write_table_listdata method'
+        raise NotImplementedError(err)
+
     def _write_table_dictdata(self, data: DictDataMap[CellT],
                               column_order: list[str],
+                              filtered_data_range: bool = False,
                               box: Optional[Box] = None) -> Position:
         """Write a table of dict data to the file.
 
         Args:
             data: The dict data to write.
             column_order: The order of the columns.
+            filtered_data_range: If True, the data written will be
+                                 marked as a data range that can be filtered.
             box: The box to write the data into.
         Returns:
             The position of the last cell written.
         """
         _ = data  # avoid unused variable warning
         _ = column_order  # avoid unused variable warning
+        _ = filtered_data_range  # avoid unused variable warning
         _ = box  # avoid unused variable warning
         err = 'Subclass must implement _write_table_dictdata method'
         raise NotImplementedError(err)

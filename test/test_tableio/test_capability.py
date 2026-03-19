@@ -7,8 +7,9 @@
 import pytest
 from pytest import CaptureFixture
 
-from tableio.capability import Capabilities, SingleCapability, Strictness, \
-    capability_match, single_capability_match
+from tableio.capability import Capabilities, CapabilityNotSupported, \
+    SingleCapability, Strictness, capability_match, \
+    single_capability_match
 
 from .check_capsys import check_capsys
 
@@ -115,6 +116,16 @@ def test_capabilities_runtime_defaults(capsys: CaptureFixture[str]) -> None:
         can_fmt_value=default_single,
         filtered_data_range=default_single,
     )
+    check_capsys(capsys)
+
+
+def test_capability_not_supported_stores_action(
+        capsys: CaptureFixture[str]) -> None:
+    """Test the public exception for unsupported capabilities."""
+    exc = CapabilityNotSupported('write a filtered data range')
+    assert exc.action == 'write a filtered data range'
+    assert str(exc) == \
+        'The class does not support write a filtered data range.'
     check_capsys(capsys)
 
 

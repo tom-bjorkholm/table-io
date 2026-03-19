@@ -141,3 +141,16 @@ def capability_match(offered: Capabilities,
                                        ignore_allowed):
             return False
     return True
+
+
+class CapabilityNotSupported(ValueError):
+    """Exception raised when a capability is not supported."""
+
+    def __init__(self, action: str):
+        """Initialize the exception.
+
+        Args:
+            action: The requested action that is not supported.
+        """
+        self.action = action
+        super().__init__(f'The class does not support {action}.')

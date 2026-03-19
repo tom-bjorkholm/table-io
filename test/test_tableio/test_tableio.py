@@ -10,7 +10,8 @@ from typing import Callable
 import pytest
 from pytest import CaptureFixture
 
-from tableio.capability import Capabilities, SingleCapability, Strictness
+from tableio.capability import Capabilities, CapabilityNotSupported, \
+    SingleCapability, Strictness
 from tableio.tableio import Box, Descriptor, Position, TableIO
 from tableio.value_type import CellT, DictDataMap, ListDataSeq, \
     ReadResult, Value, ValueFmt
@@ -26,12 +27,14 @@ def make_capability(
 
 
 def make_capabilities(
+        filtered_data_range: SingleCapability = SingleCapability(),
         can_write_box: SingleCapability = SingleCapability(),
         can_read_box: SingleCapability = SingleCapability()) -> Capabilities:
     """Build a Capabilities value for tests."""
     return Capabilities(
         can_write=make_capability(True, Strictness.STRICT),
         can_read=make_capability(True, Strictness.STRICT),
+        filtered_data_range=filtered_data_range,
         can_write_box=can_write_box,
         can_read_box=can_read_box
     )
@@ -55,10 +58,12 @@ class RecordingTableIO(TableIO):
         self.close_count: int = 0
         self.last_heading: tuple[str, int] | None = None
         self.last_list_write_data: list[list[Value | ValueFmt]] | None = None
+        self.last_list_filtered_data_range: bool | None = None
         self.last_list_write_box: Box | None = None
         self.last_dict_write_data: list[dict[str, Value | ValueFmt]] | None = \
             None
         self.last_column_order: list[str] | None = None
+        self.last_dict_filtered_data_range: bool | None = None
         self.last_dict_write_box: Box | None = None
         self.last_list_read_box: Box | None = None
         self.last_dict_read_box: Box | None = None
@@ -120,10 +125,12 @@ class RecordingTableIO(TableIO):
             raise RuntimeError('close failed')
 
     def _write_table_listdata(self, data: ListDataSeq[CellT],
+                              filtered_data_range: bool = False,
                               box: Box | None = None) -> Position:
         """Record list-data writes and return a predictable position."""
         self.events.append('write_table_listdata')
         self.last_list_write_data = [list(row) for row in data]
+        self.last_list_filtered_data_range = filtered_data_range
         self.last_list_write_box = box
         return Position(row=len(data) - 1, column=len(data[0]) - 1)
 
@@ -135,11 +142,13 @@ class RecordingTableIO(TableIO):
 
     def _write_table_dictdata(self, data: DictDataMap[CellT],
                               column_order: list[str],
+                              filtered_data_range: bool = False,
                               box: Box | None = None) -> Position:
         """Record dict-data writes and return a predictable position."""
         self.events.append('write_table_dictdata')
         self.last_dict_write_data = [dict(row) for row in data]
         self.last_column_order = list(column_order)
+        self.last_dict_filtered_data_range = filtered_data_range
         self.last_dict_write_box = box
         return Position(row=len(data), column=len(column_order) - 1)
 
@@ -259,6 +268,36 @@ class ReadStrictBoxTableIO(RecordingTableIO):
     capabilities = make_capabilities(
         can_write_box=make_capability(True, Strictness.STRICT),
         can_read_box=make_capability(False, Strictness.STRICT)
+    )
+
+
+class WriteSupportedFilteredDataRangeTableIO(RecordingTableIO):
+    """Recording implementation that supports filtered data ranges."""
+
+    capabilities = make_capabilities(
+        filtered_data_range=make_capability(True, Strictness.STRICT),
+        can_write_box=make_capability(True, Strictness.STRICT),
+        can_read_box=make_capability(True, Strictness.STRICT)
+    )
+
+
+class WriteIgnoreFilteredDataRangeTableIO(RecordingTableIO):
+    """Recording implementation that ignores filtered data ranges."""
+
+    capabilities = make_capabilities(
+        filtered_data_range=make_capability(False, Strictness.IGNORE),
+        can_write_box=make_capability(True, Strictness.STRICT),
+        can_read_box=make_capability(True, Strictness.STRICT)
+    )
+
+
+class WriteStrictFilteredDataRangeTableIO(RecordingTableIO):
+    """Recording implementation that rejects filtered data ranges."""
+
+    capabilities = make_capabilities(
+        filtered_data_range=make_capability(False, Strictness.STRICT),
+        can_write_box=make_capability(True, Strictness.STRICT),
+        can_read_box=make_capability(True, Strictness.STRICT)
     )
 
 
@@ -436,10 +475,11 @@ def test_write_table_listdata_delegates_valid_data_and_box(
     box = Box(top=3, left=4, bottom=6, right=6)
     position = table_io.write_table_listdata(
         [['alpha', 1], [None, 2.5]],
-        box
+        box=box
     )
     assert position == Position(1, 1)
     assert table_io.last_list_write_data == [['alpha', 1], [None, 2.5]]
+    assert table_io.last_list_filtered_data_range is False
     assert table_io.last_list_write_box == box
     assert table_io.events == ['write_table_listdata']
     check_capsys(capsys)
@@ -511,6 +551,7 @@ def test_write_table_dictdata_normalizes_and_delegates(
         ['alpha', 'beta'],
         missing_ok=True,
         extra_ok=True,
+        filtered_data_range=False,
         box=box
     )
     assert position == Position(2, 1)
@@ -519,6 +560,7 @@ def test_write_table_dictdata_normalizes_and_delegates(
         {'alpha': None, 'beta': 2.5}
     ]
     assert table_io.last_column_order == ['alpha', 'beta']
+    assert table_io.last_dict_filtered_data_range is False
     assert table_io.last_dict_write_box == box
     assert table_io.events == ['write_table_dictdata']
     check_capsys(capsys)
@@ -577,13 +619,43 @@ def test_check_dictdimensions_accepts_minimum_table_size(
     check_capsys(capsys)
 
 
+def test_write_table_listdata_passes_filtered_data_range_when_supported(
+        capsys: CaptureFixture[str]) -> None:
+    """Test list-data writes with filtered data range enabled."""
+    table_io = WriteSupportedFilteredDataRangeTableIO('sample')
+    data: list[list[Value]] = [['alpha', 1]]
+    position = table_io.write_table_listdata(data, True)
+    assert position == Position(0, 1)
+    assert table_io.last_list_write_data == data
+    assert table_io.last_list_filtered_data_range is True
+    assert table_io.last_list_write_box is None
+    check_capsys(capsys)
+
+
+def test_write_table_dictdata_passes_filtered_data_range_when_supported(
+        capsys: CaptureFixture[str]) -> None:
+    """Test dict-data writes with filtered data range enabled."""
+    table_io = WriteSupportedFilteredDataRangeTableIO('sample')
+    data: list[dict[str, Value]] = [{'alpha': 'left', 'beta': 1}]
+    position = table_io.write_table_dictdata(
+        data,
+        ['alpha', 'beta'],
+        filtered_data_range=True
+    )
+    assert position == Position(1, 1)
+    assert table_io.last_dict_write_data == data
+    assert table_io.last_dict_filtered_data_range is True
+    assert table_io.last_dict_write_box is None
+    check_capsys(capsys)
+
+
 def test_write_table_listdata_ignores_box_when_supported_is_ignore(
         capsys: CaptureFixture[str]) -> None:
     """Test that write-box requests can be ignored by capability policy."""
     table_io = WriteIgnoreBoxTableIO('sample')
     box = Box(1, 1, 3, 3)
     data: list[list[Value]] = [['alpha', 1]]
-    position = table_io.write_table_listdata(data, box)
+    position = table_io.write_table_listdata(data, box=box)
     assert position == Position(0, 1)
     assert table_io.last_list_write_box is None
     assert table_io.last_list_write_data == data
@@ -595,8 +667,33 @@ def test_write_table_listdata_rejects_box_when_supported_is_strict(
     """Test the write-specific box error message for strict support."""
     table_io = WriteStrictBoxTableIO('sample')
     data: list[list[Value]] = [['alpha', 1]]
-    with pytest.raises(ValueError, match='Box is not supported for writing'):
-        table_io.write_table_listdata(data, Box(1, 1, 3, 3))
+    with pytest.raises(CapabilityNotSupported) as exc_info:
+        table_io.write_table_listdata(data, box=Box(1, 1, 3, 3))
+    assert exc_info.value.action == 'write to a box'
+    assert not table_io.events
+    check_capsys(capsys)
+
+
+def test_write_table_listdata_ignores_filtered_data_range_when_allowed(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that filtered data range requests can be ignored."""
+    table_io = WriteIgnoreFilteredDataRangeTableIO('sample')
+    data: list[list[Value]] = [['alpha', 1]]
+    position = table_io.write_table_listdata(data, True)
+    assert position == Position(0, 1)
+    assert table_io.last_list_filtered_data_range is False
+    assert table_io.last_list_write_data == data
+    check_capsys(capsys)
+
+
+def test_write_table_listdata_rejects_filtered_data_range_when_strict(
+        capsys: CaptureFixture[str]) -> None:
+    """Test strict rejection when filtered data ranges are unsupported."""
+    table_io = WriteStrictFilteredDataRangeTableIO('sample')
+    data: list[list[Value]] = [['alpha', 1]]
+    with pytest.raises(CapabilityNotSupported) as exc_info:
+        table_io.write_table_listdata(data, True)
+    assert exc_info.value.action == 'write a filtered data range'
     assert not table_io.events
     check_capsys(capsys)
 
@@ -627,8 +724,9 @@ def test_read_table_dictdata_rejects_box_when_supported_is_strict(
         capsys: CaptureFixture[str]) -> None:
     """Test the read-specific box error message for strict support."""
     table_io = ReadStrictBoxTableIO('sample')
-    with pytest.raises(ValueError, match='Box is not supported for reading'):
+    with pytest.raises(CapabilityNotSupported) as exc_info:
         table_io.read_table_dictdata(Box(1, 1, 3, 3))
+    assert exc_info.value.action == 'read from a box'
     assert not table_io.events
     check_capsys(capsys)
 
