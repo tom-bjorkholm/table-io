@@ -424,7 +424,7 @@ class TableIO:
         """Open the file.
 
         Avoid using this method directly.
-        Use MultiFormat as a context manager instead, using a with statement.
+        Use derived class as a context manager instead, using a with statement.
         """
         err = 'Subclass must implement open method'
         raise NotImplementedError(err)
@@ -433,7 +433,7 @@ class TableIO:
         """Close the file.
 
         Avoid using this method directly.
-        Use MultiFormat as a context manager instead, using a with statement.
+        Use derived class as a context manager instead, using a with statement.
         """
         try:
             self._end_state()
