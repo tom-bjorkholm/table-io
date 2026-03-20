@@ -4,6 +4,8 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+from enum import IntEnum, auto
+from pathlib import Path
 from types import TracebackType
 from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
@@ -72,29 +74,56 @@ class Position(NamedTuple):
     column: int
 
 
+class FileAccess(IntEnum):
+    """What access is requested to a file.
+
+    When the file name is passed to TableIO, this enum describes what access
+    is requested to the file that will be opened.
+    The possible values have the following meaning:
+    - READ: The file must exist and is opened for reading.
+    - CREATE: The file is created and is opened for writing and
+              read after write. If the file already exists, the
+              file_exists_callback is called to decide if the file can be
+              overwritten.
+    - UPDATE: File must exist and is opened for read and write.
+    """
+
+    READ = auto()
+    """The file must exist and is opened for reading."""
+    CREATE = auto()
+    """The file is created and is opened for writing (read after write)."""
+    UPDATE = auto()
+    """File must exist and is opened for read and write."""
+
+
 class TableIO:
     """File format reader/writer base class for table data."""
 
     def __init__(self, file_name: PathLike,
+                 file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None):
         """Initialize the TableIO reader/writer class.
 
         Args:
-            file_name: The name of the file to write to.
+            file_name: The name of the file to open.
+            file_access: What access is requested to the file.
             file_exists_callback: A callback function to call if the file
-                                  already exists. Return to allow the file to
-                                  be overwritten. Raise an exception to
-                                  prevent the file from being overwritten.
+                                  already exists when file_access is CREATE.
+                                  Return to allow the file to be overwritten.
+                                  Raise an exception to prevent the file from
+                                  being overwritten.
                                   (May for instance save existing file as
                                   backup.)
                                   (Default is to raise an exception.)
         """
+        self.file_access: FileAccess = file_access
         self.file_exists_callback: Optional[Callable[[str], None]] = \
             file_exists_callback
         self.file_name: str = \
             self.file_name_with_extension(file_name,
                                           self.file_name_extension())
+        self._file_exists_check()
         self.heading_written: bool = False
 
     @classmethod
@@ -712,3 +741,28 @@ class TableIO:
         err = 'Subclass must implement _read_table_dictdata method'
         _ = box  # avoid unused variable warning
         raise NotImplementedError(err)
+
+    def _file_exists_check(self) -> None:
+        """Check if the file exists.
+
+        If the file exists and the file access is CREATE, the
+        file_exists_callback is called to decide if the file can be
+        overwritten.
+        If file access is READ or UPDATE, the file must exist.
+        """
+        file_exists = Path(self.file_name).exists()
+        if self.file_access == FileAccess.CREATE:
+            if not file_exists:
+                return
+            if self.file_exists_callback is not None:
+                self.file_exists_callback(self.file_name)
+                return
+            msg = 'Cowardly refusing to overwrite existing file '
+            msg += f'{self.file_name}.\n\n'
+            msg += '(Use a different file name or provide a '
+            msg += 'file_exists_callback \n'
+            msg += ' function to allow the file to be overwritten.)\n'
+            raise FileExistsError(msg)
+        if not file_exists:
+            msg = f'File does not exist: {self.file_name}.'
+            raise FileNotFoundError(msg)

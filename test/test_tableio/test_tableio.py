@@ -5,6 +5,7 @@
 # MIT License
 
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Callable
 
 import pytest
@@ -12,7 +13,7 @@ from pytest import CaptureFixture
 
 from tableio.capability import Capabilities, CapabilityNotSupported, \
     SingleCapability, Strictness
-from tableio.tableio import Box, Descriptor, Position, TableIO
+from tableio.tableio import Box, Descriptor, FileAccess, Position, TableIO
 from tableio.value_type import CellT, DictDataMap, Fmt, FmtDictData, \
     FmtDictRow, FmtListData, FmtListRow, ListDataSeq, ReadResult, Value, \
     ValueFmt
@@ -51,10 +52,11 @@ class RecordingTableIO(TableIO):
     )
 
     def __init__(self, file_name: str | Path,
+                 file_access: FileAccess = FileAccess.CREATE,
                  file_exists_callback:
                  Callable[[str], None] | None = None):
         """Initialize the recording test double."""
-        super().__init__(file_name, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback)
         self.events: list[str] = []
         self.close_count: int = 0
         self.last_heading: tuple[str, int] | None = None
@@ -95,7 +97,7 @@ class RecordingTableIO(TableIO):
             format_name='recording',
             implementation='test',
             capabilities=cls.capabilities,
-            mandatory_args=[],
+            mandatory_args=['file_access'],
             optional_args=['file_exists_callback']
         )
 
@@ -210,6 +212,13 @@ class RecordingTableIO(TableIO):
 class MinimalTableIO(TableIO):
     """Minimal subclass used to exercise inherited abstract methods."""
 
+    def __init__(self, file_name: str | Path,
+                 file_access: FileAccess = FileAccess.CREATE,
+                 file_exists_callback:
+                 Callable[[str], None] | None = None):
+        """Initialize the minimal test double."""
+        super().__init__(file_name, file_access, file_exists_callback)
+
     @classmethod
     def get_desciption(cls) -> Descriptor:
         """Return a descriptor that allows instantiation in tests."""
@@ -217,7 +226,7 @@ class MinimalTableIO(TableIO):
             format_name='minimal',
             implementation='test',
             capabilities=Capabilities(),
-            mandatory_args=[],
+            mandatory_args=['file_access'],
             optional_args=[]
         )
 
@@ -370,10 +379,114 @@ def test_tableio_init_adds_extension_and_stores_callback(
         """Accept the existing file name without side effects."""
         _ = file_name
 
-    table_io = RecordingTableIO(Path('sample'), file_exists_callback)
-    assert table_io.file_name == 'sample.tio'
-    assert table_io.file_exists_callback is file_exists_callback
-    assert table_io.heading_written is False
+    with TemporaryDirectory() as temp_dir:
+        table_io = RecordingTableIO(
+            Path(temp_dir) / 'sample',
+            FileAccess.CREATE,
+            file_exists_callback
+        )
+        assert table_io.file_name == str(Path(temp_dir) / 'sample.tio')
+        assert table_io.file_access is FileAccess.CREATE
+        assert table_io.file_exists_callback is file_exists_callback
+        assert table_io.heading_written is False
+    check_capsys(capsys)
+
+
+def test_tableio_init_create_rejects_existing_file_without_callback(
+        capsys: CaptureFixture[str]) -> None:
+    """Test CREATE mode when the target file already exists."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'sample'
+        Path(f'{file_name}.tio').touch()
+        with pytest.raises(FileExistsError, match='refusing to overwrite'):
+            RecordingTableIO(file_name, FileAccess.CREATE)
+    check_capsys(capsys)
+
+
+def test_tableio_init_create_calls_callback_for_existing_file(
+        capsys: CaptureFixture[str]) -> None:
+    """Test CREATE mode with a callback that allows overwriting."""
+    calls: list[str] = []
+
+    def file_exists_callback(file_name: str) -> None:
+        """Record the file name passed to the overwrite callback."""
+        calls.append(file_name)
+
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'sample'
+        expected_name = str(Path(temp_dir) / 'sample.tio')
+        Path(expected_name).touch()
+        table_io = RecordingTableIO(
+            file_name,
+            FileAccess.CREATE,
+            file_exists_callback
+        )
+        assert table_io.file_name == expected_name
+    assert calls == [expected_name]
+    check_capsys(capsys)
+
+
+def test_tableio_init_create_propagates_callback_exception(
+        capsys: CaptureFixture[str]) -> None:
+    """Test CREATE mode when the overwrite callback rejects the file."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'sample'
+        Path(f'{file_name}.tio').touch()
+
+        def file_exists_callback(callback_file_name: str) -> None:
+            """Reject the overwrite request with a custom error."""
+            raise RuntimeError(f'blocked: {callback_file_name}')
+
+        with pytest.raises(RuntimeError, match='blocked: .*sample.tio'):
+            RecordingTableIO(
+                file_name,
+                FileAccess.CREATE,
+                file_exists_callback
+            )
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    'file_access',
+    [pytest.param(FileAccess.READ, id='read'),
+     pytest.param(FileAccess.UPDATE, id='update')]
+)
+def test_tableio_init_read_and_update_require_existing_file(
+        file_access: FileAccess, capsys: CaptureFixture[str]) -> None:
+    """Test READ and UPDATE modes when the target file is missing."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'sample'
+        with pytest.raises(FileNotFoundError, match='File does not exist'):
+            RecordingTableIO(file_name, file_access)
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    'file_access',
+    [pytest.param(FileAccess.READ, id='read'),
+     pytest.param(FileAccess.UPDATE, id='update')]
+)
+def test_tableio_init_read_and_update_ignore_callback(
+        file_access: FileAccess, capsys: CaptureFixture[str]) -> None:
+    """Test READ and UPDATE modes with an existing file and a callback."""
+    calls: list[str] = []
+
+    def file_exists_callback(file_name: str) -> None:
+        """Record if READ or UPDATE ever uses the overwrite callback."""
+        calls.append(file_name)
+
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'sample'
+        expected_name = str(Path(temp_dir) / 'sample.tio')
+        Path(expected_name).touch()
+        table_io = RecordingTableIO(
+            file_name,
+            file_access,
+            file_exists_callback
+        )
+        assert table_io.file_name == expected_name
+        assert table_io.file_access is file_access
+    assert not calls
     check_capsys(capsys)
 
 
