@@ -46,6 +46,7 @@ class TableIOTextBased(TableIO):
         file = open(file=self.file_name,  # pylint: disable=consider-using-with
                     mode=_OPEN_MODES[self.file_access],
                     encoding=self.character_encoding)
+        assert isinstance(file, io.TextIOWrapper)
         self.file = file
 
     def _close(self) -> None:
@@ -114,21 +115,23 @@ class TableIOTextBased(TableIO):
         self.file.seek(cur_pos, io.SEEK_SET)
         return last_chars
 
-    def _ensure_empty_line_before(self) -> None:
+    def _ensure_empty_line_before(self) -> int:
         """Ensure an empty line before the write position.
 
         If we are at the beginning of the file do nothing.
         If we have an empty line before the current position do nothing.
         Otherwise insert an empty line before the current position.
+        Returns the number of new lines inserted.
         """
         assert self.file is not None
         last_chars = self._get_last_chars_written(2)
         if last_chars in ('\n\n', '\r\n\r\n', '\n', '\r\n', ''):
             # no previous line or previous line is an empty line
-            return
+            return 0
         if last_chars[-1] == '\n':
             # previous line ends with a newline
             self.file.write('\n')
-            return
+            return 1
         # previous line does not end with a newline
         self.file.write('\n\n')
+        return 2

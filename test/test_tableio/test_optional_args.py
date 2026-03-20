@@ -6,7 +6,7 @@
 
 from pytest import CaptureFixture
 
-from tableio.optional_args import CsvType, OptionalArgsDict, \
+from tableio.optional_args import CsvDialect, OptionalArgsDict, \
     mformat_optargs_from_optionalargs
 
 from .check_capsys import check_capsys
@@ -32,7 +32,7 @@ def test_mformat_optargs_from_optionalargs_filters_tableio_args_and_none(
         'title': 'Report',
         'line_length': 72,
         'css_file': None,
-        'csv_type': CsvType.EXCEL,
+        'csv_type': CsvDialect.EXCEL,
         'csv_delimiter': ';',
         'csv_quotechar': None
     }
@@ -52,7 +52,7 @@ def test_mformat_optargs_from_optionalargs_returns_empty_dict(
     """Test conversion when no mformat values remain after filtering."""
     optional_args: OptionalArgsDict = {
         'title': None,
-        'csv_type': CsvType.UNIX,
+        'csv_type': CsvDialect.UNIX,
         'csv_delimiter': ';',
         'csv_escapechar': None
     }

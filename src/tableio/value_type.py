@@ -81,6 +81,9 @@ class ReadResult(NamedTuple, Generic[DataT]):
     headings: list[str]
     """The headings read from the file before the table with the data."""
 
+    last_read_row: int
+    """The index of the last row read from the file. 0-based."""
+
 
 # ----------------------------------------------------------------------------
 # helper functions to convert between different types of data

@@ -9,7 +9,7 @@ from enum import IntEnum, auto
 from mformat.factory import OptArgsDict
 
 
-class CsvType(IntEnum):
+class CsvDialect(IntEnum):
     """The type of CSV file to write."""
 
     EXCEL = auto()
@@ -30,7 +30,7 @@ class OptionalArgsDict(OptArgsDict, total=False):
     package.
     """
 
-    csv_type: Optional[CsvType]
+    csv_type: Optional[CsvDialect]
     """The type of CSV file to write. None for default type."""
 
     csv_delimiter: Optional[str]

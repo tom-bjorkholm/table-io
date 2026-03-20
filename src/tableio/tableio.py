@@ -228,6 +228,9 @@ class TableIO:
         if not 1 <= level <= 3:
             err = 'Heading level must be in range 1 to 3.'
             raise ValueError(err)
+        if '\n' in heading:
+            err = 'Heading cannot contain a newline.'
+            raise ValueError(err)
         self.heading_written = True
         return self._write_heading(heading, level)
 

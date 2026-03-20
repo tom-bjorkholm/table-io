@@ -82,12 +82,14 @@ class RecordingTableIO(TableIO):
         self.fail_close: bool = False
         self.list_read_result: ReadResult[list[list[Value]]] = ReadResult(
             data=[['list', 1]],
-            headings=['before-list']
+            headings=['before-list'],
+            last_read_row=5
         )
         self.dict_read_result: ReadResult[list[dict[str, Value]]] = \
             ReadResult(
                 data=[{'alpha': 'dict', 'beta': 2}],
-                headings=['before-dict']
+                headings=['before-dict'],
+                last_read_row=5
             )
 
     @classmethod
