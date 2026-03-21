@@ -37,7 +37,11 @@ class OptionalArgsDict(OptArgsDict, total=False):
     """The delimiter to use for CSV files. None for default delimiter."""
 
     csv_quoting: Optional[str]
-    """The quoting style to use for CSV files. None for default."""
+    """The quoting style to use for CSV files.
+
+    Allowed values (case-insensitive): 'all', 'minimal',
+    'nonnumeric', 'none', 'strings', 'notnull'.
+    None for default quoting."""
 
     csv_quotechar: Optional[str]
     """The quote character to use for CSV files. None for default."""
