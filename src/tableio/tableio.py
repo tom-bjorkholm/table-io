@@ -158,7 +158,9 @@ class TableIO:
     def file_name_with_extension(file_name: PathLike,
                                  extension: str) -> str:
         """Return the file name with the extension."""
-        return f"{str(file_name)}.{extension}"
+        if not extension.startswith('.'):
+            extension = f'.{extension}'
+        return f'{str(file_name)}{extension}'
 
     @classmethod
     def file_name_extension(cls) -> str:
