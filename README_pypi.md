@@ -34,7 +34,7 @@ from a number of different common file formats.
 
 ## Test summary
 
-- Test result: 397 passed in 6s
+- Test result: 479 passed in 7s
 - No Flake8 warnings.
 - No mypy errors found.
 - Built version(s): 0.0.1

@@ -388,16 +388,16 @@ def format_each_cell_dict(data: DictDataMap[Value],
             for row in data]
 
 
-def row_fmt_from_cell_fmt_list(data: ListData[ValueFmt]) -> FmtListData:
-    """Create a list of formatted rows from a list of cell formatted rows.
+def row_fmt_from_cell_fmt_list(data: ListDataSeq[CellT]) -> FmtListData:
+    """Create a list of formatted rows from list data.
 
-    For each row in the input data, create a new formatted row with the
-    format of the row. The format is the merge of the formats of the cells
-    in the row. The merge is done so that a formatting is applied to the row
-    if and only if that formatting is applied to all cells in the row.
+    Each row gets a format that is the merge of the formats of all
+    its cells: a formatting attribute is applied to the row only
+    if that attribute is set in every cell. Plain value cells are
+    treated as having the default format Fmt().
 
     Args:
-        data: The list of cell formatted rows to create formatted rows from.
+        data: List data with plain values or ValueFmt cells.
     Returns:
         A list of formatted rows.
     Raises:
@@ -407,22 +407,30 @@ def row_fmt_from_cell_fmt_list(data: ListData[ValueFmt]) -> FmtListData:
     for row_index, row in enumerate(data):
         if not row:
             _raise_empty_row_error(row_index)
-        vals = [cell.value for cell in row]
-        fmt = fmt_set_in_all([cell.fmt for cell in row])
-        ret.append(FmtListRow(values=vals, fmt=fmt))
+        vals: list[Value] = []
+        fmts: list[Fmt] = []
+        for cell in row:
+            if isinstance(cell, ValueFmt):
+                vals.append(cell.value)
+                fmts.append(cell.fmt)
+            else:
+                vals.append(cell)
+                fmts.append(Fmt())
+        ret.append(FmtListRow(
+            values=vals, fmt=fmt_set_in_all(fmts)))
     return ret
 
 
-def row_fmt_from_cell_fmt_dict(data: DictData[ValueFmt]) -> FmtDictData:
-    """Create formatted dict rows from cell-formatted dict rows.
+def row_fmt_from_cell_fmt_dict(data: DictDataMap[CellT]) -> FmtDictData:
+    """Create formatted dict rows from dict data.
 
-    For each row in the input data, create a new formatted row with the
-    format of the row. The format is the merge of the formats of the cells
-    in the row. The merge is done so that a formatting is applied to the row
-    if and only if that formatting is applied to all cells in the row.
+    Each row gets a format that is the merge of the formats of all
+    its cells: a formatting attribute is applied to the row only
+    if that attribute is set in every cell. Plain value cells are
+    treated as having the default format Fmt().
 
     Args:
-        data: The dict rows with cell formatting to convert.
+        data: Dict data with plain values or ValueFmt cells.
     Returns:
         A list of formatted dict rows.
     Raises:
@@ -432,9 +440,17 @@ def row_fmt_from_cell_fmt_dict(data: DictData[ValueFmt]) -> FmtDictData:
     for row_index, row in enumerate(data):
         if not row:
             _raise_empty_row_error(row_index)
-        vals = {key: cell.value for key, cell in row.items()}
-        fmt = fmt_set_in_all([cell.fmt for cell in row.values()])
-        ret.append(FmtDictRow(values=vals, fmt=fmt))
+        vals: dict[str, Value] = {}
+        fmts: list[Fmt] = []
+        for key, cell in row.items():
+            if isinstance(cell, ValueFmt):
+                vals[key] = cell.value
+                fmts.append(cell.fmt)
+            else:
+                vals[key] = cell
+                fmts.append(Fmt())
+        ret.append(FmtDictRow(
+            values=vals, fmt=fmt_set_in_all(fmts)))
     return ret
 
 

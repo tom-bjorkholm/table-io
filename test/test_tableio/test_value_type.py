@@ -668,6 +668,28 @@ def test_row_fmt_from_cell_fmt_list_rejects_empty_row(
     check_capsys(capsys)
 
 
+def test_row_fmt_from_cell_fmt_list_plain_values(
+        capsys: CaptureFixture[str]) -> None:
+    """Test row_fmt_from_cell_fmt_list with plain values."""
+    data: list[list[Value]] = [
+        ['Alice', 30],
+        [None, 'text']
+    ]
+    assert row_fmt_from_cell_fmt_list(data) == [
+        FmtListRow(values=['Alice', 30], fmt=Fmt()),
+        FmtListRow(values=[None, 'text'], fmt=Fmt())
+    ]
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_list_plain_rejects_empty_row(
+        capsys: CaptureFixture[str]) -> None:
+    """Test that row_fmt_from_cell_fmt_list rejects empty plain rows."""
+    with pytest.raises(ValueError, match='index 0'):
+        row_fmt_from_cell_fmt_list([[]])
+    check_capsys(capsys)
+
+
 def test_row_fmt_from_cell_fmt_dict_returns_empty_list(
         capsys: CaptureFixture[str]) -> None:
     """Test that row_fmt_from_cell_fmt_dict preserves an empty outer list."""
@@ -714,6 +736,37 @@ def test_row_fmt_from_cell_fmt_dict_merges_formats(
 def test_row_fmt_from_cell_fmt_dict_rejects_empty_row(
         capsys: CaptureFixture[str]) -> None:
     """Test that row_fmt_from_cell_fmt_dict rejects empty rows."""
+    with pytest.raises(ValueError, match='index 0'):
+        row_fmt_from_cell_fmt_dict([{}])
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_dict_plain_values(
+        capsys: CaptureFixture[str]) -> None:
+    """Test row_fmt_from_cell_fmt_dict with plain values."""
+    data: list[dict[str, Value]] = [
+        {'name': 'Alice', 'age': 30},
+        {'name': None, 'age': 0}
+    ]
+    merged = row_fmt_from_cell_fmt_dict(data)
+    assert merged == [
+        FmtDictRow(
+            values={'name': 'Alice', 'age': 30},
+            fmt=Fmt()),
+        FmtDictRow(
+            values={'name': None, 'age': 0},
+            fmt=Fmt())
+    ]
+    assert list(
+        cast(dict[str, Value],
+             merged[0].values).keys()) == [
+        'name', 'age']
+    check_capsys(capsys)
+
+
+def test_row_fmt_from_cell_fmt_dict_plain_rejects_empty_row(
+        capsys: CaptureFixture[str]) -> None:
+    """Test row_fmt_from_cell_fmt_dict rejects empty plain rows."""
     with pytest.raises(ValueError, match='index 0'):
         row_fmt_from_cell_fmt_dict([{}])
     check_capsys(capsys)
