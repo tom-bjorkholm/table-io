@@ -1,7 +1,7 @@
 #! /usr/local/bin/python3
-"""Factory class for creating MultiFormat instances."""
+"""Factory class for creating TableIO instances."""
 
-# Copyright (c) 2025 - 2026 Tom Björkholm
+# Copyright (c) 2026 Tom Björkholm
 # MIT License
 #
 
@@ -93,16 +93,16 @@ class BestMatch(NamedTuple):
     The tuples are sorted by priority, from highest to lowest.
     The first tuple strictly matches the requested capabilities
     (that is the class can achieve all of the requested capabilities).
-    The second tuple are implementations that can tollerate all of
-    the requested capabilities, but may ignore some of the
-    requested capabilities.
+    The second tuple contains implementations that can tolerate
+    all of the requested capabilities, but may ignore some of
+    the requested capabilities.
     """
 
     strict_matches: tuple[ImplPrio, ...]
     """The implementations that strictly match the requested capabilities."""
 
     nonstrict_matches: tuple[ImplPrio, ...]
-    """The implementations that cannot tollerate the requested capabilities."""
+    """Implementations that tolerate but may ignore some capabilities."""
 
     @staticmethod
     def from_lists(strict_matches: list[ImplPrio],
@@ -180,7 +180,7 @@ class FactoryFormatInfo:
 
     def best_match_names(self, capabilities: Optional[Capabilities] = None,
                          empty_is_ok: bool = False) -> BestMatch:
-        """Get the best matching implementaton names for the capabilities.
+        """Get the best matching implementation names for the capabilities.
 
         Args:
             capabilities: The capabilities to match. If not specified,
@@ -195,18 +195,17 @@ class FactoryFormatInfo:
                                              no implementations match the
                                              capabilities.
         Returns:
-            A list of implementation names that match the capabilities,
-            or an empty list if no matches and empty_is_ok is True.
-            The first part of the returned list strictly matches the
-            capabilities (that is the class can achieve all of the requested
-            capabilities). The second part of the returned list are
-            implementation that can tollerate all of the requested
-            capabilities, but may ignore some of the requested
-            capabilities. Within each part the implementation are sorted
-            by priority, from highest to lowest. (A higher priority
-            means that the resulting output more strictly follows the
-            file format specification, and is compatiblw with more
-            software.) The first implementation in the list is the best match.
+            A BestMatch object containing the matching implementations.
+            The strict_matches are implementations that support all
+            of the requested capabilities. The nonstrict_matches are
+            implementations that tolerate all of the requested
+            capabilities but may ignore some. Within each group the
+            implementations are sorted by priority, from highest to
+            lowest. (A higher priority means that the resulting output
+            more strictly follows the file format specification and
+            is compatible with more software.)
+            If no implementations match and empty_is_ok is True, an
+            empty BestMatch is returned.
         """
         if capabilities is None:
             ret1: list[ImplPrio] = [
@@ -232,7 +231,7 @@ class FactoryFormatInfo:
                      priority=impl_class.get_description().priority)
             for impl_name, impl_class in self._registry.items()
             if capability_match(impl_class.get_capabilities(), capabilities,
-                                ignore_allowed=False)
+                                ignore_allowed=True)
         ]
         nonstrict_matches: list[ImplPrio] = [
             impl for impl in tolerant_matches if impl not in strict_matches
@@ -252,7 +251,7 @@ class TableIOFactory:
     create instances of the registered TableIO subclasses.
     There may be several registered classes for the same format name,
     as long as they have different implementation names.
-    The format names and implemenation names are stored case preserving,
+    The format names and implementation names are stored case preserving,
     but the lookup for format names and implementation names are case
     insensitive.
     Each implementation of a format name may have the same or different
@@ -331,7 +330,7 @@ class TableIOFactory:
                             the matching implementation with the highest
                             priority is used.
             capabilities: The capabilities to match. If not specified,
-                          the implementation matchng the format name (and
+                          the implementation matching the format name (and
                           if specified the implementation name) is used.
                           If several implementations match, the
                           implementation with the highest priority
@@ -409,7 +408,7 @@ class TableIOFactory:
         the given format name and implementation. This is useful when the args
         dictionary includes arguments for several formats, and not all of
         them are valid for the given format name and implementation.
-        (The risk of using this function is that a misspelled arguement will
+        (The risk of using this function is that a misspelled argument will
         be silently ignored, and the programming error will not be detected.)
         Args:
             args: The arguments to filter.
@@ -457,7 +456,7 @@ class TableIOFactory:
         Always includes the correct case for the format names in the returned
         list. If lower or upper is True, also includes those cases of the
         format names in the returned list. (Including lower case and upper
-        case variants is probably not a good idea when printint the list
+        case variants is probably not a good idea when printing the list
         for a human user, but it is useful when checking if a format name
         is in the allowed list of format names.)
         Args:
@@ -661,7 +660,7 @@ def create_tableio(format_name: str,  # pylint: disable=too-many-arguments, too-
                         the matching implementation with the highest
                         priority is used.
         capabilities: The capabilities to match. If not specified,
-                      the implementation matchng the format name (and
+                      the implementation matching the format name (and
                       if specified the implementation name) is used.
                       If several implementations match, the implementation
                       with the highest priority is used.
@@ -687,11 +686,11 @@ def filter_args_tableio(args: OptionalArgs, format_name: str,
 
     This is a shortcut for TableIOFactory.filter_args().
     Filter the arguments to only include the arguments that are valid for
-    the given format name. This is useful when the args dictionary includes
-    arguments for several formats, and not all of them are valid for the given
-    format name. (The risk of using this function is that a misspelled
-    arguement will be silently ignored, and the programming error will not be
-    detected.)
+    the given format name and implementation. This is useful when the args
+    dictionary includes arguments for several formats, and not all of them
+    are valid for the given format name and implementation. (The risk of
+    using this function is that a misspelled argument will be silently
+    ignored, and the programming error will not be detected.)
     Args:
         args: The arguments to filter.
         format_name: The name identifier of the format class to filter
@@ -717,7 +716,7 @@ def list_registered_tableio(lower: bool = False,
     Always includes the correct case for the format names in the returned
     list. If lower or upper is True, also includes those cases of the
     format names in the returned list. (Including lower case and upper
-    case variants is probably not a good idea when printint the list
+    case variants is probably not a good idea when printing the list
     for a human user, but it is useful when checking if a format name
     is in the allowed list of format names.)
     Args:
@@ -759,14 +758,14 @@ def list_implementations_tableio(format_name: Optional[str] = None,
                      If False, a TableIOFactoryNoCapabilityMatch
                      error is raised if no implementations match the
                      capabilities.
-        Returns:
-            A list of registered implementation name strings optionally
-            filtered to only include implementations that offer the
-            requested capabilities.
-        Raises:
-            TableIOFactoryNoCapabilityMatch: If empty_is_ok is False and
-                                             no implementations match the
-                                             capabilities.
+    Returns:
+        A list of registered implementation name strings optionally
+        filtered to only include implementations that offer the
+        requested capabilities.
+    Raises:
+        TableIOFactoryNoCapabilityMatch: If empty_is_ok is False and
+                                         no implementations match the
+                                         capabilities.
     """
     return TableIOFactory.get_registered_implementations(
         format_name=format_name, capabilities=capabilities,
@@ -792,7 +791,7 @@ def usage_tableio(format_name: str, implementation: str) -> Descriptor:
 
 
 def register_tableio(format_class: type[TableIO]) -> None:
-    """Register a MultiFormat subclass with the factory.
+    """Register a TableIO subclass with the factory.
 
     This is a shortcut for TableIOFactory.register().
     Args:

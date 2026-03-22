@@ -1,7 +1,12 @@
 #! /usr/local/bin/python3
-"""Register the formats defined in the package with the factory."""
+"""Formats defined in the package for registration with the factory.
 
-# Copyright (c) 2025 - 2026 Tom Björkholm
+The function in this module returns a list of TableIO subclasses
+defined in this package. The returned classes are registered with
+the factory during the factory's initialization.
+"""
+
+# Copyright (c) 2026 Tom Björkholm
 # MIT License
 #
 
