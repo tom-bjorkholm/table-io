@@ -20,7 +20,7 @@ from mformat_ext.mformat_pdf import MultiFormatPdf
 from mformat_ext.mformat_rtf import MultiFormatRtf
 from tableio.tableio_mformatbased import TableIOMformatBased, \
     _allow_overwrite
-from tableio.tableio import FileAccess
+from tableio.tableio import FileAccess, Descriptor
 from tableio.capability import SingleCapability
 
 
@@ -29,7 +29,7 @@ class TableIOMformatMd(TableIOMformatBased):
 
     def __init__(self, file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]] = None,
                  character_encoding: str = 'utf-8'):
         """Initialize the TableIOMformatMd writer class.
 
@@ -63,6 +63,15 @@ class TableIOMformatMd(TableIOMformatBased):
         """Get the file name extension."""
         return '.md'
 
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatMd writer class."""
+        return Descriptor(format_name='md', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'character_encoding'])
+
 
 class TableIOMformatHtml(TableIOMformatBased):
     """TableIO writer class for HTML, based on MultiFormat."""
@@ -70,7 +79,8 @@ class TableIOMformatHtml(TableIOMformatBased):
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                  file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]]
+                 = None,
                  character_encoding: str = 'utf-8',
                  title: str = 'HTML file',
                  css_file: Optional[str] = None,
@@ -113,6 +123,16 @@ class TableIOMformatHtml(TableIOMformatBased):
         """Get the file name extension."""
         return '.html'
 
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatHtml writer class."""
+        return Descriptor(format_name='HTML', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'character_encoding',
+                                         'title', 'css_file', 'lang'])
+
 
 class TableIOMformatTxt(TableIOMformatBased):
     """TableIO writer class for plain text, based on MultiFormat."""
@@ -120,7 +140,8 @@ class TableIOMformatTxt(TableIOMformatBased):
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                  file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]]
+                 = None,
                  character_encoding: str = 'utf-8',
                  line_length: int = 79,
                  table_max_line_length: Optional[int] = None,
@@ -168,6 +189,18 @@ class TableIOMformatTxt(TableIOMformatBased):
         """Get the file name extension."""
         return '.txt'
 
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatTxt writer class."""
+        return Descriptor(format_name='txt', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'character_encoding',
+                                         'line_length',
+                                         'table_max_line_length',
+                                         'table_alignment'])
+
 
 class TableIOMformatLatex(TableIOMformatBased):
     """TableIO writer class for LaTeX, based on MultiFormat."""
@@ -175,7 +208,8 @@ class TableIOMformatLatex(TableIOMformatBased):
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                  file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]]
+                 = None,
                  character_encoding: str = 'utf-8',
                  document_class: Optional[DocumentClassInput] = None,
                  paper_size: Optional[PaperSizeInput] = None,
@@ -230,6 +264,21 @@ class TableIOMformatLatex(TableIOMformatBased):
         """Get the file name extension."""
         return '.tex'
 
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatLatex writer class."""
+        return Descriptor(format_name='LaTeX', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'character_encoding',
+                                         'document_class',
+                                         'paper_size',
+                                         'title',
+                                         'latex_preamble',
+                                         'latex_heading_levels',
+                                         'latex_replacements'])
+
 
 class TableIOMformatRst(TableIOMformatBased):
     """TableIO writer class for reStructuredText, based on MultiFormat."""
@@ -237,7 +286,8 @@ class TableIOMformatRst(TableIOMformatBased):
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                  file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]]
+                 = None,
                  character_encoding: str = 'utf-8',
                  line_length: int = 79,
                  table_max_line_length: Optional[int] = None,
@@ -285,13 +335,26 @@ class TableIOMformatRst(TableIOMformatBased):
         """Get the file name extension."""
         return '.rst'
 
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatRst writer class."""
+        return Descriptor(format_name='rst', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'character_encoding',
+                                         'line_length',
+                                         'table_max_line_length',
+                                         'table_alignment'])
+
 
 class TableIOMformatDocx(TableIOMformatBased):
     """TableIO writer class for DOCX, based on MultiFormat."""
 
     def __init__(self, file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]]
+                 = None,
                  paper_size: PaperSize = PaperSize.A4):
         """Initialize the TableIOMformatDocx writer class.
 
@@ -327,6 +390,15 @@ class TableIOMformatDocx(TableIOMformatBased):
         """Get the file name extension."""
         return '.docx'
 
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatDocx writer class."""
+        return Descriptor(format_name='docx', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'paper_size'])
+
 
 class TableIOMformatOdt(TableIOMformatBased):
     """TableIO writer class for ODT, based on MultiFormat."""
@@ -334,7 +406,8 @@ class TableIOMformatOdt(TableIOMformatBased):
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                  file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]]
+                 = None,
                  lang: str = 'en-UK',
                  paper_size: PaperSize = PaperSize.A4):
         """Initialize the TableIOMformatOdt writer class.
@@ -372,6 +445,15 @@ class TableIOMformatOdt(TableIOMformatBased):
         """Get the file name extension."""
         return '.odt'
 
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatOdt writer class."""
+        return Descriptor(format_name='odt', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'lang', 'paper_size'])
+
 
 class TableIOMformatPdf(TableIOMformatBased):
     """TableIO writer class for PDF, based on MultiFormat."""
@@ -379,7 +461,8 @@ class TableIOMformatPdf(TableIOMformatBased):
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                  file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]]
+                 = None,
                  paper_size: PaperSize = PaperSize.A4,
                  title: Optional[str] = None):
         """Initialize the TableIOMformatPdf writer class.
@@ -417,13 +500,23 @@ class TableIOMformatPdf(TableIOMformatBased):
         """Get the file name extension."""
         return '.pdf'
 
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatPdf writer class."""
+        return Descriptor(format_name='pdf', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'paper_size', 'title'])
+
 
 class TableIOMformatRtf(TableIOMformatBased):
     """TableIO writer class for RTF, based on MultiFormat."""
 
     def __init__(self, file_name: PathLike,
                  file_access: FileAccess,
-                 file_exists_callback: Optional[Callable[[str], None]],
+                 file_exists_callback: Optional[Callable[[str], None]]
+                 = None,
                  paper_size: PaperSize = PaperSize.A4):
         """Initialize the TableIOMformatRtf writer class.
 
@@ -458,3 +551,12 @@ class TableIOMformatRtf(TableIOMformatBased):
     def file_name_extension(cls) -> str:
         """Get the file name extension."""
         return '.rtf'
+
+    @classmethod
+    def get_description(cls) -> Descriptor:
+        """Get the description of the TableIOMformatRtf writer class."""
+        return Descriptor(format_name='rtf', implementation='mformat',
+                          capabilities=cls.get_capabilities(),
+                          mandatory_args=[],
+                          optional_args=['file_exists_callback',
+                                         'paper_size'])

@@ -32,14 +32,21 @@ class Descriptor(NamedTuple):
 
     format_name: str
     """The name of the file format."""
+
     implementation: str
     """The implementation of the reader/writer class."""
+
     capabilities: Capabilities
     """The capabilities of the reader/writer class."""
+
     mandatory_args: list[str]
-    """The mandatory arguments of the reader/writer class."""
+    """The mandatory arguments of the reader/writer class.
+
+       file_name and file_access are not included in this list."""
+
     optional_args: list[str]
     """The optional arguments of the reader/writer class."""
+
     priority: int = 10
     """The priority of this implementation. 0 = lowest, 100 = highest."""
 
@@ -127,7 +134,7 @@ class TableIO:
         self.heading_written: bool = False
 
     @classmethod
-    def get_desciption(cls) -> Descriptor:
+    def get_description(cls) -> Descriptor:
         """Get the description of the reader/writer class.
 
         Must be overridden by subclasses.
@@ -136,7 +143,7 @@ class TableIO:
         better compatibitity with other software should have
         a higher priority (even it has fewer capabilities).
         """
-        err = 'Subclass must implement get_desciption method'
+        err = 'Subclass must implement get_description method'
         raise NotImplementedError(err)
         # pylint: disable=unreachable
         return Descriptor(name='', mandatory_args=[],

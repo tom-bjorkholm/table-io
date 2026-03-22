@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from pytest import CaptureFixture
 from tableio.capability import CapabilityNotSupported, SingleCapability
-from tableio.tableio import Box, FileAccess
+from tableio.tableio import Box, Descriptor, FileAccess
 from tableio.tableio_mformat import (
     TableIOMformatMd, TableIOMformatHtml,
     TableIOMformatTxt, TableIOMformatLatex,
@@ -47,6 +47,54 @@ def test_file_name_extension(
         capsys: CaptureFixture[str]) -> None:
     """Test file name extension for each mformat class."""
     assert cls.file_name_extension() == expected
+    check_capsys(capsys)
+
+
+# ── get_description tests ─────────────────────────────────────────────
+
+
+_DESCRIPTION_PARAMS: list[tuple[_MformatCls, str, list[str]]] = [
+    (TableIOMformatMd, 'md',
+     ['file_exists_callback', 'character_encoding']),
+    (TableIOMformatHtml, 'HTML',
+     ['file_exists_callback', 'character_encoding',
+      'title', 'css_file', 'lang']),
+    (TableIOMformatTxt, 'txt',
+     ['file_exists_callback', 'character_encoding',
+      'line_length', 'table_max_line_length', 'table_alignment']),
+    (TableIOMformatLatex, 'LaTeX',
+     ['file_exists_callback', 'character_encoding',
+      'document_class', 'paper_size', 'title', 'latex_preamble',
+      'latex_heading_levels', 'latex_replacements']),
+    (TableIOMformatRst, 'rst',
+     ['file_exists_callback', 'character_encoding',
+      'line_length', 'table_max_line_length', 'table_alignment']),
+    (TableIOMformatDocx, 'docx',
+     ['file_exists_callback', 'paper_size']),
+    (TableIOMformatOdt, 'odt',
+     ['file_exists_callback', 'lang', 'paper_size']),
+    (TableIOMformatPdf, 'pdf',
+     ['file_exists_callback', 'paper_size', 'title']),
+    (TableIOMformatRtf, 'rtf',
+     ['file_exists_callback', 'paper_size']),
+]
+
+
+@pytest.mark.parametrize(
+    ('cls', 'fmt_name', 'opt_args'),
+    [pytest.param(c, f, o, id=f) for c, f, o in _DESCRIPTION_PARAMS])
+def test_get_description(
+        cls: _MformatCls, fmt_name: str, opt_args: list[str],
+        capsys: CaptureFixture[str]) -> None:
+    """Test get_description returns correct Descriptor for each class."""
+    desc = cls.get_description()
+    assert isinstance(desc, Descriptor)
+    assert desc.format_name == fmt_name
+    assert desc.implementation == 'mformat'
+    assert desc.capabilities == cls.get_capabilities()
+    assert desc.mandatory_args == []
+    assert desc.optional_args == opt_args
+    assert desc.priority == 10
     check_capsys(capsys)
 
 

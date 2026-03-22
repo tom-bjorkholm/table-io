@@ -34,7 +34,7 @@ class RecordingTextBasedTableIO(TableIOTextBased):
         self.events: list[str] = []
 
     @classmethod
-    def get_desciption(cls) -> Descriptor:
+    def get_description(cls) -> Descriptor:
         """Return the descriptor for the recording implementation."""
         return Descriptor(
             format_name='textbased',

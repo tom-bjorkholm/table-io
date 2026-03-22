@@ -93,7 +93,7 @@ class RecordingTableIO(TableIO):
             )
 
     @classmethod
-    def get_desciption(cls) -> Descriptor:
+    def get_description(cls) -> Descriptor:
         """Return the descriptor for the recording implementation."""
         return Descriptor(
             format_name='recording',
@@ -222,7 +222,7 @@ class MinimalTableIO(TableIO):
         super().__init__(file_name, file_access, file_exists_callback)
 
     @classmethod
-    def get_desciption(cls) -> Descriptor:
+    def get_description(cls) -> Descriptor:
         """Return a descriptor that allows instantiation in tests."""
         return Descriptor(
             format_name='minimal',
@@ -901,8 +901,8 @@ def test_read_table_dictdata_delegates_and_returns_result(
 def test_base_class_not_implemented_class_methods_raise(
         capsys: CaptureFixture[str]) -> None:
     """Test the inherited class-level abstract methods."""
-    with pytest.raises(NotImplementedError, match='get_desciption'):
-        TableIO.get_desciption()
+    with pytest.raises(NotImplementedError, match='get_description'):
+        TableIO.get_description()
     with pytest.raises(NotImplementedError, match='get_capabilities'):
         TableIO.get_capabilities()
     with pytest.raises(NotImplementedError, match='file_name_extension'):
