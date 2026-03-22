@@ -2888,6 +2888,8 @@ is in the allowed list of format names.)
 
 ```python
 def list_implementations_tableio(format_name: Optional[str] = None,
+                                 lower: bool = False,
+                                 upper: bool = False,
                                  capabilities: Optional[Capabilities] = None,
                                  empty_is_ok: bool = False) -> list[str]
 ```
@@ -2901,6 +2903,8 @@ This is a shortcut for TableIOFactory.get_registered_implementations().
 - `format_name` - The name identifier of the format to get the
   implementation names for. If not specified, all
   implementations are included in the return value.
+- `lower` - If True, also include the implementation name in lower case.
+- `upper` - If True, also include the implementation name in upper case.
 - `capabilities` - The capabilities to match. If not specified,
   all implementations are included in the return value.
   If specified, only implementations that offer the

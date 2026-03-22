@@ -739,6 +739,8 @@ def list_registered_tableio(lower: bool = False,
 
 
 def list_implementations_tableio(format_name: Optional[str] = None,
+                                 lower: bool = False,
+                                 upper: bool = False,
                                  capabilities: Optional[Capabilities] = None,
                                  empty_is_ok: bool = False) -> list[str]:
     """Get a list of all registered implementation names.
@@ -748,6 +750,8 @@ def list_implementations_tableio(format_name: Optional[str] = None,
         format_name: The name identifier of the format to get the
                      implementation names for. If not specified, all
                      implementations are included in the return value.
+        lower: If True, also include the implementation name in lower case.
+        upper: If True, also include the implementation name in upper case.
         capabilities: The capabilities to match. If not specified,
                       all implementations are included in the return value.
                       If specified, only implementations that offer the
@@ -767,8 +771,8 @@ def list_implementations_tableio(format_name: Optional[str] = None,
                                          capabilities.
     """
     return TableIOFactory.get_registered_implementations(
-        format_name=format_name, capabilities=capabilities,
-        empty_is_ok=empty_is_ok)
+        format_name=format_name, lower=lower, upper=upper,
+        capabilities=capabilities, empty_is_ok=empty_is_ok)
 
 
 def usage_tableio(format_name: str, implementation: str) -> Descriptor:

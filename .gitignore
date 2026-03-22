@@ -31,3 +31,4 @@ non_cursor_AGENTS.md
 *.out
 *.log
 *.pdf
+example/result/*
