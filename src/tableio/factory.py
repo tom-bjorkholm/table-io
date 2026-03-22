@@ -388,12 +388,12 @@ class TableIOFactory:
                 msg3 += 'does not match the capabilities. Available matches: '
                 msg3 += f'{", ".join(bmatches_impls)}'
                 raise TableIOFactoryNoCapabilityMatch(msg3)
-        best_match = best_matches[0]
-        # pylint: disable=protected-access
-        format_class = format_info._registry[best_match[0].implementation]
+            chosen_impl = implementation
+        else:
+            chosen_impl = best_matches.combined()[0].implementation
+        format_class = format_info._registry[chosen_impl]  # pylint: disable=protected-access # noqa: E501
         if args is None:
             return format_class(file_name=file_name, file_access=file_access)
-        assert args is not None
         return format_class(file_name=file_name,  # type: ignore[misc]
                             file_access=file_access, **args)
         # mypy cannot see which TableIO subclass is being created, so it
@@ -488,18 +488,17 @@ class TableIOFactory:
                                  capabilities: Optional[Capabilities] = None,
                                  empty_is_ok: bool = False) -> list[str]:
         """Internally get a list of registered format names."""
-        sorted_names = sorted(list(self._formats.keys()))
         if capabilities is not None:
-            filtered_names = [
+            filtered_names = sorted([
                 name for name, format_info in self._formats.items()
                 if format_info.best_match_names(capabilities=capabilities,
                                                 empty_is_ok=True).combined()
-            ]
+            ])
             if not filtered_names and not empty_is_ok:
                 msg = 'No formats match the capabilities.'
                 raise TableIOFactoryNoCapabilityMatch(msg)
         else:
-            filtered_names = sorted_names
+            filtered_names = sorted(list(self._formats.keys()))
         ret: list[str] = []
         for name in filtered_names:
             ret.append(name)
@@ -583,9 +582,9 @@ class TableIOFactory:
                 raise TableIOFactoryNoCapabilityMatch(msg)
         else:
             implkeys = {
-                implkey for implkey in
-                self._formats[fmtkey]._registry.keys()  # pylint: disable=protected-access # noqa: E501
+                implkey
                 for fmtkey in fmtkeys
+                for implkey in self._formats[fmtkey]._registry.keys()  # pylint: disable=protected-access # noqa: E501
             }
         ret: list[str] = []
         for implkey in sorted(implkeys):  # order was lost using a set
