@@ -42,11 +42,13 @@ type ListRowSeq[CellValue: (Value, ValueFmt)] = Sequence[CellValue]
 type DictRow[CellValue: (Value, ValueFmt)] = dict[str, CellValue]
 type DictRowMap[CellValue: (Value, ValueFmt)] = Mapping[str, CellValue]
 type ListData[CellValue: (Value, ValueFmt)] = list[ListRow[CellValue]]
-type ListDataSeq[CellValue: (Value, ValueFmt)] = \
+type ListDataSeq[CellValue: (Value, ValueFmt)] = (
     Sequence[ListRowSeq[CellValue]]
+)
 type DictData[CellValue: (Value, ValueFmt)] = list[DictRow[CellValue]]
-type DictDataMap[CellValue: (Value, ValueFmt)] = \
+type DictDataMap[CellValue: (Value, ValueFmt)] = (
     Sequence[DictRowMap[CellValue]]
+)
 DataT = TypeVar('DataT', bound='ListData[Value] | DictData[Value]')
 
 
