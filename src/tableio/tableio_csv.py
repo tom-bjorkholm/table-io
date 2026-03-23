@@ -103,7 +103,8 @@ def _is_heading_line(line: str) -> bool:
     A heading line starts with one or more '#' characters
     followed by a space. This matches the format produced by
     _write_heading and avoids false positives for values like
-    '#ff0000' that start with '#' but have no space after it.
+    a hexadecimal color code with a leading hash that starts
+    with '#' but has no space after it.
     """
     if not line.startswith('#'):
         return False

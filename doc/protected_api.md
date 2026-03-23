@@ -4087,7 +4087,8 @@ Check if a line (without line terminator) is a heading.
 A heading line starts with one or more '#' characters
 followed by a space. This matches the format produced by
 _write_heading and avoids false positives for values like
-'`ff0000`' that start with '#' but have no space after it.
+a hexadecimal color code with a leading hash that starts
+with '#' but has no space after it.
 
 <a id="tableio.tableio_csv.TableIOCsv"></a>
 
