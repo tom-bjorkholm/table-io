@@ -262,6 +262,9 @@
     * [\_read\_raw\_sections](#tableio.tableio_csv.TableIOCsv._read_raw_sections)
     * [\_read\_table\_listdata](#tableio.tableio_csv.TableIOCsv._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio_csv.TableIOCsv._read_table_dictdata)
+* [tableio.tableio\_spreadsheetbased](#tableio.tableio_spreadsheetbased)
+  * [TableIOSpreadsheetBased](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased)
+    * [\_\_init\_\_](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__)
 * [tableio.tableio\_mformatbased](#tableio.tableio_mformatbased)
   * [\_allow\_overwrite](#tableio.tableio_mformatbased._allow_overwrite)
   * [TableIOMformatBased](#tableio.tableio_mformatbased.TableIOMformatBased)
@@ -279,8 +282,52 @@
     * [\_write\_table\_fmtdictdata](#tableio.tableio_mformatbased.TableIOMformatBased._write_table_fmtdictdata)
     * [\_read\_table\_listdata](#tableio.tableio_mformatbased.TableIOMformatBased._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio_mformatbased.TableIOMformatBased._read_table_dictdata)
+* [tableio.tableio\_excelbased](#tableio.tableio_excelbased)
+  * [TableIOExcelBased](#tableio.tableio_excelbased.TableIOExcelBased)
+    * [\_\_init\_\_](#tableio.tableio_excelbased.TableIOExcelBased.__init__)
 * [tableio.reg\_pkg\_formats](#tableio.reg_pkg_formats)
   * [register\_formats\_in\_pkg](#tableio.reg_pkg_formats.register_formats_in_pkg)
+* [tableio.tableio\_excel\_openpyxl](#tableio.tableio_excel_openpyxl)
+  * [\_ScanResult](#tableio.tableio_excel_openpyxl._ScanResult)
+  * [TableIOExcelOpenPyXL](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL)
+    * [\_\_init\_\_](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__)
+    * [get\_description](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description)
+    * [get\_capabilities](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities)
+    * [file\_name\_extension](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension)
+    * [open](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open)
+    * [\_end\_state](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._end_state)
+    * [\_write\_file\_suffix](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_file_suffix)
+    * [\_close](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._close)
+    * [\_python\_value\_from\_excel](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._python_value_from_excel)
+    * [\_excel\_value\_from\_python](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._excel_value_from_python)
+    * [\_range\_ref](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._range_ref)
+    * [\_highlight\_fill](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._highlight_fill)
+    * [\_set\_cell\_format](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_cell_format)
+    * [\_write\_value\_to\_cell](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value_to_cell)
+    * [\_write\_value](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value)
+    * [\_clear\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._clear_range)
+    * [\_used\_bounds](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._used_bounds)
+    * [\_last\_used\_row](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_row)
+    * [\_last\_used\_column](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_column)
+    * [\_cell\_value](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._cell_value)
+    * [\_read\_limits](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_limits)
+    * [\_scan\_limit\_right](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_limit_right)
+    * [\_row\_nonempty\_columns](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_nonempty_columns)
+    * [\_row\_is\_empty](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_is_empty)
+    * [\_row\_is\_heading](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_is_heading)
+    * [\_scan\_section](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_section)
+    * [\_read\_grid](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_grid)
+    * [\_update\_read\_positions](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_read_positions)
+    * [\_write\_start](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_start)
+    * [\_update\_write\_position](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_write_position)
+    * [\_write\_grid](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_grid)
+    * [\_write\_heading](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_heading)
+    * [\_write\_table\_listdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_listdata)
+    * [\_write\_table\_fmtlistdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_fmtlistdata)
+    * [\_write\_table\_dictdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_dictdata)
+    * [\_write\_table\_fmtdictdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_fmtdictdata)
+    * [\_read\_table\_listdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_table_listdata)
+    * [\_read\_table\_dictdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_table_dictdata)
 
 <a id="tableio.tableio"></a>
 
@@ -4364,6 +4411,57 @@ CSV does not support reading from a box.
   The data as a list of dicts, and any headings found
   before the table.
 
+<a id="tableio.tableio_spreadsheetbased"></a>
+
+# tableio.tableio\_spreadsheetbased
+
+Intermediate base class for spreadsheet-based file formats.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased"></a>
+
+## TableIOSpreadsheetBased Objects
+
+```python
+class TableIOSpreadsheetBased(TableIO)
+```
+
+Intermediate TableIO base class for spreadsheet-based file formats.
+
+This class is used to provide a base class for spreadsheet-based
+file formats. It is not intended to be used directly, but rather
+to be subclassed by a specific spreadsheet-based file format
+such as Excel or Open Document Spreadsheet.
+
+The main purpose of this class is to provide a place where common
+functionality for spreadsheet-based file formats can be implemented.
+This class starts out empty, but whenever common functionality
+is detected it should be refactored into this class.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(file_name: PathLike,
+             file_access: FileAccess,
+             file_exists_callback: Optional[Callable[[str], None]] = None)
+```
+
+Initialize the TableIO_SpreadsheetBased class.
+
+**Arguments**:
+
+- `file_name` - The name of the file to open.
+- `file_access` - What access is requested to the file.
+- `file_exists_callback` - A callback function to call if the file
+  already exists when file_access is CREATE.
+  Return to allow the file to be overwritten.
+  Raise an exception to prevent the file from
+  being overwritten.
+  (May for instance save existing file as
+  backup.)
+  (Default is to raise an exception.)
+
 <a id="tableio.tableio_mformatbased"></a>
 
 # tableio.tableio\_mformatbased
@@ -4664,6 +4762,57 @@ Read a table of dict data from the file.
 
 Reading is not supported for mformat based classes.
 
+<a id="tableio.tableio_excelbased"></a>
+
+# tableio.tableio\_excelbased
+
+Intermediate base class for Excel-based file formats.
+
+<a id="tableio.tableio_excelbased.TableIOExcelBased"></a>
+
+## TableIOExcelBased Objects
+
+```python
+class TableIOExcelBased(TableIOSpreadsheetBased)
+```
+
+Intermediate TableIO base class for Excel-based file formats.
+
+This class is used to provide a base class for Excel-based
+file formats. It is not intended to be used directly, but rather
+to be subclassed by a specific Excel-based file format
+such as Excel or Open Document Spreadsheet.
+
+The main purpose of this class is to provide a place where common
+functionality for Excel-based file formats can be implemented.
+This class starts out empty, but whenever common functionality
+is detected it should be refactored into this class.
+
+<a id="tableio.tableio_excelbased.TableIOExcelBased.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(file_name: PathLike,
+             file_access: FileAccess,
+             file_exists_callback: Optional[Callable[[str], None]] = None)
+```
+
+Initialize the TableIO_SpreadsheetBased class.
+
+**Arguments**:
+
+- `file_name` - The name of the file to open.
+- `file_access` - What access is requested to the file.
+- `file_exists_callback` - A callback function to call if the file
+  already exists when file_access is CREATE.
+  Return to allow the file to be overwritten.
+  Raise an exception to prevent the file from
+  being overwritten.
+  (May for instance save existing file as
+  backup.)
+  (Default is to raise an exception.)
+
 <a id="tableio.reg_pkg_formats"></a>
 
 # tableio.reg\_pkg\_formats
@@ -4683,4 +4832,480 @@ def register_formats_in_pkg() -> list[type[TableIO]]
 ```
 
 Get formats defined in the package to register with the factory.
+
+<a id="tableio.tableio_excel_openpyxl"></a>
+
+# tableio.tableio\_excel\_openpyxl
+
+TableIO reader/writer class for Excel files using OpenPyXL.
+
+<a id="tableio.tableio_excel_openpyxl._ScanResult"></a>
+
+## \_ScanResult Objects
+
+```python
+class _ScanResult(NamedTuple)
+```
+
+Details gathered while scanning one worksheet section.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL"></a>
+
+## TableIOExcelOpenPyXL Objects
+
+```python
+class TableIOExcelOpenPyXL(TableIOExcelBased)
+```
+
+TableIO reader/writer class for Excel files using OpenPyXL.
+
+The first implementation uses a single active worksheet only.
+In UPDATE mode the default write position is after the last used row in
+that worksheet. This keeps appends simple, but using box explicitly is
+strongly recommended when writing in UPDATE mode.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(file_name: PathLike,
+             file_access: FileAccess,
+             file_exists_callback: Optional[Callable[[str], None]] = None)
+```
+
+Initialize the TableIOExcelOpenPyXL class.
+
+**Arguments**:
+
+- `file_name` - The name of the file to open.
+- `file_access` - What access is requested to the file.
+- `file_exists_callback` - A callback function to call if the file
+  already exists when file_access is CREATE.
+  Return to allow the file to be overwritten.
+  Raise an exception to prevent the file from
+  being overwritten.
+  (May for instance save existing file as
+  backup.)
+  (Default is to raise an exception.)
+
+**Notes**:
+
+  In UPDATE mode the default write position is after the last used
+  row on the active worksheet. That makes simple appends convenient,
+  but box should be preferred when writing updates so the target
+  range is explicit.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description"></a>
+
+#### get\_description
+
+```python
+@classmethod
+def get_description(cls) -> Descriptor
+```
+
+Get the description of the TableIOExcelOpenPyXL class.
+
+**Returns**:
+
+- `Descriptor` - The description of the TableIOExcelOpenPyXL class.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities"></a>
+
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Get the capabilities of the TableIOExcelOpenPyXL class.
+
+**Returns**:
+
+- `Capabilities` - The capabilities of the TableIOExcelOpenPyXL class.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension"></a>
+
+#### file\_name\_extension
+
+```python
+@classmethod
+def file_name_extension(cls) -> str
+```
+
+Get the file name extension of the TableIOExcelOpenPyXL class.
+
+**Returns**:
+
+- `str` - The file name extension of the TableIOExcelOpenPyXL class.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open the Excel workbook.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._end_state"></a>
+
+#### \_end\_state
+
+```python
+def _end_state() -> None
+```
+
+Finalize in-memory state before closing.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_file_suffix"></a>
+
+#### \_write\_file\_suffix
+
+```python
+def _write_file_suffix() -> None
+```
+
+Write the workbook to disk when the file is writable.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._close"></a>
+
+#### \_close
+
+```python
+def _close() -> None
+```
+
+Close any open workbook handles.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._python_value_from_excel"></a>
+
+#### \_python\_value\_from\_excel
+
+```python
+@staticmethod
+def _python_value_from_excel(value: object) -> Value
+```
+
+Convert an Excel cell value to the closest supported Value.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._excel_value_from_python"></a>
+
+#### \_excel\_value\_from\_python
+
+```python
+@staticmethod
+def _excel_value_from_python(value: object) -> Value
+```
+
+Convert a Python value to the closest Excel-supported value.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._range_ref"></a>
+
+#### \_range\_ref
+
+```python
+@staticmethod
+def _range_ref(top: int, left: int, bottom: int, right: int) -> str
+```
+
+Return an Excel A1 range string for a zero-based rectangle.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._highlight_fill"></a>
+
+#### \_highlight\_fill
+
+```python
+@staticmethod
+def _highlight_fill(highlight: Color) -> PatternFill
+```
+
+Return the fill object for the requested highlight color.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_cell_format"></a>
+
+#### \_set\_cell\_format
+
+```python
+def _set_cell_format(worksheet: Worksheet, row: int, column: int,
+                     fmt: Fmt | None) -> None
+```
+
+Apply cell formatting to the worksheet cell.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value_to_cell"></a>
+
+#### \_write\_value\_to\_cell
+
+```python
+def _write_value_to_cell(worksheet: Worksheet, row: int, column: int,
+                         value: object) -> None
+```
+
+Write one value to one worksheet cell.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value"></a>
+
+#### \_write\_value
+
+```python
+def _write_value(row: int,
+                 column: int,
+                 value: object,
+                 fmt: Fmt | None = None) -> None
+```
+
+Write one value to the writable workbook and read snapshot.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._clear_range"></a>
+
+#### \_clear\_range
+
+```python
+def _clear_range(top: int, left: int, bottom: int, right: int) -> None
+```
+
+Clear values and simple formatting in a worksheet rectangle.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._used_bounds"></a>
+
+#### \_used\_bounds
+
+```python
+def _used_bounds(worksheet: Worksheet) -> tuple[int, int]
+```
+
+Return the last used row and column on a worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_row"></a>
+
+#### \_last\_used\_row
+
+```python
+def _last_used_row(worksheet: Worksheet) -> int
+```
+
+Return the last used row index on a worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_column"></a>
+
+#### \_last\_used\_column
+
+```python
+def _last_used_column(worksheet: Worksheet) -> int
+```
+
+Return the last used column index on a worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._cell_value"></a>
+
+#### \_cell\_value
+
+```python
+def _cell_value(worksheet: Worksheet, row: int, column: int) -> Value
+```
+
+Return one worksheet cell converted to the public Value type.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_limits"></a>
+
+#### \_read\_limits
+
+```python
+def _read_limits(box: Box | None) -> tuple[int, int, int, int | None]
+```
+
+Return the row and column limits for a read operation.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_limit_right"></a>
+
+#### \_scan\_limit\_right
+
+```python
+def _scan_limit_right(worksheet: Worksheet, left: int,
+                      right: int | None) -> int
+```
+
+Return the exclusive right limit used when scanning rows.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_nonempty_columns"></a>
+
+#### \_row\_nonempty\_columns
+
+```python
+def _row_nonempty_columns(worksheet: Worksheet, row: int, left: int,
+                          right: int | None) -> list[int]
+```
+
+Return the non-empty columns in a row within the scan limits.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_is_empty"></a>
+
+#### \_row\_is\_empty
+
+```python
+def _row_is_empty(worksheet: Worksheet, row: int, left: int,
+                  right: int | None) -> bool
+```
+
+Return whether the selected row region contains no values.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_is_heading"></a>
+
+#### \_row\_is\_heading
+
+```python
+def _row_is_heading(worksheet: Worksheet, row: int, left: int,
+                    right: int | None, bottom: int) -> bool
+```
+
+Return whether the row matches the heading layout.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_section"></a>
+
+#### \_scan\_section
+
+```python
+def _scan_section(box: Box | None) -> _ScanResult
+```
+
+Scan the next readable section on the active worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_grid"></a>
+
+#### \_read\_grid
+
+```python
+def _read_grid(scan: _ScanResult) -> ListData[Value]
+```
+
+Read a rectangular grid from the scanned section.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_read_positions"></a>
+
+#### \_update\_read\_positions
+
+```python
+def _update_read_positions(scan: _ScanResult, box: Box | None) -> None
+```
+
+Update default read and write positions after a read.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_start"></a>
+
+#### \_write\_start
+
+```python
+def _write_start(box: Box | None) -> tuple[int, int]
+```
+
+Return the start position for a write operation.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_write_position"></a>
+
+#### \_update\_write\_position
+
+```python
+def _update_write_position(next_row: int) -> None
+```
+
+Update the default write cursor after a write operation.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_grid"></a>
+
+#### \_write\_grid
+
+```python
+def _write_grid(values: ListData[Value],
+                formats: list[list[Fmt | None]],
+                filtered_data_range: bool = False,
+                box: Box | None = None) -> Position
+```
+
+Write a rectangular grid of values and optional formats.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_heading"></a>
+
+#### \_write\_heading
+
+```python
+def _write_heading(heading: str, level: int) -> Position
+```
+
+Write a heading to the active worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_listdata"></a>
+
+#### \_write\_table\_listdata
+
+```python
+def _write_table_listdata(data: ListDataSeq[CellT],
+                          filtered_data_range: bool = False,
+                          box: Box | None = None) -> Position
+```
+
+Write list data to the active worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_fmtlistdata"></a>
+
+#### \_write\_table\_fmtlistdata
+
+```python
+def _write_table_fmtlistdata(data: FmtListData,
+                             filtered_data_range: bool = False,
+                             box: Box | None = None) -> Position
+```
+
+Write row-formatted list data to the active worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_dictdata"></a>
+
+#### \_write\_table\_dictdata
+
+```python
+def _write_table_dictdata(data: DictDataMap[CellT],
+                          column_order: list[str],
+                          filtered_data_range: bool = False,
+                          box: Box | None = None) -> Position
+```
+
+Write dict data to the active worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_fmtdictdata"></a>
+
+#### \_write\_table\_fmtdictdata
+
+```python
+def _write_table_fmtdictdata(data: FmtDictData,
+                             column_order: list[str],
+                             filtered_data_range: bool = False,
+                             box: Box | None = None) -> Position
+```
+
+Write row-formatted dict data to the active worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_table_listdata"></a>
+
+#### \_read\_table\_listdata
+
+```python
+def _read_table_listdata(
+        box: Box | None = None) -> ReadResult[ListData[Value]]
+```
+
+Read list data from the active worksheet.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_table_dictdata"></a>
+
+#### \_read\_table\_dictdata
+
+```python
+def _read_table_dictdata(
+        box: Box | None = None) -> ReadResult[DictData[Value]]
+```
+
+Read dict data from the active worksheet.
 

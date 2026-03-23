@@ -15,6 +15,7 @@ from tableio.tableio_mformat import TableIOMformatHtml, TableIOMformatMd, \
     TableIOMformatDocx, TableIOMformatOdt, TableIOMformatPdf, \
     TableIOMformatRtf
 from tableio.tableio_csv import TableIOCsv
+from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
 from tableio.tableio import TableIO
 
 
@@ -24,5 +25,6 @@ def register_formats_in_pkg() -> list[type[TableIO]]:
                                 TableIOMformatRst, TableIOMformatTxt,
                                 TableIOMformatLatex, TableIOMformatDocx,
                                 TableIOMformatOdt, TableIOMformatPdf,
-                                TableIOMformatRtf, TableIOCsv]
+                                TableIOMformatRtf, TableIOCsv,
+                                TableIOExcelOpenPyXL]
     return ret

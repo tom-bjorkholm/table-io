@@ -30,7 +30,9 @@ from .check_capsys import check_capsys
     ('row', 'expected'),
     [
         pytest.param([], [], id='empty'),
-        pytest.param(('text', 1, 2.5), ['text', '1', '2.5'], id='scalars'),
+        pytest.param(('text', True, 2.5),
+                     ['text', 'True', '2.5'],
+                     id='scalars'),
         pytest.param(
             ('row', datetime(2026, 3, 16, 7, 8, 9)),
             ['row', '2026-03-16 07:08:09'],
@@ -39,8 +41,8 @@ from .check_capsys import check_capsys
     ],
 )
 def test_list_row_to_str_list_converts_values(
-        row: tuple[str | int | float | datetime, ...] |
-        list[str | int | float | datetime], expected: list[str],
+        row: tuple[str | bool | int | float | datetime, ...] |
+        list[str | bool | int | float | datetime], expected: list[str],
         capsys: CaptureFixture[str]) -> None:
     """Test that list_row_to_str_list converts supported values to strings."""
     assert list_row_to_str_list(row) == expected
@@ -116,6 +118,7 @@ def test_str_list_to_list_row_returns_same_list_object(
     ('value', 'expected_type'),
     [
         pytest.param('text', str, id='matching-str'),
+        pytest.param(True, bool, id='matching-bool'),
         pytest.param(1, int, id='matching-int'),
     ]
 )

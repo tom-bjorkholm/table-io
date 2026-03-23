@@ -1,0 +1,214 @@
+#! /usr/local/bin/python3
+"""Tests for the tableio_excel_openpyxl module."""
+
+# Copyright (c) 2026 Tom Björkholm
+# MIT License
+
+from datetime import datetime
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from xml.etree import ElementTree as ET
+from zipfile import ZipFile
+
+from openpyxl import Workbook, load_workbook
+from openpyxl.worksheet.worksheet import Worksheet
+from pytest import CaptureFixture
+
+from tableio.color import Color
+from tableio.tableio import Box, FileAccess
+from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
+from tableio.value_type import Fmt, FmtDictRow, Value, ValueFmt
+
+from .check_capsys import check_capsys
+
+
+_XML_NS = {
+    'sheet': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+}
+
+
+def _create_formula_workbook(file_path: Path,
+                             cached_value: int | None = None) -> None:
+    """Create a workbook with one formula cell and an optional cached value."""
+    workbook = Workbook()
+    worksheet = workbook.active
+    assert isinstance(worksheet, Worksheet)
+    worksheet['A1'] = '=1+2'
+    worksheet['B1'] = 'x'
+    workbook.save(file_path)
+    workbook.close()
+    if cached_value is None:
+        return
+    temp_path = file_path.with_name(f'{file_path.stem}_tmp.xlsx')
+    with ZipFile(file_path) as zip_file, \
+            ZipFile(temp_path, 'w') as temp_zip:
+        for item in zip_file.infolist():
+            data = zip_file.read(item.filename)
+            if item.filename == 'xl/worksheets/sheet1.xml':
+                root = ET.fromstring(data)
+                cell = root.find('.//sheet:c[@r="A1"]', _XML_NS)
+                assert cell is not None
+                value = cell.find('sheet:v', _XML_NS)
+                assert value is not None
+                value.text = str(cached_value)
+                data = ET.tostring(root, encoding='utf-8',
+                                   xml_declaration=False)
+            temp_zip.writestr(item, data)
+    temp_path.replace(file_path)
+
+
+def test_excel_round_trip_sequential_list_reads(
+        capsys: CaptureFixture[str]) -> None:
+    """Two list sections can be written and then read back sequentially."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'sample'
+        first_data: list[list[Value]] = [
+            ['Flag', 'When'],
+            [True, datetime(2026, 3, 23, 10, 0, 0)]
+        ]
+        second_data: list[list[Value]] = [['One', 'Two'], ['Three', 'Four']]
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_heading('Report')
+            table_io.write_heading('Flags')
+            table_io.write_table_listdata(first_data)
+            table_io.write_table_listdata(second_data)
+        with TableIOExcelOpenPyXL(file_name, FileAccess.READ) as table_io:
+            first_result = table_io.read_table_listdata()
+            second_result = table_io.read_table_listdata()
+        assert first_result.headings == ['Report', 'Flags']
+        assert first_result.data == first_data
+        assert second_result.headings == []
+        assert second_result.data == second_data
+    check_capsys(capsys)
+
+
+def test_excel_round_trip_dictdata_in_box(
+        capsys: CaptureFixture[str]) -> None:
+    """Dict data can be written into and read back from a box."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'boxed'
+        data: list[dict[str, Value]] = [
+            {'name': 'Alice', 'active': True},
+            {'name': 'Bob', 'active': None}
+        ]
+        box = Box(top=1, left=1, bottom=4, right=3)
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_dictdata(data=data, column_order=[
+                'name', 'active'
+            ], box=box)
+        with TableIOExcelOpenPyXL(file_name, FileAccess.READ) as table_io:
+            result = table_io.read_table_dictdata(box=box)
+        assert result.headings == []
+        assert result.data == data
+    check_capsys(capsys)
+
+
+def test_excel_update_default_write_starts_after_last_used_row(
+        capsys: CaptureFixture[str]) -> None:
+    """UPDATE mode appends after the used area with a blank row separator."""
+    with TemporaryDirectory() as temp_dir:
+        saved_path = Path(temp_dir) / 'update.xlsx'
+        workbook = Workbook()
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        worksheet['A1'] = 'old'
+        worksheet['B1'] = 'row'
+        workbook.save(saved_path)
+        workbook.close()
+        with TableIOExcelOpenPyXL(
+                Path(temp_dir) / 'update', FileAccess.UPDATE) as table_io:
+            table_io.write_table_listdata([['new', 'row']])
+        workbook = load_workbook(saved_path, data_only=True)
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert worksheet['A1'].value == 'old'
+        assert worksheet['B1'].value == 'row'
+        assert worksheet['A2'].value is None
+        assert worksheet['B2'].value is None
+        assert worksheet['A3'].value == 'new'
+        assert worksheet['B3'].value == 'row'
+        workbook.close()
+    check_capsys(capsys)
+
+
+def test_excel_write_formatted_listdata_applies_formatting_and_filter(
+        capsys: CaptureFixture[str]) -> None:
+    """Per-cell formatting and filtered range are written to the workbook."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'formatted'
+        data = [
+            [ValueFmt(value='Name', fmt=Fmt(bold=True)),
+             ValueFmt(value='Active', fmt=Fmt(bold=True))],
+            [ValueFmt(value='Alice', fmt=Fmt(italic=True,
+                                             highlight=Color.YELLOW)),
+             ValueFmt(value=True, fmt=Fmt(italic=True,
+                                          highlight=Color.YELLOW))]
+        ]
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(data, filtered_data_range=True)
+        workbook = load_workbook(Path(temp_dir) / 'formatted.xlsx')
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert worksheet.auto_filter.ref == 'A1:B2'
+        assert worksheet['A1'].font.bold is True
+        assert worksheet['A2'].font.italic is True
+        assert worksheet['A2'].fill.fill_type == 'solid'
+        assert worksheet['A2'].fill.fgColor.rgb == 'FFFFFF00'
+        workbook.close()
+    check_capsys(capsys)
+
+
+def test_excel_write_row_formatted_dictdata_applies_formatting(
+        capsys: CaptureFixture[str]) -> None:
+    """Row formatting for dict rows is copied to each written cell."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'row_formatted'
+        data = [
+            FmtDictRow(values={'name': 'Alice', 'active': True},
+                       fmt=Fmt(bold=True, highlight=Color.GREEN)),
+            FmtDictRow(values={'name': 'Bob', 'active': False},
+                       fmt=Fmt(italic=True, highlight=Color.RED))
+        ]
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_fmtdictdata(
+                data=data,
+                column_order=['name', 'active'],
+                filtered_data_range=True)
+        workbook = load_workbook(Path(temp_dir) / 'row_formatted.xlsx')
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert worksheet.auto_filter.ref == 'A1:B3'
+        assert worksheet['A2'].font.bold is True
+        assert worksheet['B2'].font.bold is True
+        assert worksheet['A2'].fill.fgColor.rgb == 'FF00FF00'
+        assert worksheet['A3'].font.italic is True
+        assert worksheet['B3'].font.italic is True
+        assert worksheet['A3'].fill.fgColor.rgb == 'FFFF0000'
+        workbook.close()
+    check_capsys(capsys)
+
+
+def test_excel_read_formula_uses_cached_value(
+        capsys: CaptureFixture[str]) -> None:
+    """A formula cell is read as its cached value."""
+    with TemporaryDirectory() as temp_dir:
+        saved_path = Path(temp_dir) / 'formula.xlsx'
+        _create_formula_workbook(saved_path, cached_value=3)
+        with TableIOExcelOpenPyXL(
+                Path(temp_dir) / 'formula', FileAccess.READ) as table_io:
+            result = table_io.read_table_listdata()
+        assert result.data == [[3, 'x']]
+    check_capsys(capsys)
+
+
+def test_excel_read_formula_without_cached_value_returns_none(
+        capsys: CaptureFixture[str]) -> None:
+    """A formula without a cached result is read as None."""
+    with TemporaryDirectory() as temp_dir:
+        saved_path = Path(temp_dir) / 'formula.xlsx'
+        _create_formula_workbook(saved_path)
+        with TableIOExcelOpenPyXL(
+                Path(temp_dir) / 'formula', FileAccess.READ) as table_io:
+            result = table_io.read_table_listdata()
+        assert result.data == [[None, 'x']]
+    check_capsys(capsys)

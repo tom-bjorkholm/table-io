@@ -27,6 +27,7 @@ CAPS = Capabilities(
 )
 
 
+# pylint: disable=duplicate-code
 def e01_simple_read_write(format_name: str, output_file_name: str,
                           implementation_name: Optional[str],
                           optional_args: OptionalArgs) -> int:
@@ -53,6 +54,7 @@ def e01_simple_read_write(format_name: str, output_file_name: str,
     assert read_data.headings == [head1, head2]
     assert read_data.data == data
     return 0
+# pylint: enable=duplicate-code
 
 
 if __name__ == '__main__':

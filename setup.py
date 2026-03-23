@@ -19,6 +19,8 @@ setup(
     'setuptools >= 82.0.1',
     'build >= 1.4.0',
     'wheel >= 0.46.3',
-    'mformat-ext >= 0.6'
+    'mformat-ext >= 0.6',
+    'openpyxl >= 3.1.5',
+    'types-openpyxl >= 3.1.5.20260322'
   ]
 )

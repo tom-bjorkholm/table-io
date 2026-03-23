@@ -13,7 +13,7 @@ from tableio.color import Color
 # types used to describe input and output data
 # ----------------------------------------------------------------------------
 
-type Value = Optional[str | int | float | datetime]
+type Value = Optional[str | bool | int | float | datetime]
 
 
 class Fmt(NamedTuple):

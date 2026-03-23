@@ -635,24 +635,24 @@ class TestTableIOFactoryFormats:
             capabilities=caps)
         assert names == sorted(names)
 
-    def test_no_match_raises(self) -> None:
-        """No matching format with empty_is_ok=False raises."""
+    def test_box_capability_matches_excel(self) -> None:
+        """Requesting box support includes the Excel format."""
         f = _make_factory_stubs()
         caps = Capabilities(
             can_write_box=SingleCapability(
                 True, Strictness.STRICT))
-        with pytest.raises(TableIOFactoryNoCapabilityMatch):
-            f.i_get_registered_formats(capabilities=caps)
+        names = f.i_get_registered_formats(capabilities=caps)
+        assert 'Excel' in names
 
-    def test_no_match_empty_ok(self) -> None:
-        """No matching format with empty_is_ok=True returns []."""
+    def test_box_capability_empty_ok_still_returns_match(self) -> None:
+        """empty_is_ok keeps returning matching formats when they exist."""
         f = _make_factory_stubs()
         caps = Capabilities(
             can_write_box=SingleCapability(
                 True, Strictness.STRICT))
         names = f.i_get_registered_formats(
             capabilities=caps, empty_is_ok=True)
-        assert not names
+        assert 'Excel' in names
 
 
 # -- TableIOFactory: listing implementations -----------------------------

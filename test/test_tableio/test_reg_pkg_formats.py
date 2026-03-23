@@ -8,6 +8,7 @@ import pytest
 from tableio.reg_pkg_formats import register_formats_in_pkg
 from tableio.tableio import TableIO
 from tableio.tableio_csv import TableIOCsv
+from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
 from tableio.tableio_mformat import (
     TableIOMformatHtml, TableIOMformatMd, TableIOMformatRst,
     TableIOMformatTxt, TableIOMformatLatex, TableIOMformatDocx,
@@ -32,7 +33,7 @@ _KNOWN_CLASSES: list[type[TableIO]] = [
     TableIOMformatHtml, TableIOMformatMd, TableIOMformatRst,
     TableIOMformatTxt, TableIOMformatLatex, TableIOMformatDocx,
     TableIOMformatOdt, TableIOMformatPdf, TableIOMformatRtf,
-    TableIOCsv]
+    TableIOCsv, TableIOExcelOpenPyXL]
 
 
 @pytest.mark.parametrize(
