@@ -9,7 +9,8 @@ from typing import Callable, NamedTuple, Optional
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill
-from openpyxl.utils.cell import get_column_letter
+from openpyxl.utils.cell import get_column_letter, range_boundaries
+from openpyxl.worksheet.table import Table
 from openpyxl.worksheet.worksheet import Worksheet
 
 from mformat.mformat import PathLike
@@ -34,10 +35,12 @@ _HEADING_FONT_SIZES: dict[int, int] = {
 }
 
 _HIGHLIGHT_RGB: dict[Color, str] = {
-    Color.RED: 'FFFF0000',
-    Color.GREEN: 'FF00FF00',
+    Color.RED: 'FFFFC7CE',
+    Color.GREEN: 'FFC6EFCE',
     Color.YELLOW: 'FFFFFF00'
 }
+
+_FILTER_TABLE_PREFIX = 'TableIOData'
 
 
 class _ScanResult(NamedTuple):
@@ -87,10 +90,10 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         super().__init__(file_name=file_name,
                          file_access=file_access,
                          file_exists_callback=file_exists_callback)
-        self.workbook: Workbook | None = None
-        self.read_workbook: Workbook | None = None
-        self.worksheet: Worksheet | None = None
-        self.read_worksheet: Worksheet | None = None
+        self.workbook: Optional[Workbook] = None
+        self.read_workbook: Optional[Workbook] = None
+        self.worksheet: Optional[Worksheet] = None
+        self.read_worksheet: Optional[Worksheet] = None
         self.read_row: int = 0
         self.write_row: int = 0
 
@@ -223,7 +226,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
                            fgColor=_HIGHLIGHT_RGB[highlight])
 
     def _set_cell_format(self, worksheet: Worksheet, row: int, column: int,
-                         fmt: Fmt | None) -> None:
+                         fmt: Optional[Fmt]) -> None:
         """Apply cell formatting to the worksheet cell."""
         if fmt is None:
             return
@@ -239,7 +242,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         cell.value = self._excel_value_from_python(value)
 
     def _write_value(self, row: int, column: int, value: object,
-                     fmt: Fmt | None = None) -> None:
+                     fmt: Optional[Fmt] = None) -> None:
         """Write one value to the writable workbook and read snapshot."""
         assert self.worksheet is not None
         assert self.read_worksheet is not None
@@ -288,7 +291,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         return self._python_value_from_excel(raw)
 
     def _read_limits(
-            self, box: Box | None) -> tuple[int, int, int, int | None]:
+            self, box: Optional[Box]) -> tuple[int, int, int, Optional[int]]:
         """Return the row and column limits for a read operation."""
         assert self.read_worksheet is not None
         left = 0 if box is None else box.left
@@ -300,7 +303,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         return left, top, bottom, right
 
     def _scan_limit_right(self, worksheet: Worksheet, left: int,
-                          right: int | None) -> int:
+                          right: Optional[int]) -> int:
         """Return the exclusive right limit used when scanning rows."""
         if right is not None:
             return right
@@ -310,7 +313,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         return last_used + 1
 
     def _row_nonempty_columns(self, worksheet: Worksheet, row: int, left: int,
-                              right: int | None) -> list[int]:
+                              right: Optional[int]) -> list[int]:
         """Return the non-empty columns in a row within the scan limits."""
         scan_right = self._scan_limit_right(worksheet, left, right)
         ret: list[int] = []
@@ -320,14 +323,14 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         return ret
 
     def _row_is_empty(self, worksheet: Worksheet, row: int,
-                      left: int, right: int | None) -> bool:
+                      left: int, right: Optional[int]) -> bool:
         """Return whether the selected row region contains no values."""
         return not self._row_nonempty_columns(worksheet, row, left, right)
 
     # pylint: disable-next=too-many-arguments,too-many-positional-arguments
     def _row_is_heading(self,
                         worksheet: Worksheet, row: int, left: int,
-                        right: int | None, bottom: int) -> bool:
+                        right: Optional[int], bottom: int) -> bool:
         """Return whether the row matches the heading layout."""
         nonempty_columns = self._row_nonempty_columns(worksheet, row, left,
                                                       right)
@@ -337,7 +340,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
             return False
         return self._row_is_empty(worksheet, row + 1, left, right)
 
-    def _scan_section(self, box: Box | None) -> _ScanResult:
+    def _scan_section(self, box: Optional[Box]) -> _ScanResult:
         """Scan the next readable section on the active worksheet."""
         assert self.read_worksheet is not None
         worksheet = self.read_worksheet
@@ -396,14 +399,86 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         return ret
 
     def _update_read_positions(self, scan: _ScanResult,
-                               box: Box | None) -> None:
+                               box: Optional[Box]) -> None:
         """Update default read and write positions after a read."""
         self.write_row = scan.last_read_row + 1
         if box is not None:
             return
         self.read_row = scan.next_read_row
 
-    def _write_start(self, box: Box | None) -> tuple[int, int]:
+    def _table_bounds(self, table_ref: str) -> tuple[int, int, int, int]:
+        """Return a zero-based exclusive rectangle for one table range."""
+        min_column, min_row, max_column, max_row = range_boundaries(table_ref)
+        assert min_column is not None
+        assert min_row is not None
+        assert max_column is not None
+        assert max_row is not None
+        return min_row - 1, min_column - 1, max_row, max_column
+
+    @staticmethod
+    def _ranges_overlap(first: tuple[int, int, int, int],
+                        second: tuple[int, int, int, int]) -> bool:
+        """Return whether two zero-based exclusive rectangles overlap."""
+        return first[0] < second[2] and second[0] < first[2] and \
+            first[1] < second[3] and second[1] < first[3]
+
+    def _remove_overlapping_tables(self, worksheet: Worksheet,
+                                   bounds: tuple[int, int, int, int]) -> None:
+        """Remove worksheet tables that overlap the written rectangle."""
+        for table_name in list(worksheet.tables):
+            table = worksheet.tables[table_name]
+            if self._ranges_overlap(bounds, self._table_bounds(table.ref)):
+                del worksheet.tables[table_name]
+
+    def _table_name_in_use(self, table_name: str) -> bool:
+        """Return whether the workbook already contains the table name."""
+        assert self.workbook is not None
+        for worksheet in self.workbook.worksheets:
+            if table_name in worksheet.tables:
+                return True
+        return False
+
+    def _next_table_name(self) -> str:
+        """Return a workbook-unique name for a filtered data range table."""
+        table_index = 1
+        while True:
+            table_name = f'{_FILTER_TABLE_PREFIX}{table_index}'
+            if not self._table_name_in_use(table_name):
+                return table_name
+            table_index += 1
+
+    def _normalize_filtered_table_header(self, top: int, left: int,
+                                         right: int) -> None:
+        """Convert the filtered table header row to strings when needed."""
+        assert self.worksheet is not None
+        assert self.read_worksheet is not None
+        for column in range(left, right):
+            cell = self.worksheet.cell(row=top + 1, column=column + 1)
+            if isinstance(cell.value, str) and cell.value != '':
+                continue
+            if cell.value is None:
+                header_value = f'Column{column - left + 1}'
+            else:
+                header_value = str(cell.value)
+            cell.value = header_value
+            if self.read_worksheet is not self.worksheet:
+                read_cell = self.read_worksheet.cell(row=top + 1,
+                                                     column=column + 1)
+                read_cell.value = header_value
+
+    def _write_filtered_data_range(self,
+                                   bounds: tuple[int, int, int, int]) -> None:
+        """Add a lightweight Excel table for one filtered data range."""
+        assert self.worksheet is not None
+        self._normalize_filtered_table_header(bounds[0], bounds[1], bounds[3])
+        table_name = self._next_table_name()
+        self.worksheet.add_table(Table(displayName=table_name,
+                                       ref=self._range_ref(bounds[0],
+                                                           bounds[1],
+                                                           bounds[2],
+                                                           bounds[3])))
+
+    def _write_start(self, box: Optional[Box]) -> tuple[int, int]:
         """Return the start position for a write operation."""
         if box is not None:
             return box.top, box.left
@@ -421,17 +496,27 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
 
     def _write_grid(self,  # pylint: disable=too-many-locals
                     values: ListData[Value],
-                    formats: list[list[Fmt | None]],
+                    formats: list[list[Optional[Fmt]]],
                     filtered_data_range: bool = False,
-                    box: Box | None = None) -> Position:
+                    box: Optional[Box] = None) -> Position:
         """Write a rectangular grid of values and optional formats."""
         start_row, start_column = self._write_start(box)
         row_count = len(values)
         column_count = len(values[0])
+        write_bottom = start_row + row_count
+        write_right = start_column + column_count
         clear_bottom = box.bottom if box is not None and \
-            box.bottom is not None else start_row + row_count
+            box.bottom is not None else write_bottom
         clear_right = box.right if box is not None and \
-            box.right is not None else start_column + column_count
+            box.right is not None else write_right
+        affected_bounds = (
+            start_row,
+            start_column,
+            clear_bottom if box is not None else write_bottom,
+            clear_right if box is not None else write_right
+        )
+        assert self.worksheet is not None
+        self._remove_overlapping_tables(self.worksheet, affected_bounds)
         if box is not None:
             self._clear_range(start_row, start_column, clear_bottom,
                               clear_right)
@@ -441,10 +526,8 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
                 self._write_value(start_row + row_offset,
                                   start_column + column_offset, value, fmt)
         if filtered_data_range:
-            assert self.worksheet is not None
-            self.worksheet.auto_filter.ref = self._range_ref(
-                start_row, start_column, start_row + row_count,
-                start_column + column_count)
+            self._write_filtered_data_range((start_row, start_column,
+                                             write_bottom, write_right))
         next_row = max(self.write_row, clear_bottom + 1)
         self._update_write_position(next_row)
         return Position(row=start_row + row_count - 1,
@@ -463,13 +546,13 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
     def _write_table_listdata(self,  # pylint: disable=arguments-renamed
                               data: ListDataSeq[CellT],
                               filtered_data_range: bool = False,
-                              box: Box | None = None) -> Position:
+                              box: Optional[Box] = None) -> Position:
         """Write list data to the active worksheet."""
         values: ListData[Value] = []
-        formats: list[list[Fmt | None]] = []
+        formats: list[list[Optional[Fmt]]] = []
         for row in data:
             value_row: list[Value] = []
-            format_row: list[Fmt | None] = []
+            format_row: list[Optional[Fmt]] = []
             for cell in row:
                 if isinstance(cell, ValueFmt):
                     value_row.append(self._excel_value_from_python(
@@ -484,7 +567,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
 
     def _write_table_fmtlistdata(self, data: FmtListData,
                                  filtered_data_range: bool = False,
-                                 box: Box | None = None) -> Position:
+                                 box: Optional[Box] = None) -> Position:
         """Write row-formatted list data to the active worksheet."""
         return self._write_table_listdata(row_format_each_cell_list(data),
                                           filtered_data_range, box)
@@ -493,13 +576,13 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
     def _write_table_dictdata(self, data: DictDataMap[CellT],
                               column_order: list[str],
                               filtered_data_range: bool = False,
-                              box: Box | None = None) -> Position:
+                              box: Optional[Box] = None) -> Position:
         """Write dict data to the active worksheet."""
         values: ListData[Value] = [list(column_order)]
-        formats: list[list[Fmt | None]] = [[None for _ in column_order]]
+        formats: list[list[Optional[Fmt]]] = [[None for _ in column_order]]
         for row in data:
             value_row: list[Value] = []
-            format_row: list[Fmt | None] = []
+            format_row: list[Optional[Fmt]] = []
             for column_name in column_order:
                 cell = row[column_name]
                 if isinstance(cell, ValueFmt):
@@ -516,13 +599,13 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
     def _write_table_fmtdictdata(self, data: FmtDictData,
                                  column_order: list[str],
                                  filtered_data_range: bool = False,
-                                 box: Box | None = None) -> Position:
+                                 box: Optional[Box] = None) -> Position:
         """Write row-formatted dict data to the active worksheet."""
         return self._write_table_dictdata(row_format_each_cell_dict(data),
                                           column_order,
                                           filtered_data_range, box)
 
-    def _read_table_listdata(self, box: Box | None = None) -> \
+    def _read_table_listdata(self, box: Optional[Box] = None) -> \
             ReadResult[ListData[Value]]:
         """Read list data from the active worksheet."""
         scan = self._scan_section(box)
@@ -531,7 +614,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         return ReadResult(data=data, headings=scan.headings,
                           last_read_row=scan.last_read_row)
 
-    def _read_table_dictdata(self, box: Box | None = None) -> \
+    def _read_table_dictdata(self, box: Optional[Box] = None) -> \
             ReadResult[DictData[Value]]:
         """Read dict data from the active worksheet."""
         scan = self._scan_section(box)

@@ -318,6 +318,13 @@
     * [\_scan\_section](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_section)
     * [\_read\_grid](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_grid)
     * [\_update\_read\_positions](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_read_positions)
+    * [\_table\_bounds](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_bounds)
+    * [\_ranges\_overlap](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._ranges_overlap)
+    * [\_remove\_overlapping\_tables](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._remove_overlapping_tables)
+    * [\_table\_name\_in\_use](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_name_in_use)
+    * [\_next\_table\_name](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._next_table_name)
+    * [\_normalize\_filtered\_table\_header](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._normalize_filtered_table_header)
+    * [\_write\_filtered\_data\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_filtered_data_range)
     * [\_write\_start](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_start)
     * [\_update\_write\_position](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_write_position)
     * [\_write\_grid](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_grid)
@@ -5031,7 +5038,7 @@ Return the fill object for the requested highlight color.
 
 ```python
 def _set_cell_format(worksheet: Worksheet, row: int, column: int,
-                     fmt: Fmt | None) -> None
+                     fmt: Optional[Fmt]) -> None
 ```
 
 Apply cell formatting to the worksheet cell.
@@ -5055,7 +5062,7 @@ Write one value to one worksheet cell.
 def _write_value(row: int,
                  column: int,
                  value: object,
-                 fmt: Fmt | None = None) -> None
+                 fmt: Optional[Fmt] = None) -> None
 ```
 
 Write one value to the writable workbook and read snapshot.
@@ -5115,7 +5122,7 @@ Return one worksheet cell converted to the public Value type.
 #### \_read\_limits
 
 ```python
-def _read_limits(box: Box | None) -> tuple[int, int, int, int | None]
+def _read_limits(box: Optional[Box]) -> tuple[int, int, int, Optional[int]]
 ```
 
 Return the row and column limits for a read operation.
@@ -5126,7 +5133,7 @@ Return the row and column limits for a read operation.
 
 ```python
 def _scan_limit_right(worksheet: Worksheet, left: int,
-                      right: int | None) -> int
+                      right: Optional[int]) -> int
 ```
 
 Return the exclusive right limit used when scanning rows.
@@ -5137,7 +5144,7 @@ Return the exclusive right limit used when scanning rows.
 
 ```python
 def _row_nonempty_columns(worksheet: Worksheet, row: int, left: int,
-                          right: int | None) -> list[int]
+                          right: Optional[int]) -> list[int]
 ```
 
 Return the non-empty columns in a row within the scan limits.
@@ -5148,7 +5155,7 @@ Return the non-empty columns in a row within the scan limits.
 
 ```python
 def _row_is_empty(worksheet: Worksheet, row: int, left: int,
-                  right: int | None) -> bool
+                  right: Optional[int]) -> bool
 ```
 
 Return whether the selected row region contains no values.
@@ -5159,7 +5166,7 @@ Return whether the selected row region contains no values.
 
 ```python
 def _row_is_heading(worksheet: Worksheet, row: int, left: int,
-                    right: int | None, bottom: int) -> bool
+                    right: Optional[int], bottom: int) -> bool
 ```
 
 Return whether the row matches the heading layout.
@@ -5169,7 +5176,7 @@ Return whether the row matches the heading layout.
 #### \_scan\_section
 
 ```python
-def _scan_section(box: Box | None) -> _ScanResult
+def _scan_section(box: Optional[Box]) -> _ScanResult
 ```
 
 Scan the next readable section on the active worksheet.
@@ -5189,17 +5196,90 @@ Read a rectangular grid from the scanned section.
 #### \_update\_read\_positions
 
 ```python
-def _update_read_positions(scan: _ScanResult, box: Box | None) -> None
+def _update_read_positions(scan: _ScanResult, box: Optional[Box]) -> None
 ```
 
 Update default read and write positions after a read.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_bounds"></a>
+
+#### \_table\_bounds
+
+```python
+def _table_bounds(table_ref: str) -> tuple[int, int, int, int]
+```
+
+Return a zero-based exclusive rectangle for one table range.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._ranges_overlap"></a>
+
+#### \_ranges\_overlap
+
+```python
+@staticmethod
+def _ranges_overlap(first: tuple[int, int, int, int],
+                    second: tuple[int, int, int, int]) -> bool
+```
+
+Return whether two zero-based exclusive rectangles overlap.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._remove_overlapping_tables"></a>
+
+#### \_remove\_overlapping\_tables
+
+```python
+def _remove_overlapping_tables(worksheet: Worksheet,
+                               bounds: tuple[int, int, int, int]) -> None
+```
+
+Remove worksheet tables that overlap the written rectangle.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_name_in_use"></a>
+
+#### \_table\_name\_in\_use
+
+```python
+def _table_name_in_use(table_name: str) -> bool
+```
+
+Return whether the workbook already contains the table name.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._next_table_name"></a>
+
+#### \_next\_table\_name
+
+```python
+def _next_table_name() -> str
+```
+
+Return a workbook-unique name for a filtered data range table.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._normalize_filtered_table_header"></a>
+
+#### \_normalize\_filtered\_table\_header
+
+```python
+def _normalize_filtered_table_header(top: int, left: int, right: int) -> None
+```
+
+Convert the filtered table header row to strings when needed.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_filtered_data_range"></a>
+
+#### \_write\_filtered\_data\_range
+
+```python
+def _write_filtered_data_range(bounds: tuple[int, int, int, int]) -> None
+```
+
+Add a lightweight Excel table for one filtered data range.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_start"></a>
 
 #### \_write\_start
 
 ```python
-def _write_start(box: Box | None) -> tuple[int, int]
+def _write_start(box: Optional[Box]) -> tuple[int, int]
 ```
 
 Return the start position for a write operation.
@@ -5220,9 +5300,9 @@ Update the default write cursor after a write operation.
 
 ```python
 def _write_grid(values: ListData[Value],
-                formats: list[list[Fmt | None]],
+                formats: list[list[Optional[Fmt]]],
                 filtered_data_range: bool = False,
-                box: Box | None = None) -> Position
+                box: Optional[Box] = None) -> Position
 ```
 
 Write a rectangular grid of values and optional formats.
@@ -5244,7 +5324,7 @@ Write a heading to the active worksheet.
 ```python
 def _write_table_listdata(data: ListDataSeq[CellT],
                           filtered_data_range: bool = False,
-                          box: Box | None = None) -> Position
+                          box: Optional[Box] = None) -> Position
 ```
 
 Write list data to the active worksheet.
@@ -5256,7 +5336,7 @@ Write list data to the active worksheet.
 ```python
 def _write_table_fmtlistdata(data: FmtListData,
                              filtered_data_range: bool = False,
-                             box: Box | None = None) -> Position
+                             box: Optional[Box] = None) -> Position
 ```
 
 Write row-formatted list data to the active worksheet.
@@ -5269,7 +5349,7 @@ Write row-formatted list data to the active worksheet.
 def _write_table_dictdata(data: DictDataMap[CellT],
                           column_order: list[str],
                           filtered_data_range: bool = False,
-                          box: Box | None = None) -> Position
+                          box: Optional[Box] = None) -> Position
 ```
 
 Write dict data to the active worksheet.
@@ -5282,7 +5362,7 @@ Write dict data to the active worksheet.
 def _write_table_fmtdictdata(data: FmtDictData,
                              column_order: list[str],
                              filtered_data_range: bool = False,
-                             box: Box | None = None) -> Position
+                             box: Optional[Box] = None) -> Position
 ```
 
 Write row-formatted dict data to the active worksheet.
@@ -5293,7 +5373,7 @@ Write row-formatted dict data to the active worksheet.
 
 ```python
 def _read_table_listdata(
-        box: Box | None = None) -> ReadResult[ListData[Value]]
+        box: Optional[Box] = None) -> ReadResult[ListData[Value]]
 ```
 
 Read list data from the active worksheet.
@@ -5304,7 +5384,7 @@ Read list data from the active worksheet.
 
 ```python
 def _read_table_dictdata(
-        box: Box | None = None) -> ReadResult[DictData[Value]]
+        box: Optional[Box] = None) -> ReadResult[DictData[Value]]
 ```
 
 Read dict data from the active worksheet.

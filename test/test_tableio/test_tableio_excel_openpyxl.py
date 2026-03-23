@@ -7,6 +7,7 @@
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Optional
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 
@@ -28,7 +29,7 @@ _XML_NS = {
 
 
 def _create_formula_workbook(file_path: Path,
-                             cached_value: int | None = None) -> None:
+                             cached_value: Optional[int] = None) -> None:
     """Create a workbook with one formula cell and an optional cached value."""
     workbook = Workbook()
     worksheet = workbook.active
@@ -133,7 +134,7 @@ def test_excel_update_default_write_starts_after_last_used_row(
 
 def test_excel_write_formatted_listdata_applies_formatting_and_filter(
         capsys: CaptureFixture[str]) -> None:
-    """Per-cell formatting and filtered range are written to the workbook."""
+    """Per-cell formatting and one filtered table are written."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'formatted'
         data = [
@@ -149,11 +150,58 @@ def test_excel_write_formatted_listdata_applies_formatting_and_filter(
         workbook = load_workbook(Path(temp_dir) / 'formatted.xlsx')
         worksheet = workbook.active
         assert isinstance(worksheet, Worksheet)
-        assert worksheet.auto_filter.ref == 'A1:B2'
+        assert [table.ref for table in worksheet.tables.values()] == [
+            'A1:B2'
+        ]
         assert worksheet['A1'].font.bold is True
         assert worksheet['A2'].font.italic is True
         assert worksheet['A2'].fill.fill_type == 'solid'
         assert worksheet['A2'].fill.fgColor.rgb == 'FFFFFF00'
+        workbook.close()
+    check_capsys(capsys)
+
+
+def test_excel_write_multiple_filtered_ranges_keeps_all_tables(
+        capsys: CaptureFixture[str]) -> None:
+    """Sequential filtered writes are kept as separate worksheet tables."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'multiple_filters'
+        first_data: list[list[Value]] = [['Name', 'Active'], ['Alice', True]]
+        second_data: list[list[Value]] = [
+            ['Issue', 'State'],
+            ['TIO-123', 'Done']
+        ]
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(first_data, filtered_data_range=True)
+            table_io.write_table_listdata(second_data,
+                                          filtered_data_range=True)
+        workbook = load_workbook(Path(temp_dir) / 'multiple_filters.xlsx')
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert sorted(table.ref for table in worksheet.tables.values()) == [
+            'A1:B2',
+            'A4:B5'
+        ]
+        workbook.close()
+    check_capsys(capsys)
+
+
+def test_excel_box_write_removes_overlapping_filtered_table(
+        capsys: CaptureFixture[str]) -> None:
+    """Rewriting a boxed area removes any stale overlapping table metadata."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'rewrite_box'
+        box = Box(top=0, left=0, bottom=3, right=2)
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(
+                [['Name', 'Active'], ['Alice', True]],
+                filtered_data_range=True,
+                box=box)
+            table_io.write_table_listdata([['updated', 'value']], box=box)
+        workbook = load_workbook(Path(temp_dir) / 'rewrite_box.xlsx')
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert not worksheet.tables
         workbook.close()
     check_capsys(capsys)
 
@@ -177,13 +225,15 @@ def test_excel_write_row_formatted_dictdata_applies_formatting(
         workbook = load_workbook(Path(temp_dir) / 'row_formatted.xlsx')
         worksheet = workbook.active
         assert isinstance(worksheet, Worksheet)
-        assert worksheet.auto_filter.ref == 'A1:B3'
+        assert [table.ref for table in worksheet.tables.values()] == [
+            'A1:B3'
+        ]
         assert worksheet['A2'].font.bold is True
         assert worksheet['B2'].font.bold is True
-        assert worksheet['A2'].fill.fgColor.rgb == 'FF00FF00'
+        assert worksheet['A2'].fill.fgColor.rgb == 'FFC6EFCE'
         assert worksheet['A3'].font.italic is True
         assert worksheet['B3'].font.italic is True
-        assert worksheet['A3'].fill.fgColor.rgb == 'FFFF0000'
+        assert worksheet['A3'].fill.fgColor.rgb == 'FFFFC7CE'
         workbook.close()
     check_capsys(capsys)
 
