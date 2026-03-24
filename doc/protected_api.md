@@ -327,6 +327,9 @@
     * [\_next\_table\_name](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._next_table_name)
     * [\_normalize\_filtered\_table\_header](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._normalize_filtered_table_header)
     * [\_write\_filtered\_data\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_filtered_data_range)
+    * [\_column\_width\_text](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._column_width_text)
+    * [\_table\_column\_width](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_column_width)
+    * [\_update\_table\_column\_widths](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_table_column_widths)
     * [\_write\_start](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_start)
     * [\_update\_write\_position](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_write_position)
     * [\_write\_grid](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_grid)
@@ -5304,6 +5307,39 @@ def _write_filtered_data_range(bounds: tuple[int, int, int, int]) -> None
 ```
 
 Add a lightweight Excel table for one filtered data range.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._column_width_text"></a>
+
+#### \_column\_width\_text
+
+```python
+@staticmethod
+def _column_width_text(value: object) -> str
+```
+
+Return the text used to estimate a readable column width.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_column_width"></a>
+
+#### \_table\_column\_width
+
+```python
+def _table_column_width(worksheet: Worksheet, top: int, bottom: int,
+                        column: int) -> float
+```
+
+Return a width target for one table column.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_table_column_widths"></a>
+
+#### \_update\_table\_column\_widths
+
+```python
+def _update_table_column_widths(top: int, left: int, bottom: int,
+                                right: int) -> None
+```
+
+Widen worksheet columns to fit the written table content.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_start"></a>
 

@@ -38,6 +38,8 @@ _HIGHLIGHT_RGB: dict[Color, str] = {
 }
 
 _FILTER_TABLE_PREFIX = 'TableIOData'
+_COLUMN_WIDTH_PADDING = 2
+_MAX_COLUMN_WIDTH = 50
 
 
 class _ScanResult(NamedTuple):
@@ -475,6 +477,37 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
                                                            bounds[2],
                                                            bounds[3])))
 
+    @staticmethod
+    def _column_width_text(value: object) -> str:
+        """Return the text used to estimate a readable column width."""
+        if value is None:
+            return ''
+        return str(value)
+
+    def _table_column_width(self, worksheet: Worksheet, top: int,
+                            bottom: int, column: int) -> float:
+        """Return a width target for one table column."""
+        max_length = 0
+        for row in range(top, bottom):
+            value = worksheet.cell(row=row + 1, column=column + 1).value
+            max_length = max(max_length,
+                             len(self._column_width_text(value)))
+        return float(min(_MAX_COLUMN_WIDTH,
+                         max_length + _COLUMN_WIDTH_PADDING))
+
+    def _update_table_column_widths(self, top: int, left: int,
+                                    bottom: int, right: int) -> None:
+        """Widen worksheet columns to fit the written table content."""
+        assert self.worksheet is not None
+        for column in range(left, right):
+            column_letter = get_column_letter(column + 1)
+            column_dimension = self.worksheet.column_dimensions[column_letter]
+            target_width = self._table_column_width(self.worksheet, top,
+                                                    bottom, column)
+            if column_dimension.width is None or \
+                    target_width > column_dimension.width:
+                column_dimension.width = target_width
+
     def _write_start(self, box: Optional[Box]) -> tuple[int, int]:
         """Return the start position for a write operation."""
         if box is not None:
@@ -525,6 +558,8 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         if filtered_data_range:
             self._write_filtered_data_range((start_row, start_column,
                                              write_bottom, write_right))
+        self._update_table_column_widths(start_row, start_column,
+                                         write_bottom, write_right)
         next_row = max(self.write_row, clear_bottom + 1)
         self._update_write_position(next_row)
         return Position(row=start_row + row_count - 1,

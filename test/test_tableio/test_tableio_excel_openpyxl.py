@@ -161,6 +161,27 @@ def test_excel_write_formatted_listdata_applies_formatting_and_filter(
     check_capsys(capsys)
 
 
+def test_excel_table_width_uses_table_content_not_heading(
+        capsys: CaptureFixture[str]) -> None:
+    """Table column widths ignore headings written outside table cells."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'table_width_heading'
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_heading('Heading text that is much wider than '
+                                   'column A needs')
+            table_io.write_table_listdata([
+                ['id', 'report date'],
+                ['A', datetime(2026, 3, 24, 14, 30, 0)]
+            ])
+        workbook = load_workbook(Path(temp_dir) / 'table_width_heading.xlsx')
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert worksheet.column_dimensions['A'].width == 13.0
+        assert worksheet.column_dimensions['B'].width == 21.0
+        workbook.close()
+    check_capsys(capsys)
+
+
 def test_excel_write_multiple_filtered_ranges_keeps_all_tables(
         capsys: CaptureFixture[str]) -> None:
     """Sequential filtered writes are kept as separate worksheet tables."""
@@ -182,6 +203,30 @@ def test_excel_write_multiple_filtered_ranges_keeps_all_tables(
             'A1:B2',
             'A4:B5'
         ]
+        workbook.close()
+    check_capsys(capsys)
+
+
+def test_excel_table_width_is_widen_only_with_cap(
+        capsys: CaptureFixture[str]) -> None:
+    """Box rewrites keep an already widened column width."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'table_width_cap'
+        box = Box(top=0, left=0, bottom=2, right=1)
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata([
+                ['text'],
+                ['x' * 80]
+            ], box=box)
+            table_io.write_table_listdata([
+                ['text'],
+                ['y']
+            ], box=box)
+        workbook = load_workbook(Path(temp_dir) / 'table_width_cap.xlsx')
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert worksheet['A2'].value == 'y'
+        assert worksheet.column_dimensions['A'].width == 50.0
         workbook.close()
     check_capsys(capsys)
 
