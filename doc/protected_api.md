@@ -23,6 +23,8 @@
     * [\_\_enter\_\_](#tableio.tableio.TableIO.__enter__)
     * [\_\_exit\_\_](#tableio.tableio.TableIO.__exit__)
     * [write\_heading](#tableio.tableio.TableIO.write_heading)
+    * [ImplMetaForWrite](#tableio.tableio.TableIO.ImplMetaForWrite)
+    * [ImplMetaForDictWrite](#tableio.tableio.TableIO.ImplMetaForDictWrite)
     * [write\_table\_listdata](#tableio.tableio.TableIO.write_table_listdata)
     * [write\_table\_fmtlistdata](#tableio.tableio.TableIO.write_table_fmtlistdata)
     * [write\_table\_dictdata](#tableio.tableio.TableIO.write_table_dictdata)
@@ -623,6 +625,56 @@ with the names of the columns.
 
   The position of the last cell written.
 
+<a id="tableio.tableio.TableIO.ImplMetaForWrite"></a>
+
+## ImplMetaForWrite Objects
+
+```python
+class ImplMetaForWrite(NamedTuple)
+```
+
+Meta data for writing table to pass to implementation.
+
+<a id="tableio.tableio.TableIO.ImplMetaForWrite.filtered_data_range"></a>
+
+#### filtered\_data\_range
+
+If True, data will be written as a range that can be filtered.
+
+<a id="tableio.tableio.TableIO.ImplMetaForWrite.box"></a>
+
+#### box
+
+The box to write the data into.
+
+<a id="tableio.tableio.TableIO.ImplMetaForDictWrite"></a>
+
+## ImplMetaForDictWrite Objects
+
+```python
+class ImplMetaForDictWrite(NamedTuple)
+```
+
+Meta data for writing dict table to pass to implementation.
+
+<a id="tableio.tableio.TableIO.ImplMetaForDictWrite.common_impl"></a>
+
+#### common\_impl
+
+Common meta data for writing dict/list to pass to implementation.
+
+<a id="tableio.tableio.TableIO.ImplMetaForDictWrite.column_order"></a>
+
+#### column\_order
+
+The order of the columns.
+
+<a id="tableio.tableio.TableIO.ImplMetaForDictWrite.first_row_format"></a>
+
+#### first\_row\_format
+
+The format specification for the first row.
+
 <a id="tableio.tableio.TableIO.write_table_listdata"></a>
 
 #### write\_table\_listdata
@@ -696,6 +748,7 @@ The data must fit into the box.
 ```python
 def write_table_dictdata(data: DictDataMap[CellT],
                          column_order: list[str],
+                         first_row_format: Optional[Fmt] = None,
                          missing_ok: bool = False,
                          extra_ok: bool = False,
                          filtered_data_range: bool = False,
@@ -712,6 +765,11 @@ The data must fit into the box.
 
 - `data` - The dict data to write.
 - `column_order` - The order of the columns.
+- `first_row_format` - The format specification for the first row.
+  The table will get a first row with the names
+  of the columns. This format specification will
+  be applied to the first row. If None, no format
+  will be applied to the first row.
 - `missing_ok` - If True, None is inserted for missing column data.
   If False, an exception is raised.
 - `extra_ok` - If True, data for extra columns are ignored.
@@ -742,6 +800,7 @@ The data must fit into the box.
 ```python
 def write_table_fmtdictdata(data: FmtDictData,
                             column_order: list[str],
+                            first_row_format: Optional[Fmt] = None,
                             missing_ok: bool = False,
                             extra_ok: bool = False,
                             filtered_data_range: bool = False,
@@ -758,6 +817,11 @@ The data must fit into the box.
 
 - `data` - The dict data to write.
 - `column_order` - The order of the columns.
+- `first_row_format` - The format specification for the first row.
+  The table will get a first row with the names
+  of the columns. This format specification will
+  be applied to the first row. If None, no format
+  will be applied to the first row.
 - `missing_ok` - If True, None is inserted for missing column data.
   If False, an exception is raised.
 - `extra_ok` - If True, data for extra columns are ignored.
@@ -1073,8 +1137,7 @@ with the names of the columns.
 
 ```python
 def _write_table_listdata(data: ListDataSeq[CellT],
-                          filtered_data_range: bool = False,
-                          box: Optional[Box] = None) -> Position
+                          impl_meta: ImplMetaForWrite) -> Position
 ```
 
 Write a table of list data to the file.
@@ -1082,9 +1145,8 @@ Write a table of list data to the file.
 **Arguments**:
 
 - `data` - The list data to write.
-- `filtered_data_range` - If True, the data written will be
-  marked as a data range that can be filtered.
-- `box` - The box to write the data into.
+- `impl_meta` - The meta data for the table write operation,
+  passed to the implementation class.
 
 **Returns**:
 
@@ -1096,8 +1158,7 @@ Write a table of list data to the file.
 
 ```python
 def _write_table_fmtlistdata(data: FmtListData,
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position
+                             impl_meta: ImplMetaForWrite) -> Position
 ```
 
 Write a table of list data to the file.
@@ -1105,9 +1166,8 @@ Write a table of list data to the file.
 **Arguments**:
 
 - `data` - The list data to write.
-- `filtered_data_range` - If True, the data written will be
-  marked as a data range that can be filtered.
-- `box` - The box to write the data into.
+- `impl_meta` - The meta data for the table write operation,
+  passed to the implementation class.
 
 **Returns**:
 
@@ -1119,9 +1179,7 @@ Write a table of list data to the file.
 
 ```python
 def _write_table_dictdata(data: DictDataMap[CellT],
-                          column_order: list[str],
-                          filtered_data_range: bool = False,
-                          box: Optional[Box] = None) -> Position
+                          impl_meta: ImplMetaForDictWrite) -> Position
 ```
 
 Write a table of dict data to the file.
@@ -1129,10 +1187,8 @@ Write a table of dict data to the file.
 **Arguments**:
 
 - `data` - The dict data to write.
-- `column_order` - The order of the columns.
-- `filtered_data_range` - If True, the data written will be
-  marked as a data range that can be filtered.
-- `box` - The box to write the data into.
+- `impl_meta` - The meta data for the dict table write operation,
+  passed to the implementation class.
 
 **Returns**:
 
@@ -1144,9 +1200,7 @@ Write a table of dict data to the file.
 
 ```python
 def _write_table_fmtdictdata(data: FmtDictData,
-                             column_order: list[str],
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position
+                             impl_meta: ImplMetaForDictWrite) -> Position
 ```
 
 Write a table of dict data to the file.
@@ -1154,10 +1208,8 @@ Write a table of dict data to the file.
 **Arguments**:
 
 - `data` - The dict data to write.
-- `column_order` - The order of the columns.
-- `filtered_data_range` - If True, the data written will be
-  marked as a data range that can be filtered.
-- `box` - The box to write the data into.
+- `impl_meta` - The meta data for the dict table write operation,
+  passed to the implementation class.
 
 **Returns**:
 
@@ -4220,8 +4272,7 @@ empty line.
 
 ```python
 def _write_table_listdata(data: ListDataSeq[CellT],
-                          filtered_data_range: bool = False,
-                          box: Optional[Box] = None) -> Position
+                          impl_meta: TableIO.ImplMetaForWrite) -> Position
 ```
 
 Write a table of list data to the file.
@@ -4232,8 +4283,7 @@ CSV does not support the box, nor formatting, nor filtered data range.
 **Arguments**:
 
 - `data` - The list data to write.
-- `filtered_data_range` - Ignored in CSV.
-- `box` - Not allowed in CSV.
+- `impl_meta` - The implementation meta data.
 
 **Raises**:
 
@@ -4249,8 +4299,7 @@ CSV does not support the box, nor formatting, nor filtered data range.
 
 ```python
 def _write_table_fmtlistdata(data: FmtListData,
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position
+                             impl_meta: TableIO.ImplMetaForWrite) -> Position
 ```
 
 Write a table of list data to the file.
@@ -4261,16 +4310,15 @@ CSV does not support the box, nor formatting, nor filtered data range.
 **Arguments**:
 
 - `data` - The list data to write.
-- `filtered_data_range` - Ignored in CSV.
-- `box` - Not allowed in CSV.
+- `impl_meta` - The implementation meta data.
 
 **Raises**:
 
-- `CapabilityNotSupported` - If box is provided.
+- `CapabilityNotSupported` - If impl_meta.box is provided.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Not reliable.
 
 <a id="tableio.tableio_csv.TableIOCsv._write_table_dictdata"></a>
 
@@ -4278,9 +4326,7 @@ CSV does not support the box, nor formatting, nor filtered data range.
 
 ```python
 def _write_table_dictdata(data: DictDataMap[CellT],
-                          column_order: list[str],
-                          filtered_data_range: bool = False,
-                          box: Optional[Box] = None) -> Position
+                          impl_meta: TableIO.ImplMetaForDictWrite) -> Position
 ```
 
 Write a table of dict data to the file.
@@ -4291,13 +4337,11 @@ CSV does not support the box, nor formatting, nor filtered data range.
 **Arguments**:
 
 - `data` - The dict data to write.
-- `column_order` - The order of the columns.
-- `filtered_data_range` - Ignored in CSV.
-- `box` - Not allowed in CSV.
+- `impl_meta` - The implementation meta data.
 
 **Raises**:
 
-- `CapabilityNotSupported` - If box is provided.
+- `CapabilityNotSupported` - If impl_meta.common_impl.box is provided.
 
 **Returns**:
 
@@ -4308,10 +4352,9 @@ CSV does not support the box, nor formatting, nor filtered data range.
 #### \_write\_table\_fmtdictdata
 
 ```python
-def _write_table_fmtdictdata(data: FmtDictData,
-                             column_order: list[str],
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position
+def _write_table_fmtdictdata(
+        data: FmtDictData,
+        impl_meta: TableIO.ImplMetaForDictWrite) -> Position
 ```
 
 Write a table of dict data to the file.
@@ -4322,13 +4365,11 @@ CSV does not support the box, nor formatting, nor filtered data range.
 **Arguments**:
 
 - `data` - The dict data to write.
-- `column_order` - The order of the columns.
-- `filtered_data_range` - Ignored in CSV.
-- `box` - Not allowed in CSV.
+- `impl_meta` - The implementation meta data.
 
 **Raises**:
 
-- `CapabilityNotSupported` - If box is provided.
+- `CapabilityNotSupported` - If impl_meta.common_impl.box is provided.
 
 **Returns**:
 
@@ -4640,21 +4681,19 @@ Write a heading to the file. Headings are a line between tables.
 
 ```python
 def _write_table_listdata(data: ListDataSeq[CellT],
-                          filtered_data_range: bool = False,
-                          box: Optional[Box] = None) -> Position
+                          impl_meta: TableIO.ImplMetaForWrite) -> Position
 ```
 
 Write a table of list data to the file.
 
 Write a table of list data to the file.
-Box is not supported for this class.
-filtered_data_range is ignored for this class.
+impl_meta.box is not supported for this class.
+impl_meta.filtered_data_range is ignored for this class.
 
 **Arguments**:
 
 - `data` - The list data to write.
-- `filtered_data_range` - Ignored for this class.
-- `box` - The box to write the data into. Not supported for this class.
+- `impl_meta` - The implementation meta data.
 
 **Returns**:
 
@@ -4666,21 +4705,19 @@ filtered_data_range is ignored for this class.
 
 ```python
 def _write_table_fmtlistdata(data: FmtListData,
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position
+                             impl_meta: TableIO.ImplMetaForWrite) -> Position
 ```
 
 Write a table of formatted list data to the file.
 
 Write a table of formatted list data to the file.
-Box is not supported for this class.
-filtered_data_range is ignored for this class.
+impl_meta.box is not supported for this class.
+impl_meta.filtered_data_range is ignored for this class.
 
 **Arguments**:
 
 - `data` - The formatted list data to write.
-- `filtered_data_range` - Ignored for this class.
-- `box` - The box to write the data into. Not supported for this class.
+- `impl_meta` - The implementation meta data.
 
 **Returns**:
 
@@ -4692,23 +4729,19 @@ filtered_data_range is ignored for this class.
 
 ```python
 def _write_table_dictdata(data: DictDataMap[CellT],
-                          column_order: list[str],
-                          filtered_data_range: bool = False,
-                          box: Optional[Box] = None) -> Position
+                          impl_meta: TableIO.ImplMetaForDictWrite) -> Position
 ```
 
 Write a table of dict data to the file.
 
 Write a table of dict data to the file.
-Box is not supported for this class.
-filtered_data_range is ignored for this class.
+impl_meta.common_impl.box is not supported for this class.
+impl_meta.common_impl.filtered_data_range is ignored for this class.
 
 **Arguments**:
 
 - `data` - The dict data to write.
-- `column_order` - The order of the columns.
-- `filtered_data_range` - Ignored for this class.
-- `box` - The box to write the data into. Not supported for this class.
+- `impl_meta` - The implementation meta data.
 
 **Returns**:
 
@@ -4719,26 +4752,23 @@ filtered_data_range is ignored for this class.
 #### \_write\_table\_fmtdictdata
 
 ```python
-def _write_table_fmtdictdata(data: FmtDictData,
-                             column_order: list[str],
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position
+def _write_table_fmtdictdata(
+        data: FmtDictData,
+        impl_meta: TableIO.ImplMetaForDictWrite) -> Position
 ```
 
 Write a table of formatted dict data to the file.
 
 Write a table of formatted dict data to the file.
-Box is not supported for this class.
-filtered_data_range is ignored for this class.
+impl_meta.box is not supported for this class.
+impl_meta.filtered_data_range is ignored for this class.
 The dict data is converted to list data with column_order
 as the header row, then written via _write_table_fmtlistdata.
 
 **Arguments**:
 
 - `data` - The formatted dict data to write.
-- `column_order` - The order of the columns.
-- `filtered_data_range` - Ignored for this class.
-- `box` - The box to write the data into. Not supported for this class.
+- `impl_meta` - The implementation meta data.
 
 **Returns**:
 
@@ -5324,8 +5354,7 @@ Write a heading to the active worksheet.
 
 ```python
 def _write_table_listdata(data: ListDataSeq[CellT],
-                          filtered_data_range: bool = False,
-                          box: Optional[Box] = None) -> Position
+                          impl_meta: TableIO.ImplMetaForWrite) -> Position
 ```
 
 Write list data to the active worksheet.
@@ -5336,8 +5365,7 @@ Write list data to the active worksheet.
 
 ```python
 def _write_table_fmtlistdata(data: FmtListData,
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position
+                             impl_meta: TableIO.ImplMetaForWrite) -> Position
 ```
 
 Write row-formatted list data to the active worksheet.
@@ -5348,9 +5376,7 @@ Write row-formatted list data to the active worksheet.
 
 ```python
 def _write_table_dictdata(data: DictDataMap[CellT],
-                          column_order: list[str],
-                          filtered_data_range: bool = False,
-                          box: Optional[Box] = None) -> Position
+                          impl_meta: TableIO.ImplMetaForDictWrite) -> Position
 ```
 
 Write dict data to the active worksheet.
@@ -5360,10 +5386,9 @@ Write dict data to the active worksheet.
 #### \_write\_table\_fmtdictdata
 
 ```python
-def _write_table_fmtdictdata(data: FmtDictData,
-                             column_order: list[str],
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position
+def _write_table_fmtdictdata(
+        data: FmtDictData,
+        impl_meta: TableIO.ImplMetaForDictWrite) -> Position
 ```
 
 Write row-formatted dict data to the active worksheet.

@@ -327,6 +327,27 @@ def test_md_write_dictdata(
     check_capsys(capsys)
 
 
+def test_md_write_dictdata_applies_first_row_format(
+        capsys: CaptureFixture[str]) -> None:
+    """Markdown dict writes apply first_row_format to column names."""
+    data: list[dict[str, Value]] = [
+        {'name': 'Alice', 'age': '30'}
+    ]
+    with TemporaryDirectory() as td:
+        path = Path(td) / 'test'
+        with TableIOMformatMd(
+                path, FileAccess.CREATE, None) as w:
+            w.write_table_dictdata(
+                data, ['name', 'age'],
+                first_row_format=Fmt(bold=True))
+        content = (Path(td) / 'test.md').read_text(
+            encoding='utf-8')
+        assert '**name**' in content
+        assert '**age**' in content
+        assert 'Alice' in content
+    check_capsys(capsys)
+
+
 def test_md_write_fmtdictdata(
         capsys: CaptureFixture[str]) -> None:
     """Test Markdown output with formatted dict data."""

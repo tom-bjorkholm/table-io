@@ -148,40 +148,37 @@ class TableIOMformatBased(TableIO):
         return Position(row=self.position_row, column=self.position_column)
 
     def _write_table_listdata(self, data: ListDataSeq[CellT],
-                              filtered_data_range: bool = False,
-                              box: Optional[Box] = None) -> Position:
+                              impl_meta: TableIO.ImplMetaForWrite) -> Position:
         """Write a table of list data to the file.
 
         Write a table of list data to the file.
-        Box is not supported for this class.
-        filtered_data_range is ignored for this class.
+        impl_meta.box is not supported for this class.
+        impl_meta.filtered_data_range is ignored for this class.
         Args:
             data: The list data to write.
-            filtered_data_range: Ignored for this class.
-            box: The box to write the data into. Not supported for this class.
+            impl_meta: The implementation meta data.
         Returns:
             The position of the last cell written. Not reliable.
         """
         row_fmt = row_fmt_from_cell_fmt_list(data)
-        return self._write_table_fmtlistdata(
-            data=row_fmt, filtered_data_range=filtered_data_range, box=box)
+        return self._write_table_fmtlistdata(data=row_fmt,
+                                             impl_meta=impl_meta)
 
     def _write_table_fmtlistdata(self, data: FmtListData,
-                                 filtered_data_range: bool = False,
-                                 box: Optional[Box] = None) -> Position:
+                                 impl_meta: TableIO.ImplMetaForWrite) \
+            -> Position:
         """Write a table of formatted list data to the file.
 
         Write a table of formatted list data to the file.
-        Box is not supported for this class.
-        filtered_data_range is ignored for this class.
+        impl_meta.box is not supported for this class.
+        impl_meta.filtered_data_range is ignored for this class.
         Args:
             data: The formatted list data to write.
-            filtered_data_range: Ignored for this class.
-            box: The box to write the data into. Not supported for this class.
+            impl_meta: The implementation meta data.
         Returns:
             The position of the last cell written. Not reliable.
         """
-        if box is not None:
+        if impl_meta.box is not None:
             msg = 'Box is not supported for this class.'
             raise CapabilityNotSupported(msg)
         assert self.mformat is not None
@@ -199,58 +196,56 @@ class TableIOMformatBased(TableIO):
         return Position(row=self.position_row, column=self.position_column)
 
     def _write_table_dictdata(self, data: DictDataMap[CellT],
-                              column_order: list[str],
-                              filtered_data_range: bool = False,
-                              box: Optional[Box] = None) -> Position:
+                              impl_meta: TableIO.ImplMetaForDictWrite) \
+            -> Position:
         """Write a table of dict data to the file.
 
         Write a table of dict data to the file.
-        Box is not supported for this class.
-        filtered_data_range is ignored for this class.
+        impl_meta.common_impl.box is not supported for this class.
+        impl_meta.common_impl.filtered_data_range is ignored for this class.
         Args:
             data: The dict data to write.
-            column_order: The order of the columns.
-            filtered_data_range: Ignored for this class.
-            box: The box to write the data into. Not supported for this class.
+            impl_meta: The implementation meta data.
         Returns:
             The position of the last cell written. Not reliable.
         """
         row_fmt = row_fmt_from_cell_fmt_dict(data)
         return self._write_table_fmtdictdata(
-            data=row_fmt, column_order=column_order,
-            filtered_data_range=filtered_data_range, box=box)
+            data=row_fmt, impl_meta=impl_meta)
 
     def _write_table_fmtdictdata(self, data: FmtDictData,
-                                 column_order: list[str],
-                                 filtered_data_range: bool = False,
-                                 box: Optional[Box] = None) -> Position:
+                                 impl_meta: TableIO.ImplMetaForDictWrite) \
+            -> Position:
         """Write a table of formatted dict data to the file.
 
         Write a table of formatted dict data to the file.
-        Box is not supported for this class.
-        filtered_data_range is ignored for this class.
+        impl_meta.box is not supported for this class.
+        impl_meta.filtered_data_range is ignored for this class.
         The dict data is converted to list data with column_order
         as the header row, then written via _write_table_fmtlistdata.
         Args:
             data: The formatted dict data to write.
-            column_order: The order of the columns.
-            filtered_data_range: Ignored for this class.
-            box: The box to write the data into. Not supported for this class.
+            impl_meta: The implementation meta data.
         Returns:
             The position of the last cell written. Not reliable.
         """
-        if box is not None:
+        if impl_meta.common_impl.box is not None:
             msg = 'Box is not supported for this class.'
             raise CapabilityNotSupported(msg)
-        header = FmtListRow(values=list(column_order), fmt=Fmt())
+        header_fmt = impl_meta.first_row_format
+        if header_fmt is None:
+            header_fmt = Fmt()
+        header = FmtListRow(values=list(impl_meta.column_order),
+                            fmt=header_fmt)
         list_data: list[FmtListRow] = [header]
         for row in data:
             values: list[Value] = [row.values[key]
-                                   for key in column_order]
+                                   for key in
+                                   impl_meta.column_order]
             list_data.append(
                 FmtListRow(values=values, fmt=row.fmt))
         return self._write_table_fmtlistdata(
-            data=list_data, filtered_data_range=filtered_data_range, box=box)
+            data=list_data, impl_meta=impl_meta.common_impl)
 
     def _read_table_listdata(self, box: Optional[Box] = None) \
             -> ReadResult[ListData[Value]]:

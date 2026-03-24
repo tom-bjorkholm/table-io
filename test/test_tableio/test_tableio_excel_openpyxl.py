@@ -238,6 +238,61 @@ def test_excel_write_row_formatted_dictdata_applies_formatting(
     check_capsys(capsys)
 
 
+def test_excel_write_dictdata_applies_first_row_format(
+        capsys: CaptureFixture[str]) -> None:
+    """Dict header cells can be formatted with first_row_format."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'dict_header_fmt'
+        data: list[dict[str, Value]] = [
+            {'name': 'Alice', 'active': True}
+        ]
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_dictdata(
+                data=data,
+                column_order=['name', 'active'],
+                first_row_format=Fmt(bold=True, highlight=Color.YELLOW))
+        workbook = load_workbook(Path(temp_dir) / 'dict_header_fmt.xlsx')
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert worksheet['A1'].value == 'name'
+        assert worksheet['B1'].value == 'active'
+        assert worksheet['A1'].font.bold is True
+        assert worksheet['B1'].font.bold is True
+        assert worksheet['A1'].fill.fgColor.rgb == 'FFFFFF00'
+        assert worksheet['B1'].fill.fgColor.rgb == 'FFFFFF00'
+        assert worksheet['A2'].font.bold is False
+        assert worksheet['B2'].font.bold is False
+        workbook.close()
+    check_capsys(capsys)
+
+
+def test_excel_write_fmtdictdata_applies_first_row_format(
+        capsys: CaptureFixture[str]) -> None:
+    """Formatted dict writes keep header and data-row formatting separate."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'fmtdict_header_fmt'
+        data = [
+            FmtDictRow(values={'name': 'Alice', 'active': True},
+                       fmt=Fmt(italic=True, highlight=Color.GREEN))
+        ]
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_fmtdictdata(
+                data=data,
+                column_order=['name', 'active'],
+                first_row_format=Fmt(bold=True))
+        workbook = load_workbook(Path(temp_dir) / 'fmtdict_header_fmt.xlsx')
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        assert worksheet['A1'].font.bold is True
+        assert worksheet['B1'].font.bold is True
+        assert worksheet['A2'].font.italic is True
+        assert worksheet['B2'].font.italic is True
+        assert worksheet['A2'].fill.fgColor.rgb == 'FFC6EFCE'
+        assert worksheet['B2'].fill.fgColor.rgb == 'FFC6EFCE'
+        workbook.close()
+    check_capsys(capsys)
+
+
 def test_excel_read_formula_uses_cached_value(
         capsys: CaptureFixture[str]) -> None:
     """A formula cell is read as its cached value."""

@@ -12,7 +12,7 @@ from mformat.mformat import PathLike
 from tableio.capability import Capabilities, SingleCapability, Strictness, \
     CapabilityNotSupported
 from tableio.value_type import CellT, ListDataSeq, DictDataMap, \
-    normalize_dict_data, ReadResult, ListData, Value, DictData, \
+    normalize_dict_data, ReadResult, ListData, Value, Fmt, DictData, \
     FmtListData, FmtDictData, FmtDictRow, row_strip_format_list, \
     row_strip_format_dict
 
@@ -243,6 +243,24 @@ class TableIO:
         self.heading_written = True
         return self._write_heading(heading, level)
 
+    class ImplMetaForWrite(NamedTuple):
+        """Meta data for writing table to pass to implementation."""
+
+        filtered_data_range: bool
+        """If True, data will be written as a range that can be filtered."""
+        box: Optional[Box]
+        """The box to write the data into."""
+
+    class ImplMetaForDictWrite(NamedTuple):
+        """Meta data for writing dict table to pass to implementation."""
+
+        common_impl: 'TableIO.ImplMetaForWrite'
+        """Common meta data for writing dict/list to pass to implementation."""
+        column_order: list[str]
+        """The order of the columns."""
+        first_row_format: Optional[Fmt]
+        """The format specification for the first row."""
+
     def write_table_listdata(self, data: ListDataSeq[CellT],
                              filtered_data_range: bool = False,
                              box: Optional[Box] = None) -> Position:
@@ -266,9 +284,10 @@ class TableIO:
         self._check_listdimensions(data, box)
         c_box = self._check_box_write(box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
-        return self._write_table_listdata(data=data,
-                                          filtered_data_range=c_filt_range,
-                                          box=c_box)
+        impl_meta: TableIO.ImplMetaForWrite = \
+            TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
+                                     box=c_box)
+        return self._write_table_listdata(data=data, impl_meta=impl_meta)
 
     def write_table_fmtlistdata(self, data: FmtListData,
                                 filtered_data_range: bool = False,
@@ -293,13 +312,15 @@ class TableIO:
         self._check_listdimensions(row_strip_format_list(data), box)
         c_box = self._check_box_write(box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
-        return self._write_table_fmtlistdata(data=data,
-                                             filtered_data_range=c_filt_range,
-                                             box=c_box)
+        impl_meta: TableIO.ImplMetaForWrite = \
+            TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
+                                     box=c_box)
+        return self._write_table_fmtlistdata(data=data, impl_meta=impl_meta)
 
     def write_table_dictdata(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                              data: DictDataMap[CellT],
                              column_order: list[str],
+                             first_row_format: Optional[Fmt] = None,
                              missing_ok: bool = False,
                              extra_ok: bool = False,
                              filtered_data_range: bool = False,
@@ -312,6 +333,11 @@ class TableIO:
         Args:
             data: The dict data to write.
             column_order: The order of the columns.
+            first_row_format: The format specification for the first row.
+                              The table will get a first row with the names
+                              of the columns. This format specification will
+                              be applied to the first row. If None, no format
+                              will be applied to the first row.
             missing_ok: If True, None is inserted for missing column data.
                         If False, an exception is raised.
             extra_ok: If True, data for extra columns are ignored.
@@ -335,14 +361,19 @@ class TableIO:
         self._check_dictdimensions(ndata, box)
         c_box = self._check_box_write(box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
-        return self._write_table_dictdata(data=ndata,
-                                          column_order=column_order,
-                                          filtered_data_range=c_filt_range,
-                                          box=c_box)
+        common_impl: TableIO.ImplMetaForWrite = \
+            TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
+                                     box=c_box)
+        impl_meta: TableIO.ImplMetaForDictWrite = \
+            TableIO.ImplMetaForDictWrite(common_impl=common_impl,
+                                         column_order=column_order,
+                                         first_row_format=first_row_format)
+        return self._write_table_dictdata(data=ndata, impl_meta=impl_meta)
 
     def write_table_fmtdictdata(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                                 data: FmtDictData,
                                 column_order: list[str],
+                                first_row_format: Optional[Fmt] = None,
                                 missing_ok: bool = False,
                                 extra_ok: bool = False,
                                 filtered_data_range: bool = False,
@@ -355,6 +386,11 @@ class TableIO:
         Args:
             data: The dict data to write.
             column_order: The order of the columns.
+            first_row_format: The format specification for the first row.
+                              The table will get a first row with the names
+                              of the columns. This format specification will
+                              be applied to the first row. If None, no format
+                              will be applied to the first row.
             missing_ok: If True, None is inserted for missing column data.
                         If False, an exception is raised.
             extra_ok: If True, data for extra columns are ignored.
@@ -387,10 +423,15 @@ class TableIO:
                                            strict=True)]
         c_box = self._check_box_write(box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
+        common_impl: TableIO.ImplMetaForWrite = \
+            TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
+                                     box=c_box)
+        impl_meta: TableIO.ImplMetaForDictWrite = \
+            TableIO.ImplMetaForDictWrite(common_impl=common_impl,
+                                         column_order=column_order,
+                                         first_row_format=first_row_format)
         return self._write_table_fmtdictdata(data=normalized_data,
-                                             column_order=column_order,
-                                             filtered_data_range=c_filt_range,
-                                             box=c_box)
+                                             impl_meta=impl_meta)
 
     def read_table_listdata(self, box: Optional[Box] = None) \
             -> ReadResult[ListData[Value]]:
@@ -635,84 +676,66 @@ class TableIO:
         raise NotImplementedError(err)
 
     def _write_table_listdata(self, data: ListDataSeq[CellT],
-                              filtered_data_range: bool = False,
-                              box: Optional[Box] = None) -> Position:
+                              impl_meta: ImplMetaForWrite) -> Position:
         """Write a table of list data to the file.
 
         Args:
             data: The list data to write.
-            filtered_data_range: If True, the data written will be
-                                 marked as a data range that can be filtered.
-            box: The box to write the data into.
+            impl_meta: The meta data for the table write operation,
+                       passed to the implementation class.
         Returns:
             The position of the last cell written.
         """
         _ = data  # avoid unused variable warning
-        _ = filtered_data_range  # avoid unused variable warning
-        _ = box  # avoid unused variable warning
+        _ = impl_meta  # avoid unused variable warning
         err = 'Subclass must implement _write_table_listdata method'
         raise NotImplementedError(err)
 
     def _write_table_fmtlistdata(self, data: FmtListData,
-                                 filtered_data_range: bool = False,
-                                 box: Optional[Box] = None) -> Position:
+                                 impl_meta: ImplMetaForWrite) -> Position:
         """Write a table of list data to the file.
 
         Args:
             data: The list data to write.
-            filtered_data_range: If True, the data written will be
-                                 marked as a data range that can be filtered.
-            box: The box to write the data into.
+            impl_meta: The meta data for the table write operation,
+                       passed to the implementation class.
         Returns:
             The position of the last cell written.
         """
         _ = data  # avoid unused variable warning
-        _ = filtered_data_range  # avoid unused variable warning
-        _ = box  # avoid unused variable warning
+        _ = impl_meta  # avoid unused variable warning
         err = 'Subclass must implement _write_table_fmtlistdata method'
         raise NotImplementedError(err)
 
     def _write_table_dictdata(self, data: DictDataMap[CellT],
-                              column_order: list[str],
-                              filtered_data_range: bool = False,
-                              box: Optional[Box] = None) -> Position:
+                              impl_meta: ImplMetaForDictWrite) -> Position:
         """Write a table of dict data to the file.
 
         Args:
             data: The dict data to write.
-            column_order: The order of the columns.
-            filtered_data_range: If True, the data written will be
-                                 marked as a data range that can be filtered.
-            box: The box to write the data into.
+            impl_meta: The meta data for the dict table write operation,
+                       passed to the implementation class.
         Returns:
             The position of the last cell written.
         """
         _ = data  # avoid unused variable warning
-        _ = column_order  # avoid unused variable warning
-        _ = filtered_data_range  # avoid unused variable warning
-        _ = box  # avoid unused variable warning
+        _ = impl_meta  # avoid unused variable warning
         err = 'Subclass must implement _write_table_dictdata method'
         raise NotImplementedError(err)
 
     def _write_table_fmtdictdata(self, data: FmtDictData,
-                                 column_order: list[str],
-                                 filtered_data_range: bool = False,
-                                 box: Optional[Box] = None) -> Position:
+                                 impl_meta: ImplMetaForDictWrite) -> Position:
         """Write a table of dict data to the file.
 
         Args:
             data: The dict data to write.
-            column_order: The order of the columns.
-            filtered_data_range: If True, the data written will be
-                                 marked as a data range that can be filtered.
-            box: The box to write the data into.
+            impl_meta: The meta data for the dict table write operation,
+                       passed to the implementation class.
         Returns:
             The position of the last cell written.
         """
         _ = data  # avoid unused variable warning
-        _ = column_order  # avoid unused variable warning
-        _ = filtered_data_range  # avoid unused variable warning
-        _ = box  # avoid unused variable warning
+        _ = impl_meta  # avoid unused variable warning
         err = 'Subclass must implement _write_table_fmtdictdata method'
         raise NotImplementedError(err)
 

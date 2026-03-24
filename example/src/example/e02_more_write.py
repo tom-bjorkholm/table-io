@@ -90,7 +90,8 @@ def e02_more_write(format_name: str, output_file_name: str,
         column_order2: list[str] = ['Jira key', 'Assgnee', 'Reporter']
         tableio.write_table_dictdata(data=data2,
                                      column_order=column_order2,
-                                     filtered_data_range=True)
+                                     filtered_data_range=True,
+                                     first_row_format=Fmt(bold=True))
         tableio.write_heading('Formatted List data with FmtListRow.')
         data3: FmtListData = [
             FmtListRow(values=['Jira key', 'Story Points', 'report date'],
@@ -122,6 +123,7 @@ def e02_more_write(format_name: str, output_file_name: str,
         column_order4: list[str] = ['Jira key', 'report date', 'Story Points']
         tableio.write_table_fmtdictdata(data=data4,
                                         column_order=column_order4,
+                                        first_row_format=Fmt(bold=True),
                                         filtered_data_range=True)
     return 0
 # pylint: enable=duplicate-code

@@ -6,18 +6,15 @@
 
 from datetime import date, datetime, time
 from typing import Callable, NamedTuple, Optional
-
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils.cell import get_column_letter, range_boundaries
 from openpyxl.worksheet.table import Table
 from openpyxl.worksheet.worksheet import Worksheet
-
 from mformat.mformat import PathLike
-
 from tableio.capability import Capabilities, SingleCapability, Strictness
 from tableio.color import Color
-from tableio.tableio import Box, Descriptor, FileAccess, Position
+from tableio.tableio import Box, Descriptor, FileAccess, Position, TableIO
 from tableio.tableio_excelbased import TableIOExcelBased
 from tableio.value_type import CellT, DictData, DictDataMap, Fmt, \
     FmtDictData, FmtListData, ListData, ListDataSeq, ReadResult, Value, \
@@ -543,10 +540,8 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         self._update_write_position(start_row + 2)
         return Position(row=start_row, column=start_column)
 
-    def _write_table_listdata(self,  # pylint: disable=arguments-renamed
-                              data: ListDataSeq[CellT],
-                              filtered_data_range: bool = False,
-                              box: Optional[Box] = None) -> Position:
+    def _write_table_listdata(self, data: ListDataSeq[CellT],
+                              impl_meta: TableIO.ImplMetaForWrite) -> Position:
         """Write list data to the active worksheet."""
         values: ListData[Value] = []
         formats: list[list[Optional[Fmt]]] = []
@@ -563,27 +558,28 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
                     format_row.append(None)
             values.append(value_row)
             formats.append(format_row)
-        return self._write_grid(values, formats, filtered_data_range, box)
+        return self._write_grid(values, formats,
+                                impl_meta.filtered_data_range,
+                                impl_meta.box)
 
-    def _write_table_fmtlistdata(self, data: FmtListData,
-                                 filtered_data_range: bool = False,
-                                 box: Optional[Box] = None) -> Position:
+    def _write_table_fmtlistdata(
+            self, data: FmtListData,
+            impl_meta: TableIO.ImplMetaForWrite) -> Position:
         """Write row-formatted list data to the active worksheet."""
         return self._write_table_listdata(row_format_each_cell_list(data),
-                                          filtered_data_range, box)
+                                          impl_meta=impl_meta)
 
-    # pylint: disable-next=too-many-locals,arguments-renamed
-    def _write_table_dictdata(self, data: DictDataMap[CellT],
-                              column_order: list[str],
-                              filtered_data_range: bool = False,
-                              box: Optional[Box] = None) -> Position:
+    def _write_table_dictdata(
+            self, data: DictDataMap[CellT],
+            impl_meta: TableIO.ImplMetaForDictWrite) -> Position:
         """Write dict data to the active worksheet."""
-        values: ListData[Value] = [list(column_order)]
-        formats: list[list[Optional[Fmt]]] = [[None for _ in column_order]]
+        values: ListData[Value] = [list(impl_meta.column_order)]
+        formats: list[list[Optional[Fmt]]] = \
+            [[impl_meta.first_row_format for _ in impl_meta.column_order]]
         for row in data:
             value_row: list[Value] = []
             format_row: list[Optional[Fmt]] = []
-            for column_name in column_order:
+            for column_name in impl_meta.column_order:
                 cell = row[column_name]
                 if isinstance(cell, ValueFmt):
                     value_row.append(self._excel_value_from_python(
@@ -594,16 +590,16 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
                     format_row.append(None)
             values.append(value_row)
             formats.append(format_row)
-        return self._write_grid(values, formats, filtered_data_range, box)
+        return self._write_grid(values, formats,
+                                impl_meta.common_impl.filtered_data_range,
+                                impl_meta.common_impl.box)
 
-    def _write_table_fmtdictdata(self, data: FmtDictData,
-                                 column_order: list[str],
-                                 filtered_data_range: bool = False,
-                                 box: Optional[Box] = None) -> Position:
+    def _write_table_fmtdictdata(
+            self, data: FmtDictData,
+            impl_meta: TableIO.ImplMetaForDictWrite) -> Position:
         """Write row-formatted dict data to the active worksheet."""
         return self._write_table_dictdata(row_format_each_cell_dict(data),
-                                          column_order,
-                                          filtered_data_range, box)
+                                          impl_meta=impl_meta)
 
     def _read_table_listdata(self, box: Optional[Box] = None) -> \
             ReadResult[ListData[Value]]:

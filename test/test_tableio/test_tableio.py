@@ -6,7 +6,7 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable
+from typing import Callable, Optional
 
 import pytest
 from pytest import CaptureFixture
@@ -61,18 +61,27 @@ class RecordingTableIO(TableIO):
         self.close_count: int = 0
         self.last_heading: tuple[str, int] | None = None
         self.last_list_write_data: list[list[Value | ValueFmt]] | None = None
+        self.last_list_impl_meta: Optional[TableIO.ImplMetaForWrite] = None
         self.last_list_filtered_data_range: bool | None = None
         self.last_list_write_box: Box | None = None
         self.last_fmtlist_write_data: list[FmtListRow] | None = None
+        self.last_fmtlist_impl_meta: Optional[TableIO.ImplMetaForWrite] = \
+            None
         self.last_fmtlist_filtered_data_range: bool | None = None
         self.last_fmtlist_write_box: Box | None = None
         self.last_dict_write_data: list[dict[str, Value | ValueFmt]] | None = \
             None
+        self.last_dict_impl_meta: Optional[TableIO.ImplMetaForDictWrite] = \
+            None
         self.last_column_order: list[str] | None = None
+        self.last_dict_first_row_format: Optional[Fmt] = None
         self.last_dict_filtered_data_range: bool | None = None
         self.last_dict_write_box: Box | None = None
         self.last_fmtdict_write_data: list[FmtDictRow] | None = None
+        self.last_fmtdict_impl_meta: Optional[TableIO.ImplMetaForDictWrite] = \
+            None
         self.last_fmtdict_column_order: list[str] | None = None
+        self.last_fmtdict_first_row_format: Optional[Fmt] = None
         self.last_fmtdict_filtered_data_range: bool | None = None
         self.last_fmtdict_write_box: Box | None = None
         self.last_list_read_box: Box | None = None
@@ -137,13 +146,14 @@ class RecordingTableIO(TableIO):
             raise RuntimeError('close failed')
 
     def _write_table_listdata(self, data: ListDataSeq[CellT],
-                              filtered_data_range: bool = False,
-                              box: Box | None = None) -> Position:
+                              impl_meta: TableIO.ImplMetaForWrite) \
+            -> Position:
         """Record list-data writes and return a predictable position."""
         self.events.append('write_table_listdata')
         self.last_list_write_data = [list(row) for row in data]
-        self.last_list_filtered_data_range = filtered_data_range
-        self.last_list_write_box = box
+        self.last_list_impl_meta = impl_meta
+        self.last_list_filtered_data_range = impl_meta.filtered_data_range
+        self.last_list_write_box = impl_meta.box
         return Position(row=len(data) - 1, column=len(data[0]) - 1)
 
     def _write_heading(self, heading: str, level: int) -> Position:
@@ -153,38 +163,43 @@ class RecordingTableIO(TableIO):
         return Position(row=level, column=len(heading))
 
     def _write_table_fmtlistdata(self, data: FmtListData,
-                                 filtered_data_range: bool = False,
-                                 box: Box | None = None) -> Position:
+                                 impl_meta: TableIO.ImplMetaForWrite) \
+            -> Position:
         """Record formatted list-data writes."""
         self.events.append('write_table_fmtlistdata')
         self.last_fmtlist_write_data = list(data)
-        self.last_fmtlist_filtered_data_range = filtered_data_range
-        self.last_fmtlist_write_box = box
+        self.last_fmtlist_impl_meta = impl_meta
+        self.last_fmtlist_filtered_data_range = impl_meta.filtered_data_range
+        self.last_fmtlist_write_box = impl_meta.box
         return Position(row=len(data) - 1, column=len(data[0].values) - 1)
 
     def _write_table_dictdata(self, data: DictDataMap[CellT],
-                              column_order: list[str],
-                              filtered_data_range: bool = False,
-                              box: Box | None = None) -> Position:
+                              impl_meta: TableIO.ImplMetaForDictWrite) \
+            -> Position:
         """Record dict-data writes and return a predictable position."""
         self.events.append('write_table_dictdata')
         self.last_dict_write_data = [dict(row) for row in data]
-        self.last_column_order = list(column_order)
-        self.last_dict_filtered_data_range = filtered_data_range
-        self.last_dict_write_box = box
-        return Position(row=len(data), column=len(column_order) - 1)
+        self.last_dict_impl_meta = impl_meta
+        self.last_column_order = list(impl_meta.column_order)
+        self.last_dict_first_row_format = impl_meta.first_row_format
+        self.last_dict_filtered_data_range = \
+            impl_meta.common_impl.filtered_data_range
+        self.last_dict_write_box = impl_meta.common_impl.box
+        return Position(row=len(data), column=len(impl_meta.column_order) - 1)
 
     def _write_table_fmtdictdata(self, data: FmtDictData,
-                                 column_order: list[str],
-                                 filtered_data_range: bool = False,
-                                 box: Box | None = None) -> Position:
+                                 impl_meta: TableIO.ImplMetaForDictWrite) \
+            -> Position:
         """Record formatted dict-data writes."""
         self.events.append('write_table_fmtdictdata')
         self.last_fmtdict_write_data = list(data)
-        self.last_fmtdict_column_order = list(column_order)
-        self.last_fmtdict_filtered_data_range = filtered_data_range
-        self.last_fmtdict_write_box = box
-        return Position(row=len(data), column=len(column_order) - 1)
+        self.last_fmtdict_impl_meta = impl_meta
+        self.last_fmtdict_column_order = list(impl_meta.column_order)
+        self.last_fmtdict_first_row_format = impl_meta.first_row_format
+        self.last_fmtdict_filtered_data_range = \
+            impl_meta.common_impl.filtered_data_range
+        self.last_fmtdict_write_box = impl_meta.common_impl.box
+        return Position(row=len(data), column=len(impl_meta.column_order) - 1)
 
     def _read_table_listdata(self, box: Box | None = None) -> \
             ReadResult[list[list[Value]]]:
@@ -260,22 +275,38 @@ class MinimalTableIO(TableIO):
 
     def run_write_table_listdata(self, data: ListDataSeq[CellT]) -> Position:
         """Expose the inherited _write_table_listdata method for tests."""
-        return self._write_table_listdata(data)
+        impl_meta = TableIO.ImplMetaForWrite(filtered_data_range=False,
+                                             box=None)
+        return self._write_table_listdata(data, impl_meta)
 
     def run_write_table_fmtlistdata(self, data: FmtListData) -> Position:
         """Expose the inherited _write_table_fmtlistdata method."""
-        return self._write_table_fmtlistdata(data)
+        impl_meta = TableIO.ImplMetaForWrite(filtered_data_range=False,
+                                             box=None)
+        return self._write_table_fmtlistdata(data, impl_meta)
 
     def run_write_table_dictdata(self, data: DictDataMap[CellT],
                                  column_order: list[str]) -> Position:
         """Expose the inherited _write_table_dictdata method for tests."""
-        return self._write_table_dictdata(data, column_order)
+        common_impl = TableIO.ImplMetaForWrite(filtered_data_range=False,
+                                               box=None)
+        impl_meta = TableIO.ImplMetaForDictWrite(
+            common_impl=common_impl,
+            column_order=column_order,
+            first_row_format=None)
+        return self._write_table_dictdata(data, impl_meta)
 
     def run_write_table_fmtdictdata(
             self, data: FmtDictData,
             column_order: list[str]) -> Position:
         """Expose the inherited _write_table_fmtdictdata method."""
-        return self._write_table_fmtdictdata(data, column_order)
+        common_impl = TableIO.ImplMetaForWrite(filtered_data_range=False,
+                                               box=None)
+        impl_meta = TableIO.ImplMetaForDictWrite(
+            common_impl=common_impl,
+            column_order=column_order,
+            first_row_format=None)
+        return self._write_table_fmtdictdata(data, impl_meta)
 
     def run_read_table_listdata(self) -> ReadResult[list[list[Value]]]:
         """Expose the inherited _read_table_listdata method for tests."""
@@ -364,6 +395,11 @@ def test_tableio_named_tuples_store_values_and_defaults(
     )
     box = Box(top=1, left=2, bottom=None, right=5)
     position = Position(row=3, column=4)
+    impl_meta = TableIO.ImplMetaForWrite(filtered_data_range=True, box=box)
+    dict_impl_meta = TableIO.ImplMetaForDictWrite(
+        common_impl=impl_meta,
+        column_order=['alpha', 'beta'],
+        first_row_format=Fmt(bold=True))
     assert descriptor.priority == 10
     assert descriptor.format_name == 'csv'
     assert descriptor.implementation == 'default'
@@ -371,6 +407,11 @@ def test_tableio_named_tuples_store_values_and_defaults(
     assert descriptor.optional_args == ['mode']
     assert box == Box(1, 2, None, 5)
     assert position == Position(3, 4)
+    assert impl_meta.filtered_data_range is True
+    assert impl_meta.box == box
+    assert dict_impl_meta.common_impl == impl_meta
+    assert dict_impl_meta.column_order == ['alpha', 'beta']
+    assert dict_impl_meta.first_row_format == Fmt(bold=True)
     check_capsys(capsys)
 
 
@@ -438,7 +479,6 @@ def test_tableio_init_create_propagates_callback_exception(
         def file_exists_callback(callback_file_name: str) -> None:
             """Reject the overwrite request with a custom error."""
             raise RuntimeError(f'blocked: {callback_file_name}')
-
         with pytest.raises(RuntimeError, match='blocked: .*sample.tio'):
             RecordingTableIO(
                 file_name,
@@ -701,9 +741,11 @@ def test_write_table_dictdata_normalizes_and_delegates(
     """Test dict-data writes through the public base-class method."""
     table_io = RecordingTableIO('sample')
     box = Box(top=5, left=2, bottom=9, right=4)
+    first_row_format = Fmt(bold=True)
     position = table_io.write_table_dictdata(
         [{'alpha': 'left', 'extra': 1}, {'beta': 2.5}],
         ['alpha', 'beta'],
+        first_row_format=first_row_format,
         missing_ok=True,
         extra_ok=True,
         filtered_data_range=False,
@@ -715,6 +757,7 @@ def test_write_table_dictdata_normalizes_and_delegates(
         {'alpha': None, 'beta': 2.5}
     ]
     assert table_io.last_column_order == ['alpha', 'beta']
+    assert table_io.last_dict_first_row_format == first_row_format
     assert table_io.last_dict_filtered_data_range is False
     assert table_io.last_dict_write_box == box
     assert table_io.events == ['write_table_dictdata']

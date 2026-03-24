@@ -7,7 +7,7 @@
 import csv
 from typing import Literal, Optional, Callable, NamedTuple
 from mformat.mformat import PathLike
-from tableio.tableio import FileAccess, Descriptor, Position, Box
+from tableio.tableio import FileAccess, Descriptor, Position, Box, TableIO
 from tableio.value_type import Value, ListData, ListDataSeq, CellT, \
     FmtListData, FmtDictData, DictData, DictDataMap, \
     row_strip_format_list, row_strip_format_dict, \
@@ -214,26 +214,23 @@ class TableIOCsv(TableIOTextBased):
         return Position(row=self.position_row, column=self.position_column)
 
     def _write_table_listdata(self, data: ListDataSeq[CellT],
-                              filtered_data_range: bool = False,
-                              box: Optional[Box] = None) -> Position:
+                              impl_meta: TableIO.ImplMetaForWrite) -> Position:
         """Write a table of list data to the file.
 
         Write a table of list data to the file.
         CSV does not support the box, nor formatting, nor filtered data range.
         Args:
             data: The list data to write.
-            filtered_data_range: Ignored in CSV.
-            box: Not allowed in CSV.
+            impl_meta: The implementation meta data.
         Raises:
             CapabilityNotSupported: If box is provided.
         Returns:
             The position of the last cell written.
         """
         assert self.file is not None
-        if box is not None:
+        if impl_meta.box is not None:
             err = 'Box is not allowed in CSV.'
             raise CapabilityNotSupported(err)
-        _ = filtered_data_range  # pylint: disable=unused-variable
         ndata = strip_format_list(data)
         self.position_row += self._ensure_empty_line_before()
         writer = csv.writer(self.file, dialect=self.csv_dialect)
@@ -244,51 +241,46 @@ class TableIOCsv(TableIOTextBased):
         self.position_row += self._ensure_empty_line_before()
         return Position(row=self.position_row, column=self.position_column)
 
-    def _write_table_fmtlistdata(self, data: FmtListData,
-                                 filtered_data_range: bool = False,
-                                 box: Optional[Box] = None) -> Position:
+    def _write_table_fmtlistdata(
+            self, data: FmtListData,
+            impl_meta: TableIO.ImplMetaForWrite) -> Position:
         """Write a table of list data to the file.
 
         Write a table of list data to the file.
         CSV does not support the box, nor formatting, nor filtered data range.
         Args:
             data: The list data to write.
-            filtered_data_range: Ignored in CSV.
-            box: Not allowed in CSV.
+            impl_meta: The implementation meta data.
         Raises:
-            CapabilityNotSupported: If box is provided.
+            CapabilityNotSupported: If impl_meta.box is provided.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Not reliable.
         """
         ndata: ListDataSeq[Value] = row_strip_format_list(data)
-        return self._write_table_listdata(ndata, filtered_data_range, box)
+        return self._write_table_listdata(ndata, impl_meta)
 
-    def _write_table_dictdata(self, data: DictDataMap[CellT],
-                              column_order: list[str],
-                              filtered_data_range: bool = False,
-                              box: Optional[Box] = None) -> Position:
+    def _write_table_dictdata(
+            self, data: DictDataMap[CellT],
+            impl_meta: TableIO.ImplMetaForDictWrite) -> Position:
         """Write a table of dict data to the file.
 
         Write a table of dict data to the file.
         CSV does not support the box, nor formatting, nor filtered data range.
         Args:
             data: The dict data to write.
-            column_order: The order of the columns.
-            filtered_data_range: Ignored in CSV.
-            box: Not allowed in CSV.
+            impl_meta: The implementation meta data.
         Raises:
-            CapabilityNotSupported: If box is provided.
+            CapabilityNotSupported: If impl_meta.common_impl.box is provided.
         Returns:
             The position of the last cell written.
         """
         assert self.file is not None
-        if box is not None:
+        if impl_meta.common_impl.box is not None:
             err = 'Box is not allowed in CSV.'
             raise CapabilityNotSupported(err)
-        _ = filtered_data_range  # pylint: disable=unused-variable
         self.position_row += self._ensure_empty_line_before()
         ndata: DictDataMap[Value] = strip_format_dict(data)
-        writer = csv.DictWriter(self.file, fieldnames=column_order,
+        writer = csv.DictWriter(self.file, fieldnames=impl_meta.column_order,
                                 dialect=self.csv_dialect)
         writer.writeheader()
         self.position_row += 1
@@ -299,27 +291,23 @@ class TableIOCsv(TableIOTextBased):
         self.position_row += self._ensure_empty_line_before()
         return Position(row=self.position_row, column=self.position_column)
 
-    def _write_table_fmtdictdata(self, data: FmtDictData,
-                                 column_order: list[str],
-                                 filtered_data_range: bool = False,
-                                 box: Optional[Box] = None) -> Position:
+    def _write_table_fmtdictdata(
+            self, data: FmtDictData,
+            impl_meta: TableIO.ImplMetaForDictWrite) -> Position:
         """Write a table of dict data to the file.
 
         Write a table of dict data to the file.
         CSV does not support the box, nor formatting, nor filtered data range.
         Args:
             data: The dict data to write.
-            column_order: The order of the columns.
-            filtered_data_range: Ignored in CSV.
-            box: Not allowed in CSV.
+            impl_meta: The implementation meta data.
         Raises:
-            CapabilityNotSupported: If box is provided.
+            CapabilityNotSupported: If impl_meta.common_impl.box is provided.
         Returns:
             The position of the last cell written.
         """
         ndata: DictDataMap[Value] = row_strip_format_dict(data)
-        return self._write_table_dictdata(ndata, column_order,
-                                          filtered_data_range, box)
+        return self._write_table_dictdata(ndata, impl_meta=impl_meta)
 
     def _read_raw_sections(self) -> tuple[list[str], list[str]]:
         """Read heading and data lines from the current position.

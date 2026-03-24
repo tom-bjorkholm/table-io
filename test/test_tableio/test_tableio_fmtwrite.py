@@ -98,6 +98,7 @@ def test_write_table_fmtdictdata_normalizes_and_delegates(
     table_io = RecordingTableIO('sample')
     box = Box(top=5, left=2, bottom=9, right=4)
     column_order = ['alpha', 'beta']
+    first_row_format = Fmt(italic=True)
     data = [
         FmtDictRow(
             values={'alpha': 'left', 'extra': 1},
@@ -108,6 +109,7 @@ def test_write_table_fmtdictdata_normalizes_and_delegates(
     position = table_io.write_table_fmtdictdata(
         data=data,
         column_order=column_order,
+        first_row_format=first_row_format,
         missing_ok=True,
         extra_ok=True,
         box=box
@@ -124,6 +126,7 @@ def test_write_table_fmtdictdata_normalizes_and_delegates(
         )
     ]
     assert table_io.last_fmtdict_column_order == column_order
+    assert table_io.last_fmtdict_first_row_format == first_row_format
     assert table_io.last_fmtdict_filtered_data_range is False
     assert table_io.last_fmtdict_write_box == box
     assert table_io.events == ['write_table_fmtdictdata']
