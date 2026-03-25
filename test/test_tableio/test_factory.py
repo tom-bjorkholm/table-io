@@ -635,14 +635,15 @@ class TestTableIOFactoryFormats:
             capabilities=caps)
         assert names == sorted(names)
 
-    def test_box_capability_matches_excel(self) -> None:
-        """Requesting box support includes the Excel format."""
+    def test_box_capability_matches_spreadsheet_formats(self) -> None:
+        """Requesting box support includes the spreadsheet formats."""
         f = _make_factory_stubs()
         caps = Capabilities(
             can_write_box=SingleCapability(
                 True, Strictness.STRICT))
         names = f.i_get_registered_formats(capabilities=caps)
         assert 'Excel' in names
+        assert 'ODS' in names
 
     def test_box_capability_empty_ok_still_returns_match(self) -> None:
         """empty_is_ok keeps returning matching formats when they exist."""
@@ -653,6 +654,7 @@ class TestTableIOFactoryFormats:
         names = f.i_get_registered_formats(
             capabilities=caps, empty_is_ok=True)
         assert 'Excel' in names
+        assert 'ODS' in names
 
 
 # -- TableIOFactory: listing implementations -----------------------------
@@ -778,6 +780,7 @@ class TestShortcutFunctions:
         names = list_registered_tableio()
         assert 'CSV' in names
         assert 'HTML' in names
+        assert 'ODS' in names
 
     def test_list_implementations_tableio(self) -> None:
         """list_implementations_tableio returns known impls."""

@@ -56,6 +56,35 @@
     * [RED](#tableio.color.Color.RED)
     * [GREEN](#tableio.color.Color.GREEN)
     * [YELLOW](#tableio.color.Color.YELLOW)
+* [tableio.tableio\_ods\_odfdo](#tableio.tableio_ods_odfdo)
+  * [TableIOOdsOdfdo](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo)
+    * [\_\_init\_\_](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.__init__)
+    * [get\_description](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description)
+    * [file\_name\_extension](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.file_name_extension)
+    * [open](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.open)
+    * [\_end\_state](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._end_state)
+    * [\_write\_file\_suffix](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_file_suffix)
+    * [\_close](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._close)
+    * [\_read\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._read_sheet)
+    * [\_write\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_sheet)
+    * [\_spreadsheet\_body](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._spreadsheet_body)
+    * [\_write\_value\_to\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_value_to_sheet)
+    * [\_set\_cell\_format](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_cell_format)
+    * [\_apply\_heading\_style](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._apply_heading_style)
+    * [\_used\_bounds](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._used_bounds)
+    * [\_last\_used\_row](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_row)
+    * [\_last\_used\_column](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_column)
+    * [\_cell\_value](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_value)
+    * [\_filtered\_range\_infos](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._filtered_range_infos)
+    * [\_delete\_filtered\_range](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._delete_filtered_range)
+    * [\_add\_filtered\_range](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._add_filtered_range)
+    * [\_column\_width\_string](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_width_string)
+    * [\_column\_width\_from\_text](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_width_from_text)
+    * [\_current\_column\_width](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._current_column_width)
+    * [\_set\_column\_width\_if\_wider](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_column_width_if_wider)
+    * [\_next\_style\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._next_style_name)
+    * [\_cell\_style\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_style_name)
+    * [\_column\_style\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_style_name)
 * [tableio.tableio\_mformat](#tableio.tableio_mformat)
   * [TableIOMformatMd](#tableio.tableio_mformat.TableIOMformatMd)
     * [\_\_init\_\_](#tableio.tableio_mformat.TableIOMformatMd.__init__)
@@ -277,8 +306,55 @@
     * [\_read\_table\_listdata](#tableio.tableio_csv.TableIOCsv._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio_csv.TableIOCsv._read_table_dictdata)
 * [tableio.tableio\_spreadsheetbased](#tableio.tableio_spreadsheetbased)
+  * [\_ScanResult](#tableio.tableio_spreadsheetbased._ScanResult)
   * [TableIOSpreadsheetBased](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased)
     * [\_\_init\_\_](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__)
+    * [get\_capabilities](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.get_capabilities)
+    * [\_heading\_font\_size](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._heading_font_size)
+    * [\_python\_value\_from\_spreadsheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._python_value_from_spreadsheet)
+    * [\_spreadsheet\_value\_from\_python](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._spreadsheet_value_from_python)
+    * [\_initialize\_positions](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._initialize_positions)
+    * [\_read\_sheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_sheet)
+    * [\_write\_sheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_sheet)
+    * [\_write\_value\_to\_sheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_value_to_sheet)
+    * [\_set\_cell\_format](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_cell_format)
+    * [\_apply\_heading\_style](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._apply_heading_style)
+    * [\_last\_used\_row](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._last_used_row)
+    * [\_last\_used\_column](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._last_used_column)
+    * [\_cell\_value](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._cell_value)
+    * [\_filtered\_range\_infos](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._filtered_range_infos)
+    * [\_delete\_filtered\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._delete_filtered_range)
+    * [\_add\_filtered\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._add_filtered_range)
+    * [\_set\_column\_width\_if\_wider](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_column_width_if_wider)
+    * [\_write\_value](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_value)
+    * [\_clear\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._clear_range)
+    * [\_read\_limits](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_limits)
+    * [\_scan\_limit\_right](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_limit_right)
+    * [\_row\_nonempty\_columns](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._row_nonempty_columns)
+    * [\_row\_is\_empty](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._row_is_empty)
+    * [\_row\_is\_heading](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._row_is_heading)
+    * [\_scan\_section](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_section)
+    * [\_read\_grid](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_grid)
+    * [\_update\_read\_positions](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_read_positions)
+    * [\_ranges\_overlap](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._ranges_overlap)
+    * [\_filter\_range\_name\_in\_use](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._filter_range_name_in_use)
+    * [\_next\_filter\_range\_name](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._next_filter_range_name)
+    * [\_remove\_overlapping\_filtered\_ranges](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._remove_overlapping_filtered_ranges)
+    * [\_write\_filtered\_data\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_filtered_data_range)
+    * [\_column\_width\_text](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._column_width_text)
+    * [\_table\_column\_width](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._table_column_width)
+    * [\_update\_table\_column\_widths](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_table_column_widths)
+    * [\_write\_start](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_start)
+    * [\_update\_write\_position](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_write_position)
+    * [\_write\_grid](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_grid)
+    * [\_write\_heading](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_heading)
+    * [\_split\_cell\_value](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._split_cell_value)
+    * [\_write\_table\_listdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_listdata)
+    * [\_write\_table\_fmtlistdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_fmtlistdata)
+    * [\_write\_table\_dictdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_dictdata)
+    * [\_write\_table\_fmtdictdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_fmtdictdata)
+    * [\_read\_table\_listdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_table_listdata)
+    * [\_read\_table\_dictdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_table_dictdata)
 * [tableio.tableio\_mformatbased](#tableio.tableio_mformatbased)
   * [\_allow\_overwrite](#tableio.tableio_mformatbased._allow_overwrite)
   * [TableIOMformatBased](#tableio.tableio_mformatbased.TableIOMformatBased)
@@ -302,56 +378,31 @@
 * [tableio.reg\_pkg\_formats](#tableio.reg_pkg_formats)
   * [register\_formats\_in\_pkg](#tableio.reg_pkg_formats.register_formats_in_pkg)
 * [tableio.tableio\_excel\_openpyxl](#tableio.tableio_excel_openpyxl)
-  * [\_ScanResult](#tableio.tableio_excel_openpyxl._ScanResult)
   * [TableIOExcelOpenPyXL](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL)
     * [\_\_init\_\_](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__)
     * [get\_description](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description)
-    * [get\_capabilities](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities)
     * [file\_name\_extension](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension)
     * [open](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open)
     * [\_end\_state](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._end_state)
     * [\_write\_file\_suffix](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_file_suffix)
     * [\_close](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._close)
-    * [\_python\_value\_from\_excel](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._python_value_from_excel)
-    * [\_excel\_value\_from\_python](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._excel_value_from_python)
-    * [\_range\_ref](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._range_ref)
+    * [\_read\_sheet](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_sheet)
+    * [\_write\_sheet](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_sheet)
     * [\_highlight\_fill](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._highlight_fill)
+    * [\_write\_value\_to\_sheet](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value_to_sheet)
     * [\_set\_cell\_format](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_cell_format)
-    * [\_write\_value\_to\_cell](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value_to_cell)
-    * [\_write\_value](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value)
-    * [\_clear\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._clear_range)
+    * [\_apply\_heading\_style](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._apply_heading_style)
     * [\_used\_bounds](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._used_bounds)
     * [\_last\_used\_row](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_row)
     * [\_last\_used\_column](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_column)
     * [\_cell\_value](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._cell_value)
-    * [\_read\_limits](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_limits)
-    * [\_scan\_limit\_right](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_limit_right)
-    * [\_row\_nonempty\_columns](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_nonempty_columns)
-    * [\_row\_is\_empty](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_is_empty)
-    * [\_row\_is\_heading](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_is_heading)
-    * [\_scan\_section](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_section)
-    * [\_read\_grid](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_grid)
-    * [\_update\_read\_positions](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_read_positions)
     * [\_table\_bounds](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_bounds)
-    * [\_ranges\_overlap](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._ranges_overlap)
-    * [\_remove\_overlapping\_tables](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._remove_overlapping_tables)
-    * [\_table\_name\_in\_use](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_name_in_use)
-    * [\_next\_table\_name](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._next_table_name)
+    * [\_filtered\_range\_infos](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._filtered_range_infos)
+    * [\_delete\_filtered\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._delete_filtered_range)
+    * [\_range\_ref](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._range_ref)
     * [\_normalize\_filtered\_table\_header](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._normalize_filtered_table_header)
-    * [\_write\_filtered\_data\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_filtered_data_range)
-    * [\_column\_width\_text](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._column_width_text)
-    * [\_table\_column\_width](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_column_width)
-    * [\_update\_table\_column\_widths](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_table_column_widths)
-    * [\_write\_start](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_start)
-    * [\_update\_write\_position](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_write_position)
-    * [\_write\_grid](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_grid)
-    * [\_write\_heading](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_heading)
-    * [\_write\_table\_listdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_listdata)
-    * [\_write\_table\_fmtlistdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_fmtlistdata)
-    * [\_write\_table\_dictdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_dictdata)
-    * [\_write\_table\_fmtdictdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_fmtdictdata)
-    * [\_read\_table\_listdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_table_listdata)
-    * [\_read\_table\_dictdata](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_table_dictdata)
+    * [\_add\_filtered\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._add_filtered_range)
+    * [\_set\_column\_width\_if\_wider](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_column_width_if_wider)
 
 <a id="tableio.tableio"></a>
 
@@ -1336,6 +1387,300 @@ Green highlight color.
 #### YELLOW
 
 Yellow highlight color.
+
+<a id="tableio.tableio_ods_odfdo"></a>
+
+# tableio.tableio\_ods\_odfdo
+
+TableIO class for OpenDocument Spreadsheet files using ODFdo.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo"></a>
+
+## TableIOOdsOdfdo Objects
+
+```python
+class TableIOOdsOdfdo(TableIOSpreadsheetBased)
+```
+
+TableIO class for OpenDocument Spreadsheet ODS files using odfdo.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(file_name: PathLike,
+             file_access: FileAccess,
+             file_exists_callback: Optional[Callable[[str], None]] = None)
+```
+
+Initialize the TableIOOdsOdfdo class.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description"></a>
+
+#### get\_description
+
+```python
+@classmethod
+def get_description(cls) -> Descriptor
+```
+
+Get the description of the TableIOOdsOdfdo class.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.file_name_extension"></a>
+
+#### file\_name\_extension
+
+```python
+@classmethod
+def file_name_extension(cls) -> str
+```
+
+Get the file name extension of the ODS implementation.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open the ODS document.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._end_state"></a>
+
+#### \_end\_state
+
+```python
+def _end_state() -> None
+```
+
+Finalize in-memory state before closing.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_file_suffix"></a>
+
+#### \_write\_file\_suffix
+
+```python
+def _write_file_suffix() -> None
+```
+
+Write the ODS document to disk when the file is writable.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._close"></a>
+
+#### \_close
+
+```python
+def _close() -> None
+```
+
+Release document references.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._read_sheet"></a>
+
+#### \_read\_sheet
+
+```python
+def _read_sheet() -> object
+```
+
+Return the readable ODS table.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_sheet"></a>
+
+#### \_write\_sheet
+
+```python
+def _write_sheet() -> object
+```
+
+Return the writable ODS table.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._spreadsheet_body"></a>
+
+#### \_spreadsheet\_body
+
+```python
+def _spreadsheet_body() -> Spreadsheet
+```
+
+Return the spreadsheet body of the open ODS document.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_value_to_sheet"></a>
+
+#### \_write\_value\_to\_sheet
+
+```python
+def _write_value_to_sheet(sheet: object, row: int, column: int,
+                          value: object) -> None
+```
+
+Write one value to one ODS cell.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_cell_format"></a>
+
+#### \_set\_cell\_format
+
+```python
+def _set_cell_format(sheet: object, row: int, column: int,
+                     fmt: Optional[Fmt]) -> None
+```
+
+Apply cell formatting to one ODS cell.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._apply_heading_style"></a>
+
+#### \_apply\_heading\_style
+
+```python
+def _apply_heading_style(row: int, column: int, level: int) -> None
+```
+
+Apply the heading style to one ODS cell.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._used_bounds"></a>
+
+#### \_used\_bounds
+
+```python
+def _used_bounds(sheet: object) -> tuple[int, int]
+```
+
+Return the last used row and column on one ODS table.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_row"></a>
+
+#### \_last\_used\_row
+
+```python
+def _last_used_row(sheet: object) -> int
+```
+
+Return the last used row index on one ODS table.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_column"></a>
+
+#### \_last\_used\_column
+
+```python
+def _last_used_column(sheet: object) -> int
+```
+
+Return the last used column index on one ODS table.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_value"></a>
+
+#### \_cell\_value
+
+```python
+def _cell_value(sheet: object, row: int, column: int) -> Value
+```
+
+Return one ODS cell as a public Value.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._filtered_range_infos"></a>
+
+#### \_filtered\_range\_infos
+
+```python
+def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
+```
+
+Return the filter named ranges for the active table.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._delete_filtered_range"></a>
+
+#### \_delete\_filtered\_range
+
+```python
+def _delete_filtered_range(name: str) -> None
+```
+
+Delete one named filter range by name.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._add_filtered_range"></a>
+
+#### \_add\_filtered\_range
+
+```python
+def _add_filtered_range(bounds: tuple[int, int, int, int], name: str) -> None
+```
+
+Create one named filter range for the active table.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_width_string"></a>
+
+#### \_column\_width\_string
+
+```python
+@staticmethod
+def _column_width_string(width: float) -> str
+```
+
+Return the ODS column width string for one target width.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_width_from_text"></a>
+
+#### \_column\_width\_from\_text
+
+```python
+@classmethod
+def _column_width_from_text(cls, width: str) -> Optional[float]
+```
+
+Parse one ODS column width string to the internal width unit.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._current_column_width"></a>
+
+#### \_current\_column\_width
+
+```python
+def _current_column_width(column: int) -> Optional[float]
+```
+
+Return the current width of one ODS column.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_column_width_if_wider"></a>
+
+#### \_set\_column\_width\_if\_wider
+
+```python
+def _set_column_width_if_wider(column: int, width: float) -> None
+```
+
+Widen one ODS column if the target width is larger.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._next_style_name"></a>
+
+#### \_next\_style\_name
+
+```python
+def _next_style_name(prefix: str, family: str) -> str
+```
+
+Return a document-unique style name.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_style_name"></a>
+
+#### \_cell\_style\_name
+
+```python
+def _cell_style_name(fmt: Fmt, font_size: Optional[int] = None) -> str
+```
+
+Return the cached style name for one cell format combination.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_style_name"></a>
+
+#### \_column\_style\_name
+
+```python
+def _column_style_name(width: float) -> str
+```
+
+Return the cached style name for one column width.
 
 <a id="tableio.tableio_mformat"></a>
 
@@ -4750,6 +5095,16 @@ CSV does not support reading from a box.
 
 Intermediate base class for spreadsheet-based file formats.
 
+<a id="tableio.tableio_spreadsheetbased._ScanResult"></a>
+
+## \_ScanResult Objects
+
+```python
+class _ScanResult(NamedTuple)
+```
+
+Details gathered while scanning one worksheet section.
+
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased"></a>
 
 ## TableIOSpreadsheetBased Objects
@@ -4760,15 +5115,10 @@ class TableIOSpreadsheetBased(TableIO)
 
 Intermediate TableIO base class for spreadsheet-based file formats.
 
-This class is used to provide a base class for spreadsheet-based
-file formats. It is not intended to be used directly, but rather
-to be subclassed by a specific spreadsheet-based file format
-such as Excel or Open Document Spreadsheet.
-
-The main purpose of this class is to provide a place where common
-functionality for spreadsheet-based file formats can be implemented.
-This class starts out empty, but whenever common functionality
-is detected it should be refactored into this class.
+This class holds the public spreadsheet semantics shared between Excel
+and ODS backends: sequential reads, boxed reads and writes, headings,
+filtered ranges, and the conversion between list or dict tables and the
+rectangular grid stored in the document.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__"></a>
 
@@ -4780,20 +5130,495 @@ def __init__(file_name: PathLike,
              file_exists_callback: Optional[Callable[[str], None]] = None)
 ```
 
-Initialize the TableIO_SpreadsheetBased class.
+Initialize the spreadsheet-based TableIO class.
 
-**Arguments**:
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.get_capabilities"></a>
 
-- `file_name` - The name of the file to open.
-- `file_access` - What access is requested to the file.
-- `file_exists_callback` - A callback function to call if the file
-  already exists when file_access is CREATE.
-  Return to allow the file to be overwritten.
-  Raise an exception to prevent the file from
-  being overwritten.
-  (May for instance save existing file as
-  backup.)
-  (Default is to raise an exception.)
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Return the standard spreadsheet backend capabilities.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._heading_font_size"></a>
+
+#### \_heading\_font\_size
+
+```python
+@staticmethod
+def _heading_font_size(level: int) -> int
+```
+
+Return the font size used for one heading level.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._python_value_from_spreadsheet"></a>
+
+#### \_python\_value\_from\_spreadsheet
+
+```python
+@staticmethod
+def _python_value_from_spreadsheet(value: object) -> Value
+```
+
+Convert one backend value to the public Value type.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._spreadsheet_value_from_python"></a>
+
+#### \_spreadsheet\_value\_from\_python
+
+```python
+@staticmethod
+def _spreadsheet_value_from_python(value: object) -> Value
+```
+
+Convert one Python value to a spreadsheet-compatible value.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._initialize_positions"></a>
+
+#### \_initialize\_positions
+
+```python
+def _initialize_positions() -> None
+```
+
+Initialize the default read and write cursors.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_sheet"></a>
+
+#### \_read\_sheet
+
+```python
+def _read_sheet() -> object
+```
+
+Return the readable sheet-like object.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_sheet"></a>
+
+#### \_write\_sheet
+
+```python
+def _write_sheet() -> object
+```
+
+Return the writable sheet-like object.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_value_to_sheet"></a>
+
+#### \_write\_value\_to\_sheet
+
+```python
+def _write_value_to_sheet(sheet: object, row: int, column: int,
+                          value: object) -> None
+```
+
+Write one plain value to one backend cell.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_cell_format"></a>
+
+#### \_set\_cell\_format
+
+```python
+def _set_cell_format(sheet: object, row: int, column: int,
+                     fmt: Optional[Fmt]) -> None
+```
+
+Apply optional formatting to one backend cell.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._apply_heading_style"></a>
+
+#### \_apply\_heading\_style
+
+```python
+def _apply_heading_style(row: int, column: int, level: int) -> None
+```
+
+Apply the backend heading style to one cell.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._last_used_row"></a>
+
+#### \_last\_used\_row
+
+```python
+def _last_used_row(sheet: object) -> int
+```
+
+Return the last used row index on a backend sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._last_used_column"></a>
+
+#### \_last\_used\_column
+
+```python
+def _last_used_column(sheet: object) -> int
+```
+
+Return the last used column index on a backend sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._cell_value"></a>
+
+#### \_cell\_value
+
+```python
+def _cell_value(sheet: object, row: int, column: int) -> Value
+```
+
+Return one backend cell converted to the public Value type.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._filtered_range_infos"></a>
+
+#### \_filtered\_range\_infos
+
+```python
+def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
+```
+
+Return the backend filtered ranges with zero-based bounds.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._delete_filtered_range"></a>
+
+#### \_delete\_filtered\_range
+
+```python
+def _delete_filtered_range(name: str) -> None
+```
+
+Delete one backend filtered range by name.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._add_filtered_range"></a>
+
+#### \_add\_filtered\_range
+
+```python
+def _add_filtered_range(bounds: tuple[int, int, int, int], name: str) -> None
+```
+
+Create one backend filtered range.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_column_width_if_wider"></a>
+
+#### \_set\_column\_width\_if\_wider
+
+```python
+def _set_column_width_if_wider(column: int, width: float) -> None
+```
+
+Widen one backend column if the target width is larger.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_value"></a>
+
+#### \_write\_value
+
+```python
+def _write_value(row: int,
+                 column: int,
+                 value: object,
+                 fmt: Optional[Fmt] = None) -> None
+```
+
+Write one value to the writable sheet and readable snapshot.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._clear_range"></a>
+
+#### \_clear\_range
+
+```python
+def _clear_range(top: int, left: int, bottom: int, right: int) -> None
+```
+
+Clear values and simple formatting in a rectangle.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_limits"></a>
+
+#### \_read\_limits
+
+```python
+def _read_limits(box: Optional[Box]) -> tuple[int, int, int, Optional[int]]
+```
+
+Return the row and column limits for a read operation.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_limit_right"></a>
+
+#### \_scan\_limit\_right
+
+```python
+def _scan_limit_right(sheet: object, left: int, right: Optional[int]) -> int
+```
+
+Return the exclusive right limit used when scanning rows.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._row_nonempty_columns"></a>
+
+#### \_row\_nonempty\_columns
+
+```python
+def _row_nonempty_columns(sheet: object, row: int, left: int,
+                          right: Optional[int]) -> list[int]
+```
+
+Return the non-empty columns in one row within the scan limits.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._row_is_empty"></a>
+
+#### \_row\_is\_empty
+
+```python
+def _row_is_empty(sheet: object, row: int, left: int,
+                  right: Optional[int]) -> bool
+```
+
+Return whether the selected row region contains no values.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._row_is_heading"></a>
+
+#### \_row\_is\_heading
+
+```python
+def _row_is_heading(sheet: object, row: int, left: int, right: Optional[int],
+                    bottom: int) -> bool
+```
+
+Return whether the row matches the heading layout.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_section"></a>
+
+#### \_scan\_section
+
+```python
+def _scan_section(box: Optional[Box]) -> _ScanResult
+```
+
+Scan the next readable section on the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_grid"></a>
+
+#### \_read\_grid
+
+```python
+def _read_grid(scan: _ScanResult) -> ListData[Value]
+```
+
+Read a rectangular grid from the scanned section.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_read_positions"></a>
+
+#### \_update\_read\_positions
+
+```python
+def _update_read_positions(scan: _ScanResult, box: Optional[Box]) -> None
+```
+
+Update default read and write positions after a read.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._ranges_overlap"></a>
+
+#### \_ranges\_overlap
+
+```python
+@staticmethod
+def _ranges_overlap(first: tuple[int, int, int, int],
+                    second: tuple[int, int, int, int]) -> bool
+```
+
+Return whether two zero-based exclusive rectangles overlap.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._filter_range_name_in_use"></a>
+
+#### \_filter\_range\_name\_in\_use
+
+```python
+def _filter_range_name_in_use(name: str) -> bool
+```
+
+Return whether the backend already contains the filter name.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._next_filter_range_name"></a>
+
+#### \_next\_filter\_range\_name
+
+```python
+def _next_filter_range_name() -> str
+```
+
+Return a backend-unique name for one filtered data range.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._remove_overlapping_filtered_ranges"></a>
+
+#### \_remove\_overlapping\_filtered\_ranges
+
+```python
+def _remove_overlapping_filtered_ranges(
+        bounds: tuple[int, int, int, int]) -> None
+```
+
+Remove backend filtered ranges that overlap the write bounds.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_filtered_data_range"></a>
+
+#### \_write\_filtered\_data\_range
+
+```python
+def _write_filtered_data_range(bounds: tuple[int, int, int, int]) -> None
+```
+
+Create one backend filtered data range for the given bounds.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._column_width_text"></a>
+
+#### \_column\_width\_text
+
+```python
+@staticmethod
+def _column_width_text(value: object) -> str
+```
+
+Return the text used to estimate a readable column width.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._table_column_width"></a>
+
+#### \_table\_column\_width
+
+```python
+def _table_column_width(top: int, bottom: int, column: int) -> float
+```
+
+Return a width target for one table column.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_table_column_widths"></a>
+
+#### \_update\_table\_column\_widths
+
+```python
+def _update_table_column_widths(top: int, left: int, bottom: int,
+                                right: int) -> None
+```
+
+Widen backend columns to fit the written table content.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_start"></a>
+
+#### \_write\_start
+
+```python
+def _write_start(box: Optional[Box]) -> tuple[int, int]
+```
+
+Return the start position for a write operation.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_write_position"></a>
+
+#### \_update\_write\_position
+
+```python
+def _update_write_position(next_row: int) -> None
+```
+
+Update the default write cursor after a write operation.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_grid"></a>
+
+#### \_write\_grid
+
+```python
+def _write_grid(values: ListData[Value],
+                formats: list[list[Optional[Fmt]]],
+                filtered_data_range: bool = False,
+                box: Optional[Box] = None) -> Position
+```
+
+Write a rectangular grid of values and optional formats.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_heading"></a>
+
+#### \_write\_heading
+
+```python
+def _write_heading(heading: str, level: int) -> Position
+```
+
+Write a heading to the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._split_cell_value"></a>
+
+#### \_split\_cell\_value
+
+```python
+@classmethod
+def _split_cell_value(cls, cell: CellT) -> tuple[Value, Optional[Fmt]]
+```
+
+Return the plain value and optional cell format.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_listdata"></a>
+
+#### \_write\_table\_listdata
+
+```python
+def _write_table_listdata(data: ListDataSeq[CellT],
+                          impl_meta: TableIO.ImplMetaForWrite) -> Position
+```
+
+Write list data to the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_fmtlistdata"></a>
+
+#### \_write\_table\_fmtlistdata
+
+```python
+def _write_table_fmtlistdata(data: FmtListData,
+                             impl_meta: TableIO.ImplMetaForWrite) -> Position
+```
+
+Write row-formatted list data to the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_dictdata"></a>
+
+#### \_write\_table\_dictdata
+
+```python
+def _write_table_dictdata(data: DictDataMap[CellT],
+                          impl_meta: TableIO.ImplMetaForDictWrite) -> Position
+```
+
+Write dict data to the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_fmtdictdata"></a>
+
+#### \_write\_table\_fmtdictdata
+
+```python
+def _write_table_fmtdictdata(
+        data: FmtDictData,
+        impl_meta: TableIO.ImplMetaForDictWrite) -> Position
+```
+
+Write row-formatted dict data to the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_table_listdata"></a>
+
+#### \_read\_table\_listdata
+
+```python
+def _read_table_listdata(
+        box: Optional[Box] = None) -> ReadResult[ListData[Value]]
+```
+
+Read list data from the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_table_dictdata"></a>
+
+#### \_read\_table\_dictdata
+
+```python
+def _read_table_dictdata(
+        box: Optional[Box] = None) -> ReadResult[DictData[Value]]
+```
+
+Read dict data from the active sheet.
 
 <a id="tableio.tableio_mformatbased"></a>
 
@@ -5161,16 +5986,6 @@ Get formats defined in the package to register with the factory.
 
 TableIO reader/writer class for Excel files using OpenPyXL.
 
-<a id="tableio.tableio_excel_openpyxl._ScanResult"></a>
-
-## \_ScanResult Objects
-
-```python
-class _ScanResult(NamedTuple)
-```
-
-Details gathered while scanning one worksheet section.
-
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL"></a>
 
 ## TableIOExcelOpenPyXL Objects
@@ -5181,10 +5996,8 @@ class TableIOExcelOpenPyXL(TableIOExcelBased)
 
 TableIO reader/writer class for Excel files using OpenPyXL.
 
-The first implementation uses a single active worksheet only.
-In UPDATE mode the default write position is after the last used row in
-that worksheet. This keeps appends simple, but using box explicitly is
-strongly recommended when writing in UPDATE mode.
+The implementation uses a single active worksheet only. In UPDATE mode
+the default write position is after the last used row in that worksheet.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__"></a>
 
@@ -5198,26 +6011,6 @@ def __init__(file_name: PathLike,
 
 Initialize the TableIOExcelOpenPyXL class.
 
-**Arguments**:
-
-- `file_name` - The name of the file to open.
-- `file_access` - What access is requested to the file.
-- `file_exists_callback` - A callback function to call if the file
-  already exists when file_access is CREATE.
-  Return to allow the file to be overwritten.
-  Raise an exception to prevent the file from
-  being overwritten.
-  (May for instance save existing file as
-  backup.)
-  (Default is to raise an exception.)
-
-**Notes**:
-
-  In UPDATE mode the default write position is after the last used
-  row on the active worksheet. That makes simple appends convenient,
-  but box should be preferred when writing updates so the target
-  range is explicit.
-
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description"></a>
 
 #### get\_description
@@ -5229,25 +6022,6 @@ def get_description(cls) -> Descriptor
 
 Get the description of the TableIOExcelOpenPyXL class.
 
-**Returns**:
-
-- `Descriptor` - The description of the TableIOExcelOpenPyXL class.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities"></a>
-
-#### get\_capabilities
-
-```python
-@classmethod
-def get_capabilities(cls) -> Capabilities
-```
-
-Get the capabilities of the TableIOExcelOpenPyXL class.
-
-**Returns**:
-
-- `Capabilities` - The capabilities of the TableIOExcelOpenPyXL class.
-
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension"></a>
 
 #### file\_name\_extension
@@ -5257,11 +6031,7 @@ Get the capabilities of the TableIOExcelOpenPyXL class.
 def file_name_extension(cls) -> str
 ```
 
-Get the file name extension of the TableIOExcelOpenPyXL class.
-
-**Returns**:
-
-- `str` - The file name extension of the TableIOExcelOpenPyXL class.
+Get the file name extension of the Excel implementation.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open"></a>
 
@@ -5303,38 +6073,25 @@ def _close() -> None
 
 Close any open workbook handles.
 
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._python_value_from_excel"></a>
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_sheet"></a>
 
-#### \_python\_value\_from\_excel
-
-```python
-@staticmethod
-def _python_value_from_excel(value: object) -> Value
-```
-
-Convert an Excel cell value to the closest supported Value.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._excel_value_from_python"></a>
-
-#### \_excel\_value\_from\_python
+#### \_read\_sheet
 
 ```python
-@staticmethod
-def _excel_value_from_python(value: object) -> Value
+def _read_sheet() -> object
 ```
 
-Convert a Python value to the closest Excel-supported value.
+Return the readable worksheet.
 
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._range_ref"></a>
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_sheet"></a>
 
-#### \_range\_ref
+#### \_write\_sheet
 
 ```python
-@staticmethod
-def _range_ref(top: int, left: int, bottom: int, right: int) -> str
+def _write_sheet() -> object
 ```
 
-Return an Excel A1 range string for a zero-based rectangle.
+Return the writable worksheet.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._highlight_fill"></a>
 
@@ -5347,57 +6104,44 @@ def _highlight_fill(highlight: Color) -> PatternFill
 
 Return the fill object for the requested highlight color.
 
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value_to_sheet"></a>
+
+#### \_write\_value\_to\_sheet
+
+```python
+def _write_value_to_sheet(sheet: object, row: int, column: int,
+                          value: object) -> None
+```
+
+Write one value to one worksheet cell.
+
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_cell_format"></a>
 
 #### \_set\_cell\_format
 
 ```python
-def _set_cell_format(worksheet: Worksheet, row: int, column: int,
+def _set_cell_format(sheet: object, row: int, column: int,
                      fmt: Optional[Fmt]) -> None
 ```
 
-Apply cell formatting to the worksheet cell.
+Apply cell formatting to one worksheet cell.
 
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value_to_cell"></a>
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._apply_heading_style"></a>
 
-#### \_write\_value\_to\_cell
-
-```python
-def _write_value_to_cell(worksheet: Worksheet, row: int, column: int,
-                         value: object) -> None
-```
-
-Write one value to one worksheet cell.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value"></a>
-
-#### \_write\_value
+#### \_apply\_heading\_style
 
 ```python
-def _write_value(row: int,
-                 column: int,
-                 value: object,
-                 fmt: Optional[Fmt] = None) -> None
+def _apply_heading_style(row: int, column: int, level: int) -> None
 ```
 
-Write one value to the writable workbook and read snapshot.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._clear_range"></a>
-
-#### \_clear\_range
-
-```python
-def _clear_range(top: int, left: int, bottom: int, right: int) -> None
-```
-
-Clear values and simple formatting in a worksheet rectangle.
+Apply the heading font to one worksheet cell.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._used_bounds"></a>
 
 #### \_used\_bounds
 
 ```python
-def _used_bounds(worksheet: Worksheet) -> tuple[int, int]
+def _used_bounds(sheet: object) -> tuple[int, int]
 ```
 
 Return the last used row and column on a worksheet.
@@ -5407,7 +6151,7 @@ Return the last used row and column on a worksheet.
 #### \_last\_used\_row
 
 ```python
-def _last_used_row(worksheet: Worksheet) -> int
+def _last_used_row(sheet: object) -> int
 ```
 
 Return the last used row index on a worksheet.
@@ -5417,7 +6161,7 @@ Return the last used row index on a worksheet.
 #### \_last\_used\_column
 
 ```python
-def _last_used_column(worksheet: Worksheet) -> int
+def _last_used_column(sheet: object) -> int
 ```
 
 Return the last used column index on a worksheet.
@@ -5427,147 +6171,52 @@ Return the last used column index on a worksheet.
 #### \_cell\_value
 
 ```python
-def _cell_value(worksheet: Worksheet, row: int, column: int) -> Value
+def _cell_value(sheet: object, row: int, column: int) -> Value
 ```
 
-Return one worksheet cell converted to the public Value type.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_limits"></a>
-
-#### \_read\_limits
-
-```python
-def _read_limits(box: Optional[Box]) -> tuple[int, int, int, Optional[int]]
-```
-
-Return the row and column limits for a read operation.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_limit_right"></a>
-
-#### \_scan\_limit\_right
-
-```python
-def _scan_limit_right(worksheet: Worksheet, left: int,
-                      right: Optional[int]) -> int
-```
-
-Return the exclusive right limit used when scanning rows.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_nonempty_columns"></a>
-
-#### \_row\_nonempty\_columns
-
-```python
-def _row_nonempty_columns(worksheet: Worksheet, row: int, left: int,
-                          right: Optional[int]) -> list[int]
-```
-
-Return the non-empty columns in a row within the scan limits.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_is_empty"></a>
-
-#### \_row\_is\_empty
-
-```python
-def _row_is_empty(worksheet: Worksheet, row: int, left: int,
-                  right: Optional[int]) -> bool
-```
-
-Return whether the selected row region contains no values.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._row_is_heading"></a>
-
-#### \_row\_is\_heading
-
-```python
-def _row_is_heading(worksheet: Worksheet, row: int, left: int,
-                    right: Optional[int], bottom: int) -> bool
-```
-
-Return whether the row matches the heading layout.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._scan_section"></a>
-
-#### \_scan\_section
-
-```python
-def _scan_section(box: Optional[Box]) -> _ScanResult
-```
-
-Scan the next readable section on the active worksheet.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_grid"></a>
-
-#### \_read\_grid
-
-```python
-def _read_grid(scan: _ScanResult) -> ListData[Value]
-```
-
-Read a rectangular grid from the scanned section.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_read_positions"></a>
-
-#### \_update\_read\_positions
-
-```python
-def _update_read_positions(scan: _ScanResult, box: Optional[Box]) -> None
-```
-
-Update default read and write positions after a read.
+Return one worksheet cell as a public Value.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_bounds"></a>
 
 #### \_table\_bounds
 
 ```python
+@staticmethod
 def _table_bounds(table_ref: str) -> tuple[int, int, int, int]
 ```
 
-Return a zero-based exclusive rectangle for one table range.
+Return zero-based exclusive bounds for one worksheet table.
 
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._ranges_overlap"></a>
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._filtered_range_infos"></a>
 
-#### \_ranges\_overlap
+#### \_filtered\_range\_infos
+
+```python
+def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
+```
+
+Return the worksheet tables and their bounds.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._delete_filtered_range"></a>
+
+#### \_delete\_filtered\_range
+
+```python
+def _delete_filtered_range(name: str) -> None
+```
+
+Delete one worksheet table by name.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._range_ref"></a>
+
+#### \_range\_ref
 
 ```python
 @staticmethod
-def _ranges_overlap(first: tuple[int, int, int, int],
-                    second: tuple[int, int, int, int]) -> bool
+def _range_ref(top: int, left: int, bottom: int, right: int) -> str
 ```
 
-Return whether two zero-based exclusive rectangles overlap.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._remove_overlapping_tables"></a>
-
-#### \_remove\_overlapping\_tables
-
-```python
-def _remove_overlapping_tables(worksheet: Worksheet,
-                               bounds: tuple[int, int, int, int]) -> None
-```
-
-Remove worksheet tables that overlap the written rectangle.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_name_in_use"></a>
-
-#### \_table\_name\_in\_use
-
-```python
-def _table_name_in_use(table_name: str) -> bool
-```
-
-Return whether the workbook already contains the table name.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._next_table_name"></a>
-
-#### \_next\_table\_name
-
-```python
-def _next_table_name() -> str
-```
-
-Return a workbook-unique name for a filtered data range table.
+Return an Excel A1 range string for a zero-based rectangle.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._normalize_filtered_table_header"></a>
 
@@ -5579,156 +6228,23 @@ def _normalize_filtered_table_header(top: int, left: int, right: int) -> None
 
 Convert the filtered table header row to strings when needed.
 
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_filtered_data_range"></a>
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._add_filtered_range"></a>
 
-#### \_write\_filtered\_data\_range
-
-```python
-def _write_filtered_data_range(bounds: tuple[int, int, int, int]) -> None
-```
-
-Add a lightweight Excel table for one filtered data range.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._column_width_text"></a>
-
-#### \_column\_width\_text
+#### \_add\_filtered\_range
 
 ```python
-@staticmethod
-def _column_width_text(value: object) -> str
+def _add_filtered_range(bounds: tuple[int, int, int, int], name: str) -> None
 ```
 
-Return the text used to estimate a readable column width.
+Add one lightweight Excel table for a filtered data range.
 
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_column_width"></a>
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_column_width_if_wider"></a>
 
-#### \_table\_column\_width
+#### \_set\_column\_width\_if\_wider
 
 ```python
-def _table_column_width(worksheet: Worksheet, top: int, bottom: int,
-                        column: int) -> float
+def _set_column_width_if_wider(column: int, width: float) -> None
 ```
 
-Return a width target for one table column.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_table_column_widths"></a>
-
-#### \_update\_table\_column\_widths
-
-```python
-def _update_table_column_widths(top: int, left: int, bottom: int,
-                                right: int) -> None
-```
-
-Widen worksheet columns to fit the written table content.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_start"></a>
-
-#### \_write\_start
-
-```python
-def _write_start(box: Optional[Box]) -> tuple[int, int]
-```
-
-Return the start position for a write operation.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._update_write_position"></a>
-
-#### \_update\_write\_position
-
-```python
-def _update_write_position(next_row: int) -> None
-```
-
-Update the default write cursor after a write operation.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_grid"></a>
-
-#### \_write\_grid
-
-```python
-def _write_grid(values: ListData[Value],
-                formats: list[list[Optional[Fmt]]],
-                filtered_data_range: bool = False,
-                box: Optional[Box] = None) -> Position
-```
-
-Write a rectangular grid of values and optional formats.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_heading"></a>
-
-#### \_write\_heading
-
-```python
-def _write_heading(heading: str, level: int) -> Position
-```
-
-Write a heading to the active worksheet.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_listdata"></a>
-
-#### \_write\_table\_listdata
-
-```python
-def _write_table_listdata(data: ListDataSeq[CellT],
-                          impl_meta: TableIO.ImplMetaForWrite) -> Position
-```
-
-Write list data to the active worksheet.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_fmtlistdata"></a>
-
-#### \_write\_table\_fmtlistdata
-
-```python
-def _write_table_fmtlistdata(data: FmtListData,
-                             impl_meta: TableIO.ImplMetaForWrite) -> Position
-```
-
-Write row-formatted list data to the active worksheet.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_dictdata"></a>
-
-#### \_write\_table\_dictdata
-
-```python
-def _write_table_dictdata(data: DictDataMap[CellT],
-                          impl_meta: TableIO.ImplMetaForDictWrite) -> Position
-```
-
-Write dict data to the active worksheet.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_table_fmtdictdata"></a>
-
-#### \_write\_table\_fmtdictdata
-
-```python
-def _write_table_fmtdictdata(
-        data: FmtDictData,
-        impl_meta: TableIO.ImplMetaForDictWrite) -> Position
-```
-
-Write row-formatted dict data to the active worksheet.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_table_listdata"></a>
-
-#### \_read\_table\_listdata
-
-```python
-def _read_table_listdata(
-        box: Optional[Box] = None) -> ReadResult[ListData[Value]]
-```
-
-Read list data from the active worksheet.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_table_dictdata"></a>
-
-#### \_read\_table\_dictdata
-
-```python
-def _read_table_dictdata(
-        box: Optional[Box] = None) -> ReadResult[DictData[Value]]
-```
-
-Read dict data from the active worksheet.
+Widen one worksheet column if the target width is larger.
 

@@ -39,6 +39,12 @@
     * [RED](#tableio.color.Color.RED)
     * [GREEN](#tableio.color.Color.GREEN)
     * [YELLOW](#tableio.color.Color.YELLOW)
+* [tableio.tableio\_ods\_odfdo](#tableio.tableio_ods_odfdo)
+  * [TableIOOdsOdfdo](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo)
+    * [\_\_init\_\_](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.__init__)
+    * [get\_description](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description)
+    * [file\_name\_extension](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.file_name_extension)
+    * [open](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.open)
 * [tableio.tableio\_mformat](#tableio.tableio_mformat)
   * [TableIOMformatMd](#tableio.tableio_mformat.TableIOMformatMd)
     * [\_\_init\_\_](#tableio.tableio_mformat.TableIOMformatMd.__init__)
@@ -237,6 +243,7 @@
 * [tableio.tableio\_spreadsheetbased](#tableio.tableio_spreadsheetbased)
   * [TableIOSpreadsheetBased](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased)
     * [\_\_init\_\_](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__)
+    * [get\_capabilities](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.get_capabilities)
 * [tableio.tableio\_mformatbased](#tableio.tableio_mformatbased)
   * [TableIOMformatBased](#tableio.tableio_mformatbased.TableIOMformatBased)
     * [\_\_init\_\_](#tableio.tableio_mformatbased.TableIOMformatBased.__init__)
@@ -252,7 +259,6 @@
   * [TableIOExcelOpenPyXL](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL)
     * [\_\_init\_\_](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__)
     * [get\_description](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description)
-    * [get\_capabilities](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities)
     * [file\_name\_extension](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension)
     * [open](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open)
 
@@ -888,6 +894,66 @@ Green highlight color.
 #### YELLOW
 
 Yellow highlight color.
+
+<a id="tableio.tableio_ods_odfdo"></a>
+
+# tableio.tableio\_ods\_odfdo
+
+TableIO class for OpenDocument Spreadsheet files using ODFdo.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo"></a>
+
+## TableIOOdsOdfdo Objects
+
+```python
+class TableIOOdsOdfdo(TableIOSpreadsheetBased)
+```
+
+TableIO class for OpenDocument Spreadsheet ODS files using odfdo.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(file_name: PathLike,
+             file_access: FileAccess,
+             file_exists_callback: Optional[Callable[[str], None]] = None)
+```
+
+Initialize the TableIOOdsOdfdo class.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description"></a>
+
+#### get\_description
+
+```python
+@classmethod
+def get_description(cls) -> Descriptor
+```
+
+Get the description of the TableIOOdsOdfdo class.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.file_name_extension"></a>
+
+#### file\_name\_extension
+
+```python
+@classmethod
+def file_name_extension(cls) -> str
+```
+
+Get the file name extension of the ODS implementation.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open the ODS document.
 
 <a id="tableio.tableio_mformat"></a>
 
@@ -3854,15 +3920,10 @@ class TableIOSpreadsheetBased(TableIO)
 
 Intermediate TableIO base class for spreadsheet-based file formats.
 
-This class is used to provide a base class for spreadsheet-based
-file formats. It is not intended to be used directly, but rather
-to be subclassed by a specific spreadsheet-based file format
-such as Excel or Open Document Spreadsheet.
-
-The main purpose of this class is to provide a place where common
-functionality for spreadsheet-based file formats can be implemented.
-This class starts out empty, but whenever common functionality
-is detected it should be refactored into this class.
+This class holds the public spreadsheet semantics shared between Excel
+and ODS backends: sequential reads, boxed reads and writes, headings,
+filtered ranges, and the conversion between list or dict tables and the
+rectangular grid stored in the document.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__"></a>
 
@@ -3874,20 +3935,18 @@ def __init__(file_name: PathLike,
              file_exists_callback: Optional[Callable[[str], None]] = None)
 ```
 
-Initialize the TableIO_SpreadsheetBased class.
+Initialize the spreadsheet-based TableIO class.
 
-**Arguments**:
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.get_capabilities"></a>
 
-- `file_name` - The name of the file to open.
-- `file_access` - What access is requested to the file.
-- `file_exists_callback` - A callback function to call if the file
-  already exists when file_access is CREATE.
-  Return to allow the file to be overwritten.
-  Raise an exception to prevent the file from
-  being overwritten.
-  (May for instance save existing file as
-  backup.)
-  (Default is to raise an exception.)
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Return the standard spreadsheet backend capabilities.
 
 <a id="tableio.tableio_mformatbased"></a>
 
@@ -4069,10 +4128,8 @@ class TableIOExcelOpenPyXL(TableIOExcelBased)
 
 TableIO reader/writer class for Excel files using OpenPyXL.
 
-The first implementation uses a single active worksheet only.
-In UPDATE mode the default write position is after the last used row in
-that worksheet. This keeps appends simple, but using box explicitly is
-strongly recommended when writing in UPDATE mode.
+The implementation uses a single active worksheet only. In UPDATE mode
+the default write position is after the last used row in that worksheet.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__"></a>
 
@@ -4086,26 +4143,6 @@ def __init__(file_name: PathLike,
 
 Initialize the TableIOExcelOpenPyXL class.
 
-**Arguments**:
-
-- `file_name` - The name of the file to open.
-- `file_access` - What access is requested to the file.
-- `file_exists_callback` - A callback function to call if the file
-  already exists when file_access is CREATE.
-  Return to allow the file to be overwritten.
-  Raise an exception to prevent the file from
-  being overwritten.
-  (May for instance save existing file as
-  backup.)
-  (Default is to raise an exception.)
-
-**Notes**:
-
-  In UPDATE mode the default write position is after the last used
-  row on the active worksheet. That makes simple appends convenient,
-  but box should be preferred when writing updates so the target
-  range is explicit.
-
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description"></a>
 
 #### get\_description
@@ -4117,25 +4154,6 @@ def get_description(cls) -> Descriptor
 
 Get the description of the TableIOExcelOpenPyXL class.
 
-**Returns**:
-
-- `Descriptor` - The description of the TableIOExcelOpenPyXL class.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities"></a>
-
-#### get\_capabilities
-
-```python
-@classmethod
-def get_capabilities(cls) -> Capabilities
-```
-
-Get the capabilities of the TableIOExcelOpenPyXL class.
-
-**Returns**:
-
-- `Capabilities` - The capabilities of the TableIOExcelOpenPyXL class.
-
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension"></a>
 
 #### file\_name\_extension
@@ -4145,11 +4163,7 @@ Get the capabilities of the TableIOExcelOpenPyXL class.
 def file_name_extension(cls) -> str
 ```
 
-Get the file name extension of the TableIOExcelOpenPyXL class.
-
-**Returns**:
-
-- `str` - The file name extension of the TableIOExcelOpenPyXL class.
+Get the file name extension of the Excel implementation.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open"></a>
 

@@ -4,43 +4,543 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-from typing import Callable, Optional
+from datetime import date, datetime, time
+from decimal import Decimal
+from typing import Callable, NamedTuple, Optional
 from mformat.mformat import PathLike
-from tableio.tableio import TableIO, FileAccess
+from tableio.capability import Capabilities, SingleCapability, Strictness
+from tableio.tableio import Box, FileAccess, Position, TableIO
+from tableio.value_type import CellT, DictData, DictDataMap, Fmt, \
+    FmtDictData, FmtListData, ListData, ListDataSeq, ReadResult, Value, \
+    ValueFmt, row_format_each_cell_dict, row_format_each_cell_list, \
+    value_to_str
+
+
+_SUPPORTED: SingleCapability = SingleCapability(supported=True,
+                                                strictness=Strictness.STRICT)
+_FILTER_RANGE_PREFIX = 'TableIOFilter_'
+_COLUMN_WIDTH_PADDING = 2
+_MAX_COLUMN_WIDTH = 50
+_HEADING_FONT_SIZES: dict[int, int] = {
+    1: 14,
+    2: 12,
+    3: 11
+}
+
+
+class _ScanResult(NamedTuple):
+    """Details gathered while scanning one worksheet section."""
+
+    headings: list[str]
+    table_top: int
+    table_bottom: int
+    table_left: int
+    table_right: int
+    last_read_row: int
+    next_read_row: int
 
 
 class TableIOSpreadsheetBased(TableIO):
     """Intermediate TableIO base class for spreadsheet-based file formats.
 
-    This class is used to provide a base class for spreadsheet-based
-    file formats. It is not intended to be used directly, but rather
-    to be subclassed by a specific spreadsheet-based file format
-    such as Excel or Open Document Spreadsheet.
-
-    The main purpose of this class is to provide a place where common
-    functionality for spreadsheet-based file formats can be implemented.
-    This class starts out empty, but whenever common functionality
-    is detected it should be refactored into this class.
+    This class holds the public spreadsheet semantics shared between Excel
+    and ODS backends: sequential reads, boxed reads and writes, headings,
+    filtered ranges, and the conversion between list or dict tables and the
+    rectangular grid stored in the document.
     """
 
     def __init__(self, file_name: PathLike,
                  file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None):
-        """Initialize the TableIO_SpreadsheetBased class.
-
-        Args:
-            file_name: The name of the file to open.
-            file_access: What access is requested to the file.
-            file_exists_callback: A callback function to call if the file
-                                  already exists when file_access is CREATE.
-                                  Return to allow the file to be overwritten.
-                                  Raise an exception to prevent the file from
-                                  being overwritten.
-                                  (May for instance save existing file as
-                                  backup.)
-                                  (Default is to raise an exception.)
-        """
+        """Initialize the spreadsheet-based TableIO class."""
         super().__init__(file_name=file_name,
                          file_access=file_access,
                          file_exists_callback=file_exists_callback)
+        self.read_row: int = 0
+        self.write_row: int = 0
+
+    @classmethod
+    def get_capabilities(cls) -> Capabilities:
+        """Return the standard spreadsheet backend capabilities."""
+        return Capabilities(can_read=_SUPPORTED, can_write=_SUPPORTED,
+                            can_fmt_row=_SUPPORTED, can_fmt_value=_SUPPORTED,
+                            filtered_data_range=_SUPPORTED,
+                            can_write_box=_SUPPORTED, can_read_box=_SUPPORTED,
+                            can_write_highlight=_SUPPORTED)
+
+    @staticmethod
+    def _heading_font_size(level: int) -> int:
+        """Return the font size used for one heading level."""
+        return _HEADING_FONT_SIZES[level]
+
+    @staticmethod
+    def _python_value_from_spreadsheet(value: object) -> Value:  # pylint: disable=too-many-return-statements # noqa: E501
+        """Convert one backend value to the public Value type."""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value
+        if isinstance(value, date):
+            return datetime.combine(value, time())
+        if isinstance(value, Decimal):
+            if value == value.to_integral_value():
+                return int(value)
+            return float(value)
+        if isinstance(value, (str, bool, int, float)):
+            return value
+        return str(value)
+
+    @staticmethod
+    def _spreadsheet_value_from_python(value: object) -> Value:
+        """Convert one Python value to a spreadsheet-compatible value."""
+        return TableIOSpreadsheetBased._python_value_from_spreadsheet(value)
+
+    def _initialize_positions(self) -> None:
+        """Initialize the default read and write cursors."""
+        self.read_row = 0
+        if self.file_access == FileAccess.UPDATE:
+            self.write_row = self._last_used_row(self._write_sheet()) + 1
+        else:
+            self.write_row = 0
+
+    def _read_sheet(self) -> object:
+        """Return the readable sheet-like object."""
+        err = 'Subclass must implement _read_sheet method'
+        raise NotImplementedError(err)
+        # pylint: disable=unreachable
+        return object()
+
+    def _write_sheet(self) -> object:
+        """Return the writable sheet-like object."""
+        err = 'Subclass must implement _write_sheet method'
+        raise NotImplementedError(err)
+        # pylint: disable=unreachable
+        return object()
+
+    def _write_value_to_sheet(self, sheet: object, row: int,
+                              column: int, value: object) -> None:
+        """Write one plain value to one backend cell."""
+        _ = sheet
+        _ = row
+        _ = column
+        _ = value
+        err = 'Subclass must implement _write_value_to_sheet method'
+        raise NotImplementedError(err)
+
+    def _set_cell_format(self, sheet: object, row: int, column: int,
+                         fmt: Optional[Fmt]) -> None:
+        """Apply optional formatting to one backend cell."""
+        _ = sheet
+        _ = row
+        _ = column
+        _ = fmt
+        err = 'Subclass must implement _set_cell_format method'
+        raise NotImplementedError(err)
+
+    def _apply_heading_style(self, row: int, column: int, level: int) -> None:
+        """Apply the backend heading style to one cell."""
+        _ = row
+        _ = column
+        _ = level
+        err = 'Subclass must implement _apply_heading_style method'
+        raise NotImplementedError(err)
+
+    def _last_used_row(self, sheet: object) -> int:
+        """Return the last used row index on a backend sheet."""
+        _ = sheet
+        err = 'Subclass must implement _last_used_row method'
+        raise NotImplementedError(err)
+        # pylint: disable=unreachable
+        return -1
+
+    def _last_used_column(self, sheet: object) -> int:
+        """Return the last used column index on a backend sheet."""
+        _ = sheet
+        err = 'Subclass must implement _last_used_column method'
+        raise NotImplementedError(err)
+        # pylint: disable=unreachable
+        return -1
+
+    def _cell_value(self, sheet: object, row: int, column: int) -> Value:
+        """Return one backend cell converted to the public Value type."""
+        _ = sheet
+        _ = row
+        _ = column
+        err = 'Subclass must implement _cell_value method'
+        raise NotImplementedError(err)
+        # pylint: disable=unreachable
+        return ''
+
+    def _filtered_range_infos(self) -> list[tuple[str, tuple[int, int,
+                                                             int, int]]]:
+        """Return the backend filtered ranges with zero-based bounds."""
+        err = 'Subclass must implement _filtered_range_infos method'
+        raise NotImplementedError(err)
+        # pylint: disable=unreachable
+        return []
+
+    def _delete_filtered_range(self, name: str) -> None:
+        """Delete one backend filtered range by name."""
+        _ = name
+        err = 'Subclass must implement _delete_filtered_range method'
+        raise NotImplementedError(err)
+
+    def _add_filtered_range(self, bounds: tuple[int, int, int, int],
+                            name: str) -> None:
+        """Create one backend filtered range."""
+        _ = bounds
+        _ = name
+        err = 'Subclass must implement _add_filtered_range method'
+        raise NotImplementedError(err)
+
+    def _set_column_width_if_wider(self, column: int, width: float) -> None:
+        """Widen one backend column if the target width is larger."""
+        _ = column
+        _ = width
+        err = 'Subclass must implement _set_column_width_if_wider method'
+        raise NotImplementedError(err)
+
+    def _write_value(self, row: int, column: int, value: object,
+                     fmt: Optional[Fmt] = None) -> None:
+        """Write one value to the writable sheet and readable snapshot."""
+        write_sheet = self._write_sheet()
+        read_sheet = self._read_sheet()
+        self._write_value_to_sheet(write_sheet, row, column, value)
+        self._set_cell_format(write_sheet, row, column, fmt)
+        if read_sheet is write_sheet:
+            return
+        self._write_value_to_sheet(read_sheet, row, column, value)
+
+    def _clear_range(self, top: int, left: int,
+                     bottom: int, right: int) -> None:
+        """Clear values and simple formatting in a rectangle."""
+        write_sheet = self._write_sheet()
+        read_sheet = self._read_sheet()
+        for row in range(top, bottom):
+            for column in range(left, right):
+                self._write_value_to_sheet(write_sheet, row, column, None)
+                if read_sheet is not write_sheet:
+                    self._write_value_to_sheet(read_sheet, row, column, None)
+
+    def _read_limits(
+            self, box: Optional[Box]) -> tuple[int, int, int, Optional[int]]:
+        """Return the row and column limits for a read operation."""
+        read_sheet = self._read_sheet()
+        left = 0 if box is None else box.left
+        top = self.read_row if box is None else box.top
+        last_used_row = self._last_used_row(read_sheet)
+        bottom = box.bottom if box is not None and \
+            box.bottom is not None else last_used_row + 1
+        right = box.right if box is not None else None
+        return left, top, bottom, right
+
+    def _scan_limit_right(self, sheet: object, left: int,
+                          right: Optional[int]) -> int:
+        """Return the exclusive right limit used when scanning rows."""
+        if right is not None:
+            return right
+        last_used = self._last_used_column(sheet)
+        if last_used < left:
+            return left
+        return last_used + 1
+
+    def _row_nonempty_columns(self, sheet: object, row: int, left: int,
+                              right: Optional[int]) -> list[int]:
+        """Return the non-empty columns in one row within the scan limits."""
+        scan_right = self._scan_limit_right(sheet, left, right)
+        ret: list[int] = []
+        for column in range(left, scan_right):
+            if self._cell_value(sheet, row, column) is not None:
+                ret.append(column)
+        return ret
+
+    def _row_is_empty(self, sheet: object, row: int,
+                      left: int, right: Optional[int]) -> bool:
+        """Return whether the selected row region contains no values."""
+        return not self._row_nonempty_columns(sheet, row, left, right)
+
+    def _row_is_heading(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
+                        sheet: object, row: int, left: int,
+                        right: Optional[int], bottom: int) -> bool:
+        """Return whether the row matches the heading layout."""
+        nonempty_columns = self._row_nonempty_columns(sheet, row, left, right)
+        if nonempty_columns != [left]:
+            return False
+        if row + 1 >= bottom:
+            return False
+        return self._row_is_empty(sheet, row + 1, left, right)
+
+    def _scan_section(self, box: Optional[Box]) -> _ScanResult:
+        """Scan the next readable section on the active sheet."""
+        sheet = self._read_sheet()
+        left, top, bottom, right = self._read_limits(box)
+        row = top
+        last_read_row = top - 1
+        while row < bottom and self._row_is_empty(sheet, row, left, right):
+            last_read_row = row
+            row += 1
+        headings: list[str] = []
+        while row < bottom and self._row_is_heading(sheet, row, left,
+                                                    right, bottom):
+            heading = self._cell_value(sheet, row, left)
+            headings.append(value_to_str(heading, none_is_empty=True))
+            last_read_row = row
+            row += 1
+            while row < bottom and self._row_is_empty(sheet, row, left,
+                                                      right):
+                last_read_row = row
+                row += 1
+        table_top = row
+        table_bottom = row
+        table_right = left
+        while row < bottom:
+            nonempty_columns = self._row_nonempty_columns(sheet, row, left,
+                                                          right)
+            if not nonempty_columns:
+                last_read_row = row
+                row += 1
+                break
+            last_read_row = row
+            table_bottom = row + 1
+            if right is None:
+                table_right = max(table_right, max(nonempty_columns) + 1)
+            else:
+                table_right = right
+            row += 1
+        return _ScanResult(headings=headings, table_top=table_top,
+                           table_bottom=table_bottom, table_left=left,
+                           table_right=table_right,
+                           last_read_row=last_read_row,
+                           next_read_row=row)
+
+    def _read_grid(self, scan: _ScanResult) -> ListData[Value]:
+        """Read a rectangular grid from the scanned section."""
+        read_sheet = self._read_sheet()
+        if scan.table_bottom <= scan.table_top or \
+                scan.table_right <= scan.table_left:
+            return []
+        ret: ListData[Value] = []
+        for row in range(scan.table_top, scan.table_bottom):
+            ret.append([
+                self._cell_value(read_sheet, row, column)
+                for column in range(scan.table_left, scan.table_right)
+            ])
+        return ret
+
+    def _update_read_positions(self, scan: _ScanResult,
+                               box: Optional[Box]) -> None:
+        """Update default read and write positions after a read."""
+        self.write_row = scan.last_read_row + 1
+        if box is not None:
+            return
+        self.read_row = scan.next_read_row
+
+    @staticmethod
+    def _ranges_overlap(first: tuple[int, int, int, int],
+                        second: tuple[int, int, int, int]) -> bool:
+        """Return whether two zero-based exclusive rectangles overlap."""
+        return first[0] < second[2] and second[0] < first[2] and \
+            first[1] < second[3] and second[1] < first[3]
+
+    def _filter_range_name_in_use(self, name: str) -> bool:
+        """Return whether the backend already contains the filter name."""
+        for existing_name, _ in self._filtered_range_infos():
+            if existing_name == name:
+                return True
+        return False
+
+    def _next_filter_range_name(self) -> str:
+        """Return a backend-unique name for one filtered data range."""
+        filter_index = 1
+        while True:
+            name = f'{_FILTER_RANGE_PREFIX}{filter_index}'
+            if not self._filter_range_name_in_use(name):
+                return name
+            filter_index += 1
+
+    def _remove_overlapping_filtered_ranges(
+            self, bounds: tuple[int, int, int, int]) -> None:
+        """Remove backend filtered ranges that overlap the write bounds."""
+        for name, existing_bounds in self._filtered_range_infos():
+            if self._ranges_overlap(bounds, existing_bounds):
+                self._delete_filtered_range(name)
+
+    def _write_filtered_data_range(
+            self, bounds: tuple[int, int, int, int]) -> None:
+        """Create one backend filtered data range for the given bounds."""
+        self._add_filtered_range(bounds, self._next_filter_range_name())
+
+    @staticmethod
+    def _column_width_text(value: object) -> str:
+        """Return the text used to estimate a readable column width."""
+        if value is None:
+            return ''
+        return str(value)
+
+    def _table_column_width(self, top: int, bottom: int,
+                            column: int) -> float:
+        """Return a width target for one table column."""
+        max_length = 0
+        write_sheet = self._write_sheet()
+        for row in range(top, bottom):
+            value = self._cell_value(write_sheet, row, column)
+            max_length = max(max_length,
+                             len(self._column_width_text(value)))
+        return float(min(_MAX_COLUMN_WIDTH,
+                         max_length + _COLUMN_WIDTH_PADDING))
+
+    def _update_table_column_widths(self, top: int, left: int,
+                                    bottom: int, right: int) -> None:
+        """Widen backend columns to fit the written table content."""
+        for column in range(left, right):
+            self._set_column_width_if_wider(
+                column, self._table_column_width(top, bottom, column))
+
+    def _write_start(self, box: Optional[Box]) -> tuple[int, int]:
+        """Return the start position for a write operation."""
+        if box is not None:
+            return box.top, box.left
+        row = self.write_row
+        if row > 0:
+            if not self._row_is_empty(self._write_sheet(), row - 1, 0, None):
+                row += 1
+        self.write_row = row
+        return row, 0
+
+    def _update_write_position(self, next_row: int) -> None:
+        """Update the default write cursor after a write operation."""
+        self.write_row = next_row
+
+    def _write_grid(self,  # pylint: disable=too-many-locals
+                    values: ListData[Value],
+                    formats: list[list[Optional[Fmt]]],
+                    filtered_data_range: bool = False,
+                    box: Optional[Box] = None) -> Position:
+        """Write a rectangular grid of values and optional formats."""
+        start_row, start_column = self._write_start(box)
+        row_count = len(values)
+        column_count = len(values[0])
+        write_bottom = start_row + row_count
+        write_right = start_column + column_count
+        clear_bottom = box.bottom if box is not None and \
+            box.bottom is not None else write_bottom
+        clear_right = box.right if box is not None and \
+            box.right is not None else write_right
+        affected_bounds = (
+            start_row,
+            start_column,
+            clear_bottom if box is not None else write_bottom,
+            clear_right if box is not None else write_right
+        )
+        self._remove_overlapping_filtered_ranges(affected_bounds)
+        if box is not None:
+            self._clear_range(start_row, start_column, clear_bottom,
+                              clear_right)
+        for row_offset, row in enumerate(values):
+            for column_offset, value in enumerate(row):
+                fmt = formats[row_offset][column_offset]
+                self._write_value(start_row + row_offset,
+                                  start_column + column_offset, value, fmt)
+        if filtered_data_range:
+            self._write_filtered_data_range((start_row, start_column,
+                                             write_bottom, write_right))
+        self._update_table_column_widths(start_row, start_column,
+                                         write_bottom, write_right)
+        next_row = max(self.write_row, clear_bottom + 1)
+        self._update_write_position(next_row)
+        return Position(row=start_row + row_count - 1,
+                        column=start_column + column_count - 1)
+
+    def _write_heading(self, heading: str, level: int) -> Position:
+        """Write a heading to the active sheet."""
+        start_row, start_column = self._write_start(None)
+        self._write_value(start_row, start_column, heading)
+        self._apply_heading_style(start_row, start_column, level)
+        self._update_write_position(start_row + 2)
+        return Position(row=start_row, column=start_column)
+
+    @classmethod
+    def _split_cell_value(cls, cell: CellT) -> tuple[Value, Optional[Fmt]]:
+        """Return the plain value and optional cell format."""
+        if isinstance(cell, ValueFmt):
+            value = cls._spreadsheet_value_from_python(cell.value)
+            return value, cell.fmt
+        return cls._spreadsheet_value_from_python(cell), None
+
+    def _write_table_listdata(self, data: ListDataSeq[CellT],
+                              impl_meta: TableIO.ImplMetaForWrite) -> Position:
+        """Write list data to the active sheet."""
+        values: ListData[Value] = []
+        formats: list[list[Optional[Fmt]]] = []
+        for row in data:
+            value_row: list[Value] = []
+            format_row: list[Optional[Fmt]] = []
+            for cell in row:
+                value, fmt = self._split_cell_value(cell)
+                value_row.append(value)
+                format_row.append(fmt)
+            values.append(value_row)
+            formats.append(format_row)
+        return self._write_grid(values, formats,
+                                impl_meta.filtered_data_range,
+                                impl_meta.box)
+
+    def _write_table_fmtlistdata(
+            self, data: FmtListData,
+            impl_meta: TableIO.ImplMetaForWrite) -> Position:
+        """Write row-formatted list data to the active sheet."""
+        return self._write_table_listdata(row_format_each_cell_list(data),
+                                          impl_meta=impl_meta)
+
+    def _write_table_dictdata(
+            self, data: DictDataMap[CellT],
+            impl_meta: TableIO.ImplMetaForDictWrite) -> Position:
+        """Write dict data to the active sheet."""
+        values: ListData[Value] = [list(impl_meta.column_order)]
+        formats: list[list[Optional[Fmt]]] = [
+            [impl_meta.first_row_format for _ in impl_meta.column_order]
+        ]
+        for row in data:
+            value_row: list[Value] = []
+            format_row: list[Optional[Fmt]] = []
+            for column_name in impl_meta.column_order:
+                value, fmt = self._split_cell_value(row[column_name])
+                value_row.append(value)
+                format_row.append(fmt)
+            values.append(value_row)
+            formats.append(format_row)
+        return self._write_grid(values, formats,
+                                impl_meta.common_impl.filtered_data_range,
+                                impl_meta.common_impl.box)
+
+    def _write_table_fmtdictdata(
+            self, data: FmtDictData,
+            impl_meta: TableIO.ImplMetaForDictWrite) -> Position:
+        """Write row-formatted dict data to the active sheet."""
+        return self._write_table_dictdata(row_format_each_cell_dict(data),
+                                          impl_meta=impl_meta)
+
+    def _read_table_listdata(self, box: Optional[Box] = None) -> \
+            ReadResult[ListData[Value]]:
+        """Read list data from the active sheet."""
+        scan = self._scan_section(box)
+        data = self._read_grid(scan)
+        self._update_read_positions(scan, box)
+        return ReadResult(data=data, headings=scan.headings,
+                          last_read_row=scan.last_read_row)
+
+    def _read_table_dictdata(self, box: Optional[Box] = None) -> \
+            ReadResult[DictData[Value]]:
+        """Read dict data from the active sheet."""
+        scan = self._scan_section(box)
+        rows = self._read_grid(scan)
+        data: DictData[Value] = []
+        if rows:
+            header = [value_to_str(value, none_is_empty=False)
+                      for value in rows[0]]
+            for row in rows[1:]:
+                data.append(dict(zip(header, row, strict=True)))
+        self._update_read_positions(scan, box)
+        return ReadResult(data=data, headings=scan.headings,
+                          last_read_row=scan.last_read_row)
