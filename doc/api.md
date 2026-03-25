@@ -189,6 +189,12 @@
   * [DataForExtraColumn](#tableio.value_type.DataForExtraColumn)
     * [\_\_init\_\_](#tableio.value_type.DataForExtraColumn.__init__)
   * [normalize\_dict\_data](#tableio.value_type.normalize_dict_data)
+* [tableio.valueconversion](#tableio.valueconversion)
+  * [UnreasonableTypeConversion](#tableio.valueconversion.UnreasonableTypeConversion)
+    * [\_\_init\_\_](#tableio.valueconversion.UnreasonableTypeConversion.__init__)
+  * [UnreasonableValueConversion](#tableio.valueconversion.UnreasonableValueConversion)
+    * [\_\_init\_\_](#tableio.valueconversion.UnreasonableValueConversion.__init__)
+  * [value2str](#tableio.valueconversion.value2str)
 * [tableio.capability](#tableio.capability)
   * [Strictness](#tableio.capability.Strictness)
     * [STRICT](#tableio.capability.Strictness.STRICT)
@@ -3205,6 +3211,85 @@ data and the original data object in argument list is not modified.
 **Returns**:
 
   The normalized data that may be the same object as the input data.
+
+<a id="tableio.valueconversion"></a>
+
+# tableio.valueconversion
+
+Helper functions to change type of single data cell Value.
+
+When storing a Value in some file formats, the actual type of the value
+may get lost. For example when storing a datatime value in CSV format,
+the value that is read back will most likely be a string. These are helper
+functions to change the type of the value to the expected type.
+
+<a id="tableio.valueconversion.UnreasonableTypeConversion"></a>
+
+## UnreasonableTypeConversion Objects
+
+```python
+class UnreasonableTypeConversion(TypeError)
+```
+
+Exception for when a value's conversion types are unreasonable.
+
+<a id="tableio.valueconversion.UnreasonableTypeConversion.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(value: Value, expected_type: type[Value])
+```
+
+Initialize the exception.
+
+<a id="tableio.valueconversion.UnreasonableValueConversion"></a>
+
+## UnreasonableValueConversion Objects
+
+```python
+class UnreasonableValueConversion(ValueError)
+```
+
+Exception for when a value's conversion values are unreasonable.
+
+<a id="tableio.valueconversion.UnreasonableValueConversion.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(value: Value, expected_type: type[Value])
+```
+
+Initialize the exception.
+
+<a id="tableio.valueconversion.value2str"></a>
+
+#### value2str
+
+```python
+def value2str(value: Value, none_is_empty: bool = False) -> str
+```
+
+Convert a value to a string.
+
+When storing a Value in some file formats, the actual type of the value
+may get lost. Use this function to convert the value to a string if the
+the code logic knows that the value should be a string.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `none_is_empty` - If True, None values are converted to empty strings.
+  If False, None values will raise ValueError.
+
+**Raises**:
+
+- `ValueError` - If none_is_empty is False and value is None.
+
+**Returns**:
+
+  The converted value.
 
 <a id="tableio.capability"></a>
 
