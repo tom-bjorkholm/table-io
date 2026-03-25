@@ -6,7 +6,7 @@
 
 from typing import Optional
 from tableio.factory import create_tableio
-from tableio.optional_args import OptionalArgs
+from tableio.optional_args import OptionalArgs, OptionalArgsDict
 from tableio.tableio import FileAccess
 from tableio.value_type import Value, ListDataSeq
 from tableio.capability import Capabilities, SingleCapability, Strictness
@@ -34,7 +34,12 @@ def e01_simple_read_write(format_name: str, output_file_name: str,
     """Write a table and read it back to verify round-trip."""
     head1 = 'Example of how to use the tableio package.'
     head2 = 'A subheading.'
-    data: ListDataSeq[Value] = [['Hello', 'World'], ['foo', 'bar']]
+    if format_name.lower() == 'csv':
+        if optional_args:
+            optional_args['csv_quoting'] = 'nonnumeric'
+        else:
+            optional_args = OptionalArgsDict(csv_quoting='nonnumeric')
+    data: ListDataSeq[Value] = [['Hello', 'World'], [1, 3.14]]
     with create_tableio(format_name=format_name,
                         file_name=output_file_name,
                         file_access=FileAccess.CREATE,

@@ -223,6 +223,12 @@
   * [UnreasonableValueConversion](#tableio.valueconversion.UnreasonableValueConversion)
     * [\_\_init\_\_](#tableio.valueconversion.UnreasonableValueConversion.__init__)
   * [value2str](#tableio.valueconversion.value2str)
+  * [value2bool](#tableio.valueconversion.value2bool)
+  * [value2int](#tableio.valueconversion.value2int)
+  * [value2float](#tableio.valueconversion.value2float)
+  * [value2datetime](#tableio.valueconversion.value2datetime)
+  * [value2date](#tableio.valueconversion.value2date)
+  * [value2time](#tableio.valueconversion.value2time)
 * [tableio.capability](#tableio.capability)
   * [Strictness](#tableio.capability.Strictness)
     * [STRICT](#tableio.capability.Strictness.STRICT)
@@ -3820,12 +3826,12 @@ data and the original data object in argument list is not modified.
 
 # tableio.valueconversion
 
-Helper functions to change type of single data cell Value.
+Helpers for converting one stored ``Value`` to an expected type.
 
-When storing a Value in some file formats, the actual type of the value
-may get lost. For example when storing a datatime value in CSV format,
-the value that is read back will most likely be a string. These are helper
-functions to change the type of the value to the expected type.
+When a ``Value`` is stored in a file format with weaker typing, the original
+type may be lost. A ``datetime`` written to CSV, for example, is usually read
+back as a string. These helpers perform explicit and predictable conversions
+from one public ``Value`` representation to another expected concrete type.
 
 <a id="tableio.valueconversion.UnreasonableTypeConversion"></a>
 
@@ -3842,7 +3848,7 @@ Exception for when a value's conversion types are unreasonable.
 #### \_\_init\_\_
 
 ```python
-def __init__(value: Value, expected_type: type[Value])
+def __init__(value: Value, expected_type: type[object])
 ```
 
 Initialize the exception.
@@ -3862,7 +3868,7 @@ Exception for when a value's conversion values are unreasonable.
 #### \_\_init\_\_
 
 ```python
-def __init__(value: Value, expected_type: type[Value])
+def __init__(value: Value, expected_type: type[object])
 ```
 
 Initialize the exception.
@@ -3877,23 +3883,213 @@ def value2str(value: Value, none_is_empty: bool = False) -> str
 
 Convert a value to a string.
 
-When storing a Value in some file formats, the actual type of the value
-may get lost. Use this function to convert the value to a string if the
-the code logic knows that the value should be a string.
+Datetime values are converted with ``isoformat()`` so the result remains
+easy to parse back to a datetime when needed.
 
 **Arguments**:
 
 - `value` - The value to convert.
 - `none_is_empty` - If True, None values are converted to empty strings.
-  If False, None values will raise ValueError.
+  If False, None values raise
+  UnreasonableValueConversion.
 
 **Raises**:
 
-- `ValueError` - If none_is_empty is False and value is None.
+- `UnreasonableValueConversion` - If none_is_empty is False and value is
+  None.
 
 **Returns**:
 
   The converted value.
+
+<a id="tableio.valueconversion.value2bool"></a>
+
+#### value2bool
+
+```python
+def value2bool(value: Value, none_is_false: bool = False) -> bool
+```
+
+Convert a value to a boolean.
+
+Strings are accepted only when they match one of the documented boolean
+spellings, case-insensitively and with surrounding whitespace ignored.
+Integer values are accepted only when they are exactly 0 or 1.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `none_is_false` - If True, None values are converted to False.
+  If False, None values raise UnreasonableValueConversion.
+
+**Raises**:
+
+- `UnreasonableTypeConversion` - If the source type cannot reasonably be
+  converted to bool.
+- `UnreasonableValueConversion` - If the source value is of a reasonable
+  type but does not represent a boolean.
+
+**Returns**:
+
+  The converted boolean value.
+
+<a id="tableio.valueconversion.value2int"></a>
+
+#### value2int
+
+```python
+def value2int(value: Value,
+              none_is_zero: bool = False,
+              format_string: Optional[str] = None) -> int
+```
+
+Convert a value to an integer.
+
+Strings are parsed with ``int()``. When ``format_string`` is provided, the
+parsed integer must reproduce the original string with ``format()``. This
+keeps parsing deterministic while supporting common integer formats such as
+zero-padded decimal strings.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `none_is_zero` - If True, None values are converted to 0.
+  If False, None values raise
+  UnreasonableValueConversion.
+- `format_string` - Optional Python integer format specification used to
+  validate string input after parsing.
+
+**Raises**:
+
+- `UnreasonableTypeConversion` - If the source type cannot reasonably be
+  converted to int.
+- `UnreasonableValueConversion` - If the source value is of a reasonable
+  type but does not represent an integer.
+
+**Returns**:
+
+  The converted integer value.
+
+<a id="tableio.valueconversion.value2float"></a>
+
+#### value2float
+
+```python
+def value2float(value: Value, none_is_zero: bool = False) -> float
+```
+
+Convert a value to a float.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `none_is_zero` - If True, None values are converted to 0.0.
+  If False, None values raise
+  UnreasonableValueConversion.
+
+**Raises**:
+
+- `UnreasonableTypeConversion` - If the source type cannot reasonably be
+  converted to float.
+- `UnreasonableValueConversion` - If the source value is of a reasonable
+  type but does not represent a float.
+
+**Returns**:
+
+  The converted float value.
+
+<a id="tableio.valueconversion.value2datetime"></a>
+
+#### value2datetime
+
+```python
+def value2datetime(value: Value,
+                   format_string: Optional[str] = None) -> datetime
+```
+
+Convert a value to a datetime.
+
+Without ``format_string``, string input must use one of the formats
+accepted by ``datetime.fromisoformat()``. With ``format_string``, parsing
+is delegated to ``datetime.strptime()``.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `format_string` - Optional ``strptime`` format for string input.
+
+**Raises**:
+
+- `UnreasonableTypeConversion` - If the source type cannot reasonably be
+  converted to datetime.
+- `UnreasonableValueConversion` - If the source value is of a reasonable
+  type but does not represent a datetime.
+
+**Returns**:
+
+  The converted datetime value.
+
+<a id="tableio.valueconversion.value2date"></a>
+
+#### value2date
+
+```python
+def value2date(value: Value, format_string: Optional[str] = None) -> date
+```
+
+Convert a value to a date.
+
+Datetime values are reduced to their calendar date. Without
+``format_string``, string input is parsed first as an ISO date and then as
+an ISO datetime if needed. With ``format_string``, parsing is delegated to
+``datetime.strptime()`` and the date part is returned.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `format_string` - Optional ``strptime`` format for string input.
+
+**Raises**:
+
+- `UnreasonableTypeConversion` - If the source type cannot reasonably be
+  converted to date.
+- `UnreasonableValueConversion` - If the source value is of a reasonable
+  type but does not represent a date.
+
+**Returns**:
+
+  The converted date value.
+
+<a id="tableio.valueconversion.value2time"></a>
+
+#### value2time
+
+```python
+def value2time(value: Value, format_string: Optional[str] = None) -> time
+```
+
+Convert a value to a time.
+
+Datetime values are reduced to their time-of-day. Without
+``format_string``, string input is parsed first as an ISO time and then as
+an ISO datetime if needed. With ``format_string``, parsing is delegated to
+``datetime.strptime()`` and the time part is returned.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `format_string` - Optional ``strptime`` format for string input.
+
+**Raises**:
+
+- `UnreasonableTypeConversion` - If the source type cannot reasonably be
+  converted to time.
+- `UnreasonableValueConversion` - If the source value is of a reasonable
+  type but does not represent a time.
+
+**Returns**:
+
+  The converted time value.
 
 <a id="tableio.capability"></a>
 
