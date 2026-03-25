@@ -49,7 +49,9 @@ def e01_simple_read_write(format_name: str, output_file_name: str,
         tableio.write_heading(head2)
         tableio.write_table_listdata(data)
         tableio.write_heading('Writer information:')
-        write_writer_info(tableio)
+        write_writer_info(tableio,
+                          requested_format_name=format_name,
+                          requested_implementation=implementation_name)
     with create_tableio(format_name=format_name,
                         file_name=output_file_name,
                         file_access=FileAccess.READ,

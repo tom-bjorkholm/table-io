@@ -11,7 +11,7 @@ from tableio.value_type import Value, ListData
 
 
 def write_writer_info(tableio: TableIO,
-                      requested_type_name: Optional[str] = None,
+                      requested_format_name: Optional[str] = None,
                       requested_implementation: Optional[str] = None) -> None:
     """Use the writer object to write informaion about itself.
 
@@ -22,7 +22,7 @@ def write_writer_info(tableio: TableIO,
     data: ListData[Value] = [
         ['Attribute', 'Value', 'Requested value'],
         ['Type name', tableio.get_description().format_name,
-         requested_type_name if requested_type_name else '(none)'],
+         requested_format_name if requested_format_name else '(none)'],
         ['Implementation', tableio.get_description().implementation,
          requested_implementation if requested_implementation else '(none)'],
         ['Priority', tableio.get_description().priority, ''],
