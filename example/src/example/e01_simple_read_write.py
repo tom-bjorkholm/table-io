@@ -9,15 +9,14 @@ from tableio.factory import create_tableio
 from tableio.optional_args import OptionalArgs, OptionalArgsDict
 from tableio.tableio import FileAccess
 from tableio.value_type import Value, ListDataSeq
-from tableio.capability import Capabilities, SingleCapability, Strictness
+from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED
 from .cmd_for_examples import cmd_parse_and_run_example
+from .write_writer_info import write_writer_info
 
-CAP_USED = SingleCapability(supported=True, strictness=Strictness.STRICT)
-CAP_NOT_USED = SingleCapability(supported=False, strictness=Strictness.IGNORE)
 
 CAPS = Capabilities(
-    can_write=CAP_USED,
-    can_read=CAP_USED,
+    can_write=CAP_NEEDED,
+    can_read=CAP_NEEDED,
     can_fmt_row=CAP_NOT_USED,
     can_fmt_value=CAP_NOT_USED,
     filtered_data_range=CAP_NOT_USED,
@@ -49,6 +48,8 @@ def e01_simple_read_write(format_name: str, output_file_name: str,
         tableio.write_heading(head1)
         tableio.write_heading(head2)
         tableio.write_table_listdata(data)
+        tableio.write_heading('Writer information:')
+        write_writer_info(tableio)
     with create_tableio(format_name=format_name,
                         file_name=output_file_name,
                         file_access=FileAccess.READ,

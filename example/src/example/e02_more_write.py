@@ -13,23 +13,20 @@ from tableio.value_type import Fmt, ValueFmt, \
     DictData, ListData, FmtListData, FmtDictData, \
     FmtListRow, FmtDictRow
 from tableio.color import Color
-from tableio.capability import Capabilities, SingleCapability, Strictness
+from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED, \
+    CAP_IGNORABLE
 from .cmd_for_examples import cmd_parse_and_run_example
 
-CAP_USED = SingleCapability(supported=True, strictness=Strictness.STRICT)
-USE_IF_SUPPORTED = \
-    SingleCapability(supported=True, strictness=Strictness.IGNORE)
-CAP_NOT_USED = SingleCapability(supported=False, strictness=Strictness.IGNORE)
 
 CAPS = Capabilities(
-    can_write=CAP_USED,
+    can_write=CAP_NEEDED,
     can_read=CAP_NOT_USED,
-    can_fmt_row=USE_IF_SUPPORTED,
-    can_fmt_value=USE_IF_SUPPORTED,
-    filtered_data_range=USE_IF_SUPPORTED,
+    can_fmt_row=CAP_IGNORABLE,
+    can_fmt_value=CAP_IGNORABLE,
+    filtered_data_range=CAP_IGNORABLE,
     can_write_box=CAP_NOT_USED,
     can_read_box=CAP_NOT_USED,
-    can_write_highlight=USE_IF_SUPPORTED
+    can_write_highlight=CAP_IGNORABLE
 )
 
 

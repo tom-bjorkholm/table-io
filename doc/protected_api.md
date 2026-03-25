@@ -278,6 +278,13 @@
   * [capability\_match](#tableio.capability.capability_match)
   * [CapabilityNotSupported](#tableio.capability.CapabilityNotSupported)
     * [\_\_init\_\_](#tableio.capability.CapabilityNotSupported.__init__)
+  * [capability\_to\_str](#tableio.capability.capability_to_str)
+  * [CAP\_NOT\_USED](#tableio.capability.CAP_NOT_USED)
+  * [CAP\_NEEDED](#tableio.capability.CAP_NEEDED)
+  * [CAP\_IGNORABLE](#tableio.capability.CAP_IGNORABLE)
+  * [CAP\_IMPLEMENTED](#tableio.capability.CAP_IMPLEMENTED)
+  * [CAP\_IGNORED](#tableio.capability.CAP_IGNORED)
+  * [CAP\_UNSUPPORTED](#tableio.capability.CAP_UNSUPPORTED)
 * [tableio.tableio\_csv](#tableio.tableio_csv)
   * [\_validate\_quoting](#tableio.tableio_csv._validate_quoting)
   * [CsvDefinitions](#tableio.tableio_csv.CsvDefinitions)
@@ -4657,6 +4664,82 @@ Initialize the exception.
 **Arguments**:
 
 - `action` - The requested action that is not supported.
+
+<a id="tableio.capability.capability_to_str"></a>
+
+#### capability\_to\_str
+
+```python
+def capability_to_str(capability: SingleCapability) -> str
+```
+
+Convert a single capability to a string.
+
+**Arguments**:
+
+- `capability` - The single capability to convert.
+
+**Returns**:
+
+  A string representation of the single capability.
+
+<a id="tableio.capability.CAP_NOT_USED"></a>
+
+#### CAP\_NOT\_USED
+
+A capability that is not used.
+
+The requester promises to not use this capability, so it does not
+matter if the implementation supports it or not.
+
+<a id="tableio.capability.CAP_NEEDED"></a>
+
+#### CAP\_NEEDED
+
+A capability that is used and must be supported.
+
+In the selection of reader/writer class it is a must that the selected
+class supports this capability. If no matching reader/writer class is
+found to fulfill the request, an exception is raised.
+
+<a id="tableio.capability.CAP_IGNORABLE"></a>
+
+#### CAP\_IGNORABLE
+
+A capability that can be ignored if not supported.
+
+An example might be that prefer to be able to write a value in bold,
+but the request can accept that the implementation ignores the bold
+formatting.
+
+<a id="tableio.capability.CAP_IMPLEMENTED"></a>
+
+#### CAP\_IMPLEMENTED
+
+A capability that is fully implemented and supported.
+
+<a id="tableio.capability.CAP_IGNORED"></a>
+
+#### CAP\_IGNORED
+
+A capability that is not supported and will be ignored if requested.
+
+The implementation cannot fulfill the request, but it makes sense to
+ignore this feature and continue anyway. A typical example would be
+a request to format a written value in bold. Here ignoring the bold
+formatting makes sense as there is still a value written to the file.
+
+<a id="tableio.capability.CAP_UNSUPPORTED"></a>
+
+#### CAP\_UNSUPPORTED
+
+A capability that is not supported and will raise an exception if requested.
+
+This is a for a feature that cannot be supported but it would not make
+sense to ignore. A typical example would be a request request to write
+a value in a specific location in the file. Writing the value to a
+different location would not make sense. Thus the only sensible thing
+to do is to raise an exception.
 
 <a id="tableio.tableio_csv"></a>
 

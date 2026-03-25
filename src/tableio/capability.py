@@ -154,3 +154,78 @@ class CapabilityNotSupported(ValueError):
         """
         self.action = action
         super().__init__(f'The class does not support {action}.')
+
+
+def capability_to_str(capability: SingleCapability) -> str:
+    """Convert a single capability to a string.
+
+    Args:
+        capability: The single capability to convert.
+    Returns:
+        A string representation of the single capability.
+    """
+    result = ''
+    if capability.supported:
+        result += 'supported'
+    else:
+        result += 'not supported'
+    if capability.strictness == Strictness.STRICT:
+        result += ' (strict)'
+    else:
+        result += ' (ignore)'
+    return result
+
+
+# ----------------------------------------------------------------------------
+# Capability constants from the point of view of the requester
+# ----------------------------------------------------------------------------
+
+CAP_NOT_USED = SingleCapability(supported=False, strictness=Strictness.IGNORE)
+"""A capability that is not used.
+
+   The requester promises to not use this capability, so it does not
+   matter if the implementation supports it or not.
+   """
+
+CAP_NEEDED = SingleCapability(supported=True, strictness=Strictness.STRICT)
+"""A capability that is used and must be supported.
+
+   In the selection of reader/writer class it is a must that the selected
+   class supports this capability. If no matching reader/writer class is
+   found to fulfill the request, an exception is raised.
+   """
+
+CAP_IGNORABLE = SingleCapability(supported=True, strictness=Strictness.IGNORE)
+"""A capability that can be ignored if not supported.
+
+   An example might be that prefer to be able to write a value in bold,
+   but the request can accept that the implementation ignores the bold
+   formatting."""
+
+# ----------------------------------------------------------------------------
+# Capability constants from the point of view of the reader/writer class
+# ----------------------------------------------------------------------------
+
+CAP_IMPLEMENTED = SingleCapability(supported=True,
+                                   strictness=Strictness.STRICT)
+"""A capability that is fully implemented and supported."""
+
+CAP_IGNORED = SingleCapability(supported=False, strictness=Strictness.IGNORE)
+"""A capability that is not supported and will be ignored if requested.
+
+   The implementation cannot fulfill the request, but it makes sense to
+   ignore this feature and continue anyway. A typical example would be
+   a request to format a written value in bold. Here ignoring the bold
+   formatting makes sense as there is still a value written to the file.
+   """
+
+CAP_UNSUPPORTED = SingleCapability(supported=False,
+                                   strictness=Strictness.STRICT)
+"""A capability that is not supported and will raise an exception if requested.
+
+   This is a for a feature that cannot be supported but it would not make
+   sense to ignore. A typical example would be a request request to write
+   a value in a specific location in the file. Writing the value to a
+   different location would not make sense. Thus the only sensible thing
+   to do is to raise an exception.
+   """

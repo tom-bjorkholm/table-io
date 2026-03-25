@@ -12,7 +12,7 @@ from tableio.factory import create_tableio
 from tableio.optional_args import OptionalArgs
 from tableio.tableio import FileAccess
 from tableio.value_type import Value
-from tableio.capability import Capabilities, SingleCapability, Strictness
+from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED
 from .cmd_for_examples import cmd_parse_and_run_example
 
 # Define the capabilities we want to use for this example:
@@ -21,16 +21,13 @@ from .cmd_for_examples import cmd_parse_and_run_example
 # TableIO readers/writers that do not support these capabilities will be
 # filtered out and not used for this example.
 
-# pylint: disable=duplicate-code
-CAP_USED = SingleCapability(supported=True, strictness=Strictness.STRICT)
-CAP_NOT_USED = SingleCapability(supported=False, strictness=Strictness.IGNORE)
 
 CAPS = Capabilities(
-    can_write=CAP_USED,
+    can_write=CAP_NEEDED,
     can_read=CAP_NOT_USED,
     can_fmt_row=CAP_NOT_USED,
     can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_USED,
+    filtered_data_range=CAP_NEEDED,
     can_write_box=CAP_NOT_USED,
     can_read_box=CAP_NOT_USED,
     can_write_highlight=CAP_NOT_USED
