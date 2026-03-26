@@ -158,6 +158,8 @@ def value_to_str(value: Value, none_is_empty: bool = False) -> str:
         if none_is_empty:
             return ''
         raise ValueError('Found None when expecting str.')
+    if isinstance(value, datetime):
+        return value.isoformat()
     return str(value)
 
 

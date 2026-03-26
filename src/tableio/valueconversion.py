@@ -11,7 +11,8 @@ from one public ``Value`` representation to another expected concrete type.
 # MIT License
 
 from datetime import datetime, date, time
-from typing import Optional
+from types import NoneType
+from typing import Optional, Callable
 from tableio.value_type import Value, value_to_str
 
 _TRUE_STRINGS = frozenset({'true', '1', 'yes', 'on'})
@@ -297,3 +298,67 @@ def value2time(value: Value,
         except ValueError as err:
             raise UnreasonableValueConversion(value, time) from err
     raise UnreasonableTypeConversion(value, time)
+
+
+def value2none(value: Value) -> None:
+    """Convert a value to None.
+
+    Args:
+        value: The value to convert.
+    Returns:
+        The converted value.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        if not value:
+            return None
+        raise UnreasonableValueConversion(value, NoneType)
+    if isinstance(value, int):
+        if value == 0:
+            return None
+        raise UnreasonableValueConversion(value, NoneType)
+    if isinstance(value, str):
+        if value == '':
+            return None
+        raise UnreasonableValueConversion(value, NoneType)
+    raise UnreasonableTypeConversion(value, NoneType)
+
+
+def value2type[T](value: Value, to_type: type[T],
+                  accept_none: bool = False,
+                  datetime_format_string: Optional[str] = None,
+                  int_format_string: Optional[str] = None) -> T:
+    """Convert a value to a type.
+
+    This is a convenience function that calls the appropriate value conversion
+    function based on the type.
+    Args:
+        value: The value to convert.
+        to_type: The type to convert to.
+        accept_none: If True, None values are accepted.
+        datetime_format_string: Optional ``strptime`` format for string input.
+        int_format_string: Optional Python integer format specification used to
+                           validate string input after parsing.
+    Returns:
+        The converted value.
+    """
+    if to_type is NoneType:
+        return value2none(value)
+    date_funcs: dict[type[object], Callable[[Value, bool], T]] = {
+        datetime: value2datetime,
+        date: value2date,
+        time: value2time,
+    }
+    if to_type in date_funcs:
+        return date_funcs[to_type](value, datetime_format_string)
+    if to_type == int:
+        return value2int(value, none_is_zero=accept_none,
+                         format_string=int_format_string)
+    if to_type == str:
+        return value2str(value, none_is_empty=accept_none)
+    if to_type == bool:
+        return value2bool(value, none_is_false=accept_none)
+    if to_type == float:
+        return value2float(value, none_is_zero=accept_none)
+    raise UnreasonableTypeConversion(value, to_type)

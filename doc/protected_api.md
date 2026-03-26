@@ -258,6 +258,8 @@
   * [value2datetime](#tableio.valueconversion.value2datetime)
   * [value2date](#tableio.valueconversion.value2date)
   * [value2time](#tableio.valueconversion.value2time)
+  * [value2none](#tableio.valueconversion.value2none)
+  * [value2type](#tableio.valueconversion.value2type)
 * [tableio.capability](#tableio.capability)
   * [Strictness](#tableio.capability.Strictness)
     * [STRICT](#tableio.capability.Strictness.STRICT)
@@ -4442,6 +4444,54 @@ an ISO datetime if needed. With ``format_string``, parsing is delegated to
 **Returns**:
 
   The converted time value.
+
+<a id="tableio.valueconversion.value2none"></a>
+
+#### value2none
+
+```python
+def value2none(value: Value) -> None
+```
+
+Convert a value to None.
+
+**Arguments**:
+
+- `value` - The value to convert.
+
+**Returns**:
+
+  The converted value.
+
+<a id="tableio.valueconversion.value2type"></a>
+
+#### value2type
+
+```python
+def value2type(value: Value,
+               to_type: type[T],
+               accept_none: bool = False,
+               datetime_format_string: Optional[str] = None,
+               int_format_string: Optional[str] = None) -> T
+```
+
+Convert a value to a type.
+
+This is a convenience function that calls the appropriate value conversion
+function based on the type.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `to_type` - The type to convert to.
+- `accept_none` - If True, None values are accepted.
+- `datetime_format_string` - Optional ``strptime`` format for string input.
+- `int_format_string` - Optional Python integer format specification used to
+  validate string input after parsing.
+
+**Returns**:
+
+  The converted value.
 
 <a id="tableio.capability"></a>
 

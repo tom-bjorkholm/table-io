@@ -35,7 +35,7 @@ from .check_capsys import check_capsys
                      id='scalars'),
         pytest.param(
             ('row', datetime(2026, 3, 16, 7, 8, 9)),
-            ['row', '2026-03-16 07:08:09'],
+            ['row', '2026-03-16T07:08:09'],
             id='datetime',
         ),
     ],
