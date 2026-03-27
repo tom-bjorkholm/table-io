@@ -5,8 +5,9 @@
 # MIT License
 
 from typing import Any, Callable, Optional
-from odfdo import Cell, Document, Style, Table
+from odfdo import Cell, Document, Element, Style, Table
 from odfdo.body import Spreadsheet
+from odfdo.utils import is_RFC3066
 from mformat.mformat import PathLike
 from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
@@ -30,11 +31,20 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
     def __init__(self, file_name: PathLike,
                  file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
-                 = None):
-        """Initialize the TableIOOdsOdfdo class."""
+                 = None,
+                 lang: str = 'en-UK'):
+        """Initialize the TableIOOdsOdfdo class.
+
+        Args:
+            file_name: The name of the file to open.
+            file_access: What access is requested to the file.
+            file_exists_callback: Callback used when CREATE would overwrite.
+            lang: The RFC3066 language code for newly created ODS files.
+        """
         super().__init__(file_name=file_name,
                          file_access=file_access,
                          file_exists_callback=file_exists_callback)
+        self.lang: str = self._checked_lang(lang)
         self.document: Optional[Document] = None
         self.table: Optional[Table] = None
         self._style_index: int = 1
@@ -47,7 +57,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         """Get the description of the TableIOOdsOdfdo class."""
         return Descriptor(format_name='ODS', implementation='odfdo',
                           capabilities=cls.get_capabilities(),
-                          mandatory_args=[], optional_args=[])
+                          mandatory_args=[], optional_args=['lang'])
 
     @classmethod
     def file_name_extension(cls) -> str:
@@ -61,6 +71,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         table: Optional[Table]
         if self.file_access == FileAccess.CREATE:
             document = Document('spreadsheet')
+            self._set_document_language(document)
             body = get_checked_type(document.body, Spreadsheet)
             body.clear()
             table = Table(_DEFAULT_TABLE_NAME)
@@ -79,6 +90,35 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         self._cell_style_names = {}
         self._column_style_names = {}
         self._initialize_positions()
+
+    @staticmethod
+    def _checked_lang(lang: str) -> str:
+        """Validate one document language string."""
+        if not is_RFC3066(lang):
+            msg = ('Language must be "xx" lang or "xx-YY" lang-COUNTRY '
+                   'code (RFC3066)')
+            raise TypeError(msg)
+        return lang
+
+    @staticmethod
+    def _split_rfc3066_language(lang: str) -> tuple[str, str]:
+        """Split one validated RFC3066 language string."""
+        language_parts = lang.split('-')
+        if len(language_parts) == 2:
+            return language_parts[0], language_parts[1]
+        return language_parts[0], ''
+
+    def _set_document_language(self, document: Document) -> None:
+        """Set the ODS metadata and default cell language."""
+        language, country = self._split_rfc3066_language(self.lang)
+        document.set_language(self.lang)
+        default_styles = [
+            style for style in document.styles.default_styles
+            if style.family == 'table-cell'
+        ]
+        for style in default_styles:
+            style.set_properties(area='text', language=language,
+                                 country=country)
 
     def _end_state(self) -> None:
         """Finalize in-memory state before closing."""
@@ -109,6 +149,123 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         """Return the spreadsheet body of the open ODS document."""
         assert self.document is not None
         return get_checked_type(self.document.body, Spreadsheet)
+
+    def _database_range_container(self) -> Element:
+        """Return the container for ODS database ranges."""
+        spreadsheet = self._spreadsheet_body()
+        container = spreadsheet.get_element('table:database-ranges')
+        if container is not None:
+            return container
+        container = Element.from_tag('table:database-ranges')
+        spreadsheet.append(container)
+        return container
+
+    def _database_ranges(self) -> list[Element]:
+        """Return the ODS database range elements."""
+        return self._spreadsheet_body().get_elements(
+            'descendant::table:database-ranges/table:database-range')
+
+    @staticmethod
+    def _quoted_table_name(table_name: str) -> str:
+        """Return a table name formatted for an ODF range address."""
+        if all(character.isalnum() or character == '_'
+               for character in table_name):
+            return table_name
+        return f"'{table_name}'"
+
+    @staticmethod
+    def _column_name(column: int) -> str:
+        """Return an A1 column name for one zero-based column index."""
+        ret = ''
+        current = column + 1
+        while current > 0:
+            current, remainder = divmod(current - 1, 26)
+            ret = chr(ord('A') + remainder) + ret
+        return ret
+
+    @classmethod
+    def _cell_ref(cls, row: int, column: int) -> str:
+        """Return an A1 cell reference for zero-based coordinates."""
+        return f'{cls._column_name(column)}{row + 1}'
+
+    @classmethod
+    def _database_range_address(cls, table_name: str,
+                                bounds: tuple[int, int, int, int]) -> str:
+        """Return one ODS database range address."""
+        top, left, bottom, right = bounds
+        q_table = cls._quoted_table_name(table_name)
+        start = cls._cell_ref(top, left)
+        end = cls._cell_ref(bottom - 1, right - 1)
+        return f'{q_table}.{start}:{q_table}.{end}'
+
+    @staticmethod
+    def _split_range_endpoint(endpoint: str) -> tuple[str, str]:
+        """Split one table-qualified ODF cell endpoint."""
+        normalized = endpoint.replace('$', '')
+        if normalized.startswith("'"):
+            split_pos = normalized.find("'.")
+            if split_pos < 0:
+                raise ValueError(f'Invalid endpoint {endpoint!r}')
+            table_name = normalized[1:split_pos]
+            cell_ref = normalized[split_pos + 2:]
+            return table_name, cell_ref
+        table_name, cell_ref = normalized.split('.', 1)
+        return table_name, cell_ref
+
+    @staticmethod
+    def _cell_ref_to_position(cell_ref: str) -> tuple[int, int]:
+        """Convert one A1 cell reference to zero-based coordinates."""
+        column_text = ''
+        row_text = ''
+        for character in cell_ref.upper():
+            if character.isalpha():
+                if row_text:
+                    raise ValueError(f'Invalid cell reference {cell_ref!r}')
+                column_text += character
+                continue
+            if character.isdigit():
+                row_text += character
+                continue
+            raise ValueError(f'Invalid cell reference {cell_ref!r}')
+        if not column_text or not row_text:
+            raise ValueError(f'Invalid cell reference {cell_ref!r}')
+        column = 0
+        for character in column_text:
+            column = column * 26 + ord(character) - ord('A') + 1
+        return int(row_text) - 1, column - 1
+
+    @classmethod
+    def _endpoint_position(cls, endpoint: str) -> tuple[str, int, int]:
+        """Return table name and coordinates for one range endpoint."""
+        table_name, cell_ref = cls._split_range_endpoint(endpoint)
+        row, column = cls._cell_ref_to_position(cell_ref)
+        return table_name, row, column
+
+    @classmethod
+    def _database_range_bounds(
+            cls, database_range: Element) -> tuple[str, tuple[int, int,
+                                                              int, int]]:
+        """Return table name and bounds for one ODS database range."""
+        address = database_range.get_attribute_string(
+            'table:target-range-address')
+        if not address:
+            raise ValueError('Missing target range address.')
+        endpoints = str(address).split(':', 1)
+        start_table, start_row, start_column = cls._endpoint_position(
+            endpoints[0])
+        if len(endpoints) == 1:
+            end_row = start_row
+            end_column = start_column
+        else:
+            end_table, end_row, end_column = cls._endpoint_position(
+                endpoints[1])
+            if end_table != start_table:
+                raise ValueError('Database range spans several tables.')
+        top = min(start_row, end_row)
+        left = min(start_column, end_column)
+        bottom = max(start_row, end_row) + 1
+        right = max(start_column, end_column) + 1
+        return start_table, (top, left, bottom, right)
 
     def _write_value_to_sheet(self, sheet: object, row: int,
                               column: int, value: object) -> None:
@@ -163,31 +320,51 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
 
     def _filtered_range_infos(self) -> list[tuple[str, tuple[int, int,
                                                              int, int]]]:
-        """Return the filter named ranges for the active table."""
+        """Return filtered ranges for the active table."""
         assert self.table is not None
-        ret: list[tuple[str, tuple[int, int, int, int]]] = []
+        ret: dict[str, tuple[int, int, int, int]] = {}
+        for database_range in self._database_ranges():
+            name = database_range.get_attribute_string('table:name')
+            if name is None:
+                continue
+            display_buttons = database_range.get_attribute_string(
+                'table:display-filter-buttons')
+            if display_buttons != 'true':
+                continue
+            table_name, bounds = self._database_range_bounds(database_range)
+            if table_name != self.table.name:
+                continue
+            ret[str(name)] = bounds
         for named_range in self._spreadsheet_body().get_named_ranges():
             if named_range.usage != 'filter':
                 continue
             if named_range.table_name != self.table.name:
                 continue
             left, top, right, bottom = named_range.crange
-            ret.append((str(named_range.name),
-                        (top, left, bottom + 1, right + 1)))
-        return ret
+            ret.setdefault(str(named_range.name),
+                           (top, left, bottom + 1, right + 1))
+        return list(ret.items())
 
     def _delete_filtered_range(self, name: str) -> None:
-        """Delete one named filter range by name."""
+        """Delete one filtered range by name."""
+        for database_range in self._database_ranges():
+            range_name = database_range.get_attribute_string('table:name')
+            if range_name == name:
+                database_range.delete()
         self._spreadsheet_body().delete_named_range(name)
 
     def _add_filtered_range(self, bounds: tuple[int, int, int, int],
                             name: str) -> None:
-        """Create one named filter range for the active table."""
+        """Create one filtered database range for the active table."""
         assert self.table is not None
-        top, left, bottom, right = bounds
-        self.table.set_named_range(name=name,
-                                   crange=(left, top, right - 1, bottom - 1),
-                                   usage='filter')
+        database_range = Element.from_tag('table:database-range')
+        database_range.set_attribute('table:name', name)
+        database_range.set_attribute('table:contains-header', 'true')
+        database_range.set_attribute('table:display-filter-buttons', 'true')
+        database_range.set_attribute(
+            'table:target-range-address',
+            self._database_range_address(str(self.table.name), bounds))
+        self._database_range_container().append(database_range)
 
     @staticmethod
     def _column_width_string(width: float) -> str:

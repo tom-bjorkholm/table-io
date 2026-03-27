@@ -928,10 +928,18 @@ TableIO class for OpenDocument Spreadsheet ODS files using odfdo.
 ```python
 def __init__(file_name: PathLike,
              file_access: FileAccess,
-             file_exists_callback: Optional[Callable[[str], None]] = None)
+             file_exists_callback: Optional[Callable[[str], None]] = None,
+             lang: str = 'en-UK')
 ```
 
 Initialize the TableIOOdsOdfdo class.
+
+**Arguments**:
+
+- `file_name` - The name of the file to open.
+- `file_access` - What access is requested to the file.
+- `file_exists_callback` - Callback used when CREATE would overwrite.
+- `lang` - The RFC3066 language code for newly created ODS files.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description"></a>
 

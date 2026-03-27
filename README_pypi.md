@@ -12,7 +12,8 @@ The support for spreadsheets is for reading and writing data. There is no
 intention to support reading or writing formulas. There is no support for
 running calculations in the spreadsheets (although nothing will stop a
 receiver of a spreadsheet created by tableio package to manually add
-formulas in the received spreadsheet).
+formulas in the received spreadsheet). The built-in spreadsheet backends are
+Excel via OpenPyXL and ODS via odfdo.
 
 ## Early design phase
 
@@ -40,6 +41,7 @@ The currently supported formats are:
 |-------------|----------------|-----------|----------|
 | CSV         | csv            | yes       | yes      |
 | Excel       | OpenPyXL       | yes       | yes      |
+| ODS         | odfdo          | yes       | yes      |
 | HTML        | mformat        | yes       | -        |
 | LaTeX       | mformat        | yes       | -        |
 | docx        | mformat        | yes       | -        |
@@ -76,7 +78,7 @@ a better start by reading the examples.
 
 ## Test summary
 
-- Test result: 771 passed in 13s
+- Test result: 776 passed in 12s
 - No Flake8 warnings.
 - No mypy errors found.
 - Built version(s): 0.1.1

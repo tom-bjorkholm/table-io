@@ -62,12 +62,25 @@
     * [get\_description](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description)
     * [file\_name\_extension](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.file_name_extension)
     * [open](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.open)
+    * [\_checked\_lang](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._checked_lang)
+    * [\_split\_rfc3066\_language](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._split_rfc3066_language)
+    * [\_set\_document\_language](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_document_language)
     * [\_end\_state](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._end_state)
     * [\_write\_file\_suffix](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_file_suffix)
     * [\_close](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._close)
     * [\_read\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._read_sheet)
     * [\_write\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_sheet)
     * [\_spreadsheet\_body](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._spreadsheet_body)
+    * [\_database\_range\_container](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_container)
+    * [\_database\_ranges](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_ranges)
+    * [\_quoted\_table\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._quoted_table_name)
+    * [\_column\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_name)
+    * [\_cell\_ref](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_ref)
+    * [\_database\_range\_address](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_address)
+    * [\_split\_range\_endpoint](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._split_range_endpoint)
+    * [\_cell\_ref\_to\_position](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_ref_to_position)
+    * [\_endpoint\_position](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._endpoint_position)
+    * [\_database\_range\_bounds](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_bounds)
     * [\_write\_value\_to\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_value_to_sheet)
     * [\_set\_cell\_format](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_cell_format)
     * [\_apply\_heading\_style](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._apply_heading_style)
@@ -1421,10 +1434,18 @@ TableIO class for OpenDocument Spreadsheet ODS files using odfdo.
 ```python
 def __init__(file_name: PathLike,
              file_access: FileAccess,
-             file_exists_callback: Optional[Callable[[str], None]] = None)
+             file_exists_callback: Optional[Callable[[str], None]] = None,
+             lang: str = 'en-UK')
 ```
 
 Initialize the TableIOOdsOdfdo class.
+
+**Arguments**:
+
+- `file_name` - The name of the file to open.
+- `file_access` - What access is requested to the file.
+- `file_exists_callback` - Callback used when CREATE would overwrite.
+- `lang` - The RFC3066 language code for newly created ODS files.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description"></a>
 
@@ -1457,6 +1478,38 @@ def open() -> None
 ```
 
 Open the ODS document.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._checked_lang"></a>
+
+#### \_checked\_lang
+
+```python
+@staticmethod
+def _checked_lang(lang: str) -> str
+```
+
+Validate one document language string.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._split_rfc3066_language"></a>
+
+#### \_split\_rfc3066\_language
+
+```python
+@staticmethod
+def _split_rfc3066_language(lang: str) -> tuple[str, str]
+```
+
+Split one validated RFC3066 language string.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_document_language"></a>
+
+#### \_set\_document\_language
+
+```python
+def _set_document_language(document: Document) -> None
+```
+
+Set the ODS metadata and default cell language.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._end_state"></a>
 
@@ -1517,6 +1570,116 @@ def _spreadsheet_body() -> Spreadsheet
 ```
 
 Return the spreadsheet body of the open ODS document.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_container"></a>
+
+#### \_database\_range\_container
+
+```python
+def _database_range_container() -> Element
+```
+
+Return the container for ODS database ranges.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_ranges"></a>
+
+#### \_database\_ranges
+
+```python
+def _database_ranges() -> list[Element]
+```
+
+Return the ODS database range elements.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._quoted_table_name"></a>
+
+#### \_quoted\_table\_name
+
+```python
+@staticmethod
+def _quoted_table_name(table_name: str) -> str
+```
+
+Return a table name formatted for an ODF range address.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_name"></a>
+
+#### \_column\_name
+
+```python
+@staticmethod
+def _column_name(column: int) -> str
+```
+
+Return an A1 column name for one zero-based column index.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_ref"></a>
+
+#### \_cell\_ref
+
+```python
+@classmethod
+def _cell_ref(cls, row: int, column: int) -> str
+```
+
+Return an A1 cell reference for zero-based coordinates.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_address"></a>
+
+#### \_database\_range\_address
+
+```python
+@classmethod
+def _database_range_address(cls, table_name: str, bounds: tuple[int, int, int,
+                                                                int]) -> str
+```
+
+Return one ODS database range address.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._split_range_endpoint"></a>
+
+#### \_split\_range\_endpoint
+
+```python
+@staticmethod
+def _split_range_endpoint(endpoint: str) -> tuple[str, str]
+```
+
+Split one table-qualified ODF cell endpoint.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_ref_to_position"></a>
+
+#### \_cell\_ref\_to\_position
+
+```python
+@staticmethod
+def _cell_ref_to_position(cell_ref: str) -> tuple[int, int]
+```
+
+Convert one A1 cell reference to zero-based coordinates.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._endpoint_position"></a>
+
+#### \_endpoint\_position
+
+```python
+@classmethod
+def _endpoint_position(cls, endpoint: str) -> tuple[str, int, int]
+```
+
+Return table name and coordinates for one range endpoint.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_bounds"></a>
+
+#### \_database\_range\_bounds
+
+```python
+@classmethod
+def _database_range_bounds(
+        cls, database_range: Element) -> tuple[str, tuple[int, int, int, int]]
+```
+
+Return table name and bounds for one ODS database range.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_value_to_sheet"></a>
 
@@ -1598,7 +1761,7 @@ Return one ODS cell as a public Value.
 def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
 ```
 
-Return the filter named ranges for the active table.
+Return filtered ranges for the active table.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._delete_filtered_range"></a>
 
@@ -1608,7 +1771,7 @@ Return the filter named ranges for the active table.
 def _delete_filtered_range(name: str) -> None
 ```
 
-Delete one named filter range by name.
+Delete one filtered range by name.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._add_filtered_range"></a>
 
@@ -1618,7 +1781,7 @@ Delete one named filter range by name.
 def _add_filtered_range(bounds: tuple[int, int, int, int], name: str) -> None
 ```
 
-Create one named filter range for the active table.
+Create one filtered database range for the active table.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_width_string"></a>
 
