@@ -5,8 +5,10 @@
 # MIT License
 
 import csv
+import io
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Callable
 
 import pytest
 from pytest import CaptureFixture
@@ -155,6 +157,7 @@ def test_csv_get_capabilities(
     assert caps.can_fmt_row.supported is False
     assert caps.can_write_box.supported is False
     assert caps.can_read_box.supported is False
+    assert caps.multi_sheet.supported is False
     check_capsys(capsys)
 
 
@@ -191,6 +194,37 @@ def test_csv_write_heading(
         content = (Path(td) / 'sample.csv').read_text(
             encoding='utf-8')
         assert content.startswith('# Report\n')
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    'action',
+    [
+        pytest.param(lambda table_io: table_io.write_heading('Report'),
+                     id='heading'),
+        pytest.param(
+            lambda table_io: table_io.write_table_listdata([['a', 'b']]),
+            id='listdata'),
+        pytest.param(
+            lambda table_io: table_io.write_table_dictdata(
+                [{'name': 'Alice', 'age': '30'}],
+                ['name', 'age']),
+            id='dictdata'),
+    ]
+)
+def test_csv_write_methods_reject_read_only_access(
+        action: Callable[[TableIOCsv], object],
+        capsys: CaptureFixture[str]) -> None:
+    """Public write methods raise io.UnsupportedOperation in READ mode."""
+    with TemporaryDirectory() as td:
+        path = Path(td) / 'read_only'
+        (Path(td) / 'read_only.csv').write_text('"a","b"\n',
+                                                encoding='utf-8')
+        table_io = TableIOCsv(path, FileAccess.READ)
+        with table_io:
+            with pytest.raises(io.UnsupportedOperation,
+                               match='opened for reading'):
+                action(table_io)
     check_capsys(capsys)
 
 

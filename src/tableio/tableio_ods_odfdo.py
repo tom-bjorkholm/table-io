@@ -26,7 +26,10 @@ _COLUMN_WIDTH_CM_PER_UNIT = 0.25
 
 
 class TableIOOdsOdfdo(TableIOSpreadsheetBased):
-    """TableIO class for OpenDocument Spreadsheet ODS files using odfdo."""
+    """TableIO class for OpenDocument Spreadsheet ODS files using odfdo.
+
+    The implementation operates on one current sheet at a time.
+    """
 
     def __init__(self, file_name: PathLike,
                  file_access: FileAccess,
@@ -134,6 +137,37 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         """Release document references."""
         self.table = None
         self.document = None
+
+    def _table_name_map(self) -> dict[str, Table]:
+        """Return the document tables indexed case-insensitively."""
+        ret: dict[str, Table] = {}
+        for table in self._spreadsheet_body().get_tables():
+            ret[str(table.name).casefold()] = table
+        return ret
+
+    def _list_sheets(self) -> list[str]:
+        """List the sheets in the document."""
+        return [str(table.name)
+                for table in self._spreadsheet_body().get_tables()]
+
+    def _select_sheet(self, sheet_name: str, create: bool = False) -> None:
+        """Select one document sheet, optionally creating it."""
+        assert self.table is not None
+        table = self._table_name_map().get(self._sheet_key(sheet_name))
+        if table is None:
+            if not create:
+                raise KeyError(sheet_name)
+            self._check_file_is_writable()
+            table = Table(sheet_name)
+            self._spreadsheet_body().append(table)
+        self._save_current_sheet_state()
+        self.table = table
+        self._load_current_sheet_state()
+
+    def _current_sheet_name(self) -> str:
+        """Return the name of the selected sheet."""
+        assert self.table is not None
+        return str(self.table.name)
 
     def _read_sheet(self) -> object:
         """Return the readable ODS table."""

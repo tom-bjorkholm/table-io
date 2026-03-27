@@ -656,6 +656,29 @@ class TestTableIOFactoryFormats:
         assert 'Excel' in names
         assert 'ODS' in names
 
+    def test_multi_sheet_capability_matches_spreadsheet_formats(self) -> None:
+        """Requesting multi-sheet support includes spreadsheet formats."""
+        f = _make_factory_stubs()
+        caps = Capabilities(
+            multi_sheet=SingleCapability(
+                True, Strictness.STRICT))
+        names = f.i_get_registered_formats(capabilities=caps)
+        assert 'Excel' in names
+        assert 'ODS' in names
+        assert 'CSV' not in names
+
+    def test_multi_sheet_capability_empty_ok_still_returns_match(self) -> \
+            None:
+        """empty_is_ok keeps returning multi-sheet-capable formats."""
+        f = _make_factory_stubs()
+        caps = Capabilities(
+            multi_sheet=SingleCapability(
+                True, Strictness.STRICT))
+        names = f.i_get_registered_formats(
+            capabilities=caps, empty_is_ok=True)
+        assert 'Excel' in names
+        assert 'ODS' in names
+
 
 # -- TableIOFactory: listing implementations -----------------------------
 
@@ -731,6 +754,18 @@ class TestTableIOFactoryImplementations:
             format_name='Alpha', capabilities=caps,
             empty_is_ok=True)
         assert not names
+
+    def test_multi_sheet_with_caps(self) -> None:
+        """Capability filtering finds only multi-sheet implementations."""
+        f = _make_factory_stubs()
+        caps = Capabilities(
+            multi_sheet=SingleCapability(
+                True, Strictness.STRICT))
+        names = f.i_get_registered_implementations(
+            capabilities=caps, empty_is_ok=True)
+        assert 'OpenPyXL' in names
+        assert 'odfdo' in names
+        assert 'high' not in names
 
 
 # -- TableIOFactory: usage -----------------------------------------------

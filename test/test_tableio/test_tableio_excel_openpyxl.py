@@ -21,6 +21,11 @@ from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
 from .check_capsys import check_capsys
 from .spreadsheet_test_helper import \
     run_box_write_removes_overlapping_filtered_range, \
+    run_multi_sheet_heading_state_is_per_sheet, \
+    run_multi_sheet_read_only_create_raises, \
+    run_multi_sheet_read_positions_are_per_sheet, \
+    run_multi_sheet_update_uses_selected_sheet_write_position, \
+    run_multi_sheet_write_positions_are_per_sheet, \
     run_read_formula_uses_cached_value, \
     run_read_formula_without_cached_value, \
     run_round_trip_dictdata_in_box, \
@@ -195,12 +200,47 @@ def test_excel_round_trip_dictdata_in_box(
     run_round_trip_dictdata_in_box(TableIOExcelOpenPyXL, capsys)
 
 
+def test_excel_multi_sheet_write_positions_are_per_sheet(
+        capsys: CaptureFixture[str]) -> None:
+    """Sequential writes keep an independent default position per sheet."""
+    run_multi_sheet_write_positions_are_per_sheet(
+        TableIOExcelOpenPyXL, capsys)
+
+
+def test_excel_multi_sheet_read_positions_are_per_sheet(
+        capsys: CaptureFixture[str]) -> None:
+    """Sequential reads resume independently when switching sheets."""
+    run_multi_sheet_read_positions_are_per_sheet(
+        TableIOExcelOpenPyXL, capsys)
+
+
+def test_excel_multi_sheet_heading_state_is_per_sheet(
+        capsys: CaptureFixture[str]) -> None:
+    """Each sheet tracks whether a default heading level was used before."""
+    run_multi_sheet_heading_state_is_per_sheet(
+        TableIOExcelOpenPyXL, capsys)
+
+
+def test_excel_multi_sheet_read_only_create_raises(
+        capsys: CaptureFixture[str]) -> None:
+    """READ mode can select an existing sheet but cannot create one."""
+    run_multi_sheet_read_only_create_raises(
+        TableIOExcelOpenPyXL, capsys)
+
+
 def test_excel_update_default_write_starts_after_last_used_row(
         capsys: CaptureFixture[str]) -> None:
     """UPDATE mode appends after the used area with a blank row separator."""
     run_update_default_write_starts_after_last_used_row(
         TableIOExcelOpenPyXL, '.xlsx', _create_update_workbook,
         _inspect_updated_workbook, capsys)
+
+
+def test_excel_multi_sheet_update_uses_selected_sheet_write_position(
+        capsys: CaptureFixture[str]) -> None:
+    """UPDATE mode appends using the selected sheet's used area."""
+    run_multi_sheet_update_uses_selected_sheet_write_position(
+        TableIOExcelOpenPyXL, capsys)
 
 
 def test_excel_write_formatted_listdata_applies_formatting_and_filter(

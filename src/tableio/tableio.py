@@ -4,6 +4,7 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+import io
 from enum import IntEnum, auto
 from pathlib import Path
 from types import TracebackType
@@ -70,11 +71,13 @@ class Box(NamedTuple):
 
 
 class Position(NamedTuple):
-    """A position in a file.
+    """A position in (a sheet in) a file.
 
     The position is defined by the row and column.
     Row and column indices are 0-based.
     This is used to report the position of the last cell written.
+    Note for file formats that support multiple sheets: the position is a
+    position in a sheet, and carries no information about which sheet.
     """
 
     row: int
@@ -221,14 +224,18 @@ class TableIO:
         Args:
             heading: The heading text to write.
             level: The level of the heading. 1 = highest, 3 = lowest.
-                   If level is None and it is first heading, level 1 is used.
-                   If level is None and it is not first heading,
+                   If level is None and it is first heading in the sheet,
+                   level 1 is used.
+                   If level is None and it is not first heading in the sheet,
                    level 2 is used.
         Raises:
             ValueError: If level is outside the range 1 to 3.
+            io.UnsupportedOperation: If the file is opened for reading.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
+        self._check_file_is_writable()
         if level is None:
             if self.heading_written:
                 level = 2
@@ -278,9 +285,12 @@ class TableIO:
             ValueError: If the data shape is invalid or does not fit in box.
             CapabilityNotSupported: If a requested capability is unsupported
                                     and strict.
+            io.UnsupportedOperation: If the file is opened for reading.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
+        self._check_file_is_writable()
         self._check_listdimensions(data, box)
         c_box = self._check_box_write(box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
@@ -306,9 +316,12 @@ class TableIO:
             ValueError: If the data shape is invalid or does not fit in box.
             CapabilityNotSupported: If a requested capability is unsupported
                                     and strict.
+            io.UnsupportedOperation: If the file is opened for reading.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
+        self._check_file_is_writable()
         self._check_listdimensions(row_strip_format_list(data), box)
         c_box = self._check_box_write(box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
@@ -354,9 +367,12 @@ class TableIO:
             ValueError: If the data shape is invalid or does not fit in box.
             CapabilityNotSupported: If a requested capability is unsupported
                                     and strict.
+            io.UnsupportedOperation: If the file is opened for reading.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
+        self._check_file_is_writable()
         ndata = normalize_dict_data(data, column_order, missing_ok, extra_ok)
         self._check_dictdimensions(ndata, box)
         c_box = self._check_box_write(box)
@@ -407,9 +423,12 @@ class TableIO:
             ValueError: If the data shape is invalid or does not fit in box.
             CapabilityNotSupported: If a requested capability is unsupported
                                     and strict.
+            io.UnsupportedOperation: If the file is opened for reading.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
+        self._check_file_is_writable()
         stripped_data = row_strip_format_dict(data)
         normalized_values = normalize_dict_data(stripped_data, column_order,
                                                 missing_ok, extra_ok)
@@ -472,6 +491,53 @@ class TableIO:
         """
         c_box = self._check_box_read(box)
         return self._read_table_dictdata(c_box)
+
+    def list_sheets(self) -> list[str]:
+        """List the sheets in the file.
+
+        Returns:
+            A list of the sheet names. Sheet names are case preserving,
+            but compared case insensitively.
+        Raises:
+            CapabilityNotSupported: If multiple sheets are not supported.
+        """
+        if not self.get_capabilities().multi_sheet.supported:
+            raise CapabilityNotSupported('multi sheet')
+        return self._list_sheets()
+
+    def select_sheet(self, sheet_name: str, create: bool = False) -> None:
+        """Select a sheet in the file.
+
+        Select a sheet in the file that will be used for subsequent writes
+        and reads. Cursor positions (read and write positions) are per sheet.
+
+        Args:
+            sheet_name: The name of the sheet to select. Sheet names are
+                        case preserving, but compared case insensitively.
+            create: If True, create the sheet if it does not exist.
+        Raises:
+            CapabilityNotSupported: If multiple sheets are not supported.
+            KeyError: If the sheet name is not found and create is False.
+            io.UnsupportedOperation: If create is True, the sheet does not
+                                     exist, and the file is opened for
+                                     reading.
+        """
+        if not self.get_capabilities().multi_sheet.supported:
+            raise CapabilityNotSupported('multi sheet')
+        return self._select_sheet(sheet_name, create)
+
+    def current_sheet_name(self) -> str:
+        """Return the name of the current sheet.
+
+        Returns:
+            The name of the current sheet. Sheet names are case preserving,
+            but compared case insensitively.
+        Raises:
+            CapabilityNotSupported: If multiple sheets are not supported.
+        """
+        if not self.get_capabilities().multi_sheet.supported:
+            raise CapabilityNotSupported('multi sheet')
+        return self._current_sheet_name()
 
     def open(self) -> None:
         """Open the file.
@@ -668,7 +734,8 @@ class TableIO:
             heading: The heading text to write.
             level: The level of the heading. 1 = highest, 3 = lowest.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
         err = 'Subclass must implement _write_heading method'
         _ = heading  # avoid unused variable warning
@@ -684,7 +751,8 @@ class TableIO:
             impl_meta: The meta data for the table write operation,
                        passed to the implementation class.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
         _ = data  # avoid unused variable warning
         _ = impl_meta  # avoid unused variable warning
@@ -700,7 +768,8 @@ class TableIO:
             impl_meta: The meta data for the table write operation,
                        passed to the implementation class.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
         _ = data  # avoid unused variable warning
         _ = impl_meta  # avoid unused variable warning
@@ -716,7 +785,8 @@ class TableIO:
             impl_meta: The meta data for the dict table write operation,
                        passed to the implementation class.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
         _ = data  # avoid unused variable warning
         _ = impl_meta  # avoid unused variable warning
@@ -732,7 +802,8 @@ class TableIO:
             impl_meta: The meta data for the dict table write operation,
                        passed to the implementation class.
         Returns:
-            The position of the last cell written.
+            The position of the last cell written. Position is in the
+            current sheet.
         """
         _ = data  # avoid unused variable warning
         _ = impl_meta  # avoid unused variable warning
@@ -801,3 +872,46 @@ class TableIO:
         if not file_exists:
             msg = f'File does not exist: {self.file_name}.'
             raise FileNotFoundError(msg)
+
+    def _check_file_is_writable(self) -> None:
+        """Raise if the file access mode does not allow writing."""
+        if self.file_access == FileAccess.READ:
+            msg = f'File {self.file_name} is opened for reading.'
+            raise io.UnsupportedOperation(msg)
+
+    def _list_sheets(self) -> list[str]:
+        """List the sheets in the file.
+
+        Returns:
+            A list of the sheet names. Sheet names are case preserving,
+            but compared case insensitively.
+        """
+        err = 'Subclass must implement _list_sheets method'
+        raise NotImplementedError(err)
+
+    def _select_sheet(self, sheet_name: str, create: bool = False) -> None:
+        """Select a sheet in the file.
+
+        Args:
+            sheet_name: The name of the sheet to select.
+            create: If True, create the sheet if it does not exist.
+        Raises:
+            KeyError: If the sheet name is not found and create is False.
+            io.UnsupportedOperation: If the file is opened for reading,
+                                     and create is True, and the sheet does
+                                     not exist.
+        """
+        err = 'Subclass must implement _select_sheet method'
+        _ = sheet_name  # avoid unused variable warning
+        _ = create  # avoid unused variable warning
+        raise NotImplementedError(err)
+
+    def _current_sheet_name(self) -> str:
+        """Return the name of the current sheet.
+
+        Returns:
+            The name of the current sheet. Sheet names are case preserving,
+            but compared case insensitively.
+        """
+        err = 'Subclass must implement _current_sheet_name method'
+        raise NotImplementedError(err)

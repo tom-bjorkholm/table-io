@@ -4,15 +4,17 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+import io
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Callable, Optional
 
+import pytest
 from pytest import CaptureFixture
 
 from tableio.color import Color
-from tableio.tableio import Box, FileAccess, TableIO
+from tableio.tableio import Box, FileAccess, Position, TableIO
 from tableio.value_type import Fmt, FmtDictRow, Value, ValueFmt
 
 from .check_capsys import check_capsys
@@ -262,4 +264,126 @@ def run_read_formula_without_cached_value(
                 Path(temp_dir) / 'formula', FileAccess.READ) as table_io:
             result = table_io.read_table_listdata()
         assert result.data == [[None, 'x']]
+    check_capsys(capsys)
+
+
+def run_multi_sheet_write_positions_are_per_sheet(
+        tableio_class: type[TableIO],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared per-sheet write-position case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'multi_write'
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            first_sheet = table_io.current_sheet_name()
+            assert table_io.list_sheets() == [first_sheet]
+            first_position = table_io.write_table_listdata([
+                ['left', 'right']
+            ])
+            table_io.select_sheet('Second', create=True)
+            second_position = table_io.write_table_listdata([
+                ['other', 'sheet']
+            ])
+            table_io.select_sheet(first_sheet.lower())
+            resumed_position = table_io.write_table_listdata([
+                ['resume', 'here']
+            ])
+        assert first_position == Position(0, 1)
+        assert second_position == Position(0, 1)
+        assert resumed_position == Position(2, 1)
+    check_capsys(capsys)
+
+
+def run_multi_sheet_read_positions_are_per_sheet(
+        tableio_class: type[TableIO],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared per-sheet read-position case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'multi_read'
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            first_sheet = table_io.current_sheet_name()
+            table_io.write_table_listdata([['first', 'table']])
+            table_io.write_table_listdata([['second', 'table']])
+            table_io.select_sheet('Second', create=True)
+            table_io.write_table_listdata([['other', 'sheet']])
+            table_io.select_sheet(first_sheet)
+        with tableio_class(file_name, FileAccess.READ) as table_io:
+            first_sheet = table_io.current_sheet_name()
+            first_result = table_io.read_table_listdata()
+            table_io.select_sheet('second')
+            second_result = table_io.read_table_listdata()
+            table_io.select_sheet(first_sheet)
+            resumed_result = table_io.read_table_listdata()
+        assert first_result.data == [['first', 'table']]
+        assert second_result.data == [['other', 'sheet']]
+        assert resumed_result.data == [['second', 'table']]
+    check_capsys(capsys)
+
+
+def run_multi_sheet_heading_state_is_per_sheet(
+        tableio_class: type[TableIO],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared per-sheet heading state case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'multi_heading'
+        first_position = Position(0, 0)
+        second_position = Position(0, 0)
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            first_sheet = table_io.current_sheet_name()
+            assert table_io.heading_written is False
+            first_position = table_io.write_heading('First heading')
+            assert table_io.heading_written is True
+            table_io.select_sheet('Second', create=True)
+            assert table_io.heading_written is False
+            second_position = table_io.write_heading('Second heading')
+            table_io.select_sheet(first_sheet)
+            assert table_io.heading_written is True
+        assert first_position == Position(0, 0)
+        assert second_position == Position(0, 0)
+    check_capsys(capsys)
+
+
+def run_multi_sheet_read_only_create_raises(
+        tableio_class: type[TableIO],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared READ-mode sheet-creation error case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'multi_read_only'
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            first_sheet = table_io.current_sheet_name()
+            table_io.select_sheet('Existing', create=True)
+            table_io.write_table_listdata([['left', 'right']])
+            table_io.select_sheet(first_sheet)
+        with tableio_class(file_name, FileAccess.READ) as table_io:
+            table_io.select_sheet('existing', create=True)
+            assert table_io.current_sheet_name() == 'Existing'
+            with pytest.raises(io.UnsupportedOperation,
+                               match='opened for reading'):
+                table_io.select_sheet('Missing', create=True)
+    check_capsys(capsys)
+
+
+def run_multi_sheet_update_uses_selected_sheet_write_position(
+        tableio_class: type[TableIO],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared UPDATE selected-sheet append case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'multi_update'
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            first_sheet = table_io.current_sheet_name()
+            table_io.write_table_listdata([['keep', 'first']])
+            table_io.select_sheet('Second', create=True)
+            table_io.write_table_listdata([['old', 'row']])
+            table_io.select_sheet(first_sheet)
+        with tableio_class(file_name, FileAccess.UPDATE) as table_io:
+            table_io.select_sheet('Second')
+            appended_position = table_io.write_table_listdata([
+                ['new', 'row']
+            ])
+        with tableio_class(file_name, FileAccess.READ) as table_io:
+            table_io.select_sheet('Second')
+            first_result = table_io.read_table_listdata()
+            second_result = table_io.read_table_listdata()
+        assert appended_position == Position(2, 1)
+        assert first_result.data == [['old', 'row']]
+        assert second_result.data == [['new', 'row']]
     check_capsys(capsys)

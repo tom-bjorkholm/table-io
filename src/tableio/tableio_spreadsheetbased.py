@@ -40,6 +40,14 @@ class _ScanResult(NamedTuple):
     next_read_row: int
 
 
+class _SheetState(NamedTuple):
+    """Sequential state tracked for one sheet during an open session."""
+
+    read_row: int
+    write_row: int
+    heading_written: bool
+
+
 class TableIOSpreadsheetBased(TableIO):
     """Intermediate TableIO base class for spreadsheet-based file formats.
 
@@ -59,6 +67,7 @@ class TableIOSpreadsheetBased(TableIO):
                          file_exists_callback=file_exists_callback)
         self.read_row: int = 0
         self.write_row: int = 0
+        self._sheet_states: dict[str, _SheetState] = {}
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -67,7 +76,8 @@ class TableIOSpreadsheetBased(TableIO):
                             can_fmt_row=_SUPPORTED, can_fmt_value=_SUPPORTED,
                             filtered_data_range=_SUPPORTED,
                             can_write_box=_SUPPORTED, can_read_box=_SUPPORTED,
-                            can_write_highlight=_SUPPORTED)
+                            can_write_highlight=_SUPPORTED,
+                            multi_sheet=_SUPPORTED)
 
     @staticmethod
     def _heading_font_size(level: int) -> int:
@@ -96,13 +106,45 @@ class TableIOSpreadsheetBased(TableIO):
         """Convert one Python value to a spreadsheet-compatible value."""
         return TableIOSpreadsheetBased._python_value_from_spreadsheet(value)
 
+    @staticmethod
+    def _sheet_key(sheet_name: str) -> str:
+        """Return the normalized dictionary key for one sheet name."""
+        return sheet_name.casefold()
+
+    def _current_sheet_key(self) -> str:
+        """Return the normalized key of the current sheet."""
+        return self._sheet_key(self._current_sheet_name())
+
+    def _make_current_sheet_state(self) -> _SheetState:
+        """Build the initial sequential state for the current sheet."""
+        write_row = 0
+        if self.file_access == FileAccess.UPDATE:
+            write_row = self._last_used_row(self._write_sheet()) + 1
+        return _SheetState(read_row=0, write_row=write_row,
+                           heading_written=False)
+
+    def _load_current_sheet_state(self) -> None:
+        """Load the current sheet state into the public cursor fields."""
+        key = self._current_sheet_key()
+        state = self._sheet_states.get(key)
+        if state is None:
+            state = self._make_current_sheet_state()
+            self._sheet_states[key] = state
+        self.read_row = state.read_row
+        self.write_row = state.write_row
+        self.heading_written = state.heading_written
+
+    def _save_current_sheet_state(self) -> None:
+        """Persist the public cursor fields for the current sheet."""
+        self._sheet_states[self._current_sheet_key()] = _SheetState(
+            read_row=self.read_row,
+            write_row=self.write_row,
+            heading_written=self.heading_written)
+
     def _initialize_positions(self) -> None:
         """Initialize the default read and write cursors."""
-        self.read_row = 0
-        if self.file_access == FileAccess.UPDATE:
-            self.write_row = self._last_used_row(self._write_sheet()) + 1
-        else:
-            self.write_row = 0
+        self._sheet_states = {}
+        self._load_current_sheet_state()
 
     def _read_sheet(self) -> object:
         """Return the readable sheet-like object."""
@@ -332,9 +374,9 @@ class TableIOSpreadsheetBased(TableIO):
                                box: Optional[Box]) -> None:
         """Update default read and write positions after a read."""
         self.write_row = scan.last_read_row + 1
-        if box is not None:
-            return
-        self.read_row = scan.next_read_row
+        if box is None:
+            self.read_row = scan.next_read_row
+        self._save_current_sheet_state()
 
     @staticmethod
     def _ranges_overlap(first: tuple[int, int, int, int],
@@ -411,6 +453,7 @@ class TableIOSpreadsheetBased(TableIO):
     def _update_write_position(self, next_row: int) -> None:
         """Update the default write cursor after a write operation."""
         self.write_row = next_row
+        self._save_current_sheet_state()
 
     def _write_grid(self,  # pylint: disable=too-many-locals
                     values: ListData[Value],

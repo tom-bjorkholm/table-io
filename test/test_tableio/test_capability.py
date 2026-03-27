@@ -115,6 +115,7 @@ def test_capabilities_runtime_defaults(capsys: CaptureFixture[str]) -> None:
         can_fmt_row=default_single,
         can_fmt_value=default_single,
         filtered_data_range=default_single,
+        multi_sheet=default_single,
     )
     check_capsys(capsys)
 
@@ -270,6 +271,17 @@ def test_capability_match_has_readable_examples(
             False,
             True,
             id='unused-filter-capability',
+        ),
+        pytest.param(
+            Capabilities(
+                multi_sheet=make_capability(False, Strictness.STRICT),
+            ),
+            Capabilities(
+                multi_sheet=make_capability(True, Strictness.STRICT),
+            ),
+            False,
+            False,
+            id='strict-multi-sheet-mismatch',
         ),
     ],
 )

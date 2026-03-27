@@ -31,6 +31,9 @@
     * [write\_table\_fmtdictdata](#tableio.tableio.TableIO.write_table_fmtdictdata)
     * [read\_table\_listdata](#tableio.tableio.TableIO.read_table_listdata)
     * [read\_table\_dictdata](#tableio.tableio.TableIO.read_table_dictdata)
+    * [list\_sheets](#tableio.tableio.TableIO.list_sheets)
+    * [select\_sheet](#tableio.tableio.TableIO.select_sheet)
+    * [current\_sheet\_name](#tableio.tableio.TableIO.current_sheet_name)
     * [open](#tableio.tableio.TableIO.open)
     * [close](#tableio.tableio.TableIO.close)
     * [\_end\_state](#tableio.tableio.TableIO._end_state)
@@ -50,6 +53,10 @@
     * [\_read\_table\_listdata](#tableio.tableio.TableIO._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio.TableIO._read_table_dictdata)
     * [\_file\_exists\_check](#tableio.tableio.TableIO._file_exists_check)
+    * [\_check\_file\_is\_writable](#tableio.tableio.TableIO._check_file_is_writable)
+    * [\_list\_sheets](#tableio.tableio.TableIO._list_sheets)
+    * [\_select\_sheet](#tableio.tableio.TableIO._select_sheet)
+    * [\_current\_sheet\_name](#tableio.tableio.TableIO._current_sheet_name)
 * [tableio.color](#tableio.color)
   * [Color](#tableio.color.Color)
     * [NONE](#tableio.color.Color.NONE)
@@ -68,6 +75,10 @@
     * [\_end\_state](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._end_state)
     * [\_write\_file\_suffix](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_file_suffix)
     * [\_close](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._close)
+    * [\_table\_name\_map](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._table_name_map)
+    * [\_list\_sheets](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._list_sheets)
+    * [\_select\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._select_sheet)
+    * [\_current\_sheet\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._current_sheet_name)
     * [\_read\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._read_sheet)
     * [\_write\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_sheet)
     * [\_spreadsheet\_body](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._spreadsheet_body)
@@ -290,6 +301,7 @@
     * [can\_write\_box](#tableio.capability.Capabilities.can_write_box)
     * [can\_read\_box](#tableio.capability.Capabilities.can_read_box)
     * [can\_write\_highlight](#tableio.capability.Capabilities.can_write_highlight)
+    * [multi\_sheet](#tableio.capability.Capabilities.multi_sheet)
   * [single\_capability\_match](#tableio.capability.single_capability_match)
   * [capability\_match](#tableio.capability.capability_match)
   * [CapabilityNotSupported](#tableio.capability.CapabilityNotSupported)
@@ -330,12 +342,18 @@
     * [\_read\_table\_dictdata](#tableio.tableio_csv.TableIOCsv._read_table_dictdata)
 * [tableio.tableio\_spreadsheetbased](#tableio.tableio_spreadsheetbased)
   * [\_ScanResult](#tableio.tableio_spreadsheetbased._ScanResult)
+  * [\_SheetState](#tableio.tableio_spreadsheetbased._SheetState)
   * [TableIOSpreadsheetBased](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased)
     * [\_\_init\_\_](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__)
     * [get\_capabilities](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.get_capabilities)
     * [\_heading\_font\_size](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._heading_font_size)
     * [\_python\_value\_from\_spreadsheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._python_value_from_spreadsheet)
     * [\_spreadsheet\_value\_from\_python](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._spreadsheet_value_from_python)
+    * [\_sheet\_key](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._sheet_key)
+    * [\_current\_sheet\_key](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._current_sheet_key)
+    * [\_make\_current\_sheet\_state](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._make_current_sheet_state)
+    * [\_load\_current\_sheet\_state](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._load_current_sheet_state)
+    * [\_save\_current\_sheet\_state](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._save_current_sheet_state)
     * [\_initialize\_positions](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._initialize_positions)
     * [\_read\_sheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_sheet)
     * [\_write\_sheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_sheet)
@@ -409,6 +427,11 @@
     * [\_end\_state](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._end_state)
     * [\_write\_file\_suffix](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_file_suffix)
     * [\_close](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._close)
+    * [\_worksheet\_name\_map](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._worksheet_name_map)
+    * [\_set\_active\_worksheets](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_active_worksheets)
+    * [\_list\_sheets](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._list_sheets)
+    * [\_select\_sheet](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._select_sheet)
+    * [\_current\_sheet\_name](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._current_sheet_name)
     * [\_read\_sheet](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_sheet)
     * [\_write\_sheet](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_sheet)
     * [\_highlight\_fill](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._highlight_fill)
@@ -516,11 +539,13 @@ If bottom or right is None, the box will expand according to the data.
 class Position(NamedTuple)
 ```
 
-A position in a file.
+A position in (a sheet in) a file.
 
 The position is defined by the row and column.
 Row and column indices are 0-based.
 This is used to report the position of the last cell written.
+Note for file formats that support multiple sheets: the position is a
+position in a sheet, and carries no information about which sheet.
 
 <a id="tableio.tableio.FileAccess"></a>
 
@@ -702,17 +727,20 @@ with the names of the columns.
 
 - `heading` - The heading text to write.
 - `level` - The level of the heading. 1 = highest, 3 = lowest.
-  If level is None and it is first heading, level 1 is used.
-  If level is None and it is not first heading,
+  If level is None and it is first heading in the sheet,
+  level 1 is used.
+  If level is None and it is not first heading in the sheet,
   level 2 is used.
 
 **Raises**:
 
 - `ValueError` - If level is outside the range 1 to 3.
+- `io.UnsupportedOperation` - If the file is opened for reading.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO.ImplMetaForWrite"></a>
 
@@ -792,10 +820,12 @@ The data must fit into the box.
 - `ValueError` - If the data shape is invalid or does not fit in box.
 - `CapabilityNotSupported` - If a requested capability is unsupported
   and strict.
+- `io.UnsupportedOperation` - If the file is opened for reading.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO.write_table_fmtlistdata"></a>
 
@@ -825,10 +855,12 @@ The data must fit into the box.
 - `ValueError` - If the data shape is invalid or does not fit in box.
 - `CapabilityNotSupported` - If a requested capability is unsupported
   and strict.
+- `io.UnsupportedOperation` - If the file is opened for reading.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO.write_table_dictdata"></a>
 
@@ -877,10 +909,12 @@ The data must fit into the box.
 - `ValueError` - If the data shape is invalid or does not fit in box.
 - `CapabilityNotSupported` - If a requested capability is unsupported
   and strict.
+- `io.UnsupportedOperation` - If the file is opened for reading.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO.write_table_fmtdictdata"></a>
 
@@ -929,10 +963,12 @@ The data must fit into the box.
 - `ValueError` - If the data shape is invalid or does not fit in box.
 - `CapabilityNotSupported` - If a requested capability is unsupported
   and strict.
+- `io.UnsupportedOperation` - If the file is opened for reading.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO.read_table_listdata"></a>
 
@@ -993,6 +1029,71 @@ returned as a list of headings.
 **Returns**:
 
   The data read from the table and the headings before the table.
+
+<a id="tableio.tableio.TableIO.list_sheets"></a>
+
+#### list\_sheets
+
+```python
+def list_sheets() -> list[str]
+```
+
+List the sheets in the file.
+
+**Returns**:
+
+  A list of the sheet names. Sheet names are case preserving,
+  but compared case insensitively.
+
+**Raises**:
+
+- `CapabilityNotSupported` - If multiple sheets are not supported.
+
+<a id="tableio.tableio.TableIO.select_sheet"></a>
+
+#### select\_sheet
+
+```python
+def select_sheet(sheet_name: str, create: bool = False) -> None
+```
+
+Select a sheet in the file.
+
+Select a sheet in the file that will be used for subsequent writes
+and reads. Cursor positions (read and write positions) are per sheet.
+
+**Arguments**:
+
+- `sheet_name` - The name of the sheet to select. Sheet names are
+  case preserving, but compared case insensitively.
+- `create` - If True, create the sheet if it does not exist.
+
+**Raises**:
+
+- `CapabilityNotSupported` - If multiple sheets are not supported.
+- `KeyError` - If the sheet name is not found and create is False.
+- `io.UnsupportedOperation` - If create is True, the sheet does not
+  exist, and the file is opened for
+  reading.
+
+<a id="tableio.tableio.TableIO.current_sheet_name"></a>
+
+#### current\_sheet\_name
+
+```python
+def current_sheet_name() -> str
+```
+
+Return the name of the current sheet.
+
+**Returns**:
+
+  The name of the current sheet. Sheet names are case preserving,
+  but compared case insensitively.
+
+**Raises**:
+
+- `CapabilityNotSupported` - If multiple sheets are not supported.
 
 <a id="tableio.tableio.TableIO.open"></a>
 
@@ -1218,7 +1319,8 @@ with the names of the columns.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO._write_table_listdata"></a>
 
@@ -1239,7 +1341,8 @@ Write a table of list data to the file.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO._write_table_fmtlistdata"></a>
 
@@ -1260,7 +1363,8 @@ Write a table of list data to the file.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO._write_table_dictdata"></a>
 
@@ -1281,7 +1385,8 @@ Write a table of dict data to the file.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO._write_table_fmtdictdata"></a>
 
@@ -1302,7 +1407,8 @@ Write a table of dict data to the file.
 
 **Returns**:
 
-  The position of the last cell written.
+  The position of the last cell written. Position is in the
+  current sheet.
 
 <a id="tableio.tableio.TableIO._read_table_listdata"></a>
 
@@ -1371,6 +1477,68 @@ file_exists_callback is called to decide if the file can be
 overwritten.
 If file access is READ or UPDATE, the file must exist.
 
+<a id="tableio.tableio.TableIO._check_file_is_writable"></a>
+
+#### \_check\_file\_is\_writable
+
+```python
+def _check_file_is_writable() -> None
+```
+
+Raise if the file access mode does not allow writing.
+
+<a id="tableio.tableio.TableIO._list_sheets"></a>
+
+#### \_list\_sheets
+
+```python
+def _list_sheets() -> list[str]
+```
+
+List the sheets in the file.
+
+**Returns**:
+
+  A list of the sheet names. Sheet names are case preserving,
+  but compared case insensitively.
+
+<a id="tableio.tableio.TableIO._select_sheet"></a>
+
+#### \_select\_sheet
+
+```python
+def _select_sheet(sheet_name: str, create: bool = False) -> None
+```
+
+Select a sheet in the file.
+
+**Arguments**:
+
+- `sheet_name` - The name of the sheet to select.
+- `create` - If True, create the sheet if it does not exist.
+
+**Raises**:
+
+- `KeyError` - If the sheet name is not found and create is False.
+- `io.UnsupportedOperation` - If the file is opened for reading,
+  and create is True, and the sheet does
+  not exist.
+
+<a id="tableio.tableio.TableIO._current_sheet_name"></a>
+
+#### \_current\_sheet\_name
+
+```python
+def _current_sheet_name() -> str
+```
+
+Return the name of the current sheet.
+
+**Returns**:
+
+  The name of the current sheet. Sheet names are case preserving,
+  but compared case insensitively.
+
 <a id="tableio.color"></a>
 
 # tableio.color
@@ -1426,6 +1594,8 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased)
 ```
 
 TableIO class for OpenDocument Spreadsheet ODS files using odfdo.
+
+The implementation operates on one current sheet at a time.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.__init__"></a>
 
@@ -1540,6 +1710,46 @@ def _close() -> None
 ```
 
 Release document references.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._table_name_map"></a>
+
+#### \_table\_name\_map
+
+```python
+def _table_name_map() -> dict[str, Table]
+```
+
+Return the document tables indexed case-insensitively.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._list_sheets"></a>
+
+#### \_list\_sheets
+
+```python
+def _list_sheets() -> list[str]
+```
+
+List the sheets in the document.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._select_sheet"></a>
+
+#### \_select\_sheet
+
+```python
+def _select_sheet(sheet_name: str, create: bool = False) -> None
+```
+
+Select one document sheet, optionally creating it.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._current_sheet_name"></a>
+
+#### \_current\_sheet\_name
+
+```python
+def _current_sheet_name() -> str
+```
+
+Return the name of the selected sheet.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._read_sheet"></a>
 
@@ -4828,6 +5038,12 @@ The reader class can read from position given by a box.
 
 The writer class can write highlight according to format.
 
+<a id="tableio.capability.Capabilities.multi_sheet"></a>
+
+#### multi\_sheet
+
+The reader/writer class can read from or write to multiple sheets.
+
 <a id="tableio.capability.single_capability_match"></a>
 
 #### single\_capability\_match
@@ -4849,7 +5065,7 @@ Check if the offered single capability matches the will use.
 - `ignore_allowed` - If False: when the offered single capability would
   ignore the will use single capability it is
   considered a mismatch, and will return False.
-  If False: when the offered single capability would
+  If True: when the offered single capability would
   ignore the will use single capability it is
   considered a match, and will return True.
 
@@ -4983,7 +5199,7 @@ formatting makes sense as there is still a value written to the file.
 A capability that is not supported and will raise an exception if requested.
 
 This is a for a feature that cannot be supported but it would not make
-sense to ignore. A typical example would be a request request to write
+sense to ignore. A typical example would be a request to write
 a value in a specific location in the file. Writing the value to a
 different location would not make sense. Thus the only sensible thing
 to do is to raise an exception.
@@ -5435,6 +5651,16 @@ class _ScanResult(NamedTuple)
 
 Details gathered while scanning one worksheet section.
 
+<a id="tableio.tableio_spreadsheetbased._SheetState"></a>
+
+## \_SheetState Objects
+
+```python
+class _SheetState(NamedTuple)
+```
+
+Sequential state tracked for one sheet during an open session.
+
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased"></a>
 
 ## TableIOSpreadsheetBased Objects
@@ -5505,6 +5731,57 @@ def _spreadsheet_value_from_python(value: object) -> Value
 ```
 
 Convert one Python value to a spreadsheet-compatible value.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._sheet_key"></a>
+
+#### \_sheet\_key
+
+```python
+@staticmethod
+def _sheet_key(sheet_name: str) -> str
+```
+
+Return the normalized dictionary key for one sheet name.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._current_sheet_key"></a>
+
+#### \_current\_sheet\_key
+
+```python
+def _current_sheet_key() -> str
+```
+
+Return the normalized key of the current sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._make_current_sheet_state"></a>
+
+#### \_make\_current\_sheet\_state
+
+```python
+def _make_current_sheet_state() -> _SheetState
+```
+
+Build the initial sequential state for the current sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._load_current_sheet_state"></a>
+
+#### \_load\_current\_sheet\_state
+
+```python
+def _load_current_sheet_state() -> None
+```
+
+Load the current sheet state into the public cursor fields.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._save_current_sheet_state"></a>
+
+#### \_save\_current\_sheet\_state
+
+```python
+def _save_current_sheet_state() -> None
+```
+
+Persist the public cursor fields for the current sheet.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._initialize_positions"></a>
 
@@ -6326,8 +6603,9 @@ class TableIOExcelOpenPyXL(TableIOExcelBased)
 
 TableIO reader/writer class for Excel files using OpenPyXL.
 
-The implementation uses a single active worksheet only. In UPDATE mode
-the default write position is after the last used row in that worksheet.
+The implementation operates on one current worksheet at a time. In
+UPDATE mode the default write position is after the last used row in
+the selected worksheet.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__"></a>
 
@@ -6402,6 +6680,58 @@ def _close() -> None
 ```
 
 Close any open workbook handles.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._worksheet_name_map"></a>
+
+#### \_worksheet\_name\_map
+
+```python
+@staticmethod
+def _worksheet_name_map(workbook: Workbook) -> dict[str, Worksheet]
+```
+
+Return the workbook worksheets indexed case-insensitively.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_active_worksheets"></a>
+
+#### \_set\_active\_worksheets
+
+```python
+def _set_active_worksheets(worksheet: Worksheet,
+                           read_worksheet: Worksheet) -> None
+```
+
+Set the current writable and readable worksheets.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._list_sheets"></a>
+
+#### \_list\_sheets
+
+```python
+def _list_sheets() -> list[str]
+```
+
+List the sheets in the workbook.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._select_sheet"></a>
+
+#### \_select\_sheet
+
+```python
+def _select_sheet(sheet_name: str, create: bool = False) -> None
+```
+
+Select one workbook sheet, optionally creating it.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._current_sheet_name"></a>
+
+#### \_current\_sheet\_name
+
+```python
+def _current_sheet_name() -> str
+```
+
+Return the name of the selected worksheet.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._read_sheet"></a>
 

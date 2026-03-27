@@ -142,6 +142,7 @@ def test_common_capabilities(
     assert caps.filtered_data_range.supported is False
     assert caps.can_fmt_value.supported is False
     assert caps.can_write_highlight.supported is False
+    assert caps.multi_sheet.supported is False
     check_capsys(capsys)
 
 

@@ -84,6 +84,9 @@ class Capabilities(NamedTuple):
     can_write_highlight: SingleCapability = SingleCapability()
     """The writer class can write highlight according to format."""
 
+    multi_sheet: SingleCapability = SingleCapability()
+    """The reader/writer class can read from or write to multiple sheets."""
+
 
 def single_capability_match(offered: SingleCapability,
                             will_use: SingleCapability,
@@ -98,7 +101,7 @@ def single_capability_match(offered: SingleCapability,
         ignore_allowed: If False: when the offered single capability would
                         ignore the will use single capability it is
                         considered a mismatch, and will return False.
-                        If False: when the offered single capability would
+                        If True: when the offered single capability would
                         ignore the will use single capability it is
                         considered a match, and will return True.
     Returns:
@@ -200,7 +203,8 @@ CAP_IGNORABLE = SingleCapability(supported=True, strictness=Strictness.IGNORE)
 
    An example might be that prefer to be able to write a value in bold,
    but the request can accept that the implementation ignores the bold
-   formatting."""
+   formatting.
+   """
 
 # ----------------------------------------------------------------------------
 # Capability constants from the point of view of the reader/writer class
@@ -224,7 +228,7 @@ CAP_UNSUPPORTED = SingleCapability(supported=False,
 """A capability that is not supported and will raise an exception if requested.
 
    This is a for a feature that cannot be supported but it would not make
-   sense to ignore. A typical example would be a request request to write
+   sense to ignore. A typical example would be a request to write
    a value in a specific location in the file. Writing the value to a
    different location would not make sense. Thus the only sensible thing
    to do is to raise an exception.

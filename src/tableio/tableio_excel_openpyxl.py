@@ -26,8 +26,9 @@ _HIGHLIGHT_RGB: dict[Color, str] = {
 class TableIOExcelOpenPyXL(TableIOExcelBased):
     """TableIO reader/writer class for Excel files using OpenPyXL.
 
-    The implementation uses a single active worksheet only. In UPDATE mode
-    the default write position is after the last used row in that worksheet.
+    The implementation operates on one current worksheet at a time. In
+    UPDATE mode the default write position is after the last used row in
+    the selected worksheet.
     """
 
     def __init__(self, file_name: PathLike,
@@ -104,6 +105,63 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
             self.worksheet = None
         self.read_workbook = None
         self.read_worksheet = None
+
+    @staticmethod
+    def _worksheet_name_map(
+            workbook: Workbook) -> dict[str, Worksheet]:
+        """Return the workbook worksheets indexed case-insensitively."""
+        ret: dict[str, Worksheet] = {}
+        for worksheet in workbook.worksheets:
+            ret[worksheet.title.casefold()] = worksheet
+        return ret
+
+    def _set_active_worksheets(self, worksheet: Worksheet,
+                               read_worksheet: Worksheet) -> None:
+        """Set the current writable and readable worksheets."""
+        assert self.workbook is not None
+        assert self.read_workbook is not None
+        self.worksheet = worksheet
+        self.read_worksheet = read_worksheet
+        self.workbook.active = self.workbook.index(worksheet)
+        if self.read_workbook is self.workbook:
+            return
+        self.read_workbook.active = self.read_workbook.index(read_worksheet)
+
+    def _list_sheets(self) -> list[str]:
+        """List the sheets in the workbook."""
+        assert self.workbook is not None
+        return list(self.workbook.sheetnames)
+
+    def _select_sheet(self, sheet_name: str, create: bool = False) -> None:
+        """Select one workbook sheet, optionally creating it."""
+        assert self.workbook is not None
+        assert self.read_workbook is not None
+        assert self.worksheet is not None
+        assert self.read_worksheet is not None
+        sheet_key = self._sheet_key(sheet_name)
+        workbook_map = self._worksheet_name_map(self.workbook)
+        read_map = self._worksheet_name_map(self.read_workbook)
+        worksheet = workbook_map.get(sheet_key)
+        read_worksheet = read_map.get(sheet_key)
+        if worksheet is None:
+            if not create:
+                raise KeyError(sheet_name)
+            self._check_file_is_writable()
+            worksheet = self.workbook.create_sheet(title=sheet_name)
+            if self.read_workbook is self.workbook:
+                read_worksheet = worksheet
+            else:
+                read_worksheet = self.read_workbook.create_sheet(
+                    title=sheet_name)
+        assert read_worksheet is not None
+        self._save_current_sheet_state()
+        self._set_active_worksheets(worksheet, read_worksheet)
+        self._load_current_sheet_state()
+
+    def _current_sheet_name(self) -> str:
+        """Return the name of the selected worksheet."""
+        assert self.worksheet is not None
+        return self.worksheet.title
 
     def _read_sheet(self) -> object:
         """Return the readable worksheet."""
