@@ -14,6 +14,7 @@ from .cmd_for_examples import cmd_parse_and_run_example
 from .write_writer_info import write_writer_info
 
 
+# pylint: disable=duplicate-code
 CAPS = Capabilities(
     can_write=CAP_NEEDED,
     can_read=CAP_NEEDED,

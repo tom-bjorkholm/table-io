@@ -12,7 +12,7 @@ from one public ``Value`` representation to another expected concrete type.
 
 from datetime import datetime, date, time
 from types import NoneType
-from typing import Optional, Callable
+from typing import Optional
 from tableio.value_type import Value, value_to_str
 
 _TRUE_STRINGS = frozenset({'true', '1', 'yes', 'on'})
@@ -325,7 +325,8 @@ def value2none(value: Value) -> None:
     raise UnreasonableTypeConversion(value, NoneType)
 
 
-def value2type[T](value: Value, to_type: type[T],
+def value2type[T](value: Value,  # noqa: D103
+                  to_type: type[T],
                   accept_none: bool = False,
                   datetime_format_string: Optional[str] = None,
                   int_format_string: Optional[str] = None) -> T:
@@ -335,7 +336,8 @@ def value2type[T](value: Value, to_type: type[T],
     function based on the type.
     Args:
         value: The value to convert.
-        to_type: The type to convert to.
+        to_type: The type to convert to. Can be NoneType, datetime, int, str,
+                 bool, or float.
         accept_none: If True, None values are accepted.
         datetime_format_string: Optional ``strptime`` format for string input.
         int_format_string: Optional Python integer format specification used to
@@ -344,21 +346,51 @@ def value2type[T](value: Value, to_type: type[T],
         The converted value.
     """
     if to_type is NoneType:
-        return value2none(value)
-    date_funcs: dict[type[object], Callable[[Value, bool], T]] = {
-        datetime: value2datetime,
-        date: value2date,
-        time: value2time,
-    }
-    if to_type in date_funcs:
-        return date_funcs[to_type](value, datetime_format_string)
-    if to_type == int:
-        return value2int(value, none_is_zero=accept_none,
-                         format_string=int_format_string)
-    if to_type == str:
-        return value2str(value, none_is_empty=accept_none)
-    if to_type == bool:
-        return value2bool(value, none_is_false=accept_none)
-    if to_type == float:
-        return value2float(value, none_is_zero=accept_none)
+        return value2none(value)  # type: ignore[func-returns-value, no-any-return] # noqa: E501
+    if to_type is datetime:
+        ret_dt = value2datetime(value, datetime_format_string)
+        assert isinstance(ret_dt, to_type)
+        return ret_dt
+    if to_type is int:
+        ret_int = value2int(value, none_is_zero=accept_none,
+                            format_string=int_format_string)
+        assert isinstance(ret_int, to_type)
+        return ret_int
+    if to_type is str:
+        ret_str = value2str(value, none_is_empty=accept_none)
+        assert isinstance(ret_str, to_type)
+        return ret_str
+    if to_type is bool:
+        ret_bool = value2bool(value, none_is_false=accept_none)
+        assert isinstance(ret_bool, to_type)
+        return ret_bool
+    if to_type is float:
+        ret_float = value2float(value, none_is_zero=accept_none)
+        assert isinstance(ret_float, to_type)
+        return ret_float
     raise UnreasonableTypeConversion(value, to_type)
+
+
+def value2type_of[T](value: Value,  # noqa: D103
+                     to_type_of: T,
+                     accept_none: bool = False,
+                     datetime_format_string: Optional[str] = None,
+                     int_format_string: Optional[str] = None) -> T:
+    """Convert a value to a type of the given variable.
+
+    This is a convenience function that calls the appropriate value conversion
+    function based on the type.
+    Args:
+        value: The value to convert.
+        to_type_of: The a variable of the type to convert to. The value of
+                    this variable will not be used, only its type. Can be of
+                    type NoneType, datetime, int, str, bool, or float.
+        accept_none: If True, None values are accepted.
+        datetime_format_string: Optional ``strptime`` format for string input.
+        int_format_string: Optional Python integer format specification used to
+                           validate string input after parsing.
+    Returns:
+        The converted value.
+    """
+    return value2type(value, type(to_type_of), accept_none,
+                      datetime_format_string, int_format_string)

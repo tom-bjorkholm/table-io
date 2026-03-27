@@ -260,6 +260,7 @@
   * [value2time](#tableio.valueconversion.value2time)
   * [value2none](#tableio.valueconversion.value2none)
   * [value2type](#tableio.valueconversion.value2type)
+  * [value2type\_of](#tableio.valueconversion.value2type_of)
 * [tableio.capability](#tableio.capability)
   * [Strictness](#tableio.capability.Strictness)
     * [STRICT](#tableio.capability.Strictness.STRICT)
@@ -4483,7 +4484,40 @@ function based on the type.
 **Arguments**:
 
 - `value` - The value to convert.
-- `to_type` - The type to convert to.
+- `to_type` - The type to convert to. Can be NoneType, datetime, int, str,
+  bool, or float.
+- `accept_none` - If True, None values are accepted.
+- `datetime_format_string` - Optional ``strptime`` format for string input.
+- `int_format_string` - Optional Python integer format specification used to
+  validate string input after parsing.
+
+**Returns**:
+
+  The converted value.
+
+<a id="tableio.valueconversion.value2type_of"></a>
+
+#### value2type\_of
+
+```python
+def value2type_of(value: Value,
+                  to_type_of: T,
+                  accept_none: bool = False,
+                  datetime_format_string: Optional[str] = None,
+                  int_format_string: Optional[str] = None) -> T
+```
+
+Convert a value to a type of the given variable.
+
+This is a convenience function that calls the appropriate value conversion
+function based on the type.
+
+**Arguments**:
+
+- `value` - The value to convert.
+- `to_type_of` - The a variable of the type to convert to. The value of
+  this variable will not be used, only its type. Can be of
+  type NoneType, datetime, int, str, bool, or float.
 - `accept_none` - If True, None values are accepted.
 - `datetime_format_string` - Optional ``strptime`` format for string input.
 - `int_format_string` - Optional Python integer format specification used to
