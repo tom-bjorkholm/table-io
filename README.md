@@ -1,13 +1,10 @@
 # tableio
 
-## Early protoype
-
-This package is still an early prototype. This means that major changes to the APIs are expected.
-
-## Use
-
 > **👤 Looking to use this in your program**  
-> This repository is for developers of the package. If you want to install and use `tableio` including writing programs that use them, please visit the **PyPI project page [https://pypi.org/project/tableio](https://pypi.org/project/tableio) for installation instructions and user documentation.
+> This repository is for developers of the package. If you want to install
+> and use `tableio` including writing programs that use them, please visit
+> the **PyPI project page [https://pypi.org/project/tableio](https://pypi.org/project/tableio)
+> for installation instructions and user documentation.
 
 ## What is it
 
@@ -23,8 +20,7 @@ The support for spreadsheets is for reading and writing data. There is no
 intention to support reading or writing formulas. There is no support for
 running calculations in the spreadsheets (although nothing will stop a
 receiver of a spreadsheet created by tableio package to manually add
-formulas in the received spreadsheet). The built-in spreadsheet backends are
-Excel via OpenPyXL and ODS via odfdo.
+formulas in the received spreadsheet).
 
 ## For developers
 
@@ -53,22 +49,20 @@ git submodule update --remote --merge
 
 #### OS
 
-For running the script and running the test suite you need a mac or a Linux computer. Even if the resulting package can be installed and used on Windows, the scripts for building and testing are only implemented for mac and Linux.
+For running the script and running the test suite you need a mac or a Linux computer.
+Even if the resulting package can be installed and used on Windows, the scripts for
+building and testing are only implemented for mac and Linux.
 
 #### Python version
 
-Please see README_pypi.md for information on needed python version. Main development is on newest Python version.
-
-#### Zsh
-
-Most scripts are Python.
-Some scripts are zsh. zsh is available by default on modern macs. zsh can easily be installed on Linux (on Ubuntu: `sudo apt install zsh`).
+Please see README_pypi.md for information on needed python version.
+Main development is on newest Python version.
 
 ### Quick start
 
 1. Clone this repository
-2. Run `./setup_build_environment.zsh` to set up the build environment
-3. Run `./doBuild.zsh` to build and test the package
+2. Run `./run_setup_build_environment.py` to set up the build environment
+3. Run `./run_build.py`  to build and test the package
 
 ### Building application
 
@@ -102,5 +96,5 @@ information about the build system. This README can also be viewed at
 - Test result: 869 passed in 13s
 - No flake8 warnings.
 - No mypy errors found.
-- Built version(s): 0.1.1
+- Built version(s): 0.2
 - Build and test using Python 3.14.3

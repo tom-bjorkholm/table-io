@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tableio"
-version = "0.1.1"
+version = "0.2"
 authors = [
   { name="Tom Björkholm", email="klausuler_linnet0q@icloud.com" },
 ]
@@ -15,8 +15,7 @@ license = "MIT"
 license-files = ["LICENSE.txt"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-    "Development Status :: 2 - Pre-Alpha"
+    "Operating System :: OS Independent"
 ]
 dynamic = ["dependencies"]
 

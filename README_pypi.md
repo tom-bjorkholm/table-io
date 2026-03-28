@@ -4,6 +4,12 @@ The tableio package contains a number of classes providing a uniform way for
 a python program to write table data (rows of columns) to and read table data
 from a number of different common file formats.
 
+An increasing number of users want output from programs to de in a format
+like a spreadsheet, and not the old fashoned raw text files. Similarly,
+many users want the data they feed into programs to be in a particular format
+(like a spreadsheet). The tableio packade tries to make it easier for the
+programmer to fullfil requests like that.
+
 The primary intended use is for text output from a python program, where the
 programmer would like the user to be able to select the input and output file
 formats.
@@ -12,12 +18,7 @@ The support for spreadsheets is for reading and writing data. There is no
 intention to support reading or writing formulas. There is no support for
 running calculations in the spreadsheets (although nothing will stop a
 receiver of a spreadsheet created by tableio package to manually add
-formulas in the received spreadsheet). The built-in spreadsheet backends are
-Excel via OpenPyXL and ODS via odfdo.
-
-## Early design phase
-
-This project is in an early design phase. This means that major changes to the APIs are still expected.
+formulas in the received spreadsheet).
 
 ## Installing tableio
 
@@ -52,9 +53,42 @@ The currently supported formats are:
 | rtf         | mformat        | yes       | -        |
 | txt         | mformat        | yes       | -        |
 
+## Features
+
+All features are not available for all file formats. Often the file
+format restricts what features are reasonable in that format. Using
+a selection mechanism called Capabilities it is possible to select
+file format at runtime based on what features are essential. It is
+also possible to ignore some features when using a file format that
+cannot support that feature (like ignoring bold fomatting in CSV).
+
+The main features are:
+
+- File open modes: Create, Read or Update
+- Writing tables from list of lists or list of dicts
+- Writing headings before and between tables
+- Reading tables to list of lists or list of dicts, including the headings
+  before the table.
+- formatting per cell or per row:
+  - bold format
+  - italics format
+  - highlight colour
+- reading and writing cells with data types:
+  - str
+  - bool
+  - int
+  - float
+  - datetime
+- writing a table as a filtered data range
+- writing a table to a specific location in a spreadsheet (specified by a box)
+- reading table data from a specific location in a spreadsheet (specified by a box)
+- using multiple sheets in spreadsheets
+
 ## Example programs
 
-Some example programs are available at: [https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/](https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/).
+The best way to learn to use this package is to use the provided
+example programs:
+[https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/README.md](https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/README.md).
 
 ## API documentation
 
@@ -72,14 +106,15 @@ a better start by reading the examples.
 
 ## Version history
 
-| Version | Date        | Python version | Comment                |
-|---------|-------------|----------------|------------------------|
-| 0.1     | 2026 Mar 23 | 3.12 or newer  | First released version |
+| Version | Date        | Python version | Comment                    |
+|---------|-------------|----------------|----------------------------|
+| 0.2     | 2026 Mar 28 | 3.12 or newer  | More features, API changes |
+| 0.1     | 2026 Mar 23 | 3.12 or newer  | First released version     |
 
 ## Test summary
 
 - Test result: 869 passed in 13s
 - No flake8 warnings.
 - No mypy errors found.
-- Built version(s): 0.1.1
+- Built version(s): 0.2
 - Build and test using Python 3.14.3
