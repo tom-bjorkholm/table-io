@@ -85,7 +85,7 @@ _DESCRIPTION_PARAMS: list[tuple[_MformatCls, str, list[str]]] = [
      ['file_exists_callback', 'character_encoding',
       'document_class', 'paper_size', 'title', 'latex_preamble',
       'latex_heading_levels', 'latex_replacements']),
-    (TableIOMformatRst, 'rst',
+    (TableIOMformatRst, 'reST',
      ['file_exists_callback', 'character_encoding',
       'line_length', 'table_max_line_length', 'table_alignment']),
     (TableIOMformatDocx, 'docx',

@@ -338,7 +338,7 @@ class TableIOMformatRst(TableIOMformatBased):
     @classmethod
     def get_description(cls) -> Descriptor:
         """Get the description of the TableIOMformatRst writer class."""
-        return Descriptor(format_name='rst', implementation='mformat',
+        return Descriptor(format_name='reST', implementation='mformat',
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',

@@ -49,7 +49,7 @@ The currently supported formats are:
 | md          | mformat        | yes       | -        |
 | odt         | mformat        | yes       | -        |
 | pdf         | mformat        | yes       | -        |
-| rst         | mformat        | yes       | -        |
+| reST        | mformat        | yes       | -        |
 | rtf         | mformat        | yes       | -        |
 | txt         | mformat        | yes       | -        |
 
@@ -113,7 +113,7 @@ a better start by reading the examples.
 
 ## Test summary
 
-- Test result: 869 passed in 13s
+- Test result: 869 passed in 11s
 - No flake8 warnings.
 - No mypy errors found.
 - Built version(s): 0.2
