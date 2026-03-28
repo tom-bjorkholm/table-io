@@ -12,6 +12,7 @@ from typing import Any, Mapping, cast
 import pytest
 from pytest import CaptureFixture
 
+import tableio.value_type as value_type_module
 from tableio.color import Color
 from tableio.value_type import Fmt, ValueFmt, \
     FmtListRow, FmtDictRow, Value, DataForExtraColumn, \
@@ -578,6 +579,22 @@ def test_normalize_dict_data_normalizes_formatted_rows(
         {'alpha': missing_cell, 'beta': ValueFmt(value=3.5, fmt=fmt)}
     ]
     assert normalized is not data
+    check_capsys(capsys)
+
+
+def test_normalize_dict_data_impl_asserts_if_type_guards_disagree(
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: CaptureFixture[str]) -> None:
+    """The internal normalize helper keeps a defensive assertion."""
+    monkeypatch.setattr(value_type_module,
+                        '_first_row_is_plain_dict_data',
+                        lambda data: False)
+    monkeypatch.setattr(value_type_module,
+                        '_first_row_is_formatted_dict_data',
+                        lambda data: False)
+    normalize_impl = getattr(value_type_module, '_normalize_dict_data_impl')
+    with pytest.raises(AssertionError, match='Unreachable code reached'):
+        normalize_impl([{'alpha': 'cell'}], ['alpha'])
     check_capsys(capsys)
 
 

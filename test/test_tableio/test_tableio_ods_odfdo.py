@@ -6,8 +6,9 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
+import pytest
 from odfdo import Cell, Document, Element, Table
 from odfdo.body import Spreadsheet
 from odfdo.style import Style
@@ -15,7 +16,7 @@ from pytest import CaptureFixture
 
 from tableio.tableio import FileAccess
 from tableio.tableio_ods_odfdo import TableIOOdsOdfdo
-from tableio.value_type import get_checked_type
+from tableio.value_type import Fmt, get_checked_type
 
 from .check_capsys import check_capsys
 from .spreadsheet_test_helper import \
@@ -25,10 +26,12 @@ from .spreadsheet_test_helper import \
     run_multi_sheet_read_positions_are_per_sheet, \
     run_multi_sheet_update_uses_selected_sheet_write_position, \
     run_multi_sheet_write_positions_are_per_sheet, \
+    run_open_rejects_second_open, \
     run_read_formula_uses_cached_value, \
     run_read_formula_without_cached_value, \
     run_round_trip_dictdata_in_box, \
     run_round_trip_sequential_list_reads, \
+    run_select_missing_sheet_without_create_raises_key_error, \
     run_table_width_is_widen_only_with_cap, \
     run_update_default_write_starts_after_last_used_row, \
     run_write_dictdata_applies_first_row_format, \
@@ -221,6 +224,75 @@ def _inspect_fmtdict_header_fmt_document(file_path: Path) -> None:
     assert data_table_props['fo:background-color'] == '#c6efce'
 
 
+def _make_database_range(name: Optional[str], display_buttons: str,
+                         address: str) -> Element:
+    """Create one ODS database-range element for tests."""
+    database_range = Element.from_tag('table:database-range')
+    if name is not None:
+        database_range.set_attribute('table:name', name)
+    database_range.set_attribute('table:display-filter-buttons',
+                                 display_buttons)
+    database_range.set_attribute('table:target-range-address', address)
+    return database_range
+
+
+class ExposedTableIOOdsOdfdo(TableIOOdsOdfdo):
+    """ODS test double exposing protected helpers through public wrappers."""
+
+    @classmethod
+    def split_rfc3066_language(cls, lang: str) -> tuple[str, str]:
+        """Expose the RFC3066 splitting helper for tests."""
+        return cls._split_rfc3066_language(lang)
+
+    @classmethod
+    def quote_table_name(cls, table_name: str) -> str:
+        """Expose the table-name quoting helper for tests."""
+        return cls._quoted_table_name(table_name)
+
+    @classmethod
+    def split_range_endpoint(cls, endpoint: str) -> tuple[str, str]:
+        """Expose the range-endpoint parsing helper for tests."""
+        return cls._split_range_endpoint(endpoint)
+
+    @classmethod
+    def cell_ref_to_position(cls, cell_ref: str) -> tuple[int, int]:
+        """Expose the A1 parsing helper for tests."""
+        return cls._cell_ref_to_position(cell_ref)
+
+    @classmethod
+    def database_range_bounds(
+            cls, database_range: Element) -> tuple[str, tuple[int, int,
+                                                              int, int]]:
+        """Expose the database-range parser for tests."""
+        return cls._database_range_bounds(database_range)
+
+    def database_range_container(self) -> Element:
+        """Expose the database-range container helper for tests."""
+        return self._database_range_container()
+
+    def spreadsheet_body(self) -> Spreadsheet:
+        """Expose the spreadsheet-body helper for tests."""
+        return self._spreadsheet_body()
+
+    def filtered_range_infos(self) -> list[tuple[str, tuple[int, int,
+                                                            int, int]]]:
+        """Expose filtered-range discovery for tests."""
+        return self._filtered_range_infos()
+
+    def current_column_width(self, column: int) -> Optional[float]:
+        """Expose current-column-width lookup for tests."""
+        return self._current_column_width(column)
+
+    @classmethod
+    def column_width_from_text(cls, width: str) -> Optional[float]:
+        """Expose the column-width parser for tests."""
+        return cls._column_width_from_text(width)
+
+    def cell_style_name(self, fmt: Fmt) -> str:
+        """Expose the cell-style cache helper for tests."""
+        return self._cell_style_name(fmt)
+
+
 def test_ods_round_trip_sequential_list_reads(
         capsys: CaptureFixture[str]) -> None:
     """Two list sections can be written and then read back sequentially."""
@@ -343,6 +415,195 @@ def test_ods_read_formula_without_cached_value_returns_none(
     """A formula without a cached result is read as None."""
     run_read_formula_without_cached_value(
         TableIOOdsOdfdo, '.ods', _create_formula_document, capsys)
+
+
+def test_ods_open_rejects_second_open(
+        capsys: CaptureFixture[str]) -> None:
+    """Opening the same ODS object twice raises RuntimeError."""
+    run_open_rejects_second_open(TableIOOdsOdfdo, capsys)
+
+
+def test_ods_open_update_creates_default_table_when_document_has_none(
+        capsys: CaptureFixture[str]) -> None:
+    """Opening a table-less ODS file creates the default first table."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'empty_tables.ods'
+        document = Document('spreadsheet')
+        document.body.clear()
+        document.save(file_path)
+        with TableIOOdsOdfdo(
+                Path(temp_dir) / 'empty_tables',
+                FileAccess.UPDATE) as table_io:
+            assert table_io.list_sheets() == ['Sheet1']
+            assert table_io.current_sheet_name() == 'Sheet1'
+    check_capsys(capsys)
+
+
+def test_ods_split_rfc3066_language_without_country(
+        capsys: CaptureFixture[str]) -> None:
+    """A plain language code is split with an empty country part."""
+    assert ExposedTableIOOdsOdfdo.split_rfc3066_language('sv') == ('sv', '')
+    check_capsys(capsys)
+
+
+def test_ods_select_missing_sheet_without_create_raises_key_error(
+        capsys: CaptureFixture[str]) -> None:
+    """Selecting a missing sheet without create=True raises KeyError."""
+    run_select_missing_sheet_without_create_raises_key_error(
+        TableIOOdsOdfdo, capsys)
+
+
+def test_ods_quoted_table_name_quotes_non_identifier_names(
+        capsys: CaptureFixture[str]) -> None:
+    """Names containing spaces are quoted for ODF range addresses."""
+    assert ExposedTableIOOdsOdfdo.quote_table_name('Quarter 1') == \
+        "'Quarter 1'"
+    check_capsys(capsys)
+
+
+def test_ods_split_range_endpoint_rejects_malformed_quoted_endpoint(
+        capsys: CaptureFixture[str]) -> None:
+    """Quoted range endpoints must include the closing quote and dot."""
+    with pytest.raises(ValueError, match='Invalid endpoint'):
+        ExposedTableIOOdsOdfdo.split_range_endpoint("'Sheet1.A1")
+    check_capsys(capsys)
+
+
+def test_ods_split_range_endpoint_accepts_quoted_table_name(
+        capsys: CaptureFixture[str]) -> None:
+    """Quoted range endpoints preserve the table name and cell reference."""
+    assert ExposedTableIOOdsOdfdo.split_range_endpoint(
+        "'Quarter 1'.B3") == ('Quarter 1', 'B3')
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('cell_ref', 'match'),
+    [
+        pytest.param('A1B', 'Invalid cell reference', id='alpha-after-row'),
+        pytest.param('A-1', 'Invalid cell reference', id='invalid-character'),
+        pytest.param('A', 'Invalid cell reference', id='missing-row')
+    ]
+)
+def test_ods_cell_ref_to_position_rejects_invalid_references(
+        cell_ref: str, match: str,
+        capsys: CaptureFixture[str]) -> None:
+    """Malformed A1 references are rejected."""
+    with pytest.raises(ValueError, match=match):
+        ExposedTableIOOdsOdfdo.cell_ref_to_position(cell_ref)
+    check_capsys(capsys)
+
+
+def test_ods_database_range_bounds_handles_single_cell_and_errors(
+        capsys: CaptureFixture[str]) -> None:
+    """database_range_bounds parses single cells and rejects bad metadata."""
+    single_cell = Element.from_tag('table:database-range')
+    single_cell.set_attribute('table:target-range-address', 'Sheet1.C3')
+    assert ExposedTableIOOdsOdfdo.database_range_bounds(single_cell) == (
+        'Sheet1',
+        (2, 2, 3, 3)
+    )
+    missing_address = Element.from_tag('table:database-range')
+    with pytest.raises(ValueError, match='Missing target range address'):
+        ExposedTableIOOdsOdfdo.database_range_bounds(missing_address)
+    multi_table = Element.from_tag('table:database-range')
+    multi_table.set_attribute('table:target-range-address',
+                              'Sheet1.A1:Sheet2.B2')
+    with pytest.raises(ValueError, match='spans several tables'):
+        ExposedTableIOOdsOdfdo.database_range_bounds(multi_table)
+    check_capsys(capsys)
+
+
+def test_ods_filtered_range_infos_ignores_non_matching_range_metadata(
+        capsys: CaptureFixture[str]) -> None:
+    """Only filtered ranges for the active table are returned."""
+    with TemporaryDirectory() as temp_dir:
+        with ExposedTableIOOdsOdfdo(
+                Path(temp_dir) / 'filter_infos',
+                FileAccess.CREATE) as opened:
+            table_io = cast(ExposedTableIOOdsOdfdo, opened)
+            container = table_io.database_range_container()
+            container.append(_make_database_range(
+                None, 'true', 'Sheet1.A1:Sheet1.B2'))
+            container.append(_make_database_range(
+                'SkipDisplay', 'false', 'Sheet1.A1:Sheet1.B2'))
+            container.append(_make_database_range(
+                'SkipTable', 'true', 'Other.A1:Other.B2'))
+            container.append(_make_database_range(
+                'DbFilter', 'true', 'Sheet1.C1:Sheet1.D2'))
+            body = table_io.spreadsheet_body()
+            body.set_named_range('SkipUsage', (0, 0, 1, 1), 'Sheet1',
+                                 usage='print-range')
+            body.set_named_range('SkipNamedTable', (0, 0, 1, 1), 'Other',
+                                 usage='filter')
+            body.set_named_range('NamedFilter', (0, 0, 1, 1), 'Sheet1',
+                                 usage='filter')
+            assert dict(table_io.filtered_range_infos()) == {
+                'DbFilter': (0, 2, 2, 4),
+                'NamedFilter': (0, 0, 2, 2)
+            }
+    check_capsys(capsys)
+
+
+def test_ods_column_width_from_text_rejects_invalid_values(
+        capsys: CaptureFixture[str]) -> None:
+    """Non-centimetre widths and invalid numbers are rejected."""
+    assert ExposedTableIOOdsOdfdo.column_width_from_text('12pt') is None
+    assert ExposedTableIOOdsOdfdo.column_width_from_text('abccm') is None
+    check_capsys(capsys)
+
+
+def test_ods_current_column_width_handles_missing_style_information(
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: CaptureFixture[str]) -> None:
+    """current_column_width returns None when style metadata is incomplete."""
+    with TemporaryDirectory() as temp_dir:
+        with ExposedTableIOOdsOdfdo(
+                Path(temp_dir) / 'width_info',
+                FileAccess.CREATE) as opened:
+            table_io = cast(ExposedTableIOOdsOdfdo, opened)
+            assert table_io.table is not None
+            assert table_io.document is not None
+            column = table_io.table.get_column(0)
+            column.style = 'missing_style'
+            table_io.table.set_column(0, column)
+            monkeypatch.setattr(table_io.document, 'get_style',
+                                lambda family, name: None)
+            assert table_io.current_column_width(0) is None
+            no_props_style = Style('table-column', name='no_props')
+            monkeypatch.setattr(no_props_style, 'get_properties',
+                                lambda area: None)
+            column.style = 'no_props'
+            table_io.table.set_column(0, column)
+            monkeypatch.setattr(table_io.document, 'get_style',
+                                lambda family, name: no_props_style)
+            assert table_io.current_column_width(0) is None
+            no_width_style = Style('table-column', name='no_width')
+            no_width_style.set_properties(
+                {'style:use-optimal-column-width': 'true'},
+                area='table-column')
+            column.style = 'no_width'
+            table_io.table.set_column(0, column)
+            monkeypatch.setattr(table_io.document, 'get_style',
+                                lambda family, name: no_width_style)
+            assert table_io.current_column_width(0) is None
+    check_capsys(capsys)
+
+
+def test_ods_cell_style_name_handles_plain_default_format(
+        capsys: CaptureFixture[str]) -> None:
+    """The style cache also works for an unformatted default cell."""
+    with TemporaryDirectory() as temp_dir:
+        with ExposedTableIOOdsOdfdo(
+                Path(temp_dir) / 'plain_style',
+                FileAccess.CREATE) as opened:
+            table_io = cast(ExposedTableIOOdsOdfdo, opened)
+            assert table_io.document is not None
+            style_name = table_io.cell_style_name(Fmt())
+            assert table_io.cell_style_name(Fmt()) == style_name
+            style = table_io.document.get_style('table-cell', style_name)
+            assert isinstance(style, Style)
+    check_capsys(capsys)
 
 
 def test_ods_default_lang_uses_mformat_convention(

@@ -26,10 +26,12 @@ from .spreadsheet_test_helper import \
     run_multi_sheet_read_positions_are_per_sheet, \
     run_multi_sheet_update_uses_selected_sheet_write_position, \
     run_multi_sheet_write_positions_are_per_sheet, \
+    run_open_rejects_second_open, \
     run_read_formula_uses_cached_value, \
     run_read_formula_without_cached_value, \
     run_round_trip_dictdata_in_box, \
     run_round_trip_sequential_list_reads, \
+    run_select_missing_sheet_without_create_raises_key_error, \
     run_table_width_is_widen_only_with_cap, \
     run_update_default_write_starts_after_last_used_row, \
     run_write_dictdata_applies_first_row_format, \
@@ -334,3 +336,40 @@ def test_excel_read_formula_without_cached_value_returns_none(
     run_read_formula_without_cached_value(
         TableIOExcelOpenPyXL, '.xlsx', _create_formula_workbook,
         capsys)
+
+
+def test_excel_open_rejects_second_open(
+        capsys: CaptureFixture[str]) -> None:
+    """Opening the same Excel object twice raises RuntimeError."""
+    run_open_rejects_second_open(TableIOExcelOpenPyXL, capsys)
+
+
+def test_excel_select_missing_sheet_without_create_raises_key_error(
+        capsys: CaptureFixture[str]) -> None:
+    """Selecting a missing sheet without create=True raises KeyError."""
+    run_select_missing_sheet_without_create_raises_key_error(
+        TableIOExcelOpenPyXL, capsys)
+
+
+def test_excel_update_creates_new_read_sheet_and_normalizes_table_headers(
+        capsys: CaptureFixture[str]) -> None:
+    """UPDATE mode mirrors created sheets and normalizes filter headers."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'update_headers'
+        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata([['keep', 'row']])
+        with TableIOExcelOpenPyXL(file_name, FileAccess.UPDATE) as table_io:
+            table_io.select_sheet('Numbers', create=True)
+            table_io.write_table_listdata(
+                [[1, None], [2, 3]],
+                filtered_data_range=True)
+        workbook = load_workbook(Path(temp_dir) / 'update_headers.xlsx')
+        worksheet = workbook['Numbers']
+        assert isinstance(worksheet, Worksheet)
+        assert worksheet['A1'].value == '1'
+        assert worksheet['B1'].value == 'Column2'
+        assert [table.ref for table in worksheet.tables.values()] == [
+            'A1:B2'
+        ]
+        workbook.close()
+    check_capsys(capsys)

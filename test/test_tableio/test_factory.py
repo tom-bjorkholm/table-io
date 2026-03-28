@@ -5,7 +5,7 @@
 # MIT License
 
 from pathlib import Path
-from typing import Callable
+from typing import Callable, cast
 import pytest
 from tableio.capability import Capabilities, SingleCapability, Strictness
 from tableio.tableio import TableIO, Descriptor, FileAccess
@@ -104,6 +104,24 @@ class StubBeta(_StubBase):
             can_fmt_row=_SUP),
         mandatory_args=[], optional_args=[],
         priority=10)
+
+
+class StubGammaMandatory(_StubBase):
+    """Gamma format used to exercise mandatory and mixed-case args."""
+
+    _desc = Descriptor(
+        format_name='Gamma', implementation='CamelCase',
+        capabilities=Capabilities(can_write=_SUP),
+        mandatory_args=['required_arg'], optional_args=[])
+
+    def __init__(self, file_name: str | Path,
+                 file_access: FileAccess = FileAccess.CREATE,
+                 required_arg: str = 'required',
+                 file_exists_callback:
+                 Callable[[str], None] | None = None):
+        """Initialize with a descriptor-declared mandatory argument."""
+        super().__init__(file_name, file_access, file_exists_callback)
+        self.required_arg = required_arg
 
 
 # -- Helpers -------------------------------------------------------------
@@ -537,6 +555,22 @@ class TestTableIOFactoryCreate:
 class TestTableIOFactoryFilterArgs:
     """Tests for TableIOFactory.i_filter_args."""
 
+    def test_keeps_mandatory_and_common_args(self) -> None:
+        """Mandatory args and COMMON_ARGS are preserved."""
+        f = _make_factory_stubs()
+        f.i_register(StubGammaMandatory)
+        args = {
+            'required_arg': 'value',
+            'file_exists_callback': None,
+            'ignored': 'x'
+        }
+        result = f.i_filter_args(
+            cast(OptionalArgsDict, args), 'Gamma', 'CamelCase')
+        assert result == {
+            'required_arg': 'value',
+            'file_exists_callback': None
+        }
+
     def test_keeps_valid(self) -> None:
         """Valid optional args are kept."""
         f = _make_factory_stubs()
@@ -679,6 +713,25 @@ class TestTableIOFactoryFormats:
         assert 'Excel' in names
         assert 'ODS' in names
 
+    def test_no_matching_formats_raise_when_empty_is_not_allowed(self) -> \
+            None:
+        """Capability filtering raises when no configured format can match."""
+        f = _make_factory_stubs()
+        f._formats = {  # pylint: disable=protected-access
+            'Alpha': f._formats['Alpha'],  # pylint: disable=protected-access
+            'Beta': f._formats['Beta']  # pylint: disable=protected-access
+        }
+        f._lower2correct = {  # pylint: disable=protected-access
+            'alpha': 'Alpha',
+            'beta': 'Beta'
+        }
+        caps = Capabilities(
+            can_write_box=SingleCapability(
+                True, Strictness.STRICT))
+        with pytest.raises(TableIOFactoryNoCapabilityMatch,
+                           match='No formats match the capabilities'):
+            f.i_get_registered_formats(capabilities=caps)
+
 
 # -- TableIOFactory: listing implementations -----------------------------
 
@@ -714,6 +767,16 @@ class TestTableIOFactoryImplementations:
         names = f.i_get_registered_implementations(
             format_name='Alpha', lower=True)
         assert 'high' in names
+
+    def test_with_lower_adds_variant_for_mixed_case_implementation(self) -> \
+            None:
+        """lower=True adds a lowercase alias for mixed-case names."""
+        f = _make_factory_stubs()
+        f.i_register(StubGammaMandatory)
+        names = f.i_get_registered_implementations(
+            format_name='Gamma', lower=True)
+        assert 'CamelCase' in names
+        assert 'camelcase' in names
 
     def test_with_upper(self) -> None:
         """upper=True adds uppercase variant."""

@@ -7,7 +7,7 @@
 import io
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable
+from typing import Callable, cast
 
 import pytest
 from pytest import CaptureFixture
@@ -204,6 +204,51 @@ def test_textbased_get_last_chars_written_handles_utf8_multibyte_text(
             assert table_io.tell() == current_pos
             table_io.write_text('!')
         assert file_path.read_text(encoding='utf-8') == 'A😀åäö!'
+    check_capsys(capsys)
+
+
+def test_textbased_get_last_chars_written_retries_after_decode_error(
+        capsys: CaptureFixture[str]) -> None:
+    """Tail reading retries when a short read starts mid-character."""
+    class _ReadFailsOnceProxy:
+        """Proxy that raises one decode error before delegating."""
+
+        def __init__(self, file_obj: io.TextIOWrapper) -> None:
+            """Initialize the proxy around the real text file."""
+            self._file_obj = file_obj
+            self._failed_once = False
+
+        def seek(self, offset: int, whence: int = io.SEEK_SET) -> int:
+            """Delegate seek to the wrapped file object."""
+            return self._file_obj.seek(offset, whence)
+
+        def read(self, size: int = -1) -> str:
+            """Raise one UnicodeDecodeError before reading normally."""
+            if not self._failed_once:
+                self._failed_once = True
+                raise UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'bad byte')
+            return self._file_obj.read(size)
+
+        def tell(self) -> int:
+            """Delegate tell to the wrapped file object."""
+            return self._file_obj.tell()
+
+        def close(self) -> None:
+            """Delegate close to the wrapped file object."""
+            self._file_obj.close()
+
+    with TemporaryDirectory() as temp_dir:
+        table_io = RecordingTextBasedTableIO(
+            Path(temp_dir) / 'sample',
+            FileAccess.CREATE)
+        with table_io:
+            assert table_io.file is not None
+            table_io.write_text('abcdef')
+            table_io.file = cast(
+                io.TextIOWrapper,
+                _ReadFailsOnceProxy(table_io.file))
+            assert table_io.get_last_chars_written(3) == 'def'
+            assert table_io.tell() == 6
     check_capsys(capsys)
 
 

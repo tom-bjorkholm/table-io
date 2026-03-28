@@ -8,7 +8,7 @@ import pytest
 from pytest import CaptureFixture
 
 from tableio.capability import Capabilities, CapabilityNotSupported, \
-    SingleCapability, Strictness, capability_match, \
+    SingleCapability, Strictness, capability_match, capability_to_str, \
     single_capability_match
 
 from .check_capsys import check_capsys
@@ -127,6 +127,39 @@ def test_capability_not_supported_stores_action(
     assert exc.action == 'write a filtered data range'
     assert str(exc) == \
         'The class does not support write a filtered data range.'
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('capability', 'expected'),
+    [
+        pytest.param(
+            SingleCapability(supported=True, strictness=Strictness.STRICT),
+            'supported (strict)',
+            id='supported-strict'
+        ),
+        pytest.param(
+            SingleCapability(supported=True, strictness=Strictness.IGNORE),
+            'supported (ignore)',
+            id='supported-ignore'
+        ),
+        pytest.param(
+            SingleCapability(supported=False, strictness=Strictness.STRICT),
+            'not supported (strict)',
+            id='unsupported-strict'
+        ),
+        pytest.param(
+            SingleCapability(supported=False, strictness=Strictness.IGNORE),
+            'not supported (ignore)',
+            id='unsupported-ignore'
+        )
+    ]
+)
+def test_capability_to_str_covers_supported_and_strictness_variants(
+        capability: SingleCapability, expected: str,
+        capsys: CaptureFixture[str]) -> None:
+    """capability_to_str describes both support and strictness."""
+    assert capability_to_str(capability) == expected
     check_capsys(capsys)
 
 

@@ -387,3 +387,29 @@ def run_multi_sheet_update_uses_selected_sheet_write_position(
         assert first_result.data == [['old', 'row']]
         assert second_result.data == [['new', 'row']]
     check_capsys(capsys)
+
+
+def run_open_rejects_second_open(tableio_class: type[TableIO],
+                                 capsys: CaptureFixture[str]) -> None:
+    """Run the shared double-open error case."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = tableio_class(
+            Path(temp_dir) / 'open_twice', FileAccess.CREATE)
+        table_io.open()
+        with pytest.raises(RuntimeError, match='already open'):
+            table_io.open()
+        table_io.close()
+    check_capsys(capsys)
+
+
+def run_select_missing_sheet_without_create_raises_key_error(
+        tableio_class: type[TableIO],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared missing-sheet selection error case."""
+    with TemporaryDirectory() as temp_dir:
+        with tableio_class(
+                Path(temp_dir) / 'missing_sheet',
+                FileAccess.CREATE) as table_io:
+            with pytest.raises(KeyError, match='Missing'):
+                table_io.select_sheet('Missing')
+    check_capsys(capsys)

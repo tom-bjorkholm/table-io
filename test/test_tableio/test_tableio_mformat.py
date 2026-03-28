@@ -6,6 +6,7 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import cast
 import pytest
 from pytest import CaptureFixture
 from tableio.capability import CapabilityNotSupported, SingleCapability
@@ -20,6 +21,8 @@ from tableio.tableio_mformatbased import TableIOMformatBased
 from tableio.value_type import Fmt, FmtDictRow, FmtListRow, Value
 
 from .check_capsys import check_capsys
+from .impl_meta_test_helper import make_boxed_dict_write_impl_meta, \
+    make_boxed_write_impl_meta
 
 type _MformatCls = type[TableIOMformatBased]
 
@@ -34,6 +37,22 @@ _ALL_CLASSES: list[tuple[_MformatCls, str]] = [
     (TableIOMformatPdf, '.pdf'),
     (TableIOMformatRtf, '.rtf'),
 ]
+
+
+class ExposedTableIOMformatMd(TableIOMformatMd):
+    """Markdown test double exposing boxed implementation hooks."""
+
+    def write_table_fmtlistdata_in_box(self, data: list[FmtListRow],
+                                       box: Box) -> None:
+        """Expose the boxed formatted-list writer for tests."""
+        self._write_table_fmtlistdata(data, make_boxed_write_impl_meta(box))
+
+    def write_table_fmtdictdata_in_box(self, data: list[FmtDictRow],
+                                       column_order: list[str],
+                                       box: Box) -> None:
+        """Expose the boxed formatted-dict writer for tests."""
+        self._write_table_fmtdictdata(
+            data, make_boxed_dict_write_impl_meta(column_order, box))
 
 
 # ── file extension tests ────────────────────────────────────────────
@@ -167,6 +186,15 @@ def test_rejects_non_create_access(
     check_capsys(capsys)
 
 
+def test_mformat_base_row_format_capability_must_be_overridden(
+        capsys: CaptureFixture[str]) -> None:
+    """The base mformat class requires subclasses to declare row support."""
+    with pytest.raises(NotImplementedError,
+                       match='get_row_format_capability method'):
+        TableIOMformatBased.get_row_format_capability()
+    check_capsys(capsys)
+
+
 # ── reading not supported ────────────────────────────────────────────
 
 
@@ -239,6 +267,19 @@ def test_context_manager_opens_and_closes(
     check_capsys(capsys)
 
 
+def test_open_rejects_second_open(
+        capsys: CaptureFixture[str]) -> None:
+    """Opening the same mformat object twice raises RuntimeError."""
+    with TemporaryDirectory() as td:
+        obj = TableIOMformatMd(
+            Path(td) / 'test', FileAccess.CREATE, None)
+        obj.open()
+        with pytest.raises(RuntimeError, match='already open'):
+            obj.open()
+        obj.close()
+    check_capsys(capsys)
+
+
 # ── file_exists_callback test ────────────────────────────────────────
 
 
@@ -259,6 +300,39 @@ def test_file_exists_callback_is_called(
             w.write_table_listdata(
                 [['a', 'b'], ['c', 'd']])
         assert len(called) == 1
+    check_capsys(capsys)
+
+
+def test_protected_fmtlist_writer_rejects_box(
+        capsys: CaptureFixture[str]) -> None:
+    """The internal formatted-list writer rejects boxed writes."""
+    with TemporaryDirectory() as td:
+        with ExposedTableIOMformatMd(
+                Path(td) / 'test', FileAccess.CREATE,
+                None) as opened:
+            table_io = cast(ExposedTableIOMformatMd, opened)
+            with pytest.raises(CapabilityNotSupported,
+                               match='Box is not supported for this class'):
+                table_io.write_table_fmtlistdata_in_box(
+                    [FmtListRow(values=['a', 'b'], fmt=Fmt())],
+                    Box(0, 0, 2, 2))
+    check_capsys(capsys)
+
+
+def test_protected_fmtdict_writer_rejects_box(
+        capsys: CaptureFixture[str]) -> None:
+    """The internal formatted-dict writer rejects boxed writes."""
+    with TemporaryDirectory() as td:
+        with ExposedTableIOMformatMd(
+                Path(td) / 'test', FileAccess.CREATE,
+                None) as opened:
+            table_io = cast(ExposedTableIOMformatMd, opened)
+            with pytest.raises(CapabilityNotSupported,
+                               match='Box is not supported for this class'):
+                table_io.write_table_fmtdictdata_in_box(
+                    [FmtDictRow(values={'a': '1', 'b': '2'}, fmt=Fmt())],
+                    ['a', 'b'],
+                    Box(0, 0, 2, 2))
     check_capsys(capsys)
 
 

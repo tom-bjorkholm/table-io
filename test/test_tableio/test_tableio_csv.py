@@ -8,7 +8,7 @@ import csv
 import io
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable
+from typing import Callable, cast
 
 import pytest
 from pytest import CaptureFixture
@@ -24,6 +24,32 @@ from tableio.tableio_csv import (
 from tableio.value_type import Fmt, FmtDictRow, FmtListRow, Value
 
 from .check_capsys import check_capsys
+from .impl_meta_test_helper import make_boxed_dict_write_impl_meta, \
+    make_boxed_write_impl_meta
+
+
+class ExposedTableIOCsv(TableIOCsv):
+    """CSV test double exposing implementation hooks through public methods."""
+
+    def write_table_listdata_in_box(self, data: list[list[Value]],
+                                    box: Box) -> None:
+        """Expose the boxed list-data implementation hook for tests."""
+        self._write_table_listdata(data, make_boxed_write_impl_meta(box))
+
+    def write_table_dictdata_in_box(self, data: list[dict[str, Value]],
+                                    column_order: list[str], box: Box) -> \
+            None:
+        """Expose the boxed dict-data implementation hook for tests."""
+        self._write_table_dictdata(
+            data, make_boxed_dict_write_impl_meta(column_order, box))
+
+    def read_table_listdata_in_box(self, box: Box) -> object:
+        """Expose the boxed list-data reader hook for tests."""
+        return self._read_table_listdata(box)
+
+    def read_table_dictdata_in_box(self, box: Box) -> object:
+        """Expose the boxed dict-data reader hook for tests."""
+        return self._read_table_dictdata(box)
 
 
 # ── module-level helper function tests ───────────────────────────────
@@ -40,6 +66,14 @@ def test_get_csv_dialect_type_excel(
         capsys: CaptureFixture[str]) -> None:
     """Test that EXCEL dialect enum maps to csv.excel."""
     assert _get_csv_dialect_type(CsvDialect.EXCEL) is csv.excel
+    check_capsys(capsys)
+
+
+def test_get_csv_dialect_type_rejects_unknown_value(
+        capsys: CaptureFixture[str]) -> None:
+    """Unknown runtime dialect values raise KeyError."""
+    with pytest.raises(KeyError, match='Unknown CSV dialect'):
+        _get_csv_dialect_type(cast(CsvDialect, object()))
     check_capsys(capsys)
 
 
@@ -228,6 +262,35 @@ def test_csv_write_methods_reject_read_only_access(
     check_capsys(capsys)
 
 
+def test_csv_protected_list_writer_rejects_box(
+        capsys: CaptureFixture[str]) -> None:
+    """The CSV implementation hook rejects boxed list writes."""
+    with TemporaryDirectory() as td:
+        with ExposedTableIOCsv(
+                Path(td) / 'list_box', FileAccess.CREATE) as opened:
+            table_io = cast(ExposedTableIOCsv, opened)
+            with pytest.raises(CapabilityNotSupported,
+                               match='Box is not allowed in CSV'):
+                table_io.write_table_listdata_in_box(
+                    [['a', 'b']], Box(0, 0, 1, 2))
+    check_capsys(capsys)
+
+
+def test_csv_protected_dict_writer_rejects_box(
+        capsys: CaptureFixture[str]) -> None:
+    """The CSV implementation hook rejects boxed dict writes."""
+    with TemporaryDirectory() as td:
+        data: list[dict[str, Value]] = [{'name': 'Alice', 'active': True}]
+        with ExposedTableIOCsv(
+                Path(td) / 'dict_box', FileAccess.CREATE) as opened:
+            table_io = cast(ExposedTableIOCsv, opened)
+            with pytest.raises(CapabilityNotSupported,
+                               match='Box is not allowed in CSV'):
+                table_io.write_table_dictdata_in_box(
+                    data, ['name', 'active'], Box(0, 0, 2, 2))
+    check_capsys(capsys)
+
+
 def test_csv_write_table_listdata(
         capsys: CaptureFixture[str]) -> None:
     """Test writing list data to a CSV file."""
@@ -343,6 +406,42 @@ def test_csv_write_numeric_values(
             encoding='utf-8')
         assert '"42"' in content
         assert '"3.14"' in content
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    'reader_name',
+    [
+        pytest.param('read_table_listdata_in_box', id='listdata'),
+        pytest.param('read_table_dictdata_in_box', id='dictdata')
+    ]
+)
+def test_csv_protected_readers_reject_box(
+        reader_name: str, capsys: CaptureFixture[str]) -> None:
+    """The CSV implementation hooks reject boxed reads."""
+    with TemporaryDirectory() as td:
+        file_path = Path(td) / 'boxed.csv'
+        file_path.write_text('"name","active"\n"Alice","True"\n',
+                             encoding='utf-8')
+        table_io = ExposedTableIOCsv(Path(td) / 'boxed', FileAccess.READ)
+        with table_io:
+            reader = getattr(table_io, reader_name)
+            with pytest.raises(CapabilityNotSupported,
+                               match='Box is not allowed in CSV'):
+                reader(Box(0, 0, 2, 2))
+    check_capsys(capsys)
+
+
+def test_csv_read_table_dictdata_returns_empty_result_for_heading_only_input(
+        capsys: CaptureFixture[str]) -> None:
+    """A heading-only section reads back as no dict rows."""
+    with TemporaryDirectory() as td:
+        file_path = Path(td) / 'headings.csv'
+        file_path.write_text('# Report\n\n', encoding='utf-8')
+        with TableIOCsv(Path(td) / 'headings', FileAccess.READ) as table_io:
+            result = table_io.read_table_dictdata()
+        assert result.headings == ['Report']
+        assert result.data == []
     check_capsys(capsys)
 
 
