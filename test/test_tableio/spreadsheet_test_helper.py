@@ -15,6 +15,7 @@ from pytest import CaptureFixture
 
 from tableio.color import Color
 from tableio.tableio import Box, FileAccess, Position, TableIO
+from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased
 from tableio.value_type import Fmt, FmtDictRow, Value, ValueFmt
 
 from .check_capsys import check_capsys
@@ -158,14 +159,75 @@ def run_box_write_removes_overlapping_filtered_range(
     """Run the shared overlapping filtered-range rewrite case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'rewrite_box'
-        box = Box(top=0, left=0, bottom=3, right=2)
+        box = Box(top=0, left=0, bottom=2, right=2)
         with tableio_class(file_name, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata(
                 [['Name', 'Active'], ['Alice', True]],
                 filtered_data_range=True,
                 box=box)
-            table_io.write_table_listdata([['updated', 'value']], box=box)
+            table_io.write_table_listdata(
+                [['updated', 'value'], ['new', 'row']], box=box)
         inspect_file(Path(temp_dir) / f'rewrite_box{extension}')
+    check_capsys(capsys)
+
+
+def run_find_value_and_write_cells(
+        tableio_class: type[TableIOSpreadsheetBased],
+        extension: str,
+        inspect_file: Callable[[Path], None],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared find-value and exact-cell-write case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'find_and_write_cells'
+        table_box = Box(top=1, left=1, bottom=4, right=3)
+        found_box = Box(top=3, left=1, bottom=4, right=3)
+        table_io = tableio_class(file_name, FileAccess.CREATE)
+        with table_io:
+            table_data: list[list[Value]] = [
+                ['name', 'active'],
+                ['Alice', True],
+                ['Bob', False]
+            ]
+            table_io.write_table_listdata(table_data, box=table_box)
+            read_row = table_io.read_row
+            write_row = table_io.write_row
+            assert table_io.find_value([['Bob', False]]) == found_box
+            assert table_io.read_row == read_row
+            assert table_io.write_row == write_row
+            assert table_io.read_cells(found_box) == [['Bob', False]]
+            assert table_io.read_row == read_row
+            assert table_io.write_row == write_row
+            table_io.write_cells([
+                [ValueFmt(value='Bob',
+                          fmt=Fmt(highlight=Color.YELLOW)),
+                 ValueFmt(value=True,
+                          fmt=Fmt(highlight=Color.YELLOW))]
+            ], found_box)
+            assert table_io.read_cells(found_box) == [['Bob', True]]
+            assert table_io.read_row == read_row
+            assert table_io.write_row == write_row
+        inspect_file(Path(temp_dir) / f'find_and_write_cells{extension}')
+    check_capsys(capsys)
+
+
+def run_boxed_table_partial_overwrite_raises(
+        tableio_class: type[TableIO],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared partial boxed-table overwrite rejection case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'partial_overwrite'
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            table_data: list[list[Value]] = [
+                ['name', 'active'],
+                ['Alice', True]
+            ]
+            replacement_data: list[list[Value]] = [['Alice', False]]
+            table_io.write_table_listdata(
+                table_data, box=Box(top=1, left=1, bottom=3, right=3))
+            with pytest.raises(ValueError, match='partly overwrite'):
+                table_io.write_table_listdata(
+                    replacement_data,
+                    box=Box(top=2, left=1, bottom=3, right=3))
     check_capsys(capsys)
 
 

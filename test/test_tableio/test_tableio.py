@@ -3,6 +3,7 @@
 
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
+# pylint: disable=too-many-lines
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -31,14 +32,17 @@ def make_capability(
 def make_capabilities(
         filtered_data_range: SingleCapability = SingleCapability(),
         can_write_box: SingleCapability = SingleCapability(),
-        can_read_box: SingleCapability = SingleCapability()) -> Capabilities:
+        can_read_box: SingleCapability = SingleCapability(),
+        can_find_value_position: SingleCapability = SingleCapability()) \
+        -> Capabilities:
     """Build a Capabilities value for tests."""
     return Capabilities(
         can_write=make_capability(True, Strictness.STRICT),
         can_read=make_capability(True, Strictness.STRICT),
         filtered_data_range=filtered_data_range,
         can_write_box=can_write_box,
-        can_read_box=can_read_box
+        can_read_box=can_read_box,
+        can_find_value_position=can_find_value_position
     )
 
 
@@ -48,7 +52,8 @@ class RecordingTableIO(TableIO):
 
     capabilities = make_capabilities(
         can_write_box=make_capability(True, Strictness.STRICT),
-        can_read_box=make_capability(True, Strictness.STRICT)
+        can_read_box=make_capability(True, Strictness.STRICT),
+        can_find_value_position=make_capability(True, Strictness.STRICT)
     )
 
     def __init__(self, file_name: str | Path,
@@ -86,6 +91,15 @@ class RecordingTableIO(TableIO):
         self.last_fmtdict_write_box: Box | None = None
         self.last_list_read_box: Box | None = None
         self.last_dict_read_box: Box | None = None
+        self.last_find_value: Optional[list[list[Value]]] = None
+        self.last_find_type_conversion: Optional[bool] = None
+        self.last_find_box: Optional[Box] = None
+        self.find_result: Optional[Box] = None
+        self.last_read_cells_box: Optional[Box] = None
+        self.read_cells_result: list[list[Value]] = [['read', 1]]
+        self.last_write_cells_data: Optional[list[list[Value | ValueFmt]]] = \
+            None
+        self.last_write_cells_box: Optional[Box] = None
         self.fail_end_state: bool = False
         self.fail_write_file_suffix: bool = False
         self.fail_close: bool = False
@@ -215,6 +229,28 @@ class RecordingTableIO(TableIO):
         self.last_dict_read_box = box
         return self.dict_read_result
 
+    def _find_value(self, find_value: list[list[Value]],
+                    type_conversion: bool = True,
+                    box: Optional[Box] = None) -> Optional[Box]:
+        """Record find-value calls and return the prepared result."""
+        self.events.append('find_value')
+        self.last_find_value = [list(row) for row in find_value]
+        self.last_find_type_conversion = type_conversion
+        self.last_find_box = box
+        return self.find_result
+
+    def _read_cells(self, box: Box) -> list[list[Value]]:
+        """Record cell reads and return the prepared result."""
+        self.events.append('read_cells')
+        self.last_read_cells_box = box
+        return self.read_cells_result
+
+    def _write_cells(self, data: ListDataSeq[CellT], box: Box) -> None:
+        """Record cell writes."""
+        self.events.append('write_cells')
+        self.last_write_cells_data = [list(row) for row in data]
+        self.last_write_cells_box = box
+
     def check_listdimensions(self, data: ListDataSeq[CellT],
                              box: Box | None = None) -> None:
         """Expose list-dimension validation for tests."""
@@ -315,6 +351,18 @@ class MinimalTableIO(TableIO):
     def run_read_table_dictdata(self) -> ReadResult[list[dict[str, Value]]]:
         """Expose the inherited _read_table_dictdata method for tests."""
         return self._read_table_dictdata()
+
+    def run_find_value(self, find_value: list[list[Value]]) -> Optional[Box]:
+        """Expose the inherited _find_value method for tests."""
+        return self._find_value(find_value)
+
+    def run_read_cells(self, box: Box) -> list[list[Value]]:
+        """Expose the inherited _read_cells method for tests."""
+        return self._read_cells(box)
+
+    def run_write_cells(self, data: ListDataSeq[CellT], box: Box) -> None:
+        """Expose the inherited _write_cells method for tests."""
+        self._write_cells(data, box)
 
 
 class WriteIgnoreBoxTableIO(RecordingTableIO):
@@ -667,7 +715,7 @@ def test_write_table_listdata_delegates_valid_data_and_box(
         capsys: CaptureFixture[str]) -> None:
     """Test list-data writes through the public base-class method."""
     table_io = RecordingTableIO('sample')
-    box = Box(top=3, left=4, bottom=6, right=6)
+    box = Box(top=3, left=4, bottom=5, right=6)
     position = table_io.write_table_listdata(
         [['alpha', 1], [None, 2.5]],
         box=box
@@ -700,13 +748,13 @@ def test_write_table_listdata_delegates_valid_data_and_box(
         pytest.param(
             [['left', 1], ['right', 2]],
             Box(0, 0, 1, None),
-            'Too many rows',
+            'Wrong number of rows',
             id='too-many-rows'
         ),
         pytest.param(
             [['left', 1], ['right', 2]],
             Box(0, 0, None, 1),
-            'Too many columns',
+            'Wrong number of columns',
             id='too-many-columns'
         )
     ]
@@ -740,7 +788,7 @@ def test_write_table_dictdata_normalizes_and_delegates(
         capsys: CaptureFixture[str]) -> None:
     """Test dict-data writes through the public base-class method."""
     table_io = RecordingTableIO('sample')
-    box = Box(top=5, left=2, bottom=9, right=4)
+    box = Box(top=5, left=2, bottom=8, right=4)
     first_row_format = Fmt(bold=True)
     position = table_io.write_table_dictdata(
         [{'alpha': 'left', 'extra': 1}, {'beta': 2.5}],
@@ -778,13 +826,13 @@ def test_write_table_dictdata_normalizes_and_delegates(
         pytest.param(
             [{'alpha': 'left', 'beta': 1}],
             Box(0, 0, 1, None),
-            'Too many rows',
+            'Wrong number of rows',
             id='too-many-rows'
         ),
         pytest.param(
             [{'alpha': 'left', 'beta': 1}],
             Box(0, 0, None, 1),
-            'Too many columns',
+            'Wrong number of columns',
             id='too-many-columns'
         )
     ]
@@ -851,7 +899,7 @@ def test_write_table_listdata_ignores_box_when_supported_is_ignore(
         capsys: CaptureFixture[str]) -> None:
     """Test that write-box requests can be ignored by capability policy."""
     table_io = WriteIgnoreBoxTableIO('sample')
-    box = Box(1, 1, 3, 3)
+    box = Box(1, 1, 2, 3)
     data: list[list[Value]] = [['alpha', 1]]
     position = table_io.write_table_listdata(data, box=box)
     assert position == Position(0, 1)
@@ -866,7 +914,7 @@ def test_write_table_listdata_rejects_box_when_supported_is_strict(
     table_io = WriteStrictBoxTableIO('sample')
     data: list[list[Value]] = [['alpha', 1]]
     with pytest.raises(CapabilityNotSupported) as exc_info:
-        table_io.write_table_listdata(data, box=Box(1, 1, 3, 3))
+        table_io.write_table_listdata(data, box=Box(1, 1, 2, 3))
     assert exc_info.value.action == 'write to a box'
     assert not table_io.events
     check_capsys(capsys)
@@ -941,6 +989,82 @@ def test_read_table_dictdata_delegates_and_returns_result(
     check_capsys(capsys)
 
 
+def test_find_value_normalizes_scalar_and_delegates(
+        capsys: CaptureFixture[str]) -> None:
+    """Test scalar find requests through the public base-class method."""
+    table_io = RecordingTableIO('sample')
+    result_box = Box(top=4, left=5, bottom=5, right=6)
+    table_io.find_result = result_box
+    box = Box(top=2, left=3, bottom=8, right=9)
+    result = table_io.find_value('alpha', type_conversion=False, box=box)
+    assert result == result_box
+    assert table_io.last_find_value == [['alpha']]
+    assert table_io.last_find_type_conversion is False
+    assert table_io.last_find_box == box
+    assert table_io.events == ['find_value']
+    check_capsys(capsys)
+
+
+def test_find_value_normalizes_rectangular_values(
+        capsys: CaptureFixture[str]) -> None:
+    """Test rectangular find requests through the public base-class method."""
+    table_io = RecordingTableIO('sample')
+    result_box = Box(top=1, left=1, bottom=3, right=3)
+    table_io.find_result = result_box
+    result = table_io.find_value([['id', 1], ['name', 'Alice']])
+    assert result == result_box
+    assert table_io.last_find_value == [['id', 1], ['name', 'Alice']]
+    assert table_io.last_find_type_conversion is True
+    assert table_io.last_find_box is None
+    check_capsys(capsys)
+
+
+def test_find_value_rejects_invalid_rectangular_shape(
+        capsys: CaptureFixture[str]) -> None:
+    """Test find-value validation for ragged value grids."""
+    table_io = RecordingTableIO('sample')
+    with pytest.raises(ValueError, match='All rows must have the same'):
+        table_io.find_value([['left', 1], ['right']])
+    assert not table_io.events
+    check_capsys(capsys)
+
+
+def test_read_cells_delegates_and_returns_result(
+        capsys: CaptureFixture[str]) -> None:
+    """Test exact cell reads through the public base-class method."""
+    table_io = RecordingTableIO('sample')
+    table_io.read_cells_result = [['alpha', 1], ['beta', 2]]
+    box = Box(top=2, left=3, bottom=4, right=5)
+    result = table_io.read_cells(box)
+    assert result == [['alpha', 1], ['beta', 2]]
+    assert table_io.last_read_cells_box == box
+    assert table_io.events == ['read_cells']
+    check_capsys(capsys)
+
+
+def test_read_cells_rejects_open_ended_box(
+        capsys: CaptureFixture[str]) -> None:
+    """Test read-cells validation for incomplete boxes."""
+    table_io = RecordingTableIO('sample')
+    with pytest.raises(ValueError, match='must be not None'):
+        table_io.read_cells(Box(top=0, left=0, bottom=None, right=2))
+    assert not table_io.events
+    check_capsys(capsys)
+
+
+def test_write_cells_validates_and_delegates(
+        capsys: CaptureFixture[str]) -> None:
+    """Test exact cell writes through the public base-class method."""
+    table_io = RecordingTableIO('sample')
+    box = Box(top=2, left=3, bottom=4, right=5)
+    data: list[list[Value]] = [['alpha', 1], ['beta', 2]]
+    table_io.write_cells(data, box)
+    assert table_io.last_write_cells_data == data
+    assert table_io.last_write_cells_box == box
+    assert table_io.events == ['write_cells']
+    check_capsys(capsys)
+
+
 def test_base_class_not_implemented_class_methods_raise(
         capsys: CaptureFixture[str]) -> None:
     """Test the inherited class-level abstract methods."""
@@ -997,4 +1121,10 @@ def test_base_class_not_implemented_instance_methods_raise(
     with pytest.raises(NotImplementedError,
                        match='_read_table_dictdata method'):
         table_io.run_read_table_dictdata()
+    with pytest.raises(NotImplementedError, match='_find_value method'):
+        table_io.run_find_value([['alpha']])
+    with pytest.raises(NotImplementedError, match='_read_cells method'):
+        table_io.run_read_cells(Box(top=0, left=0, bottom=1, right=1))
+    with pytest.raises(NotImplementedError, match='_write_cells method'):
+        table_io.run_write_cells([['alpha']], Box(0, 0, 1, 1))
     check_capsys(capsys)

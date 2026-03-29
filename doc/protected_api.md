@@ -1,19 +1,6 @@
 # Table of Contents
 
 * [tableio.tableio](#tableio.tableio)
-  * [Descriptor](#tableio.tableio.Descriptor)
-    * [format\_name](#tableio.tableio.Descriptor.format_name)
-    * [implementation](#tableio.tableio.Descriptor.implementation)
-    * [capabilities](#tableio.tableio.Descriptor.capabilities)
-    * [mandatory\_args](#tableio.tableio.Descriptor.mandatory_args)
-    * [optional\_args](#tableio.tableio.Descriptor.optional_args)
-    * [priority](#tableio.tableio.Descriptor.priority)
-  * [Box](#tableio.tableio.Box)
-  * [Position](#tableio.tableio.Position)
-  * [FileAccess](#tableio.tableio.FileAccess)
-    * [READ](#tableio.tableio.FileAccess.READ)
-    * [CREATE](#tableio.tableio.FileAccess.CREATE)
-    * [UPDATE](#tableio.tableio.FileAccess.UPDATE)
   * [TableIO](#tableio.tableio.TableIO)
     * [\_\_init\_\_](#tableio.tableio.TableIO.__init__)
     * [get\_description](#tableio.tableio.TableIO.get_description)
@@ -34,12 +21,16 @@
     * [list\_sheets](#tableio.tableio.TableIO.list_sheets)
     * [select\_sheet](#tableio.tableio.TableIO.select_sheet)
     * [current\_sheet\_name](#tableio.tableio.TableIO.current_sheet_name)
+    * [find\_value](#tableio.tableio.TableIO.find_value)
+    * [read\_cells](#tableio.tableio.TableIO.read_cells)
+    * [write\_cells](#tableio.tableio.TableIO.write_cells)
     * [open](#tableio.tableio.TableIO.open)
     * [close](#tableio.tableio.TableIO.close)
     * [\_end\_state](#tableio.tableio.TableIO._end_state)
     * [\_write\_file\_suffix](#tableio.tableio.TableIO._write_file_suffix)
     * [\_close](#tableio.tableio.TableIO._close)
     * [\_check\_listdimensions](#tableio.tableio.TableIO._check_listdimensions)
+    * [\_value\_area](#tableio.tableio.TableIO._value_area)
     * [\_check\_dictdimensions](#tableio.tableio.TableIO._check_dictdimensions)
     * [\_check\_box\_write](#tableio.tableio.TableIO._check_box_write)
     * [\_check\_box\_read](#tableio.tableio.TableIO._check_box_read)
@@ -57,6 +48,9 @@
     * [\_list\_sheets](#tableio.tableio.TableIO._list_sheets)
     * [\_select\_sheet](#tableio.tableio.TableIO._select_sheet)
     * [\_current\_sheet\_name](#tableio.tableio.TableIO._current_sheet_name)
+    * [\_find\_value](#tableio.tableio.TableIO._find_value)
+    * [\_read\_cells](#tableio.tableio.TableIO._read_cells)
+    * [\_write\_cells](#tableio.tableio.TableIO._write_cells)
 * [tableio.color](#tableio.color)
   * [Color](#tableio.color.Color)
     * [NONE](#tableio.color.Color.NONE)
@@ -285,6 +279,20 @@
   * [value2none](#tableio.valueconversion.value2none)
   * [value2type](#tableio.valueconversion.value2type)
   * [value2type\_of](#tableio.valueconversion.value2type_of)
+* [tableio.tableio\_types](#tableio.tableio_types)
+  * [Descriptor](#tableio.tableio_types.Descriptor)
+    * [format\_name](#tableio.tableio_types.Descriptor.format_name)
+    * [implementation](#tableio.tableio_types.Descriptor.implementation)
+    * [capabilities](#tableio.tableio_types.Descriptor.capabilities)
+    * [mandatory\_args](#tableio.tableio_types.Descriptor.mandatory_args)
+    * [optional\_args](#tableio.tableio_types.Descriptor.optional_args)
+    * [priority](#tableio.tableio_types.Descriptor.priority)
+  * [Box](#tableio.tableio_types.Box)
+  * [Position](#tableio.tableio_types.Position)
+  * [FileAccess](#tableio.tableio_types.FileAccess)
+    * [READ](#tableio.tableio_types.FileAccess.READ)
+    * [CREATE](#tableio.tableio_types.FileAccess.CREATE)
+    * [UPDATE](#tableio.tableio_types.FileAccess.UPDATE)
 * [tableio.capability](#tableio.capability)
   * [Strictness](#tableio.capability.Strictness)
     * [STRICT](#tableio.capability.Strictness.STRICT)
@@ -302,6 +310,7 @@
     * [can\_read\_box](#tableio.capability.Capabilities.can_read_box)
     * [can\_write\_highlight](#tableio.capability.Capabilities.can_write_highlight)
     * [multi\_sheet](#tableio.capability.Capabilities.multi_sheet)
+    * [can\_find\_value\_position](#tableio.capability.Capabilities.can_find_value_position)
   * [single\_capability\_match](#tableio.capability.single_capability_match)
   * [capability\_match](#tableio.capability.capability_match)
   * [CapabilityNotSupported](#tableio.capability.CapabilityNotSupported)
@@ -377,11 +386,19 @@
     * [\_scan\_section](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_section)
     * [\_read\_grid](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_grid)
     * [\_update\_read\_positions](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_read_positions)
+    * [\_range\_contains](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._range_contains)
     * [\_ranges\_overlap](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._ranges_overlap)
+    * [\_sheet\_table\_regions](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._sheet_table_regions)
+    * [\_existing\_table\_regions](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._existing_table_regions)
+    * [\_check\_boxed\_table\_overwrite](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._check_boxed_table_overwrite)
     * [\_filter\_range\_name\_in\_use](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._filter_range_name_in_use)
     * [\_next\_filter\_range\_name](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._next_filter_range_name)
     * [\_remove\_overlapping\_filtered\_ranges](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._remove_overlapping_filtered_ranges)
     * [\_write\_filtered\_data\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_filtered_data_range)
+    * [\_values\_match](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._values_match)
+    * [\_split\_cell\_grid](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._split_cell_grid)
+    * [\_find\_bounds](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._find_bounds)
+    * [\_grid\_matches](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._grid_matches)
     * [\_column\_width\_text](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._column_width_text)
     * [\_table\_column\_width](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._table_column_width)
     * [\_update\_table\_column\_widths](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_table_column_widths)
@@ -396,6 +413,9 @@
     * [\_write\_table\_fmtdictdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_fmtdictdata)
     * [\_read\_table\_listdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_table_dictdata)
+    * [\_find\_value](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._find_value)
+    * [\_read\_cells](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_cells)
+    * [\_write\_cells](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_cells)
 * [tableio.tableio\_mformatbased](#tableio.tableio_mformatbased)
   * [\_allow\_overwrite](#tableio.tableio_mformatbased._allow_overwrite)
   * [TableIOMformatBased](#tableio.tableio_mformatbased.TableIOMformatBased)
@@ -455,135 +475,6 @@
 # tableio.tableio
 
 Reader/writer base class for a file format.
-
-<a id="tableio.tableio.Descriptor"></a>
-
-## Descriptor Objects
-
-```python
-class Descriptor(NamedTuple)
-```
-
-Descriptors of the reader/writer class for a file format.
-
-A descriptor is holds the metadata about a reader/writer
-class for a file format and is used by the factory.
-There may be several reader/writer classes for the same file
-as long as they have different values for the implementation.
-
-The capabilities describe what the reader/writer class can do.
-The mandatory and optional arguments describe the arguments that
-the reader/writer class expects.
-
-<a id="tableio.tableio.Descriptor.format_name"></a>
-
-#### format\_name
-
-The name of the file format.
-
-<a id="tableio.tableio.Descriptor.implementation"></a>
-
-#### implementation
-
-The implementation of the reader/writer class.
-
-<a id="tableio.tableio.Descriptor.capabilities"></a>
-
-#### capabilities
-
-The capabilities of the reader/writer class.
-
-<a id="tableio.tableio.Descriptor.mandatory_args"></a>
-
-#### mandatory\_args
-
-The mandatory arguments of the reader/writer class.
-
-file_name and file_access are not included in this list.
-
-<a id="tableio.tableio.Descriptor.optional_args"></a>
-
-#### optional\_args
-
-The optional arguments of the reader/writer class.
-
-<a id="tableio.tableio.Descriptor.priority"></a>
-
-#### priority
-
-The priority of this implementation. 0 = lowest, 100 = highest.
-
-<a id="tableio.tableio.Box"></a>
-
-## Box Objects
-
-```python
-class Box(NamedTuple)
-```
-
-A rectangular area in a file.
-
-The box is defined by the edges.
- - top: top row, that is first row inside the box.
- - left: left column, that is leftmost column in the box.
- - bottom: bottom edge, first row below the box.
- - right: right edge, first column to the right of the box.
-Row and column indices are 0-based.
-If bottom or right is None, the box will expand according to the data.
-
-<a id="tableio.tableio.Position"></a>
-
-## Position Objects
-
-```python
-class Position(NamedTuple)
-```
-
-A position in (a sheet in) a file.
-
-The position is defined by the row and column.
-Row and column indices are 0-based.
-This is used to report the position of the last cell written.
-Note for file formats that support multiple sheets: the position is a
-position in a sheet, and carries no information about which sheet.
-
-<a id="tableio.tableio.FileAccess"></a>
-
-## FileAccess Objects
-
-```python
-class FileAccess(IntEnum)
-```
-
-What access is requested to a file.
-
-When the file name is passed to TableIO, this enum describes what access
-is requested to the file that will be opened.
-The possible values have the following meaning:
-- READ: The file must exist and is opened for reading.
-- CREATE: The file is created and is opened for writing and
-          read after write. If the file already exists, the
-          file_exists_callback is called to decide if the file can be
-          overwritten.
-- UPDATE: File must exist and is opened for read and write.
-
-<a id="tableio.tableio.FileAccess.READ"></a>
-
-#### READ
-
-The file must exist and is opened for reading.
-
-<a id="tableio.tableio.FileAccess.CREATE"></a>
-
-#### CREATE
-
-The file is created and is opened for writing (read after write).
-
-<a id="tableio.tableio.FileAccess.UPDATE"></a>
-
-#### UPDATE
-
-File must exist and is opened for read and write.
 
 <a id="tableio.tableio.TableIO"></a>
 
@@ -807,13 +698,16 @@ Write a table of list data to the file.
 Write a table of list data to the file.
 If a box is provided the data will be written into the box.
 The data must fit into the box.
+Notice when spefifying a box: It is not allowed to write a
+table that partly overwrites an existing table.
 
 **Arguments**:
 
 - `data` - The list data to write.
 - `filtered_data_range` - If True, the data written will be
   marked as a data range that can be filtered.
-- `box` - The box to write the data into.
+- `box` - The box to write the data into. If box.bottom or box.right is
+  not None, the data must fill the box.
 
 **Raises**:
 
@@ -842,13 +736,16 @@ Write a table of list data to the file.
 Write a table of list data to the file.
 If a box is provided the data will be written into the box.
 The data must fit into the box.
+Notice when spefifying a box: It is not allowed to write a
+table that partly overwrites an existing table.
 
 **Arguments**:
 
 - `data` - The list data to write.
 - `filtered_data_range` - If True, the data written will be
   marked as a data range that can be filtered.
-- `box` - The box to write the data into.
+- `box` - The box to write the data into. If box.bottom or box.right is
+  not None, the data must fill the box.
 
 **Raises**:
 
@@ -881,6 +778,8 @@ Write a table of dict data to the file.
 Write a table of dict data to the file.
 If a box is provided the data will be written into the box.
 The data must fit into the box.
+Notice when spefifying a box: It is not allowed to write a
+table that partly overwrites an existing table.
 
 **Arguments**:
 
@@ -898,7 +797,8 @@ The data must fit into the box.
   columns are present.
 - `filtered_data_range` - If True, the data written will be
   marked as a data range that can be filtered.
-- `box` - The box to write the data into.
+- `box` - The box to write the data into. If box.bottom or box.right is
+  not None, the data must fill the box.
 
 **Raises**:
 
@@ -935,6 +835,8 @@ Write a table of dict data to the file.
 Write a table of dict data to the file.
 If a box is provided the data will be written into the box.
 The data must fit into the box.
+Notice when spefifying a box: It is not allowed to write a
+table that partly overwrites an existing table.
 
 **Arguments**:
 
@@ -952,7 +854,8 @@ The data must fit into the box.
   columns are present.
 - `filtered_data_range` - If True, the data written will be
   marked as a data range that can be filtered.
-- `box` - The box to write the data into.
+- `box` - The box to write the data into. If box.bottom or box.right is
+  not None, the data must fill the box.
 
 **Raises**:
 
@@ -1095,6 +998,109 @@ Return the name of the current sheet.
 
 - `CapabilityNotSupported` - If multiple sheets are not supported.
 
+<a id="tableio.tableio.TableIO.find_value"></a>
+
+#### find\_value
+
+```python
+def find_value(find_value: Value | ListDataSeq[Value],
+               type_conversion: bool = True,
+               box: Optional[Box] = None) -> Optional[Box]
+```
+
+Find the position of a value or values in the file.
+
+Search for a position of a value or values in the current sheet of
+the file. The first position found is returned.
+If several matching values are present, the first found is returned.
+Here "first" means on a lower row index, and if row indices are equal,
+on a lower column index.
+For comparison the value in a cell is first compared without type
+conversion, mismatching if types differ.
+Then type conversion to each corresponding find_value cell is
+attempted using value2type_of(...), if allowed by type_conversion.
+
+**Arguments**:
+
+- `find_value` - The value or values to find. A rectangular area of
+  values to find. A single value is used as a 1x1 area.
+- `type_conversion` - If True, each cell value in the searched area is
+  also converted to the type of the corresponding
+  find_value cell for comparison. If False, no type
+  conversion is attempted.
+- `box` - Search within this box. If None, the entire current sheet is
+  searched.
+
+**Raises**:
+
+- `CapabilityNotSupported` - If find_value_position capability is not
+  supported.
+
+**Returns**:
+
+  A box tightly fitting around the first found value or values.
+  None if no matching value is found.
+
+<a id="tableio.tableio.TableIO.read_cells"></a>
+
+#### read\_cells
+
+```python
+def read_cells(box: Box) -> ListData[Value]
+```
+
+Read the cells in the current sheet of the file.
+
+Read cells from the box position in the current sheet of the file.
+The cell reading is independent of the table positions in the file.
+This call does not affect the cursor position.
+
+**Arguments**:
+
+- `box` - The box to read the cells from. Neither of box.bottom or
+  box.right may be None.
+
+**Raises**:
+
+- `ValueError` - If box.bottom or box.right is None.
+- `CapabilityNotSupported` - If reading from a box is unsupported.
+
+**Returns**:
+
+  The values of the cells read from the file.
+
+<a id="tableio.tableio.TableIO.write_cells"></a>
+
+#### write\_cells
+
+```python
+def write_cells(data: ListDataSeq[CellT], box: Box) -> None
+```
+
+Write the cells to the current sheet of the file.
+
+Write cells to the box position in the current sheet of the file.
+The cell writing is independent of the table positions in the file.
+This call does not affect the cursor position.
+Notice: This method allows writing of cells to arbitrary positions
+in the file, which might destroy table and heading structures, and
+may make it impossible to read the file back into a table. It is
+the responsibility of the caller to ensure that the file keeps
+a valid structure for whatever purpose the file is intended for.
+
+**Arguments**:
+
+- `data` - The data to write.
+- `box` - The box to write the cells to. If box.bottom or box.right is
+  not None, the data must fill the box.
+
+**Raises**:
+
+- `ValueError` - If box.bottom or box.right is not None and the data
+  does not fit and fill the box.
+- `CapabilityNotSupported` - If writing to a box is unsupported.
+- `io.UnsupportedOperation` - If the file is opened for reading.
+
 <a id="tableio.tableio.TableIO.open"></a>
 
 #### open
@@ -1157,7 +1163,8 @@ Close the file.
 
 ```python
 def _check_listdimensions(data: ListDataSeq[CellT],
-                          box: Optional[Box] = None) -> None
+                          box: Optional[Box] = None,
+                          is_table: bool = True) -> None
 ```
 
 Check the dimensions of the list data.
@@ -1173,6 +1180,16 @@ Check the dimensions of the list data.
   each row.
 - `ValueError` - If the data does not fit into the box.
 - `ValueError` - If the data is not at least 2 cells in size.
+
+<a id="tableio.tableio.TableIO._value_area"></a>
+
+#### \_value\_area
+
+```python
+def _value_area(value: Value | ListDataSeq[Value]) -> ListData[Value]
+```
+
+Return one scalar or rectangular value pattern as a list grid.
 
 <a id="tableio.tableio.TableIO._check_dictdimensions"></a>
 
@@ -1538,6 +1555,38 @@ Return the name of the current sheet.
 
   The name of the current sheet. Sheet names are case preserving,
   but compared case insensitively.
+
+<a id="tableio.tableio.TableIO._find_value"></a>
+
+#### \_find\_value
+
+```python
+def _find_value(find_value: ListData[Value],
+                type_conversion: bool = True,
+                box: Optional[Box] = None) -> Optional[Box]
+```
+
+Backend hook for find_value().
+
+<a id="tableio.tableio.TableIO._read_cells"></a>
+
+#### \_read\_cells
+
+```python
+def _read_cells(box: Box) -> ListData[Value]
+```
+
+Backend hook for read_cells().
+
+<a id="tableio.tableio.TableIO._write_cells"></a>
+
+#### \_write\_cells
+
+```python
+def _write_cells(data: ListDataSeq[CellT], box: Box) -> None
+```
+
+Backend hook for write_cells().
 
 <a id="tableio.color"></a>
 
@@ -4900,6 +4949,106 @@ function based on the type.
 
   The converted value.
 
+<a id="tableio.tableio_types"></a>
+
+# tableio.tableio\_types
+
+Shared public types used by the tableio package.
+
+<a id="tableio.tableio_types.Descriptor"></a>
+
+## Descriptor Objects
+
+```python
+class Descriptor(NamedTuple)
+```
+
+Metadata describing one TableIO implementation.
+
+<a id="tableio.tableio_types.Descriptor.format_name"></a>
+
+#### format\_name
+
+The name of the file format.
+
+<a id="tableio.tableio_types.Descriptor.implementation"></a>
+
+#### implementation
+
+The implementation name for the file format.
+
+<a id="tableio.tableio_types.Descriptor.capabilities"></a>
+
+#### capabilities
+
+The capabilities of the reader/writer class.
+
+<a id="tableio.tableio_types.Descriptor.mandatory_args"></a>
+
+#### mandatory\_args
+
+Mandatory constructor arguments besides file name and access.
+
+<a id="tableio.tableio_types.Descriptor.optional_args"></a>
+
+#### optional\_args
+
+Optional constructor arguments.
+
+<a id="tableio.tableio_types.Descriptor.priority"></a>
+
+#### priority
+
+The implementation priority. Higher means more preferred.
+
+<a id="tableio.tableio_types.Box"></a>
+
+## Box Objects
+
+```python
+class Box(NamedTuple)
+```
+
+A rectangular area in a sheet or file.
+
+<a id="tableio.tableio_types.Position"></a>
+
+## Position Objects
+
+```python
+class Position(NamedTuple)
+```
+
+A zero-based row and column position in one sheet.
+
+<a id="tableio.tableio_types.FileAccess"></a>
+
+## FileAccess Objects
+
+```python
+class FileAccess(IntEnum)
+```
+
+What access is requested to a file.
+
+<a id="tableio.tableio_types.FileAccess.READ"></a>
+
+#### READ
+
+The file must exist and is opened for reading.
+
+<a id="tableio.tableio_types.FileAccess.CREATE"></a>
+
+#### CREATE
+
+The file is created and opened for writing and reading.
+
+<a id="tableio.tableio_types.FileAccess.UPDATE"></a>
+
+#### UPDATE
+
+The file must exist and is opened for reading and writing.
+
 <a id="tableio.capability"></a>
 
 # tableio.capability
@@ -5043,6 +5192,12 @@ The writer class can write highlight according to format.
 #### multi\_sheet
 
 The reader/writer class can read from or write to multiple sheets.
+
+<a id="tableio.capability.Capabilities.can_find_value_position"></a>
+
+#### can\_find\_value\_position
+
+The reader/writer class can find the position of a value.
 
 <a id="tableio.capability.single_capability_match"></a>
 
@@ -6021,6 +6176,18 @@ def _update_read_positions(scan: _ScanResult, box: Optional[Box]) -> None
 
 Update default read and write positions after a read.
 
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._range_contains"></a>
+
+#### \_range\_contains
+
+```python
+@staticmethod
+def _range_contains(first: tuple[int, int, int, int],
+                    second: tuple[int, int, int, int]) -> bool
+```
+
+Return whether one exclusive rectangle contains another.
+
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._ranges_overlap"></a>
 
 #### \_ranges\_overlap
@@ -6032,6 +6199,36 @@ def _ranges_overlap(first: tuple[int, int, int, int],
 ```
 
 Return whether two zero-based exclusive rectangles overlap.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._sheet_table_regions"></a>
+
+#### \_sheet\_table\_regions
+
+```python
+def _sheet_table_regions() -> list[tuple[int, int, int, int]]
+```
+
+Return detected table-like regions on the active readable sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._existing_table_regions"></a>
+
+#### \_existing\_table\_regions
+
+```python
+def _existing_table_regions() -> list[tuple[int, int, int, int]]
+```
+
+Return persisted and inferred table regions on the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._check_boxed_table_overwrite"></a>
+
+#### \_check\_boxed\_table\_overwrite
+
+```python
+def _check_boxed_table_overwrite(bounds: tuple[int, int, int, int]) -> None
+```
+
+Reject writes that would leave part of an existing table behind.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._filter_range_name_in_use"></a>
 
@@ -6073,6 +6270,52 @@ def _write_filtered_data_range(bounds: tuple[int, int, int, int]) -> None
 ```
 
 Create one backend filtered data range for the given bounds.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._values_match"></a>
+
+#### \_values\_match
+
+```python
+@staticmethod
+def _values_match(cell_value: Value, find_value: Value,
+                  type_conversion: bool) -> bool
+```
+
+Return whether one cell matches one requested value.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._split_cell_grid"></a>
+
+#### \_split\_cell\_grid
+
+```python
+@classmethod
+def _split_cell_grid(
+    cls, data: ListDataSeq[CellT]
+) -> tuple[ListData[Value], list[list[Optional[Fmt]]]]
+```
+
+Return a grid of plain values and matching cell formats.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._find_bounds"></a>
+
+#### \_find\_bounds
+
+```python
+def _find_bounds(box: Optional[Box]) -> tuple[int, int, int, int]
+```
+
+Return the search limits for one find operation.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._grid_matches"></a>
+
+#### \_grid\_matches
+
+```python
+def _grid_matches(sheet: object, top: int, left: int,
+                  find_value: ListData[Value], type_conversion: bool) -> bool
+```
+
+Return whether one sheet region matches the requested grid.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._column_width_text"></a>
 
@@ -6226,6 +6469,38 @@ def _read_table_dictdata(
 ```
 
 Read dict data from the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._find_value"></a>
+
+#### \_find\_value
+
+```python
+def _find_value(find_value: ListData[Value],
+                type_conversion: bool = True,
+                box: Optional[Box] = None) -> Optional[Box]
+```
+
+Find the first matching value grid on the active sheet.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_cells"></a>
+
+#### \_read\_cells
+
+```python
+def _read_cells(box: Box) -> ListData[Value]
+```
+
+Read the exact cell rectangle described by the box.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_cells"></a>
+
+#### \_write\_cells
+
+```python
+def _write_cells(data: ListDataSeq[CellT], box: Box) -> None
+```
+
+Write the exact cell rectangle described by the box.
 
 <a id="tableio.tableio_mformatbased"></a>
 

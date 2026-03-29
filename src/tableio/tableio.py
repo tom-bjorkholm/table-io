@@ -5,105 +5,20 @@
 # MIT License
 
 import io
-from enum import IntEnum, auto
+from datetime import datetime
 from pathlib import Path
 from types import TracebackType
 from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
 from tableio.capability import Capabilities, SingleCapability, Strictness, \
     CapabilityNotSupported
+from tableio.tableio_types import Box, Descriptor, FileAccess, Position
 from tableio.value_type import CellT, ListDataSeq, DictDataMap, \
     normalize_dict_data, ReadResult, ListData, Value, Fmt, DictData, \
     FmtListData, FmtDictData, FmtDictRow, row_strip_format_list, \
     row_strip_format_dict
 
-
-class Descriptor(NamedTuple):
-    """Descriptors of the reader/writer class for a file format.
-
-    A descriptor is holds the metadata about a reader/writer
-    class for a file format and is used by the factory.
-    There may be several reader/writer classes for the same file
-    as long as they have different values for the implementation.
-
-    The capabilities describe what the reader/writer class can do.
-    The mandatory and optional arguments describe the arguments that
-    the reader/writer class expects.
-    """
-
-    format_name: str
-    """The name of the file format."""
-
-    implementation: str
-    """The implementation of the reader/writer class."""
-
-    capabilities: Capabilities
-    """The capabilities of the reader/writer class."""
-
-    mandatory_args: list[str]
-    """The mandatory arguments of the reader/writer class.
-
-       file_name and file_access are not included in this list."""
-
-    optional_args: list[str]
-    """The optional arguments of the reader/writer class."""
-
-    priority: int = 10
-    """The priority of this implementation. 0 = lowest, 100 = highest."""
-
-
-class Box(NamedTuple):
-    """A rectangular area in a file.
-
-    The box is defined by the edges.
-     - top: top row, that is first row inside the box.
-     - left: left column, that is leftmost column in the box.
-     - bottom: bottom edge, first row below the box.
-     - right: right edge, first column to the right of the box.
-    Row and column indices are 0-based.
-    If bottom or right is None, the box will expand according to the data.
-    """
-
-    top: int
-    left: int
-    bottom: Optional[int]
-    right: Optional[int]
-
-
-class Position(NamedTuple):
-    """A position in (a sheet in) a file.
-
-    The position is defined by the row and column.
-    Row and column indices are 0-based.
-    This is used to report the position of the last cell written.
-    Note for file formats that support multiple sheets: the position is a
-    position in a sheet, and carries no information about which sheet.
-    """
-
-    row: int
-    column: int
-
-
-class FileAccess(IntEnum):
-    """What access is requested to a file.
-
-    When the file name is passed to TableIO, this enum describes what access
-    is requested to the file that will be opened.
-    The possible values have the following meaning:
-    - READ: The file must exist and is opened for reading.
-    - CREATE: The file is created and is opened for writing and
-              read after write. If the file already exists, the
-              file_exists_callback is called to decide if the file can be
-              overwritten.
-    - UPDATE: File must exist and is opened for read and write.
-    """
-
-    READ = auto()
-    """The file must exist and is opened for reading."""
-    CREATE = auto()
-    """The file is created and is opened for writing (read after write)."""
-    UPDATE = auto()
-    """File must exist and is opened for read and write."""
+__all__ = ['Box', 'Descriptor', 'FileAccess', 'Position', 'TableIO']
 
 
 class TableIO:
@@ -276,11 +191,14 @@ class TableIO:
         Write a table of list data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
+        Notice when spefifying a box: It is not allowed to write a
+        table that partly overwrites an existing table.
         Args:
             data: The list data to write.
             filtered_data_range: If True, the data written will be
                                  marked as a data range that can be filtered.
-            box: The box to write the data into.
+            box: The box to write the data into. If box.bottom or box.right is
+                not None, the data must fill the box.
         Raises:
             ValueError: If the data shape is invalid or does not fit in box.
             CapabilityNotSupported: If a requested capability is unsupported
@@ -291,8 +209,8 @@ class TableIO:
             current sheet.
         """
         self._check_file_is_writable()
-        self._check_listdimensions(data, box)
         c_box = self._check_box_write(box)
+        self._check_listdimensions(data, c_box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
         impl_meta: TableIO.ImplMetaForWrite = \
             TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
@@ -307,11 +225,14 @@ class TableIO:
         Write a table of list data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
+        Notice when spefifying a box: It is not allowed to write a
+        table that partly overwrites an existing table.
         Args:
             data: The list data to write.
             filtered_data_range: If True, the data written will be
                                  marked as a data range that can be filtered.
-            box: The box to write the data into.
+            box: The box to write the data into. If box.bottom or box.right is
+                not None, the data must fill the box.
         Raises:
             ValueError: If the data shape is invalid or does not fit in box.
             CapabilityNotSupported: If a requested capability is unsupported
@@ -322,8 +243,8 @@ class TableIO:
             current sheet.
         """
         self._check_file_is_writable()
-        self._check_listdimensions(row_strip_format_list(data), box)
         c_box = self._check_box_write(box)
+        self._check_listdimensions(row_strip_format_list(data), c_box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
         impl_meta: TableIO.ImplMetaForWrite = \
             TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
@@ -343,6 +264,8 @@ class TableIO:
         Write a table of dict data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
+        Notice when spefifying a box: It is not allowed to write a
+        table that partly overwrites an existing table.
         Args:
             data: The dict data to write.
             column_order: The order of the columns.
@@ -358,7 +281,8 @@ class TableIO:
                       columns are present.
             filtered_data_range: If True, the data written will be
                                  marked as a data range that can be filtered.
-            box: The box to write the data into.
+            box: The box to write the data into. If box.bottom or box.right is
+                not None, the data must fill the box.
         Raises:
             ValueError: If missing_ok is False and data is missing for a
                         column in the column_order.
@@ -373,9 +297,9 @@ class TableIO:
             current sheet.
         """
         self._check_file_is_writable()
-        ndata = normalize_dict_data(data, column_order, missing_ok, extra_ok)
-        self._check_dictdimensions(ndata, box)
         c_box = self._check_box_write(box)
+        ndata = normalize_dict_data(data, column_order, missing_ok, extra_ok)
+        self._check_dictdimensions(ndata, c_box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
         common_impl: TableIO.ImplMetaForWrite = \
             TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
@@ -399,6 +323,8 @@ class TableIO:
         Write a table of dict data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
+        Notice when spefifying a box: It is not allowed to write a
+        table that partly overwrites an existing table.
         Args:
             data: The dict data to write.
             column_order: The order of the columns.
@@ -414,7 +340,8 @@ class TableIO:
                       columns are present.
             filtered_data_range: If True, the data written will be
                                  marked as a data range that can be filtered.
-            box: The box to write the data into.
+            box: The box to write the data into. If box.bottom or box.right is
+                not None, the data must fill the box.
         Raises:
             ValueError: If missing_ok is False and data is missing for a
                         column in the column_order.
@@ -429,10 +356,11 @@ class TableIO:
             current sheet.
         """
         self._check_file_is_writable()
+        c_box = self._check_box_write(box)
         stripped_data = row_strip_format_dict(data)
         normalized_values = normalize_dict_data(stripped_data, column_order,
                                                 missing_ok, extra_ok)
-        self._check_dictdimensions(normalized_values, box)
+        self._check_dictdimensions(normalized_values, c_box)
         if normalized_values is stripped_data:
             normalized_data = data
         else:
@@ -440,7 +368,6 @@ class TableIO:
                 FmtDictRow(values=row_values, fmt=row.fmt)
                 for row, row_values in zip(data, normalized_values,
                                            strict=True)]
-        c_box = self._check_box_write(box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
         common_impl: TableIO.ImplMetaForWrite = \
             TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
@@ -539,6 +466,94 @@ class TableIO:
             raise CapabilityNotSupported('multi sheet')
         return self._current_sheet_name()
 
+    def find_value(self, find_value: Value | ListDataSeq[Value],
+                   type_conversion: bool = True,
+                   box: Optional[Box] = None) -> Optional[Box]:
+        """Find the position of a value or values in the file.
+
+        Search for a position of a value or values in the current sheet of
+        the file. The first position found is returned.
+        If several matching values are present, the first found is returned.
+        Here "first" means on a lower row index, and if row indices are equal,
+        on a lower column index.
+        For comparison the value in a cell is first compared without type
+        conversion, mismatching if types differ.
+        Then type conversion to each corresponding find_value cell is
+        attempted using value2type_of(...), if allowed by type_conversion.
+        Args:
+            find_value: The value or values to find. A rectangular area of
+                        values to find. A single value is used as a 1x1 area.
+            type_conversion: If True, each cell value in the searched area is
+                             also converted to the type of the corresponding
+                             find_value cell for comparison. If False, no type
+                             conversion is attempted.
+            box: Search within this box. If None, the entire current sheet is
+                 searched.
+        Raises:
+            CapabilityNotSupported: If find_value_position capability is not
+                                    supported.
+        Returns:
+            A box tightly fitting around the first found value or values.
+            None if no matching value is found.
+        """
+        if not self.get_capabilities().can_find_value_position.supported:
+            err = 'Finding value position is not supported'
+            raise CapabilityNotSupported(err)
+        c_box = self._check_box_read(box)
+        value_area = self._value_area(find_value)
+        return self._find_value(value_area, type_conversion, c_box)
+
+    def read_cells(self, box: Box) -> ListData[Value]:
+        """Read the cells in the current sheet of the file.
+
+        Read cells from the box position in the current sheet of the file.
+        The cell reading is independent of the table positions in the file.
+        This call does not affect the cursor position.
+        Args:
+            box: The box to read the cells from. Neither of box.bottom or
+            box.right may be None.
+        Raises:
+            ValueError: If box.bottom or box.right is None.
+            CapabilityNotSupported: If reading from a box is unsupported.
+        Returns:
+            The values of the cells read from the file.
+        """
+        if box.bottom is None or box.right is None:
+            err = 'box.bottom and box.right must be not None'
+            raise ValueError(err)
+        if not self.get_capabilities().can_read_box.supported:
+            err = 'Reading from a box is not supported'
+            raise CapabilityNotSupported(err)
+        return self._read_cells(box)
+
+    def write_cells(self, data: ListDataSeq[CellT], box: Box) -> None:
+        """Write the cells to the current sheet of the file.
+
+        Write cells to the box position in the current sheet of the file.
+        The cell writing is independent of the table positions in the file.
+        This call does not affect the cursor position.
+        Notice: This method allows writing of cells to arbitrary positions
+        in the file, which might destroy table and heading structures, and
+        may make it impossible to read the file back into a table. It is
+        the responsibility of the caller to ensure that the file keeps
+        a valid structure for whatever purpose the file is intended for.
+        Args:
+            data: The data to write.
+            box: The box to write the cells to. If box.bottom or box.right is
+                 not None, the data must fill the box.
+        Raises:
+            ValueError: If box.bottom or box.right is not None and the data
+                        does not fit and fill the box.
+            CapabilityNotSupported: If writing to a box is unsupported.
+            io.UnsupportedOperation: If the file is opened for reading.
+        """
+        self._check_file_is_writable()
+        self._check_listdimensions(data, box, is_table=False)
+        if not self.get_capabilities().can_write_box.supported:
+            err = 'Writing to a box is not supported'
+            raise CapabilityNotSupported(err)
+        self._write_cells(data, box)
+
     def open(self) -> None:
         """Open the file.
 
@@ -584,7 +599,8 @@ class TableIO:
         raise NotImplementedError(err)
 
     def _check_listdimensions(self, data: ListDataSeq[CellT],
-                              box: Optional[Box] = None) -> None:
+                              box: Optional[Box] = None,
+                              is_table: bool = True) -> None:
         """Check the dimensions of the list data.
 
         Args:
@@ -602,20 +618,30 @@ class TableIO:
         if not data[0]:
             err = 'First row is empty'
             raise ValueError(err)
-        if len(data[0]) < 2 and len(data) < 2:
-            err = 'Data is not at least 2 cells in size'
-            raise ValueError(err)
+        if is_table:
+            if len(data[0]) < 2 and len(data) < 2:
+                err = 'Data is not at least 2 cells in size'
+                raise ValueError(err)
         for row in data:
             if len(row) != len(data[0]):
                 err = 'All rows must have the same number of columns'
                 raise ValueError(err)
         if box is not None:
-            if box.bottom is not None and len(data) > box.bottom - box.top:
-                err = 'Data does not fit into box. Too many rows.'
+            if box.bottom is not None and len(data) != box.bottom - box.top:
+                err = 'Data does not fit into box. Wrong number of rows.'
                 raise ValueError(err)
-            if box.right is not None and len(data[0]) > box.right - box.left:
-                err = 'Data does not fit into box. Too many columns.'
+            if box.right is not None and len(data[0]) != box.right - box.left:
+                err = 'Data does not fit into box. Wrong number of columns.'
                 raise ValueError(err)
+
+    def _value_area(
+            self, value: Value | ListDataSeq[Value]) -> ListData[Value]:
+        """Return one scalar or rectangular value pattern as a list grid."""
+        if value is None or isinstance(value, (str, bool, int, float,
+                                               datetime)):
+            return [[value]]
+        self._check_listdimensions(value, is_table=False)
+        return [list(row) for row in value]
 
     def _check_dictdimensions(self, data: DictDataMap[CellT],
                               box: Optional[Box] = None) -> None:
@@ -639,11 +665,11 @@ class TableIO:
             raise ValueError(err)
         if box is None:
             return
-        if box.bottom is not None and (len(data)+1) > box.bottom - box.top:
-            err = 'Data does not fit into box. Too many rows.'
+        if box.bottom is not None and (len(data)+1) != box.bottom - box.top:
+            err = 'Data does not fit into box. Wrong number of rows.'
             raise ValueError(err)
-        if box.right is not None and len(data[0]) > box.right - box.left:
-            err = 'Data does not fit into box. Too many columns.'
+        if box.right is not None and len(data[0]) != box.right - box.left:
+            err = 'Data does not fit into box. Wrong number of columns.'
             raise ValueError(err)
 
     def _check_box_write(self, box: Optional[Box]) -> Optional[Box]:
@@ -914,4 +940,27 @@ class TableIO:
             but compared case insensitively.
         """
         err = 'Subclass must implement _current_sheet_name method'
+        raise NotImplementedError(err)
+
+    def _find_value(self, find_value: ListData[Value],
+                    type_conversion: bool = True,
+                    box: Optional[Box] = None) -> Optional[Box]:
+        """Backend hook for find_value()."""
+        err = 'Subclass must implement _find_value method'
+        _ = find_value  # avoid unused variable warning
+        _ = type_conversion  # avoid unused variable warning
+        _ = box  # avoid unused variable warning
+        raise NotImplementedError(err)
+
+    def _read_cells(self, box: Box) -> ListData[Value]:
+        """Backend hook for read_cells()."""
+        err = 'Subclass must implement _read_cells method'
+        _ = box  # avoid unused variable warning
+        raise NotImplementedError(err)
+
+    def _write_cells(self, data: ListDataSeq[CellT], box: Box) -> None:
+        """Backend hook for write_cells()."""
+        err = 'Subclass must implement _write_cells method'
+        _ = data  # avoid unused variable warning
+        _ = box  # avoid unused variable warning
         raise NotImplementedError(err)

@@ -17,9 +17,11 @@ from tableio.capability import Capabilities
 from tableio.tableio import Box, Descriptor, FileAccess, Position
 from tableio.tableio_spreadsheetbased import _ScanResult, \
     TableIOSpreadsheetBased
-from tableio.value_type import Fmt, FmtListRow, Value, ValueFmt
+from tableio.value_type import CellT, Fmt, FmtListRow, ListDataSeq, Value, \
+    ValueFmt
 
 from .check_capsys import check_capsys
+from .spreadsheet_test_helper import run_boxed_table_partial_overwrite_raises
 
 
 class _MemorySheet:
@@ -151,8 +153,8 @@ class _MinimalSpreadsheetTableIO(TableIOSpreadsheetBased):
         self._set_column_width_if_wider(column, width)
 
 
-class _RecordingSpreadsheetTableIO(  # pylint: disable=too-many-public-methods
-        TableIOSpreadsheetBased):
+# pylint: disable-next=too-many-instance-attributes,too-many-public-methods
+class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
     """Concrete in-memory spreadsheet backend used by the tests."""
 
     def __init__(self, file_name: str | Path,
@@ -408,6 +410,10 @@ class _RecordingSpreadsheetTableIO(  # pylint: disable=too-many-public-methods
         """Expose the width-update helper for tests."""
         self._update_table_column_widths(top, left, bottom, right)
 
+    def run_sheet_table_regions(self) -> list[tuple[int, int, int, int]]:
+        """Expose inferred table-region detection for tests."""
+        return self._sheet_table_regions()
+
     @classmethod
     def split_plain_cell_value(
             cls, cell: Value) -> tuple[Value, Optional[Fmt]]:
@@ -419,6 +425,21 @@ class _RecordingSpreadsheetTableIO(  # pylint: disable=too-many-public-methods
             cls, cell: ValueFmt) -> tuple[Value, Optional[Fmt]]:
         """Expose formatted cell splitting for tests."""
         return cls._split_cell_value(cell)
+
+    def run_find_value(self, find_value: list[list[Value]],
+                       type_conversion: bool = True,
+                       box: Optional[Box] = None) -> Optional[Box]:
+        """Expose the grid-find helper for tests."""
+        return self._find_value(find_value, type_conversion, box)
+
+    def run_read_cells(self, box: Box) -> list[list[Value]]:
+        """Expose exact cell reads for tests."""
+        return self._read_cells(box)
+
+    def run_write_cells(self, data: ListDataSeq[CellT],
+                        box: Box) -> None:
+        """Expose exact cell writes for tests."""
+        self._write_cells(data, box)
 
 
 @pytest.mark.parametrize(
@@ -647,6 +668,80 @@ def test_spreadsheet_write_table_fmtlistdata_applies_row_formats(
                 (1, 0): Fmt(italic=True),
                 (1, 1): Fmt(italic=True)
             }
+    check_capsys(capsys)
+
+
+def test_spreadsheet_find_value_matches_per_cell_with_type_conversion(
+        capsys: CaptureFixture[str]) -> None:
+    """Grid search can match converted values cell by cell."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample')
+        with table_io:
+            table_io.seed_value(1, 2, '1')
+            table_io.seed_value(1, 3, 'true')
+            exact = table_io.run_find_value([[1, True]],
+                                            type_conversion=False)
+            converted = table_io.run_find_value([[1, True]])
+            restricted = table_io.run_find_value(
+                [[1, True]], box=Box(top=0, left=0, bottom=1, right=4))
+            assert exact is None
+            assert converted == Box(top=1, left=2, bottom=2, right=4)
+            assert restricted is None
+    check_capsys(capsys)
+
+
+def test_spreadsheet_read_and_write_cells_keep_cursor_positions(
+        capsys: CaptureFixture[str]) -> None:
+    """Exact cell reads and writes do not move the sequential cursors."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample')
+        with table_io:
+            table_io.write_table_listdata([
+                ['name', 'active'],
+                ['Alice', True]
+            ], box=Box(top=1, left=1, bottom=3, right=3))
+            table_io.read_row = 7
+            table_io.write_row = 9
+            table_io.run_write_cells([
+                [ValueFmt(value='Alice', fmt=Fmt(bold=True)),
+                 ValueFmt(value=False, fmt=Fmt(bold=True))]
+            ], Box(top=2, left=1, bottom=3, right=3))
+            assert table_io.run_read_cells(
+                Box(top=2, left=1, bottom=3, right=3)) == [
+                    ['Alice', False]
+                ]
+            assert table_io.read_row == 7
+            assert table_io.write_row == 9
+            assert table_io.write_sheet_data().formats[(2, 1)] == \
+                Fmt(bold=True)
+            assert table_io.write_sheet_data().formats[(2, 2)] == \
+                Fmt(bold=True)
+    check_capsys(capsys)
+
+
+def test_spreadsheet_boxed_table_write_rejects_partial_overwrite(
+        capsys: CaptureFixture[str]) -> None:
+    """Boxed table writes reject overlaps that leave part behind."""
+    run_boxed_table_partial_overwrite_raises(
+        _RecordingSpreadsheetTableIO, capsys)
+
+
+def test_spreadsheet_boxed_table_write_allows_full_replacement(
+        capsys: CaptureFixture[str]) -> None:
+    """Boxed table writes may fully replace a table with a larger one."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample')
+        with table_io:
+            table_io.write_table_listdata([
+                ['name', 'active'],
+                ['Alice', True]
+            ], box=Box(top=1, left=1, bottom=3, right=3))
+            table_io.write_table_listdata([
+                ['name', 'active', 'note'],
+                ['Alice', False, 'updated']
+            ], box=Box(top=1, left=1, bottom=3, right=4))
+            assert table_io.run_sheet_table_regions() == [(1, 1, 3, 4)]
+            assert table_io.write_sheet_data().values[(2, 3)] == 'updated'
     check_capsys(capsys)
 
 

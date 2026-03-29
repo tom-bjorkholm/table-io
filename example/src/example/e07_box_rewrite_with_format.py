@@ -92,19 +92,19 @@ def e07_box_rewrite_with_format(format_name: str, output_file_name: str,
         #
         # Read the existing values from that box.
         #
-        boxed_result = tableio.read_table_listdata(box=lower_left_box)
+        boxed_result = tableio.read_cells(lower_left_box)
         #
         # Wrap the values in ValueFmt so we can apply formatting while
         # keeping the original cell values unchanged.
         #
-        formatted_box = build_bold_red_copy(boxed_result.data)
+        formatted_box = build_bold_red_copy(boxed_result)
         #
         # Write the formatted values back into exactly the same rectangle.
         #
         # Because the write uses the same box, the values stay in place but
         # now appear bold with a red highlight.
         #
-        tableio.write_table_listdata(formatted_box, box=lower_left_box)
+        tableio.write_cells(formatted_box, box=lower_left_box)
     return 0
 # pylint: enable=duplicate-code
 

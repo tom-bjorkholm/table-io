@@ -20,7 +20,9 @@ from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
 
 from .check_capsys import check_capsys
 from .spreadsheet_test_helper import \
+    run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
+    run_find_value_and_write_cells, \
     run_multi_sheet_heading_state_is_per_sheet, \
     run_multi_sheet_read_only_create_raises, \
     run_multi_sheet_read_positions_are_per_sheet, \
@@ -142,6 +144,18 @@ def _inspect_rewrite_box_workbook(file_path: Path) -> None:
     worksheet = workbook.active
     assert isinstance(worksheet, Worksheet)
     assert not worksheet.tables
+    workbook.close()
+
+
+def _inspect_find_and_write_cells_workbook(file_path: Path) -> None:
+    """Check exact cell writes after finding one row in the worksheet."""
+    workbook = load_workbook(file_path)
+    worksheet = workbook.active
+    assert isinstance(worksheet, Worksheet)
+    assert worksheet['B4'].value == 'Bob'
+    assert worksheet['C4'].value is True
+    assert worksheet['B4'].fill.fgColor.rgb == 'FFFFFF00'
+    assert worksheet['C4'].fill.fgColor.rgb == 'FFFFFF00'
     workbook.close()
 
 
@@ -296,6 +310,21 @@ def test_excel_box_write_removes_overlapping_filtered_table(
     run_box_write_removes_overlapping_filtered_range(
         TableIOExcelOpenPyXL, '.xlsx',
         _inspect_rewrite_box_workbook, capsys)
+
+
+def test_excel_find_value_and_write_cells(
+        capsys: CaptureFixture[str]) -> None:
+    """Found cell ranges can be read and updated without moving cursors."""
+    run_find_value_and_write_cells(
+        TableIOExcelOpenPyXL, '.xlsx',
+        _inspect_find_and_write_cells_workbook, capsys)
+
+
+def test_excel_boxed_table_partial_overwrite_raises(
+        capsys: CaptureFixture[str]) -> None:
+    """Boxed table writes reject overlaps that leave part of a table behind."""
+    run_boxed_table_partial_overwrite_raises(
+        TableIOExcelOpenPyXL, capsys)
 
 
 def test_excel_write_row_formatted_dictdata_applies_formatting(

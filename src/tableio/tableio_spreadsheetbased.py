@@ -10,6 +10,8 @@ from typing import Callable, NamedTuple, Optional
 from mformat.mformat import PathLike
 from tableio.capability import Capabilities, SingleCapability, Strictness
 from tableio.tableio import Box, FileAccess, Position, TableIO
+from tableio.valueconversion import UnreasonableTypeConversion, \
+    UnreasonableValueConversion, value2type_of
 from tableio.value_type import CellT, DictData, DictDataMap, Fmt, \
     FmtDictData, FmtListData, ListData, ListDataSeq, ReadResult, Value, \
     ValueFmt, row_format_each_cell_dict, row_format_each_cell_list, \
@@ -77,7 +79,8 @@ class TableIOSpreadsheetBased(TableIO):
                             filtered_data_range=_SUPPORTED,
                             can_write_box=_SUPPORTED, can_read_box=_SUPPORTED,
                             can_write_highlight=_SUPPORTED,
-                            multi_sheet=_SUPPORTED)
+                            multi_sheet=_SUPPORTED,
+                            can_find_value_position=_SUPPORTED)
 
     @staticmethod
     def _heading_font_size(level: int) -> int:
@@ -379,11 +382,75 @@ class TableIOSpreadsheetBased(TableIO):
         self._save_current_sheet_state()
 
     @staticmethod
+    def _range_contains(first: tuple[int, int, int, int],
+                        second: tuple[int, int, int, int]) -> bool:
+        """Return whether one exclusive rectangle contains another."""
+        return first[0] <= second[0] and first[1] <= second[1] and \
+            first[2] >= second[2] and first[3] >= second[3]
+
+    @staticmethod
     def _ranges_overlap(first: tuple[int, int, int, int],
                         second: tuple[int, int, int, int]) -> bool:
         """Return whether two zero-based exclusive rectangles overlap."""
         return first[0] < second[2] and second[0] < first[2] and \
             first[1] < second[3] and second[1] < first[3]
+
+    def _sheet_table_regions(self) -> list[tuple[int, int, int, int]]:
+        """Return detected table-like regions on the active readable sheet."""
+        read_sheet = self._read_sheet()
+        bottom = self._last_used_row(read_sheet) + 1
+        if bottom <= 0:
+            return []
+        ret: list[tuple[int, int, int, int]] = []
+        row = 0
+        while row < bottom:
+            if self._row_is_empty(read_sheet, row, 0, None):
+                row += 1
+                continue
+            if self._row_is_heading(read_sheet, row, 0, None, bottom):
+                row += 2
+                continue
+            top = row
+            left: Optional[int] = None
+            right = 0
+            while row < bottom:
+                nonempty_columns = self._row_nonempty_columns(
+                    read_sheet, row, 0, None)
+                if not nonempty_columns:
+                    break
+                row_left = min(nonempty_columns)
+                row_right = max(nonempty_columns) + 1
+                if left is None:
+                    left = row_left
+                else:
+                    left = min(left, row_left)
+                right = max(right, row_right)
+                row += 1
+            assert left is not None
+            ret.append((top, left, row, right))
+        return ret
+
+    def _existing_table_regions(self) -> list[tuple[int, int, int, int]]:
+        """Return persisted and inferred table regions on the active sheet."""
+        ret: list[tuple[int, int, int, int]] = []
+        for _, bounds in self._filtered_range_infos():
+            if bounds not in ret:
+                ret.append(bounds)
+        for bounds in self._sheet_table_regions():
+            if bounds not in ret:
+                ret.append(bounds)
+        return ret
+
+    def _check_boxed_table_overwrite(
+            self, bounds: tuple[int, int, int, int]) -> None:
+        """Reject writes that would leave part of an existing table behind."""
+        for existing_bounds in self._existing_table_regions():
+            if not self._ranges_overlap(bounds, existing_bounds):
+                continue
+            if self._range_contains(bounds, existing_bounds):
+                continue
+            msg = 'Boxed table write would partly overwrite an existing table.'
+            raise ValueError(msg)
 
     def _filter_range_name_in_use(self, name: str) -> bool:
         """Return whether the backend already contains the filter name."""
@@ -412,6 +479,67 @@ class TableIOSpreadsheetBased(TableIO):
             self, bounds: tuple[int, int, int, int]) -> None:
         """Create one backend filtered data range for the given bounds."""
         self._add_filtered_range(bounds, self._next_filter_range_name())
+
+    @staticmethod
+    def _values_match(cell_value: Value, find_value: Value,
+                      type_conversion: bool) -> bool:
+        """Return whether one cell matches one requested value."""
+        if type(cell_value) is type(find_value) and cell_value == find_value:
+            return True
+        if not type_conversion:
+            return False
+        try:
+            converted = value2type_of(cell_value, find_value,
+                                      accept_none=find_value is None)
+        except (UnreasonableTypeConversion, UnreasonableValueConversion):
+            return False
+        return converted == find_value
+
+    @classmethod
+    def _split_cell_grid(cls, data: ListDataSeq[CellT]) -> tuple[
+            ListData[Value], list[list[Optional[Fmt]]]]:
+        """Return a grid of plain values and matching cell formats."""
+        values: ListData[Value] = []
+        formats: list[list[Optional[Fmt]]] = []
+        for row in data:
+            value_row: list[Value] = []
+            format_row: list[Optional[Fmt]] = []
+            for cell in row:
+                value, fmt = cls._split_cell_value(cell)
+                value_row.append(value)
+                format_row.append(fmt)
+            values.append(value_row)
+            formats.append(format_row)
+        return values, formats
+
+    def _find_bounds(self, box: Optional[Box]) -> tuple[int, int, int, int]:
+        """Return the search limits for one find operation."""
+        read_sheet = self._read_sheet()
+        top = 0 if box is None else box.top
+        left = 0 if box is None else box.left
+        if box is not None and box.bottom is not None:
+            bottom = box.bottom
+        else:
+            bottom = max(top, self._last_used_row(read_sheet) + 1)
+        if box is not None and box.right is not None:
+            right = box.right
+        else:
+            right = max(left, self._last_used_column(read_sheet) + 1)
+        return top, left, bottom, right
+
+    def _grid_matches(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
+                      sheet: object, top: int, left: int,
+                      find_value: ListData[Value],
+                      type_conversion: bool) -> bool:
+        """Return whether one sheet region matches the requested grid."""
+        for row_offset, find_row in enumerate(find_value):
+            for column_offset, expected_value in enumerate(find_row):
+                cell_value = self._cell_value(sheet, top + row_offset,
+                                              left + column_offset)
+                if not self._values_match(cell_value, expected_value,
+                                          type_conversion):
+                    return False
+        return True
 
     @staticmethod
     def _column_width_text(value: object) -> str:
@@ -476,6 +604,8 @@ class TableIOSpreadsheetBased(TableIO):
             clear_bottom if box is not None else write_bottom,
             clear_right if box is not None else write_right
         )
+        if box is not None:
+            self._check_boxed_table_overwrite(affected_bounds)
         self._remove_overlapping_filtered_ranges(affected_bounds)
         if box is not None:
             self._clear_range(start_row, start_column, clear_bottom,
@@ -514,17 +644,7 @@ class TableIOSpreadsheetBased(TableIO):
     def _write_table_listdata(self, data: ListDataSeq[CellT],
                               impl_meta: TableIO.ImplMetaForWrite) -> Position:
         """Write list data to the active sheet."""
-        values: ListData[Value] = []
-        formats: list[list[Optional[Fmt]]] = []
-        for row in data:
-            value_row: list[Value] = []
-            format_row: list[Optional[Fmt]] = []
-            for cell in row:
-                value, fmt = self._split_cell_value(cell)
-                value_row.append(value)
-                format_row.append(fmt)
-            values.append(value_row)
-            formats.append(format_row)
+        values, formats = self._split_cell_grid(data)
         return self._write_grid(values, formats,
                                 impl_meta.filtered_data_range,
                                 impl_meta.box)
@@ -587,3 +707,50 @@ class TableIOSpreadsheetBased(TableIO):
         self._update_read_positions(scan, box)
         return ReadResult(data=data, headings=scan.headings,
                           last_read_row=scan.last_read_row)
+
+    def _find_value(self, find_value: ListData[Value],
+                    type_conversion: bool = True,
+                    box: Optional[Box] = None) -> Optional[Box]:
+        """Find the first matching value grid on the active sheet."""
+        read_sheet = self._read_sheet()
+        top, left, bottom, right = self._find_bounds(box)
+        row_count = len(find_value)
+        column_count = len(find_value[0])
+        last_row = bottom - row_count
+        last_column = right - column_count
+        if last_row < top or last_column < left:
+            return None
+        for row in range(top, last_row + 1):
+            for column in range(left, last_column + 1):
+                if self._grid_matches(read_sheet, row, column,
+                                      find_value, type_conversion):
+                    return Box(top=row, left=column,
+                               bottom=row + row_count,
+                               right=column + column_count)
+        return None
+
+    def _read_cells(self, box: Box) -> ListData[Value]:
+        """Read the exact cell rectangle described by the box."""
+        read_sheet = self._read_sheet()
+        assert box.bottom is not None
+        assert box.right is not None
+        ret: ListData[Value] = []
+        for row in range(box.top, box.bottom):
+            ret.append([
+                self._cell_value(read_sheet, row, column)
+                for column in range(box.left, box.right)
+            ])
+        return ret
+
+    def _write_cells(self, data: ListDataSeq[CellT], box: Box) -> None:
+        """Write the exact cell rectangle described by the box."""
+        values, formats = self._split_cell_grid(data)
+        top = box.top
+        left = box.left
+        bottom = box.bottom if box.bottom is not None else top + len(values)
+        right = box.right if box.right is not None else left + len(values[0])
+        self._clear_range(top, left, bottom, right)
+        for row_offset, row in enumerate(values):
+            for column_offset, value in enumerate(row):
+                self._write_value(top + row_offset, left + column_offset,
+                                  value, formats[row_offset][column_offset])

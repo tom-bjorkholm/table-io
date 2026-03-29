@@ -22,7 +22,7 @@ def test_write_table_fmtlistdata_delegates_valid_data_and_box(
         capsys: CaptureFixture[str]) -> None:
     """Test formatted list-data writes through the public method."""
     table_io = RecordingTableIO('sample')
-    box = Box(top=3, left=4, bottom=6, right=6)
+    box = Box(top=3, left=4, bottom=5, right=6)
     data = [
         FmtListRow(values=('alpha', 1), fmt=Fmt(bold=True)),
         FmtListRow(values=[None, 2.5], fmt=Fmt(italic=True))
@@ -67,7 +67,7 @@ def test_write_table_fmtlistdata_delegates_valid_data_and_box(
                 FmtListRow(values=('right', 2), fmt=Fmt())
             ],
             Box(0, 0, 1, None),
-            'Too many rows',
+            'Wrong number of rows',
             id='too-many-rows'
         ),
         pytest.param(
@@ -76,7 +76,7 @@ def test_write_table_fmtlistdata_delegates_valid_data_and_box(
                 FmtListRow(values=('right', 2), fmt=Fmt())
             ],
             Box(0, 0, None, 1),
-            'Too many columns',
+            'Wrong number of columns',
             id='too-many-columns'
         )
     ]
@@ -96,7 +96,7 @@ def test_write_table_fmtdictdata_normalizes_and_delegates(
         capsys: CaptureFixture[str]) -> None:
     """Test formatted dict-data writes through the public method."""
     table_io = RecordingTableIO('sample')
-    box = Box(top=5, left=2, bottom=9, right=4)
+    box = Box(top=5, left=2, bottom=8, right=4)
     column_order = ['alpha', 'beta']
     first_row_format = Fmt(italic=True)
     data = [
@@ -183,14 +183,14 @@ def test_write_table_fmtdictdata_normalizes_and_delegates(
             [FmtDictRow(values={'alpha': 'left', 'beta': 1}, fmt=Fmt())],
             ['alpha', 'beta'],
             Box(0, 0, 1, None),
-            'Too many rows',
+            'Wrong number of rows',
             id='too-many-rows'
         ),
         pytest.param(
             [FmtDictRow(values={'alpha': 'left', 'beta': 1}, fmt=Fmt())],
             ['alpha', 'beta'],
             Box(0, 0, None, 1),
-            'Too many columns',
+            'Wrong number of columns',
             id='too-many-columns'
         )
     ]
@@ -246,7 +246,7 @@ def test_write_table_fmtlistdata_ignores_box_when_supported_is_ignore(
     """Test ignoring write-box requests for formatted list-data writes."""
     table_io = WriteIgnoreBoxTableIO('sample')
     data = [FmtListRow(values=('alpha', 1), fmt=Fmt(bold=True))]
-    position = table_io.write_table_fmtlistdata(data, box=Box(1, 1, 3, 3))
+    position = table_io.write_table_fmtlistdata(data, box=Box(1, 1, 2, 3))
     assert position == Position(0, 1)
     assert table_io.last_fmtlist_write_box is None
     assert table_io.last_fmtlist_write_data == data

@@ -87,6 +87,9 @@ class Capabilities(NamedTuple):
     multi_sheet: SingleCapability = SingleCapability()
     """The reader/writer class can read from or write to multiple sheets."""
 
+    can_find_value_position: SingleCapability = SingleCapability()
+    """The reader/writer class can find the position of a value."""
+
 
 def single_capability_match(offered: SingleCapability,
                             will_use: SingleCapability,

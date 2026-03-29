@@ -20,7 +20,9 @@ from tableio.value_type import Fmt, get_checked_type
 
 from .check_capsys import check_capsys
 from .spreadsheet_test_helper import \
+    run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
+    run_find_value_and_write_cells, \
     run_multi_sheet_heading_state_is_per_sheet, \
     run_multi_sheet_read_only_create_raises, \
     run_multi_sheet_read_positions_are_per_sheet, \
@@ -184,6 +186,17 @@ def _inspect_rewrite_box_document(file_path: Path) -> None:
     """Check that overwriting a box removes stale filter metadata."""
     document, _ = _load_document(file_path)
     assert _filtered_database_ranges(document) == []
+
+
+def _inspect_find_and_write_cells_document(file_path: Path) -> None:
+    """Check exact cell writes after finding one row in the table."""
+    document, table = _load_document(file_path)
+    assert table.get_value((1, 3)) == 'Bob'
+    assert table.get_value((2, 3)) is True
+    bob_table_props, _ = _cell_style_properties(document, table, 3, 1)
+    active_table_props, _ = _cell_style_properties(document, table, 3, 2)
+    assert bob_table_props['fo:background-color'] == '#ffff00'
+    assert active_table_props['fo:background-color'] == '#ffff00'
 
 
 def _inspect_row_formatted_document(file_path: Path) -> None:
@@ -377,6 +390,20 @@ def test_ods_box_write_removes_overlapping_filtered_range(
     run_box_write_removes_overlapping_filtered_range(
         TableIOOdsOdfdo, '.ods', _inspect_rewrite_box_document,
         capsys)
+
+
+def test_ods_find_value_and_write_cells(
+        capsys: CaptureFixture[str]) -> None:
+    """Found cell ranges can be read and updated without moving cursors."""
+    run_find_value_and_write_cells(
+        TableIOOdsOdfdo, '.ods',
+        _inspect_find_and_write_cells_document, capsys)
+
+
+def test_ods_boxed_table_partial_overwrite_raises(
+        capsys: CaptureFixture[str]) -> None:
+    """Boxed table writes reject overlaps that leave part of a table behind."""
+    run_boxed_table_partial_overwrite_raises(TableIOOdsOdfdo, capsys)
 
 
 def test_ods_write_row_formatted_dictdata_applies_formatting(
