@@ -22,6 +22,8 @@ setup(
     'mformat-ext >= 0.6',
     'openpyxl >= 3.1.5',
     'types-openpyxl >= 3.1.5.20260322',
-    'odfdo >= 3.22.1'
+    'odfdo >= 3.22.1',
+    'xlsxwriter >= 3.2.9',
+    'pylightxl >= 1.61'
   ]
 )
