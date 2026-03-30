@@ -27,6 +27,16 @@ _HEADING_FONT_SIZES: dict[int, int] = {
 }
 
 
+def excel_column_name(column: int) -> str:
+    """Return the Excel-style A1 column name for one zero-based column."""
+    ret = ''
+    current = column + 1
+    while current > 0:
+        current, remainder = divmod(current - 1, 26)
+        ret = chr(ord('A') + remainder) + ret
+    return ret
+
+
 class _ScanResult(NamedTuple):
     """Details gathered while scanning one worksheet section."""
 

@@ -4,10 +4,11 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 from mformat.mformat import PathLike
 from tableio.tableio import FileAccess
-from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased
+from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased, \
+    excel_column_name
 
 
 class TableIOExcelBased(TableIOSpreadsheetBased):
@@ -23,6 +24,9 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
     This class starts out empty, but whenever common functionality
     is detected it should be refactored into this class.
     """
+
+    _DATETIME_NUMBER_FORMAT = 'yyyy-mm-dd hh:mm:ss'
+    """Excel number format used for datetime values."""
 
     def __init__(self, file_name: PathLike,
                  file_access: FileAccess,
@@ -45,3 +49,36 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
         super().__init__(file_name=file_name,
                          file_access=file_access,
                          file_exists_callback=file_exists_callback)
+
+    @classmethod
+    def _datetime_number_format(cls) -> str:
+        """Return the Excel number format used for datetime values."""
+        return cls._DATETIME_NUMBER_FORMAT
+
+    @staticmethod
+    def _excel_column_name(column: int) -> str:
+        """Return the Excel A1 column name for one zero-based column."""
+        return excel_column_name(column)
+
+    @classmethod
+    def _excel_range_ref(cls, top: int, left: int,
+                         bottom: int, right: int) -> str:
+        """Return one Excel A1 range string for zero-based bounds."""
+        start = f'{cls._excel_column_name(left)}{top + 1}'
+        end = f'{cls._excel_column_name(right - 1)}{bottom}'
+        return f'{start}:{end}'
+
+    @staticmethod
+    def _filtered_table_header(value: object, index: int) -> str:
+        """Return the normalized Excel table header for one cell value."""
+        if isinstance(value, str) and value != '':
+            return value
+        if value is None:
+            return f'Column{index + 1}'
+        return str(value)
+
+    @classmethod
+    def _filtered_table_headers(cls, values: Sequence[object]) -> list[str]:
+        """Return normalized Excel table headers for one header row."""
+        return [cls._filtered_table_header(value, index)
+                for index, value in enumerate(values)]

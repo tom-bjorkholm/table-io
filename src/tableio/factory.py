@@ -51,6 +51,37 @@ class TableIOFactoryNoCapabilityMatch(ValueError):
     """
 
 
+class InsufficientCapabilities(ValueError):
+    """Raised when requested capabilities contradict requested file access.
+
+    Error raised when the caller supplies both file access and an explicit
+    Capabilities object, but the requested capabilities do not include the
+    capability implied by that access mode. For example, READ requires
+    can_read, CREATE requires can_write, and UPDATE requires both.
+    """
+
+
+def _check_capabilities_for_file_access(
+        file_access: FileAccess,
+        capabilities: Optional[Capabilities]) -> None:
+    """Raise if explicit capabilities not enough for requested access mode."""
+    if capabilities is None:
+        return
+    if file_access == FileAccess.READ and not capabilities.can_read.supported:
+        msg = 'FileAccess.READ requires can_read capability.'
+        raise InsufficientCapabilities(msg)
+    if file_access == FileAccess.CREATE and \
+            not capabilities.can_write.supported:
+        msg = 'FileAccess.CREATE requires can_write capability.'
+        raise InsufficientCapabilities(msg)
+    if file_access == FileAccess.UPDATE and (
+            not capabilities.can_write.supported or
+            not capabilities.can_read.supported):
+        msg = 'FileAccess.UPDATE requires both can_read and '
+        msg += 'can_write capabilities.'
+        raise InsufficientCapabilities(msg)
+
+
 @total_ordering
 class ImplPrio(NamedTuple):
     """Priority of an implementation."""
@@ -339,6 +370,7 @@ class TableIOFactory:
             An instance of the requested TableIO subclass.
             Intended to be used as context manager, using a with statement.
         Raises:
+            InsufficientCapabilities: If capabilities contradict file_access.
             TableIOFactoryNoSuchError: If the format_name is not registered
                                         or the implementation name is not
                                         registered.
@@ -357,7 +389,17 @@ class TableIOFactory:
                  file_access: FileAccess, args: OptionalArgs = None,
                  implementation: Optional[str] = None,
                  capabilities: Optional[Capabilities] = None) -> TableIO:
-        """Internally create an instance of a registered subclass."""
+        """Internally create an instance of a registered subclass.
+
+        Raises:
+            InsufficientCapabilities: If capabilities contradict file_access.
+            TableIOFactoryNoSuchError: If the format_name is not registered
+                                       or the implementation name is not
+                                       registered.
+            TableIOFactoryNoCapabilityMatch: If the capabilities cannot be
+                                             matched to any implementation.
+        """
+        _check_capabilities_for_file_access(file_access, capabilities)
         correct_name: Optional[str] = None
         if format_name in self._formats:
             correct_name = format_name
@@ -371,8 +413,8 @@ class TableIOFactory:
             )
         assert correct_name is not None
         format_info: FactoryFormatInfo = self._formats[correct_name]
-        best_matches = format_info.best_match_names(capabilities=capabilities,
-                                                    empty_is_ok=False)
+        best_matches = format_info.best_match_names(
+            capabilities=capabilities, empty_is_ok=False)
         if implementation is not None:
             fikeys = list(format_info._registry.keys())  # pylint: disable=protected-access # noqa: E501
             if implementation not in fikeys:
@@ -666,6 +708,7 @@ def create_tableio(format_name: str,  # pylint: disable=too-many-arguments, too-
     Returns:
         An instance of the requested TableIO subclass.
     Raises:
+        InsufficientCapabilities: If capabilities contradict file_access.
         TableIOFactoryNoSuchError: If the format_name or implementation
                                    name is not registered.
         TableIOFactoryNoCapabilityMatch: If the capabilities cannot be

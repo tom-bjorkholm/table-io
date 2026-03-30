@@ -4,7 +4,6 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional
@@ -19,6 +18,11 @@ from tableio.tableio import FileAccess
 from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
 
 from .check_capsys import check_capsys
+from .excel_inspect_helper import inspect_dict_header_fmt_workbook, \
+    inspect_fmtdict_header_fmt_workbook, inspect_formatted_workbook, \
+    inspect_multiple_filters_workbook, inspect_normalized_header_workbook, \
+    inspect_rewrite_box_workbook, inspect_row_formatted_workbook, \
+    inspect_table_width_cap_workbook, inspect_table_width_heading_workbook
 from .spreadsheet_test_helper import \
     run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
@@ -34,6 +38,7 @@ from .spreadsheet_test_helper import \
     run_round_trip_dictdata_in_box, \
     run_round_trip_sequential_list_reads, \
     run_select_missing_sheet_without_create_raises_key_error, \
+    run_table_width_uses_table_content_not_heading, \
     run_table_width_is_widen_only_with_cap, \
     run_update_default_write_starts_after_last_used_row, \
     run_write_dictdata_applies_first_row_format, \
@@ -103,50 +108,6 @@ def _inspect_updated_workbook(file_path: Path) -> None:
     workbook.close()
 
 
-def _inspect_formatted_workbook(file_path: Path) -> None:
-    """Check formatting and filtered-range metadata in one workbook."""
-    workbook = load_workbook(file_path)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert [table.ref for table in worksheet.tables.values()] == ['A1:B2']
-    assert worksheet['A1'].font.bold is True
-    assert worksheet['A2'].font.italic is True
-    assert worksheet['A2'].fill.fill_type == 'solid'
-    assert worksheet['A2'].fill.fgColor.rgb == 'FFFFFF00'
-    workbook.close()
-
-
-def _inspect_multiple_filters_workbook(file_path: Path) -> None:
-    """Check that sequential filtered writes remain separate tables."""
-    workbook = load_workbook(file_path)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert sorted(table.ref for table in worksheet.tables.values()) == [
-        'A1:B2',
-        'A4:B5'
-    ]
-    workbook.close()
-
-
-def _inspect_table_width_cap_workbook(file_path: Path) -> None:
-    """Check that repeated boxed writes do not shrink the widened column."""
-    workbook = load_workbook(file_path)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert worksheet['A2'].value == 'y'
-    assert worksheet.column_dimensions['A'].width == 50.0
-    workbook.close()
-
-
-def _inspect_rewrite_box_workbook(file_path: Path) -> None:
-    """Check that overwriting a box removes stale table metadata."""
-    workbook = load_workbook(file_path)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert not worksheet.tables
-    workbook.close()
-
-
 def _inspect_find_and_write_cells_workbook(file_path: Path) -> None:
     """Check exact cell writes after finding one row in the worksheet."""
     workbook = load_workbook(file_path)
@@ -156,51 +117,6 @@ def _inspect_find_and_write_cells_workbook(file_path: Path) -> None:
     assert worksheet['C4'].value is True
     assert worksheet['B4'].fill.fgColor.rgb == 'FFFFFF00'
     assert worksheet['C4'].fill.fgColor.rgb == 'FFFFFF00'
-    workbook.close()
-
-
-def _inspect_row_formatted_workbook(file_path: Path) -> None:
-    """Check row formatting copied from FmtDictRow writes."""
-    workbook = load_workbook(file_path)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert [table.ref for table in worksheet.tables.values()] == ['A1:B3']
-    assert worksheet['A2'].font.bold is True
-    assert worksheet['B2'].font.bold is True
-    assert worksheet['A2'].fill.fgColor.rgb == 'FFC6EFCE'
-    assert worksheet['A3'].font.italic is True
-    assert worksheet['B3'].font.italic is True
-    assert worksheet['A3'].fill.fgColor.rgb == 'FFFFC7CE'
-    workbook.close()
-
-
-def _inspect_dict_header_fmt_workbook(file_path: Path) -> None:
-    """Check header formatting produced by dict-data writes."""
-    workbook = load_workbook(file_path)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert worksheet['A1'].value == 'name'
-    assert worksheet['B1'].value == 'active'
-    assert worksheet['A1'].font.bold is True
-    assert worksheet['B1'].font.bold is True
-    assert worksheet['A1'].fill.fgColor.rgb == 'FFFFFF00'
-    assert worksheet['B1'].fill.fgColor.rgb == 'FFFFFF00'
-    assert worksheet['A2'].font.bold is False
-    assert worksheet['B2'].font.bold is False
-    workbook.close()
-
-
-def _inspect_fmtdict_header_fmt_workbook(file_path: Path) -> None:
-    """Check header and row formatting separation in fmtdict writes."""
-    workbook = load_workbook(file_path)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert worksheet['A1'].font.bold is True
-    assert worksheet['B1'].font.bold is True
-    assert worksheet['A2'].font.italic is True
-    assert worksheet['B2'].font.italic is True
-    assert worksheet['A2'].fill.fgColor.rgb == 'FFC6EFCE'
-    assert worksheet['B2'].fill.fgColor.rgb == 'FFC6EFCE'
     workbook.close()
 
 
@@ -263,29 +179,17 @@ def test_excel_write_formatted_listdata_applies_formatting_and_filter(
         capsys: CaptureFixture[str]) -> None:
     """Per-cell formatting and one filtered table are written."""
     run_write_formatted_listdata_applies_formatting_and_filter(
-        TableIOExcelOpenPyXL, '.xlsx', _inspect_formatted_workbook,
+        TableIOExcelOpenPyXL, '.xlsx', inspect_formatted_workbook,
         capsys)
 
 
 def test_excel_table_width_uses_table_content_not_heading(
         capsys: CaptureFixture[str]) -> None:
     """Table column widths ignore headings written outside table cells."""
-    with TemporaryDirectory() as temp_dir:
-        file_name = Path(temp_dir) / 'table_width_heading'
-        with TableIOExcelOpenPyXL(file_name, FileAccess.CREATE) as table_io:
-            table_io.write_heading('Heading text that is much wider than '
-                                   'column A needs')
-            table_io.write_table_listdata([
-                ['id', 'report date'],
-                ['A', datetime(2026, 3, 24, 14, 30, 0)]
-            ])
-        workbook = load_workbook(Path(temp_dir) / 'table_width_heading.xlsx')
-        worksheet = workbook.active
-        assert isinstance(worksheet, Worksheet)
-        assert worksheet.column_dimensions['A'].width == 13.0
-        assert worksheet.column_dimensions['B'].width == 21.0
-        workbook.close()
-    check_capsys(capsys)
+    run_table_width_uses_table_content_not_heading(
+        TableIOExcelOpenPyXL, '.xlsx',
+        lambda file_path: inspect_table_width_heading_workbook(
+            file_path, 13.0, 21.0), capsys)
 
 
 def test_excel_write_multiple_filtered_ranges_keeps_all_tables(
@@ -293,7 +197,7 @@ def test_excel_write_multiple_filtered_ranges_keeps_all_tables(
     """Sequential filtered writes are kept as separate worksheet tables."""
     run_write_multiple_filtered_ranges_keeps_all_ranges(
         TableIOExcelOpenPyXL, '.xlsx',
-        _inspect_multiple_filters_workbook, capsys)
+        inspect_multiple_filters_workbook, capsys)
 
 
 def test_excel_table_width_is_widen_only_with_cap(
@@ -301,7 +205,8 @@ def test_excel_table_width_is_widen_only_with_cap(
     """Box rewrites keep an already widened column width."""
     run_table_width_is_widen_only_with_cap(
         TableIOExcelOpenPyXL, '.xlsx',
-        _inspect_table_width_cap_workbook, capsys)
+        lambda file_path: inspect_table_width_cap_workbook(
+            file_path, 50.0), capsys)
 
 
 def test_excel_box_write_removes_overlapping_filtered_table(
@@ -309,7 +214,7 @@ def test_excel_box_write_removes_overlapping_filtered_table(
     """Rewriting a boxed area removes any stale overlapping table metadata."""
     run_box_write_removes_overlapping_filtered_range(
         TableIOExcelOpenPyXL, '.xlsx',
-        _inspect_rewrite_box_workbook, capsys)
+        inspect_rewrite_box_workbook, capsys)
 
 
 def test_excel_find_value_and_write_cells(
@@ -332,7 +237,7 @@ def test_excel_write_row_formatted_dictdata_applies_formatting(
     """Row formatting for dict rows is copied to each written cell."""
     run_write_row_formatted_dictdata_applies_formatting(
         TableIOExcelOpenPyXL, '.xlsx',
-        _inspect_row_formatted_workbook, capsys)
+        inspect_row_formatted_workbook, capsys)
 
 
 def test_excel_write_dictdata_applies_first_row_format(
@@ -340,7 +245,7 @@ def test_excel_write_dictdata_applies_first_row_format(
     """Dict header cells can be formatted with first_row_format."""
     run_write_dictdata_applies_first_row_format(
         TableIOExcelOpenPyXL, '.xlsx',
-        _inspect_dict_header_fmt_workbook, capsys)
+        inspect_dict_header_fmt_workbook, capsys)
 
 
 def test_excel_write_fmtdictdata_applies_first_row_format(
@@ -348,7 +253,7 @@ def test_excel_write_fmtdictdata_applies_first_row_format(
     """Formatted dict writes keep header and data-row formatting separate."""
     run_write_fmtdictdata_applies_first_row_format(
         TableIOExcelOpenPyXL, '.xlsx',
-        _inspect_fmtdict_header_fmt_workbook, capsys)
+        inspect_fmtdict_header_fmt_workbook, capsys)
 
 
 def test_excel_read_formula_uses_cached_value(
@@ -392,13 +297,6 @@ def test_excel_update_creates_new_read_sheet_and_normalizes_table_headers(
             table_io.write_table_listdata(
                 [[1, None], [2, 3]],
                 filtered_data_range=True)
-        workbook = load_workbook(Path(temp_dir) / 'update_headers.xlsx')
-        worksheet = workbook['Numbers']
-        assert isinstance(worksheet, Worksheet)
-        assert worksheet['A1'].value == '1'
-        assert worksheet['B1'].value == 'Column2'
-        assert [table.ref for table in worksheet.tables.values()] == [
-            'A1:B2'
-        ]
-        workbook.close()
+        inspect_normalized_header_workbook(
+            Path(temp_dir) / 'update_headers.xlsx', 'Numbers')
     check_capsys(capsys)

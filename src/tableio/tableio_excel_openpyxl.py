@@ -263,26 +263,18 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         assert self.worksheet is not None
         del self.worksheet.tables[name]
 
-    @staticmethod
-    def _range_ref(top: int, left: int, bottom: int, right: int) -> str:
-        """Return an Excel A1 range string for a zero-based rectangle."""
-        start = f'{get_column_letter(left + 1)}{top + 1}'
-        end = f'{get_column_letter(right)}{bottom}'
-        return f'{start}:{end}'
-
     def _normalize_filtered_table_header(self, top: int, left: int,
                                          right: int) -> None:
         """Convert the filtered table header row to strings when needed."""
         assert self.worksheet is not None
         assert self.read_worksheet is not None
-        for column in range(left, right):
+        headers = self._filtered_table_headers([
+            self.worksheet.cell(row=top + 1, column=column + 1).value
+            for column in range(left, right)
+        ])
+        for column_offset, header_value in enumerate(headers):
+            column = left + column_offset
             cell = self.worksheet.cell(row=top + 1, column=column + 1)
-            if isinstance(cell.value, str) and cell.value != '':
-                continue
-            if cell.value is None:
-                header_value = f'Column{column - left + 1}'
-            else:
-                header_value = str(cell.value)
             cell.value = header_value
             if self.read_worksheet is not self.worksheet:
                 read_cell = self.read_worksheet.cell(row=top + 1,
@@ -296,8 +288,8 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         self._normalize_filtered_table_header(bounds[0], bounds[1], bounds[3])
         self.worksheet.add_table(
             Table(displayName=name,
-                  ref=self._range_ref(bounds[0], bounds[1],
-                                      bounds[2], bounds[3])))
+                  ref=self._excel_range_ref(bounds[0], bounds[1],
+                                            bounds[2], bounds[3])))
 
     def _set_column_width_if_wider(self, column: int, width: float) -> None:
         """Widen one worksheet column if the target width is larger."""

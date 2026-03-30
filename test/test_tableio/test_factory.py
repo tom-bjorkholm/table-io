@@ -12,7 +12,7 @@ from tableio.tableio import TableIO, Descriptor, FileAccess
 from tableio.factory import (
     ImplPrio, BestMatch, FactoryFormatInfo, TableIOFactory,
     TableIOFactoryConflictError, TableIOFactoryNoSuchError,
-    TableIOFactoryNoCapabilityMatch,
+    TableIOFactoryNoCapabilityMatch, InsufficientCapabilities,
     create_tableio, filter_args_tableio, list_registered_tableio,
     list_implementations_tableio, usage_tableio, register_tableio)
 from tableio.optional_args import OptionalArgsDict
@@ -159,6 +159,10 @@ class TestErrorClasses:
         """Verify capability-match error subclasses ValueError."""
         assert issubclass(
             TableIOFactoryNoCapabilityMatch, ValueError)
+
+    def test_insufficient_capabilities_is_value_error(self) -> None:
+        """Verify insufficient-capabilities error subclasses ValueError."""
+        assert issubclass(InsufficientCapabilities, ValueError)
 
 
 # -- ImplPrio ------------------------------------------------------------
@@ -496,6 +500,8 @@ class TestTableIOFactoryCreate:
         """Implementation not matching capabilities raises."""
         f = _make_factory_stubs()
         caps = Capabilities(
+            can_write=SingleCapability(
+                True, Strictness.STRICT),
             can_read=SingleCapability(
                 True, Strictness.STRICT))
         with pytest.raises(TableIOFactoryNoCapabilityMatch):
@@ -548,6 +554,50 @@ class TestTableIOFactoryCreate:
             'Alpha', tmp_path / 'f', FileAccess.CREATE,
             args=None)
         assert isinstance(result, StubAlphaHigh)
+
+    def test_create_rejects_capabilities_without_write(
+            self, tmp_path: Path) -> None:
+        """CREATE rejects explicit capabilities that omit write support."""
+        f = _make_factory_stubs()
+        caps = Capabilities(can_read=_SUP)
+        with pytest.raises(InsufficientCapabilities,
+                           match='FileAccess.CREATE'):
+            f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
+                       capabilities=caps)
+
+    def test_read_rejects_capabilities_without_read(
+            self, tmp_path: Path) -> None:
+        """READ rejects explicit capabilities that omit read support."""
+        f = _make_factory_stubs()
+        caps = Capabilities(can_write=_SUP)
+        with pytest.raises(InsufficientCapabilities,
+                           match='FileAccess.READ'):
+            f.i_create('Alpha', tmp_path / 'f', FileAccess.READ,
+                       capabilities=caps)
+
+    @pytest.mark.parametrize('caps', [
+        pytest.param(Capabilities(can_read=_SUP), id='read-only'),
+        pytest.param(Capabilities(can_write=_SUP), id='write-only'),
+        pytest.param(Capabilities(), id='neither')
+    ])
+    def test_update_rejects_capabilities_without_read_and_write(
+            self, tmp_path: Path, caps: Capabilities) -> None:
+        """UPDATE requires both read and write in explicit capabilities."""
+        f = _make_factory_stubs()
+        with pytest.raises(InsufficientCapabilities,
+                           match='FileAccess.UPDATE'):
+            f.i_create('Alpha', tmp_path / 'f', FileAccess.UPDATE,
+                       capabilities=caps)
+
+    def test_inconsistent_request_raises_before_format_lookup(
+            self, tmp_path: Path) -> None:
+        """Capability-vs-access errors are raised before format lookup."""
+        f = _make_factory_stubs()
+        caps = Capabilities(can_write=_SUP)
+        with pytest.raises(InsufficientCapabilities,
+                           match='FileAccess.READ'):
+            f.i_create('NoSuch', tmp_path / 'f', FileAccess.READ,
+                       capabilities=caps)
 
 
 # -- TableIOFactory: filter_args -----------------------------------------

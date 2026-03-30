@@ -151,6 +151,25 @@ def run_table_width_is_widen_only_with_cap(
     check_capsys(capsys)
 
 
+def run_table_width_uses_table_content_not_heading(
+        tableio_class: type[TableIO],
+        extension: str,
+        inspect_file: Callable[[Path], None],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared table-width case with one heading and one table."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'table_width_heading'
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_heading('Heading text that is much wider than '
+                                   'column A needs')
+            table_io.write_table_listdata([
+                ['id', 'report date'],
+                ['A', datetime(2026, 3, 24, 14, 30, 0)]
+            ])
+        inspect_file(Path(temp_dir) / f'table_width_heading{extension}')
+    check_capsys(capsys)
+
+
 def run_box_write_removes_overlapping_filtered_range(
         tableio_class: type[TableIO],
         extension: str,

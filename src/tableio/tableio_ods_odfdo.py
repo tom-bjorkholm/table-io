@@ -11,7 +11,8 @@ from odfdo.utils import is_RFC3066
 from mformat.mformat import PathLike
 from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
-from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased
+from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased, \
+    excel_column_name
 from tableio.value_type import Fmt, Value, get_checked_type
 from tableio.capability import Capabilities, CAP_ALL_IMPLEMENTED
 
@@ -216,12 +217,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
     @staticmethod
     def _column_name(column: int) -> str:
         """Return an A1 column name for one zero-based column index."""
-        ret = ''
-        current = column + 1
-        while current > 0:
-            current, remainder = divmod(current - 1, 26)
-            ret = chr(ord('A') + remainder) + ret
-        return ret
+        return excel_column_name(column)
 
     @classmethod
     def _cell_ref(cls, row: int, column: int) -> str:

@@ -43,6 +43,7 @@ def run_examples() -> None:
             '-m', f'example.{source_file.stem}',
             '-f',
             'all',
+            '--implementation', 'all',
             '-o',
             str(output_base)]
         process = subprocess.run(

@@ -105,6 +105,7 @@
   * [TableIOFactoryConflictError](#tableio.factory.TableIOFactoryConflictError)
   * [TableIOFactoryNoSuchError](#tableio.factory.TableIOFactoryNoSuchError)
   * [TableIOFactoryNoCapabilityMatch](#tableio.factory.TableIOFactoryNoCapabilityMatch)
+  * [InsufficientCapabilities](#tableio.factory.InsufficientCapabilities)
   * [ImplPrio](#tableio.factory.ImplPrio)
     * [format\_name](#tableio.factory.ImplPrio.format_name)
     * [implementation](#tableio.factory.ImplPrio.implementation)
@@ -247,6 +248,22 @@
   * [CAP\_IMPLEMENTED](#tableio.capability.CAP_IMPLEMENTED)
   * [CAP\_IGNORED](#tableio.capability.CAP_IGNORED)
   * [CAP\_UNSUPPORTED](#tableio.capability.CAP_UNSUPPORTED)
+* [tableio.tableio\_excel\_xlsxwriter](#tableio.tableio_excel_xlsxwriter)
+  * [\_WorksheetLike](#tableio.tableio_excel_xlsxwriter._WorksheetLike)
+    * [add\_table](#tableio.tableio_excel_xlsxwriter._WorksheetLike.add_table)
+    * [set\_column](#tableio.tableio_excel_xlsxwriter._WorksheetLike.set_column)
+    * [write](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write)
+    * [write\_blank](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write_blank)
+  * [\_WorkbookLike](#tableio.tableio_excel_xlsxwriter._WorkbookLike)
+    * [add\_worksheet](#tableio.tableio_excel_xlsxwriter._WorkbookLike.add_worksheet)
+    * [add\_format](#tableio.tableio_excel_xlsxwriter._WorkbookLike.add_format)
+    * [close](#tableio.tableio_excel_xlsxwriter._WorkbookLike.close)
+  * [TableIOExcelXlsxWriter](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter)
+    * [\_\_init\_\_](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.__init__)
+    * [get\_capabilities](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_capabilities)
+    * [get\_description](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_description)
+    * [file\_name\_extension](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.file_name_extension)
+    * [open](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.open)
 * [tableio.tableio\_csv](#tableio.tableio_csv)
   * [CsvDefinitions](#tableio.tableio_csv.CsvDefinitions)
     * [type](#tableio.tableio_csv.CsvDefinitions.type)
@@ -261,6 +278,7 @@
     * [get\_description](#tableio.tableio_csv.TableIOCsv.get_description)
     * [get\_capabilities](#tableio.tableio_csv.TableIOCsv.get_capabilities)
 * [tableio.tableio\_spreadsheetbased](#tableio.tableio_spreadsheetbased)
+  * [excel\_column\_name](#tableio.tableio_spreadsheetbased.excel_column_name)
   * [TableIOSpreadsheetBased](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased)
     * [\_\_init\_\_](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__)
 * [tableio.tableio\_mformatbased](#tableio.tableio_mformatbased)
@@ -1956,6 +1974,21 @@ implementation, or that the requester is requesting a specific
 format name or implementation name, and the implementation(s)
 with those name(s) do not support the requested capabilities.
 
+<a id="tableio.factory.InsufficientCapabilities"></a>
+
+## InsufficientCapabilities Objects
+
+```python
+class InsufficientCapabilities(ValueError)
+```
+
+Raised when requested capabilities contradict requested file access.
+
+Error raised when the caller supplies both file access and an explicit
+Capabilities object, but the requested capabilities do not include the
+capability implied by that access mode. For example, READ requires
+can_read, CREATE requires can_write, and UPDATE requires both.
+
 <a id="tableio.factory.ImplPrio"></a>
 
 ## ImplPrio Objects
@@ -2289,6 +2322,7 @@ Create an instance of a registered TableIO subclass.
 
 **Raises**:
 
+- `InsufficientCapabilities` - If capabilities contradict file_access.
 - `TableIOFactoryNoSuchError` - If the format_name is not registered
   or the implementation name is not
   registered.
@@ -2309,6 +2343,15 @@ def i_create(format_name: str,
 ```
 
 Internally create an instance of a registered subclass.
+
+**Raises**:
+
+- `InsufficientCapabilities` - If capabilities contradict file_access.
+- `TableIOFactoryNoSuchError` - If the format_name is not registered
+  or the implementation name is not
+  registered.
+- `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
+  matched to any implementation.
 
 <a id="tableio.factory.TableIOFactory.filter_args"></a>
 
@@ -2562,6 +2605,7 @@ This is a shortcut for TableIOFactory.create().
 
 **Raises**:
 
+- `InsufficientCapabilities` - If capabilities contradict file_access.
 - `TableIOFactoryNoSuchError` - If the format_name or implementation
   name is not registered.
 - `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
@@ -4149,6 +4193,178 @@ a value in a specific location in the file. Writing the value to a
 different location would not make sense. Thus the only sensible thing
 to do is to raise an exception.
 
+<a id="tableio.tableio_excel_xlsxwriter"></a>
+
+# tableio.tableio\_excel\_xlsxwriter
+
+TableIO writer class for Excel files using XlsxWriter.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike"></a>
+
+## \_WorksheetLike Objects
+
+```python
+class _WorksheetLike(Protocol)
+```
+
+Protocol for the subset of Worksheet methods used here.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.add_table"></a>
+
+#### add\_table
+
+```python
+def add_table(*args: object, **kwargs: object) -> int
+```
+
+Add one table to the worksheet.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.set_column"></a>
+
+#### set\_column
+
+```python
+def set_column(*args: object, **kwargs: object) -> object
+```
+
+Set one worksheet column width.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.write"></a>
+
+#### write
+
+```python
+def write(row: int, col: int, *args: object) -> object
+```
+
+Write one cell value.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.write_blank"></a>
+
+#### write\_blank
+
+```python
+def write_blank(row: int,
+                col: int,
+                blank: object,
+                cell_format: Optional[object] = None) -> object
+```
+
+Write one blank cell.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorkbookLike"></a>
+
+## \_WorkbookLike Objects
+
+```python
+class _WorkbookLike(Protocol)
+```
+
+Protocol for the subset of Workbook methods used here.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorkbookLike.add_worksheet"></a>
+
+#### add\_worksheet
+
+```python
+def add_worksheet(name: Optional[str] = None) -> _WorksheetLike
+```
+
+Add one worksheet to the workbook.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorkbookLike.add_format"></a>
+
+#### add\_format
+
+```python
+def add_format(properties: Optional[dict[str, object]] = None) -> object
+```
+
+Create one format in the workbook.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorkbookLike.close"></a>
+
+#### close
+
+```python
+def close() -> None
+```
+
+Close the workbook and write it to disk.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter"></a>
+
+## TableIOExcelXlsxWriter Objects
+
+```python
+class TableIOExcelXlsxWriter(TableIOExcelBased)
+```
+
+TableIO writer class for Excel files using XlsxWriter.
+
+XlsxWriter is a creation-only backend. It can create `.xlsx` files with
+multiple sheets, formatting, filtered table ranges and boxed writes, but
+it cannot read or modify an existing workbook. This implementation keeps
+an in-memory sheet model so the shared spreadsheet writing logic can still
+manage cursor positions, boxed overwrites and filtered-range metadata
+during one open CREATE session.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(
+        file_name: PathLike,
+        file_access: FileAccess,
+        file_exists_callback: Optional[Callable[[str], None]] = None) -> None
+```
+
+Initialize the XlsxWriter-backed Excel writer.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_capabilities"></a>
+
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Return the capabilities for the XlsxWriter Excel backend.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_description"></a>
+
+#### get\_description
+
+```python
+@classmethod
+def get_description(cls) -> Descriptor
+```
+
+Return the descriptor for the XlsxWriter Excel backend.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.file_name_extension"></a>
+
+#### file\_name\_extension
+
+```python
+@classmethod
+def file_name_extension(cls) -> str
+```
+
+Return the file name extension of the implementation.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open one workbook for CREATE access.
+
 <a id="tableio.tableio_csv"></a>
 
 # tableio.tableio\_csv
@@ -4283,6 +4499,16 @@ Return the capabilities of the TableIOCsv reader/writer class.
 # tableio.tableio\_spreadsheetbased
 
 Intermediate base class for spreadsheet-based file formats.
+
+<a id="tableio.tableio_spreadsheetbased.excel_column_name"></a>
+
+#### excel\_column\_name
+
+```python
+def excel_column_name(column: int) -> str
+```
+
+Return the Excel-style A1 column name for one zero-based column.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased"></a>
 

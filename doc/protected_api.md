@@ -175,6 +175,8 @@
   * [TableIOFactoryConflictError](#tableio.factory.TableIOFactoryConflictError)
   * [TableIOFactoryNoSuchError](#tableio.factory.TableIOFactoryNoSuchError)
   * [TableIOFactoryNoCapabilityMatch](#tableio.factory.TableIOFactoryNoCapabilityMatch)
+  * [InsufficientCapabilities](#tableio.factory.InsufficientCapabilities)
+  * [\_check\_capabilities\_for\_file\_access](#tableio.factory._check_capabilities_for_file_access)
   * [ImplPrio](#tableio.factory.ImplPrio)
     * [format\_name](#tableio.factory.ImplPrio.format_name)
     * [implementation](#tableio.factory.ImplPrio.implementation)
@@ -323,6 +325,52 @@
   * [CAP\_IMPLEMENTED](#tableio.capability.CAP_IMPLEMENTED)
   * [CAP\_IGNORED](#tableio.capability.CAP_IGNORED)
   * [CAP\_UNSUPPORTED](#tableio.capability.CAP_UNSUPPORTED)
+* [tableio.tableio\_excel\_xlsxwriter](#tableio.tableio_excel_xlsxwriter)
+  * [\_CellStyle](#tableio.tableio_excel_xlsxwriter._CellStyle)
+  * [\_FormatKey](#tableio.tableio_excel_xlsxwriter._FormatKey)
+  * [\_WorksheetLike](#tableio.tableio_excel_xlsxwriter._WorksheetLike)
+    * [add\_table](#tableio.tableio_excel_xlsxwriter._WorksheetLike.add_table)
+    * [set\_column](#tableio.tableio_excel_xlsxwriter._WorksheetLike.set_column)
+    * [write](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write)
+    * [write\_blank](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write_blank)
+  * [\_WorkbookLike](#tableio.tableio_excel_xlsxwriter._WorkbookLike)
+    * [add\_worksheet](#tableio.tableio_excel_xlsxwriter._WorkbookLike.add_worksheet)
+    * [add\_format](#tableio.tableio_excel_xlsxwriter._WorkbookLike.add_format)
+    * [close](#tableio.tableio_excel_xlsxwriter._WorkbookLike.close)
+  * [\_SheetState](#tableio.tableio_excel_xlsxwriter._SheetState)
+  * [TableIOExcelXlsxWriter](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter)
+    * [\_\_init\_\_](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.__init__)
+    * [get\_capabilities](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_capabilities)
+    * [get\_description](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_description)
+    * [file\_name\_extension](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.file_name_extension)
+    * [open](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.open)
+    * [\_end\_state](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._end_state)
+    * [\_write\_file\_suffix](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_file_suffix)
+    * [\_close](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._close)
+    * [\_create\_sheet\_state](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._create_sheet_state)
+    * [\_current\_sheet\_state](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._current_sheet_state)
+    * [\_list\_sheets](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._list_sheets)
+    * [\_select\_sheet](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._select_sheet)
+    * [\_current\_sheet\_name](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._current_sheet_name)
+    * [\_read\_sheet](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_sheet)
+    * [\_write\_sheet](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_sheet)
+    * [\_write\_value\_to\_sheet](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_value_to_sheet)
+    * [\_set\_cell\_format](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_cell_format)
+    * [\_apply\_heading\_style](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._apply_heading_style)
+    * [\_last\_used\_row](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._last_used_row)
+    * [\_last\_used\_column](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._last_used_column)
+    * [\_cell\_value](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._cell_value)
+    * [\_filtered\_range\_infos](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._filtered_range_infos)
+    * [\_delete\_filtered\_range](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._delete_filtered_range)
+    * [\_add\_filtered\_range](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._add_filtered_range)
+    * [\_set\_column\_width\_if\_wider](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_column_width_if_wider)
+    * [\_filter\_range\_name\_in\_use](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._filter_range_name_in_use)
+    * [\_read\_table\_listdata](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_table_listdata)
+    * [\_read\_table\_dictdata](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_table_dictdata)
+    * [\_cell\_fmt](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._cell_fmt)
+    * [\_remove\_table\_metadata](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._remove_table_metadata)
+    * [\_write\_actual\_cell](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_actual_cell)
+    * [\_xlsx\_format](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._xlsx_format)
 * [tableio.tableio\_csv](#tableio.tableio_csv)
   * [\_validate\_quoting](#tableio.tableio_csv._validate_quoting)
   * [CsvDefinitions](#tableio.tableio_csv.CsvDefinitions)
@@ -351,6 +399,7 @@
     * [\_read\_table\_listdata](#tableio.tableio_csv.TableIOCsv._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio_csv.TableIOCsv._read_table_dictdata)
 * [tableio.tableio\_spreadsheetbased](#tableio.tableio_spreadsheetbased)
+  * [excel\_column\_name](#tableio.tableio_spreadsheetbased.excel_column_name)
   * [\_ScanResult](#tableio.tableio_spreadsheetbased._ScanResult)
   * [\_SheetState](#tableio.tableio_spreadsheetbased._SheetState)
   * [TableIOSpreadsheetBased](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased)
@@ -435,7 +484,13 @@
     * [\_read\_table\_dictdata](#tableio.tableio_mformatbased.TableIOMformatBased._read_table_dictdata)
 * [tableio.tableio\_excelbased](#tableio.tableio_excelbased)
   * [TableIOExcelBased](#tableio.tableio_excelbased.TableIOExcelBased)
+    * [\_DATETIME\_NUMBER\_FORMAT](#tableio.tableio_excelbased.TableIOExcelBased._DATETIME_NUMBER_FORMAT)
     * [\_\_init\_\_](#tableio.tableio_excelbased.TableIOExcelBased.__init__)
+    * [\_datetime\_number\_format](#tableio.tableio_excelbased.TableIOExcelBased._datetime_number_format)
+    * [\_excel\_column\_name](#tableio.tableio_excelbased.TableIOExcelBased._excel_column_name)
+    * [\_excel\_range\_ref](#tableio.tableio_excelbased.TableIOExcelBased._excel_range_ref)
+    * [\_filtered\_table\_header](#tableio.tableio_excelbased.TableIOExcelBased._filtered_table_header)
+    * [\_filtered\_table\_headers](#tableio.tableio_excelbased.TableIOExcelBased._filtered_table_headers)
 * [tableio.reg\_pkg\_formats](#tableio.reg_pkg_formats)
   * [register\_formats\_in\_pkg](#tableio.reg_pkg_formats.register_formats_in_pkg)
 * [tableio.tableio\_excel\_openpyxl](#tableio.tableio_excel_openpyxl)
@@ -466,7 +521,6 @@
     * [\_table\_bounds](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_bounds)
     * [\_filtered\_range\_infos](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._filtered_range_infos)
     * [\_delete\_filtered\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._delete_filtered_range)
-    * [\_range\_ref](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._range_ref)
     * [\_normalize\_filtered\_table\_header](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._normalize_filtered_table_header)
     * [\_add\_filtered\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._add_filtered_range)
     * [\_set\_column\_width\_if\_wider](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_column_width_if_wider)
@@ -3108,6 +3162,32 @@ implementation, or that the requester is requesting a specific
 format name or implementation name, and the implementation(s)
 with those name(s) do not support the requested capabilities.
 
+<a id="tableio.factory.InsufficientCapabilities"></a>
+
+## InsufficientCapabilities Objects
+
+```python
+class InsufficientCapabilities(ValueError)
+```
+
+Raised when requested capabilities contradict requested file access.
+
+Error raised when the caller supplies both file access and an explicit
+Capabilities object, but the requested capabilities do not include the
+capability implied by that access mode. For example, READ requires
+can_read, CREATE requires can_write, and UPDATE requires both.
+
+<a id="tableio.factory._check_capabilities_for_file_access"></a>
+
+#### \_check\_capabilities\_for\_file\_access
+
+```python
+def _check_capabilities_for_file_access(
+        file_access: FileAccess, capabilities: Optional[Capabilities]) -> None
+```
+
+Raise if explicit capabilities not enough for requested access mode.
+
 <a id="tableio.factory.ImplPrio"></a>
 
 ## ImplPrio Objects
@@ -3441,6 +3521,7 @@ Create an instance of a registered TableIO subclass.
 
 **Raises**:
 
+- `InsufficientCapabilities` - If capabilities contradict file_access.
 - `TableIOFactoryNoSuchError` - If the format_name is not registered
   or the implementation name is not
   registered.
@@ -3461,6 +3542,15 @@ def i_create(format_name: str,
 ```
 
 Internally create an instance of a registered subclass.
+
+**Raises**:
+
+- `InsufficientCapabilities` - If capabilities contradict file_access.
+- `TableIOFactoryNoSuchError` - If the format_name is not registered
+  or the implementation name is not
+  registered.
+- `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
+  matched to any implementation.
 
 <a id="tableio.factory.TableIOFactory.filter_args"></a>
 
@@ -3714,6 +3804,7 @@ This is a shortcut for TableIOFactory.create().
 
 **Raises**:
 
+- `InsufficientCapabilities` - If capabilities contradict file_access.
 - `TableIOFactoryNoSuchError` - If the format_name or implementation
   name is not registered.
 - `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
@@ -5371,6 +5462,487 @@ a value in a specific location in the file. Writing the value to a
 different location would not make sense. Thus the only sensible thing
 to do is to raise an exception.
 
+<a id="tableio.tableio_excel_xlsxwriter"></a>
+
+# tableio.tableio\_excel\_xlsxwriter
+
+TableIO writer class for Excel files using XlsxWriter.
+
+<a id="tableio.tableio_excel_xlsxwriter._CellStyle"></a>
+
+## \_CellStyle Objects
+
+```python
+class _CellStyle(NamedTuple)
+```
+
+Formatting stored for one in-memory cell.
+
+<a id="tableio.tableio_excel_xlsxwriter._FormatKey"></a>
+
+## \_FormatKey Objects
+
+```python
+class _FormatKey(NamedTuple)
+```
+
+Cache key for one XlsxWriter format object.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike"></a>
+
+## \_WorksheetLike Objects
+
+```python
+class _WorksheetLike(Protocol)
+```
+
+Protocol for the subset of Worksheet methods used here.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.add_table"></a>
+
+#### add\_table
+
+```python
+def add_table(*args: object, **kwargs: object) -> int
+```
+
+Add one table to the worksheet.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.set_column"></a>
+
+#### set\_column
+
+```python
+def set_column(*args: object, **kwargs: object) -> object
+```
+
+Set one worksheet column width.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.write"></a>
+
+#### write
+
+```python
+def write(row: int, col: int, *args: object) -> object
+```
+
+Write one cell value.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.write_blank"></a>
+
+#### write\_blank
+
+```python
+def write_blank(row: int,
+                col: int,
+                blank: object,
+                cell_format: Optional[object] = None) -> object
+```
+
+Write one blank cell.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorkbookLike"></a>
+
+## \_WorkbookLike Objects
+
+```python
+class _WorkbookLike(Protocol)
+```
+
+Protocol for the subset of Workbook methods used here.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorkbookLike.add_worksheet"></a>
+
+#### add\_worksheet
+
+```python
+def add_worksheet(name: Optional[str] = None) -> _WorksheetLike
+```
+
+Add one worksheet to the workbook.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorkbookLike.add_format"></a>
+
+#### add\_format
+
+```python
+def add_format(properties: Optional[dict[str, object]] = None) -> object
+```
+
+Create one format in the workbook.
+
+<a id="tableio.tableio_excel_xlsxwriter._WorkbookLike.close"></a>
+
+#### close
+
+```python
+def close() -> None
+```
+
+Close the workbook and write it to disk.
+
+<a id="tableio.tableio_excel_xlsxwriter._SheetState"></a>
+
+## \_SheetState Objects
+
+```python
+@dataclass
+class _SheetState()
+```
+
+In-memory state for one XlsxWriter worksheet.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter"></a>
+
+## TableIOExcelXlsxWriter Objects
+
+```python
+class TableIOExcelXlsxWriter(TableIOExcelBased)
+```
+
+TableIO writer class for Excel files using XlsxWriter.
+
+XlsxWriter is a creation-only backend. It can create `.xlsx` files with
+multiple sheets, formatting, filtered table ranges and boxed writes, but
+it cannot read or modify an existing workbook. This implementation keeps
+an in-memory sheet model so the shared spreadsheet writing logic can still
+manage cursor positions, boxed overwrites and filtered-range metadata
+during one open CREATE session.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(
+        file_name: PathLike,
+        file_access: FileAccess,
+        file_exists_callback: Optional[Callable[[str], None]] = None) -> None
+```
+
+Initialize the XlsxWriter-backed Excel writer.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_capabilities"></a>
+
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Return the capabilities for the XlsxWriter Excel backend.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_description"></a>
+
+#### get\_description
+
+```python
+@classmethod
+def get_description(cls) -> Descriptor
+```
+
+Return the descriptor for the XlsxWriter Excel backend.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.file_name_extension"></a>
+
+#### file\_name\_extension
+
+```python
+@classmethod
+def file_name_extension(cls) -> str
+```
+
+Return the file name extension of the implementation.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open one workbook for CREATE access.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._end_state"></a>
+
+#### \_end\_state
+
+```python
+def _end_state() -> None
+```
+
+Finalize in-memory state before closing.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_file_suffix"></a>
+
+#### \_write\_file\_suffix
+
+```python
+def _write_file_suffix() -> None
+```
+
+Write the workbook to disk.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._close"></a>
+
+#### \_close
+
+```python
+def _close() -> None
+```
+
+Release workbook and worksheet references.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._create_sheet_state"></a>
+
+#### \_create\_sheet\_state
+
+```python
+def _create_sheet_state(sheet_name: str) -> _SheetState
+```
+
+Create and register one worksheet state.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._current_sheet_state"></a>
+
+#### \_current\_sheet\_state
+
+```python
+def _current_sheet_state() -> _SheetState
+```
+
+Return the selected worksheet state.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._list_sheets"></a>
+
+#### \_list\_sheets
+
+```python
+def _list_sheets() -> list[str]
+```
+
+List the sheets in the workbook.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._select_sheet"></a>
+
+#### \_select\_sheet
+
+```python
+def _select_sheet(sheet_name: str, create: bool = False) -> None
+```
+
+Select one workbook sheet, optionally creating it.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._current_sheet_name"></a>
+
+#### \_current\_sheet\_name
+
+```python
+def _current_sheet_name() -> str
+```
+
+Return the name of the selected worksheet.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_sheet"></a>
+
+#### \_read\_sheet
+
+```python
+def _read_sheet() -> object
+```
+
+Return the in-memory readable worksheet state.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_sheet"></a>
+
+#### \_write\_sheet
+
+```python
+def _write_sheet() -> object
+```
+
+Return the in-memory writable worksheet state.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_value_to_sheet"></a>
+
+#### \_write\_value\_to\_sheet
+
+```python
+def _write_value_to_sheet(sheet: object, row: int, column: int,
+                          value: object) -> None
+```
+
+Write one value to one worksheet cell.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_cell_format"></a>
+
+#### \_set\_cell\_format
+
+```python
+def _set_cell_format(sheet: object, row: int, column: int,
+                     fmt: Optional[Fmt]) -> None
+```
+
+Apply cell formatting to one worksheet cell.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._apply_heading_style"></a>
+
+#### \_apply\_heading\_style
+
+```python
+def _apply_heading_style(row: int, column: int, level: int) -> None
+```
+
+Apply the heading style to one worksheet cell.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._last_used_row"></a>
+
+#### \_last\_used\_row
+
+```python
+def _last_used_row(sheet: object) -> int
+```
+
+Return the last used row index on a worksheet.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._last_used_column"></a>
+
+#### \_last\_used\_column
+
+```python
+def _last_used_column(sheet: object) -> int
+```
+
+Return the last used column index on a worksheet.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._cell_value"></a>
+
+#### \_cell\_value
+
+```python
+def _cell_value(sheet: object, row: int, column: int) -> Value
+```
+
+Return one worksheet cell as a public Value.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._filtered_range_infos"></a>
+
+#### \_filtered\_range\_infos
+
+```python
+def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
+```
+
+Return the worksheet filtered ranges.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._delete_filtered_range"></a>
+
+#### \_delete\_filtered\_range
+
+```python
+def _delete_filtered_range(name: str) -> None
+```
+
+Delete one worksheet filtered range.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._add_filtered_range"></a>
+
+#### \_add\_filtered\_range
+
+```python
+def _add_filtered_range(bounds: tuple[int, int, int, int], name: str) -> None
+```
+
+Add one Excel table for a filtered data range.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_column_width_if_wider"></a>
+
+#### \_set\_column\_width\_if\_wider
+
+```python
+def _set_column_width_if_wider(column: int, width: float) -> None
+```
+
+Widen one worksheet column if the target width is larger.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._filter_range_name_in_use"></a>
+
+#### \_filter\_range\_name\_in\_use
+
+```python
+def _filter_range_name_in_use(name: str) -> bool
+```
+
+Return whether one filter range name is already used.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_table_listdata"></a>
+
+#### \_read\_table\_listdata
+
+```python
+def _read_table_listdata(
+        box: Optional[object] = None) -> ReadResult[list[list[Value]]]
+```
+
+Reject list-data reads for the write-only backend.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_table_dictdata"></a>
+
+#### \_read\_table\_dictdata
+
+```python
+def _read_table_dictdata(
+        box: Optional[object] = None) -> ReadResult[list[dict[str, Value]]]
+```
+
+Reject dict-data reads for the write-only backend.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._cell_fmt"></a>
+
+#### \_cell\_fmt
+
+```python
+def _cell_fmt(row: int, column: int) -> Optional[Fmt]
+```
+
+Return the public format stored for one cell.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._remove_table_metadata"></a>
+
+#### \_remove\_table\_metadata
+
+```python
+@classmethod
+def _remove_table_metadata(cls, sheet: _SheetState, bounds: tuple[int, int,
+                                                                  int, int],
+                           name: str) -> None
+```
+
+Remove one pending XlsxWriter table from worksheet internals.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_actual_cell"></a>
+
+#### \_write\_actual\_cell
+
+```python
+def _write_actual_cell(sheet: _SheetState, row: int, column: int) -> None
+```
+
+Write the current in-memory cell state to XlsxWriter.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._xlsx_format"></a>
+
+#### \_xlsx\_format
+
+```python
+def _xlsx_format(style: Optional[_CellStyle],
+                 datetime_value: bool) -> Optional[object]
+```
+
+Return the cached XlsxWriter format for one cell style.
+
 <a id="tableio.tableio_csv"></a>
 
 # tableio.tableio\_csv
@@ -5807,6 +6379,16 @@ CSV does not support reading from a box.
 # tableio.tableio\_spreadsheetbased
 
 Intermediate base class for spreadsheet-based file formats.
+
+<a id="tableio.tableio_spreadsheetbased.excel_column_name"></a>
+
+#### excel\_column\_name
+
+```python
+def excel_column_name(column: int) -> str
+```
+
+Return the Excel-style A1 column name for one zero-based column.
 
 <a id="tableio.tableio_spreadsheetbased._ScanResult"></a>
 
@@ -6818,6 +7400,12 @@ functionality for Excel-based file formats can be implemented.
 This class starts out empty, but whenever common functionality
 is detected it should be refactored into this class.
 
+<a id="tableio.tableio_excelbased.TableIOExcelBased._DATETIME_NUMBER_FORMAT"></a>
+
+#### \_DATETIME\_NUMBER\_FORMAT
+
+Excel number format used for datetime values.
+
 <a id="tableio.tableio_excelbased.TableIOExcelBased.__init__"></a>
 
 #### \_\_init\_\_
@@ -6842,6 +7430,61 @@ Initialize the TableIO_SpreadsheetBased class.
   (May for instance save existing file as
   backup.)
   (Default is to raise an exception.)
+
+<a id="tableio.tableio_excelbased.TableIOExcelBased._datetime_number_format"></a>
+
+#### \_datetime\_number\_format
+
+```python
+@classmethod
+def _datetime_number_format(cls) -> str
+```
+
+Return the Excel number format used for datetime values.
+
+<a id="tableio.tableio_excelbased.TableIOExcelBased._excel_column_name"></a>
+
+#### \_excel\_column\_name
+
+```python
+@staticmethod
+def _excel_column_name(column: int) -> str
+```
+
+Return the Excel A1 column name for one zero-based column.
+
+<a id="tableio.tableio_excelbased.TableIOExcelBased._excel_range_ref"></a>
+
+#### \_excel\_range\_ref
+
+```python
+@classmethod
+def _excel_range_ref(cls, top: int, left: int, bottom: int, right: int) -> str
+```
+
+Return one Excel A1 range string for zero-based bounds.
+
+<a id="tableio.tableio_excelbased.TableIOExcelBased._filtered_table_header"></a>
+
+#### \_filtered\_table\_header
+
+```python
+@staticmethod
+def _filtered_table_header(value: object, index: int) -> str
+```
+
+Return the normalized Excel table header for one cell value.
+
+<a id="tableio.tableio_excelbased.TableIOExcelBased._filtered_table_headers"></a>
+
+#### \_filtered\_table\_headers
+
+```python
+@classmethod
+def _filtered_table_headers(cls, values: Sequence[object]) -> list[str]
+```
+
+Return normalized Excel table headers for one header row.
 
 <a id="tableio.reg_pkg_formats"></a>
 
@@ -7153,17 +7796,6 @@ def _delete_filtered_range(name: str) -> None
 ```
 
 Delete one worksheet table by name.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._range_ref"></a>
-
-#### \_range\_ref
-
-```python
-@staticmethod
-def _range_ref(top: int, left: int, bottom: int, right: int) -> str
-```
-
-Return an Excel A1 range string for a zero-based rectangle.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._normalize_filtered_table_header"></a>
 
