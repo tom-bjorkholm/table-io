@@ -13,6 +13,7 @@ from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased
 from tableio.value_type import Fmt, Value, get_checked_type
+from tableio.capability import Capabilities, CAP_ALL_IMPLEMENTED
 
 
 _DEFAULT_TABLE_NAME = 'Sheet1'
@@ -54,6 +55,11 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         self._cell_style_names: dict[tuple[bool, bool, Color,
                                            Optional[int]], str] = {}
         self._column_style_names: dict[str, str] = {}
+
+    @classmethod
+    def get_capabilities(cls) -> Capabilities:
+        """Return the standard spreadsheet backend capabilities."""
+        return CAP_ALL_IMPLEMENTED
 
     @classmethod
     def get_description(cls) -> Descriptor:

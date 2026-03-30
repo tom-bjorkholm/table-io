@@ -8,7 +8,6 @@ from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Callable, NamedTuple, Optional
 from mformat.mformat import PathLike
-from tableio.capability import Capabilities, SingleCapability, Strictness
 from tableio.tableio import Box, FileAccess, Position, TableIO
 from tableio.valueconversion import UnreasonableTypeConversion, \
     UnreasonableValueConversion, value2type_of
@@ -18,8 +17,6 @@ from tableio.value_type import CellT, DictData, DictDataMap, Fmt, \
     value_to_str
 
 
-_SUPPORTED: SingleCapability = SingleCapability(supported=True,
-                                                strictness=Strictness.STRICT)
 _FILTER_RANGE_PREFIX = 'TableIOFilter_'
 _COLUMN_WIDTH_PADDING = 2
 _MAX_COLUMN_WIDTH = 50
@@ -70,17 +67,6 @@ class TableIOSpreadsheetBased(TableIO):
         self.read_row: int = 0
         self.write_row: int = 0
         self._sheet_states: dict[str, _SheetState] = {}
-
-    @classmethod
-    def get_capabilities(cls) -> Capabilities:
-        """Return the standard spreadsheet backend capabilities."""
-        return Capabilities(can_read=_SUPPORTED, can_write=_SUPPORTED,
-                            can_fmt_row=_SUPPORTED, can_fmt_value=_SUPPORTED,
-                            filtered_data_range=_SUPPORTED,
-                            can_write_box=_SUPPORTED, can_read_box=_SUPPORTED,
-                            can_write_highlight=_SUPPORTED,
-                            multi_sheet=_SUPPORTED,
-                            can_find_value_position=_SUPPORTED)
 
     @staticmethod
     def _heading_font_size(level: int) -> int:

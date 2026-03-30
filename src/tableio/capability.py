@@ -236,3 +236,14 @@ CAP_UNSUPPORTED = SingleCapability(supported=False,
    different location would not make sense. Thus the only sensible thing
    to do is to raise an exception.
    """
+
+CAP_ALL_IMPLEMENTED = Capabilities(can_read=CAP_IMPLEMENTED,
+                                   can_write=CAP_IMPLEMENTED,
+                                   can_fmt_row=CAP_IMPLEMENTED,
+                                   can_fmt_value=CAP_IMPLEMENTED,
+                                   filtered_data_range=CAP_IMPLEMENTED,
+                                   can_write_box=CAP_IMPLEMENTED,
+                                   can_read_box=CAP_IMPLEMENTED,
+                                   can_write_highlight=CAP_IMPLEMENTED,
+                                   multi_sheet=CAP_IMPLEMENTED,
+                                   can_find_value_position=CAP_IMPLEMENTED)

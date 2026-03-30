@@ -60,6 +60,7 @@
 * [tableio.tableio\_ods\_odfdo](#tableio.tableio_ods_odfdo)
   * [TableIOOdsOdfdo](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo)
     * [\_\_init\_\_](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.__init__)
+    * [get\_capabilities](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_capabilities)
     * [get\_description](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description)
     * [file\_name\_extension](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.file_name_extension)
     * [open](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.open)
@@ -354,7 +355,6 @@
   * [\_SheetState](#tableio.tableio_spreadsheetbased._SheetState)
   * [TableIOSpreadsheetBased](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased)
     * [\_\_init\_\_](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__)
-    * [get\_capabilities](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.get_capabilities)
     * [\_heading\_font\_size](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._heading_font_size)
     * [\_python\_value\_from\_spreadsheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._python_value_from_spreadsheet)
     * [\_spreadsheet\_value\_from\_python](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._spreadsheet_value_from_python)
@@ -441,6 +441,7 @@
 * [tableio.tableio\_excel\_openpyxl](#tableio.tableio_excel_openpyxl)
   * [TableIOExcelOpenPyXL](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL)
     * [\_\_init\_\_](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__)
+    * [get\_capabilities](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities)
     * [get\_description](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description)
     * [file\_name\_extension](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension)
     * [open](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open)
@@ -1665,6 +1666,17 @@ Initialize the TableIOOdsOdfdo class.
 - `file_access` - What access is requested to the file.
 - `file_exists_callback` - Callback used when CREATE would overwrite.
 - `lang` - The RFC3066 language code for newly created ODS files.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_capabilities"></a>
+
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Return the standard spreadsheet backend capabilities.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_description"></a>
 
@@ -5843,17 +5855,6 @@ def __init__(file_name: PathLike,
 
 Initialize the spreadsheet-based TableIO class.
 
-<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.get_capabilities"></a>
-
-#### get\_capabilities
-
-```python
-@classmethod
-def get_capabilities(cls) -> Capabilities
-```
-
-Return the standard spreadsheet backend capabilities.
-
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._heading_font_size"></a>
 
 #### \_heading\_font\_size
@@ -6893,6 +6894,17 @@ def __init__(file_name: PathLike,
 ```
 
 Initialize the TableIOExcelOpenPyXL class.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities"></a>
+
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Return the standard spreadsheet backend capabilities.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description"></a>
 

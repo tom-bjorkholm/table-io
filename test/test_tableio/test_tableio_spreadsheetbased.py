@@ -19,6 +19,7 @@ from tableio.tableio_spreadsheetbased import _ScanResult, \
     TableIOSpreadsheetBased
 from tableio.value_type import CellT, Fmt, FmtListRow, ListDataSeq, Value, \
     ValueFmt
+from tableio.capability import CAP_ALL_IMPLEMENTED
 
 from .check_capsys import check_capsys
 from .spreadsheet_test_helper import run_boxed_table_partial_overwrite_raises
@@ -182,6 +183,11 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=[])
+
+    @classmethod
+    def get_capabilities(cls) -> Capabilities:
+        """Return the capabilities for the recording backend."""
+        return CAP_ALL_IMPLEMENTED
 
     @classmethod
     def file_name_extension(cls) -> str:

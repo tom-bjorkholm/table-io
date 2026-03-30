@@ -15,6 +15,7 @@ from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_excelbased import TableIOExcelBased
 from tableio.value_type import Fmt, Value, get_checked_type
+from tableio.capability import Capabilities, CAP_ALL_IMPLEMENTED
 
 _HIGHLIGHT_RGB: dict[Color, str] = {
     Color.RED: 'FFFFC7CE',
@@ -43,6 +44,11 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         self.read_workbook: Optional[Workbook] = None
         self.worksheet: Optional[Worksheet] = None
         self.read_worksheet: Optional[Worksheet] = None
+
+    @classmethod
+    def get_capabilities(cls) -> Capabilities:
+        """Return the standard spreadsheet backend capabilities."""
+        return CAP_ALL_IMPLEMENTED
 
     @classmethod
     def get_description(cls) -> Descriptor:
