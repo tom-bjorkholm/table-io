@@ -110,6 +110,17 @@ class TableIOSpreadsheetBased(TableIO):
         """Return the normalized dictionary key for one sheet name."""
         return sheet_name.casefold()
 
+    @classmethod
+    def _find_matching_sheet_name(
+            cls, existing_sheet_names: list[str],
+            sheet_name: str) -> Optional[str]:
+        """Return the existing sheet name matching the requested name."""
+        wanted_key = cls._sheet_key(sheet_name)
+        for existing_name in existing_sheet_names:
+            if cls._sheet_key(existing_name) == wanted_key:
+                return existing_name
+        return None
+
     def _current_sheet_key(self) -> str:
         """Return the normalized key of the current sheet."""
         return self._sheet_key(self._current_sheet_name())
@@ -242,6 +253,19 @@ class TableIOSpreadsheetBased(TableIO):
         err = 'Subclass must implement _set_column_width_if_wider method'
         raise NotImplementedError(err)
 
+    def _used_bounds_by_cell_scan(self, sheet: object, row_limit: int,
+                                  column_limit: int) -> tuple[int, int]:
+        """Return the last used row and column by scanning cell values."""
+        last_row = -1
+        last_column = -1
+        for row in range(row_limit):
+            for column in range(column_limit):
+                if self._cell_value(sheet, row, column) is None:
+                    continue
+                last_row = max(last_row, row)
+                last_column = max(last_column, column)
+        return last_row, last_column
+
     def _write_value(self, row: int, column: int, value: object,
                      fmt: Optional[Fmt] = None) -> None:
         """Write one value to the writable sheet and readable snapshot."""
@@ -270,11 +294,18 @@ class TableIOSpreadsheetBased(TableIO):
         read_sheet = self._read_sheet()
         left = 0 if box is None else box.left
         top = self.read_row if box is None else box.top
-        last_used_row = self._last_used_row(read_sheet)
         bottom = box.bottom if box is not None and \
-            box.bottom is not None else last_used_row + 1
+            box.bottom is not None else self._scan_limit_bottom(read_sheet,
+                                                                top)
         right = box.right if box is not None else None
         return left, top, bottom, right
+
+    def _scan_limit_bottom(self, sheet: object, top: int) -> int:
+        """Return the exclusive bottom limit used when scanning rows."""
+        last_used = self._last_used_row(sheet)
+        if last_used < top:
+            return top
+        return last_used + 1
 
     def _scan_limit_right(self, sheet: object, left: int,
                           right: Optional[int]) -> int:
@@ -394,7 +425,7 @@ class TableIOSpreadsheetBased(TableIO):
     def _sheet_table_regions(self) -> list[tuple[int, int, int, int]]:
         """Return detected table-like regions on the active readable sheet."""
         read_sheet = self._read_sheet()
-        bottom = self._last_used_row(read_sheet) + 1
+        bottom = self._scan_limit_bottom(read_sheet, 0)
         if bottom <= 0:
             return []
         ret: list[tuple[int, int, int, int]] = []

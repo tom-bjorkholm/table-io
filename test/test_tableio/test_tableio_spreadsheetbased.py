@@ -217,11 +217,8 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
 
     def _select_sheet(self, sheet_name: str, create: bool = False) -> None:
         """Select or create the requested in-memory sheet."""
-        matched_name: Optional[str] = None
-        for existing_name in self._sheet_order:
-            if existing_name.casefold() == sheet_name.casefold():
-                matched_name = existing_name
-                break
+        matched_name = self._find_matching_sheet_name(self._sheet_order,
+                                                      sheet_name)
         if matched_name is None:
             if not create:
                 raise KeyError(sheet_name)

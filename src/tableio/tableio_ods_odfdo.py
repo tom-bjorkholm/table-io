@@ -214,24 +214,14 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
             return table_name
         return f"'{table_name}'"
 
-    @staticmethod
-    def _column_name(column: int) -> str:
-        """Return an A1 column name for one zero-based column index."""
-        return excel_column_name(column)
-
-    @classmethod
-    def _cell_ref(cls, row: int, column: int) -> str:
-        """Return an A1 cell reference for zero-based coordinates."""
-        return f'{cls._column_name(column)}{row + 1}'
-
     @classmethod
     def _database_range_address(cls, table_name: str,
                                 bounds: tuple[int, int, int, int]) -> str:
         """Return one ODS database range address."""
         top, left, bottom, right = bounds
         q_table = cls._quoted_table_name(table_name)
-        start = cls._cell_ref(top, left)
-        end = cls._cell_ref(bottom - 1, right - 1)
+        start = f'{excel_column_name(left)}{top + 1}'
+        end = f'{excel_column_name(right - 1)}{bottom}'
         return f'{q_table}.{start}:{q_table}.{end}'
 
     @staticmethod
@@ -327,26 +317,17 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
             self._cell_style_name(Fmt(bold=True),
                                   font_size=self._heading_font_size(level))
 
-    def _used_bounds(self, sheet: object) -> tuple[int, int]:
-        """Return the last used row and column on one ODS table."""
-        table = get_checked_type(sheet, Table)
-        last_row = -1
-        last_column = -1
-        for row in range(table.height):
-            for column in range(table.width):
-                if self._cell_value(table, row, column) is None:
-                    continue
-                last_row = max(last_row, row)
-                last_column = max(last_column, column)
-        return last_row, last_column
-
     def _last_used_row(self, sheet: object) -> int:
         """Return the last used row index on one ODS table."""
-        return self._used_bounds(sheet)[0]
+        table = get_checked_type(sheet, Table)
+        return self._used_bounds_by_cell_scan(table, table.height,
+                                              table.width)[0]
 
     def _last_used_column(self, sheet: object) -> int:
         """Return the last used column index on one ODS table."""
-        return self._used_bounds(sheet)[1]
+        table = get_checked_type(sheet, Table)
+        return self._used_bounds_by_cell_scan(table, table.height,
+                                              table.width)[1]
 
     def _cell_value(self, sheet: object, row: int, column: int) -> Value:
         """Return one ODS cell as a public Value."""

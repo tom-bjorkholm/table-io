@@ -57,11 +57,6 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[], optional_args=[])
 
-    @classmethod
-    def file_name_extension(cls) -> str:
-        """Get the file name extension of the Excel implementation."""
-        return '.xlsx'
-
     def open(self) -> None:
         """Open the Excel workbook."""
         if self.workbook is not None:
@@ -211,26 +206,17 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         cell = self.worksheet.cell(row=row + 1, column=column + 1)
         cell.font = Font(bold=True, size=self._heading_font_size(level))
 
-    def _used_bounds(self, sheet: object) -> tuple[int, int]:
-        """Return the last used row and column on a worksheet."""
-        worksheet = get_checked_type(sheet, Worksheet)
-        last_row = -1
-        last_column = -1
-        for row in worksheet.iter_rows():
-            for cell in row:
-                if cell.value is None:
-                    continue
-                last_row = max(last_row, cell.row - 1)
-                last_column = max(last_column, cell.column - 1)
-        return last_row, last_column
-
     def _last_used_row(self, sheet: object) -> int:
         """Return the last used row index on a worksheet."""
-        return self._used_bounds(sheet)[0]
+        worksheet = get_checked_type(sheet, Worksheet)
+        return self._used_bounds_by_cell_scan(worksheet, worksheet.max_row,
+                                              worksheet.max_column)[0]
 
     def _last_used_column(self, sheet: object) -> int:
         """Return the last used column index on a worksheet."""
-        return self._used_bounds(sheet)[1]
+        worksheet = get_checked_type(sheet, Worksheet)
+        return self._used_bounds_by_cell_scan(worksheet, worksheet.max_row,
+                                              worksheet.max_column)[1]
 
     def _cell_value(self, sheet: object, row: int, column: int) -> Value:
         """Return one worksheet cell as a public Value."""

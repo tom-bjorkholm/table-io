@@ -6,18 +6,16 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional
-from xml.etree import ElementTree as ET
-from zipfile import ZipFile
-
-from openpyxl import Workbook, load_workbook
-from openpyxl.worksheet.worksheet import Worksheet
 from pytest import CaptureFixture
 
 from tableio.tableio import FileAccess
 from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
 
 from .check_capsys import check_capsys
+from .excel_test_file_helper import create_formula_workbook, \
+    create_update_workbook, inspect_find_and_write_cells_workbook as \
+    inspect_find_and_write_cells_workbook_common, \
+    inspect_updated_workbook
 from .excel_inspect_helper import inspect_dict_header_fmt_workbook, \
     inspect_fmtdict_header_fmt_workbook, inspect_formatted_workbook, \
     inspect_multiple_filters_workbook, inspect_normalized_header_workbook, \
@@ -48,76 +46,10 @@ from .spreadsheet_test_helper import \
     run_write_row_formatted_dictdata_applies_formatting
 
 
-_XML_NS = {
-    'sheet': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
-}
-
-
-def _create_formula_workbook(file_path: Path,
-                             cached_value: Optional[int] = None) -> None:
-    """Create a workbook with one formula cell and an optional cached value."""
-    workbook = Workbook()
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    worksheet['A1'] = '=1+2'
-    worksheet['B1'] = 'x'
-    workbook.save(file_path)
-    workbook.close()
-    if cached_value is None:
-        return
-    temp_path = file_path.with_name(f'{file_path.stem}_tmp.xlsx')
-    with ZipFile(file_path) as zip_file, \
-            ZipFile(temp_path, 'w') as temp_zip:
-        for item in zip_file.infolist():
-            data = zip_file.read(item.filename)
-            if item.filename == 'xl/worksheets/sheet1.xml':
-                root = ET.fromstring(data)
-                cell = root.find('.//sheet:c[@r="A1"]', _XML_NS)
-                assert cell is not None
-                value = cell.find('sheet:v', _XML_NS)
-                assert value is not None
-                value.text = str(cached_value)
-                data = ET.tostring(root, encoding='utf-8',
-                                   xml_declaration=False)
-            temp_zip.writestr(item, data)
-    temp_path.replace(file_path)
-
-
-def _create_update_workbook(file_path: Path) -> None:
-    """Create the starting workbook used by the UPDATE mode test."""
-    workbook = Workbook()
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    worksheet['A1'] = 'old'
-    worksheet['B1'] = 'row'
-    workbook.save(file_path)
-    workbook.close()
-
-
-def _inspect_updated_workbook(file_path: Path) -> None:
-    """Check the workbook produced by the shared UPDATE mode case."""
-    workbook = load_workbook(file_path, data_only=True)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert worksheet['A1'].value == 'old'
-    assert worksheet['B1'].value == 'row'
-    assert worksheet['A2'].value is None
-    assert worksheet['B2'].value is None
-    assert worksheet['A3'].value == 'new'
-    assert worksheet['B3'].value == 'row'
-    workbook.close()
-
-
 def _inspect_find_and_write_cells_workbook(file_path: Path) -> None:
     """Check exact cell writes after finding one row in the worksheet."""
-    workbook = load_workbook(file_path)
-    worksheet = workbook.active
-    assert isinstance(worksheet, Worksheet)
-    assert worksheet['B4'].value == 'Bob'
-    assert worksheet['C4'].value is True
-    assert worksheet['B4'].fill.fgColor.rgb == 'FFFFFF00'
-    assert worksheet['C4'].fill.fgColor.rgb == 'FFFFFF00'
-    workbook.close()
+    inspect_find_and_write_cells_workbook_common(
+        file_path, expect_highlight=True)
 
 
 def test_excel_round_trip_sequential_list_reads(
@@ -164,8 +96,8 @@ def test_excel_update_default_write_starts_after_last_used_row(
         capsys: CaptureFixture[str]) -> None:
     """UPDATE mode appends after the used area with a blank row separator."""
     run_update_default_write_starts_after_last_used_row(
-        TableIOExcelOpenPyXL, '.xlsx', _create_update_workbook,
-        _inspect_updated_workbook, capsys)
+        TableIOExcelOpenPyXL, '.xlsx', create_update_workbook,
+        inspect_updated_workbook, capsys)
 
 
 def test_excel_multi_sheet_update_uses_selected_sheet_write_position(
@@ -260,7 +192,7 @@ def test_excel_read_formula_uses_cached_value(
         capsys: CaptureFixture[str]) -> None:
     """A formula cell is read as its cached value."""
     run_read_formula_uses_cached_value(
-        TableIOExcelOpenPyXL, '.xlsx', _create_formula_workbook, 3,
+        TableIOExcelOpenPyXL, '.xlsx', create_formula_workbook, 3,
         capsys)
 
 
@@ -268,7 +200,7 @@ def test_excel_read_formula_without_cached_value_returns_none(
         capsys: CaptureFixture[str]) -> None:
     """A formula without a cached result is read as None."""
     run_read_formula_without_cached_value(
-        TableIOExcelOpenPyXL, '.xlsx', _create_formula_workbook,
+        TableIOExcelOpenPyXL, '.xlsx', create_formula_workbook,
         capsys)
 
 

@@ -51,6 +51,11 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
                          file_exists_callback=file_exists_callback)
 
     @classmethod
+    def file_name_extension(cls) -> str:
+        """Return the standard file name extension for Excel files."""
+        return '.xlsx'
+
+    @classmethod
     def _datetime_number_format(cls) -> str:
         """Return the Excel number format used for datetime values."""
         return cls._DATETIME_NUMBER_FORMAT
@@ -61,11 +66,16 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
         return excel_column_name(column)
 
     @classmethod
+    def _excel_cell_ref(cls, row: int, column: int) -> str:
+        """Return one Excel A1 cell reference for zero-based coordinates."""
+        return f'{cls._excel_column_name(column)}{row + 1}'
+
+    @classmethod
     def _excel_range_ref(cls, top: int, left: int,
                          bottom: int, right: int) -> str:
         """Return one Excel A1 range string for zero-based bounds."""
-        start = f'{cls._excel_column_name(left)}{top + 1}'
-        end = f'{cls._excel_column_name(right - 1)}{bottom}'
+        start = cls._excel_cell_ref(top, left)
+        end = cls._excel_cell_ref(bottom - 1, right - 1)
         return f'{start}:{end}'
 
     @staticmethod

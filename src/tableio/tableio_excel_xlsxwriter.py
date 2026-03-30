@@ -138,11 +138,6 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
                           optional_args=[],
                           priority=20)
 
-    @classmethod
-    def file_name_extension(cls) -> str:
-        """Return the file name extension of the implementation."""
-        return '.xlsx'
-
     def open(self) -> None:
         """Open one workbook for CREATE access."""
         if self.workbook is not None:

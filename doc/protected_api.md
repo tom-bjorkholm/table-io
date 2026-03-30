@@ -80,8 +80,6 @@
     * [\_database\_range\_container](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_container)
     * [\_database\_ranges](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_ranges)
     * [\_quoted\_table\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._quoted_table_name)
-    * [\_column\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_name)
-    * [\_cell\_ref](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_ref)
     * [\_database\_range\_address](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_address)
     * [\_split\_range\_endpoint](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._split_range_endpoint)
     * [\_cell\_ref\_to\_position](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_ref_to_position)
@@ -90,7 +88,6 @@
     * [\_write\_value\_to\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_value_to_sheet)
     * [\_set\_cell\_format](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_cell_format)
     * [\_apply\_heading\_style](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._apply_heading_style)
-    * [\_used\_bounds](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._used_bounds)
     * [\_last\_used\_row](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_row)
     * [\_last\_used\_column](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_column)
     * [\_cell\_value](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_value)
@@ -158,6 +155,61 @@
     * [\_get\_last\_chars\_written\_impl](#tableio.tableio_textbased.TableIOTextBased._get_last_chars_written_impl)
     * [\_get\_last\_chars\_written](#tableio.tableio_textbased.TableIOTextBased._get_last_chars_written)
     * [\_ensure\_empty\_line\_before](#tableio.tableio_textbased.TableIOTextBased._ensure_empty_line_before)
+* [tableio.tableio\_excel\_pylightxl](#tableio.tableio_excel_pylightxl)
+  * [\_WorksheetLike](#tableio.tableio_excel_pylightxl._WorksheetLike)
+    * [\_calc\_size](#tableio.tableio_excel_pylightxl._WorksheetLike._calc_size)
+    * [update\_address](#tableio.tableio_excel_pylightxl._WorksheetLike.update_address)
+  * [\_worksheet\_names](#tableio.tableio_excel_pylightxl._worksheet_names)
+  * [\_database\_worksheet](#tableio.tableio_excel_pylightxl._database_worksheet)
+  * [\_worksheet\_cells](#tableio.tableio_excel_pylightxl._worksheet_cells)
+  * [\_recalculate\_worksheet\_size](#tableio.tableio_excel_pylightxl._recalculate_worksheet_size)
+  * [\_xml\_bytes](#tableio.tableio_excel_pylightxl._xml_bytes)
+  * [\_worksheet\_id\_attr](#tableio.tableio_excel_pylightxl._worksheet_id_attr)
+  * [\_sheet\_xml\_targets](#tableio.tableio_excel_pylightxl._sheet_xml_targets)
+  * [\_xml\_text](#tableio.tableio_excel_pylightxl._xml_text)
+  * [\_inline\_string\_text](#tableio.tableio_excel_pylightxl._inline_string_text)
+  * [\_number\_from\_cell\_text](#tableio.tableio_excel_pylightxl._number_from_cell_text)
+  * [\_styled\_number\_value](#tableio.tableio_excel_pylightxl._styled_number_value)
+  * [\_sheet\_data\_from\_xml](#tableio.tableio_excel_pylightxl._sheet_data_from_xml)
+  * [\_load\_named\_ranges](#tableio.tableio_excel_pylightxl._load_named_ranges)
+  * [\_read\_database](#tableio.tableio_excel_pylightxl._read_database)
+  * [\_style\_index\_for\_code](#tableio.tableio_excel_pylightxl._style_index_for_code)
+  * [\_styles\_xml](#tableio.tableio_excel_pylightxl._styles_xml)
+  * [TableIOExcelPylightxl](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl)
+    * [\_\_init\_\_](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.__init__)
+    * [get\_description](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_description)
+    * [get\_capabilities](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_capabilities)
+    * [open](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.open)
+    * [\_initialize\_sheet\_style\_codes](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._initialize_sheet_style_codes)
+    * [\_end\_state](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._end_state)
+    * [\_write\_file\_suffix](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._write_file_suffix)
+    * [\_close](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._close)
+    * [\_temporary\_workbook\_path](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._temporary_workbook_path)
+    * [\_invalid\_placeholder\_cell](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._invalid_placeholder_cell)
+    * [\_normalize\_written\_bool\_cell](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._normalize_written_bool_cell)
+    * [\_rewrite\_workbook\_xml](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._rewrite_workbook_xml)
+    * [\_content\_types\_with\_styles](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._content_types_with_styles)
+    * [\_workbook\_rels\_with\_styles](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._workbook_rels_with_styles)
+    * [\_entry\_style\_codes](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._entry_style_codes)
+    * [\_rewrite\_row\_xml](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._rewrite_row_xml)
+    * [\_worksheet\_xml\_for\_output](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._worksheet_xml_for_output)
+    * [\_current\_style\_codes](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._current_style_codes)
+    * [\_list\_sheets](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._list_sheets)
+    * [\_select\_sheet](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._select_sheet)
+    * [\_current\_sheet\_name](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._current_sheet_name)
+    * [\_read\_sheet](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._read_sheet)
+    * [\_write\_sheet](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._write_sheet)
+    * [\_write\_value\_to\_sheet](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._write_value_to_sheet)
+    * [\_set\_cell\_format](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._set_cell_format)
+    * [\_apply\_heading\_style](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._apply_heading_style)
+    * [\_last\_used\_row](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._last_used_row)
+    * [\_last\_used\_column](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._last_used_column)
+    * [\_cell\_value](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._cell_value)
+    * [\_parse\_typed\_cell\_value](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._parse_typed_cell_value)
+    * [\_filtered\_range\_infos](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._filtered_range_infos)
+    * [\_delete\_filtered\_range](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._delete_filtered_range)
+    * [\_add\_filtered\_range](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._add_filtered_range)
+    * [\_set\_column\_width\_if\_wider](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._set_column_width_if_wider)
 * [tableio.optional\_args](#tableio.optional_args)
   * [CsvDialect](#tableio.optional_args.CsvDialect)
     * [EXCEL](#tableio.optional_args.CsvDialect.EXCEL)
@@ -342,7 +394,6 @@
     * [\_\_init\_\_](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.__init__)
     * [get\_capabilities](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_capabilities)
     * [get\_description](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_description)
-    * [file\_name\_extension](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.file_name_extension)
     * [open](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.open)
     * [\_end\_state](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._end_state)
     * [\_write\_file\_suffix](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_file_suffix)
@@ -408,6 +459,7 @@
     * [\_python\_value\_from\_spreadsheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._python_value_from_spreadsheet)
     * [\_spreadsheet\_value\_from\_python](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._spreadsheet_value_from_python)
     * [\_sheet\_key](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._sheet_key)
+    * [\_find\_matching\_sheet\_name](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._find_matching_sheet_name)
     * [\_current\_sheet\_key](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._current_sheet_key)
     * [\_make\_current\_sheet\_state](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._make_current_sheet_state)
     * [\_load\_current\_sheet\_state](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._load_current_sheet_state)
@@ -425,9 +477,11 @@
     * [\_delete\_filtered\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._delete_filtered_range)
     * [\_add\_filtered\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._add_filtered_range)
     * [\_set\_column\_width\_if\_wider](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_column_width_if_wider)
+    * [\_used\_bounds\_by\_cell\_scan](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._used_bounds_by_cell_scan)
     * [\_write\_value](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_value)
     * [\_clear\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._clear_range)
     * [\_read\_limits](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._read_limits)
+    * [\_scan\_limit\_bottom](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_limit_bottom)
     * [\_scan\_limit\_right](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_limit_right)
     * [\_row\_nonempty\_columns](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._row_nonempty_columns)
     * [\_row\_is\_empty](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._row_is_empty)
@@ -486,8 +540,10 @@
   * [TableIOExcelBased](#tableio.tableio_excelbased.TableIOExcelBased)
     * [\_DATETIME\_NUMBER\_FORMAT](#tableio.tableio_excelbased.TableIOExcelBased._DATETIME_NUMBER_FORMAT)
     * [\_\_init\_\_](#tableio.tableio_excelbased.TableIOExcelBased.__init__)
+    * [file\_name\_extension](#tableio.tableio_excelbased.TableIOExcelBased.file_name_extension)
     * [\_datetime\_number\_format](#tableio.tableio_excelbased.TableIOExcelBased._datetime_number_format)
     * [\_excel\_column\_name](#tableio.tableio_excelbased.TableIOExcelBased._excel_column_name)
+    * [\_excel\_cell\_ref](#tableio.tableio_excelbased.TableIOExcelBased._excel_cell_ref)
     * [\_excel\_range\_ref](#tableio.tableio_excelbased.TableIOExcelBased._excel_range_ref)
     * [\_filtered\_table\_header](#tableio.tableio_excelbased.TableIOExcelBased._filtered_table_header)
     * [\_filtered\_table\_headers](#tableio.tableio_excelbased.TableIOExcelBased._filtered_table_headers)
@@ -498,7 +554,6 @@
     * [\_\_init\_\_](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__)
     * [get\_capabilities](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities)
     * [get\_description](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description)
-    * [file\_name\_extension](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension)
     * [open](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open)
     * [\_end\_state](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._end_state)
     * [\_write\_file\_suffix](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_file_suffix)
@@ -514,7 +569,6 @@
     * [\_write\_value\_to\_sheet](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value_to_sheet)
     * [\_set\_cell\_format](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_cell_format)
     * [\_apply\_heading\_style](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._apply_heading_style)
-    * [\_used\_bounds](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._used_bounds)
     * [\_last\_used\_row](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_row)
     * [\_last\_used\_column](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_column)
     * [\_cell\_value](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._cell_value)
@@ -1927,28 +1981,6 @@ def _quoted_table_name(table_name: str) -> str
 
 Return a table name formatted for an ODF range address.
 
-<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_name"></a>
-
-#### \_column\_name
-
-```python
-@staticmethod
-def _column_name(column: int) -> str
-```
-
-Return an A1 column name for one zero-based column index.
-
-<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_ref"></a>
-
-#### \_cell\_ref
-
-```python
-@classmethod
-def _cell_ref(cls, row: int, column: int) -> str
-```
-
-Return an A1 cell reference for zero-based coordinates.
-
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_address"></a>
 
 #### \_database\_range\_address
@@ -2037,16 +2069,6 @@ def _apply_heading_style(row: int, column: int, level: int) -> None
 ```
 
 Apply the heading style to one ODS cell.
-
-<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._used_bounds"></a>
-
-#### \_used\_bounds
-
-```python
-def _used_bounds(sheet: object) -> tuple[int, int]
-```
-
-Return the last used row and column on one ODS table.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_row"></a>
 
@@ -2998,6 +3020,578 @@ If we are at the beginning of the file do nothing.
 If we have an empty line before the current position do nothing.
 Otherwise insert an empty line before the current position.
 Returns the number of new lines inserted.
+
+<a id="tableio.tableio_excel_pylightxl"></a>
+
+# tableio.tableio\_excel\_pylightxl
+
+TableIO reader/writer class for Excel files using pylightxl.
+
+<a id="tableio.tableio_excel_pylightxl._WorksheetLike"></a>
+
+## \_WorksheetLike Objects
+
+```python
+class _WorksheetLike(Protocol)
+```
+
+Typed subset of the pylightxl worksheet API used here.
+
+<a id="tableio.tableio_excel_pylightxl._WorksheetLike._calc_size"></a>
+
+#### \_calc\_size
+
+```python
+def _calc_size() -> None
+```
+
+Recalculate cached worksheet size information.
+
+<a id="tableio.tableio_excel_pylightxl._WorksheetLike.update_address"></a>
+
+#### update\_address
+
+```python
+def update_address(address: str, val: object) -> None
+```
+
+Update one worksheet cell by Excel address.
+
+<a id="tableio.tableio_excel_pylightxl._worksheet_names"></a>
+
+#### \_worksheet\_names
+
+```python
+def _worksheet_names(database: Database) -> list[str]
+```
+
+Return the workbook sheet names with a concrete static type.
+
+<a id="tableio.tableio_excel_pylightxl._database_worksheet"></a>
+
+#### \_database\_worksheet
+
+```python
+def _database_worksheet(database: Database, sheet_name: str) -> _WorksheetLike
+```
+
+Return one worksheet from the database with a concrete static type.
+
+<a id="tableio.tableio_excel_pylightxl._worksheet_cells"></a>
+
+#### \_worksheet\_cells
+
+```python
+def _worksheet_cells(
+        worksheet: _WorksheetLike) -> dict[str, dict[str, object]]
+```
+
+Return the internal worksheet cell dictionary.
+
+<a id="tableio.tableio_excel_pylightxl._recalculate_worksheet_size"></a>
+
+#### \_recalculate\_worksheet\_size
+
+```python
+def _recalculate_worksheet_size(worksheet: _WorksheetLike) -> None
+```
+
+Recalculate the cached worksheet size after cell deletion.
+
+<a id="tableio.tableio_excel_pylightxl._xml_bytes"></a>
+
+#### \_xml\_bytes
+
+```python
+def _xml_bytes(root: ET.Element) -> bytes
+```
+
+Return one XML element serialized as UTF-8 bytes.
+
+<a id="tableio.tableio_excel_pylightxl._worksheet_id_attr"></a>
+
+#### \_worksheet\_id\_attr
+
+```python
+def _worksheet_id_attr(tag_sheet: ET.Element) -> Optional[str]
+```
+
+Return the relationship id stored on one workbook sheet element.
+
+<a id="tableio.tableio_excel_pylightxl._sheet_xml_targets"></a>
+
+#### \_sheet\_xml\_targets
+
+```python
+def _sheet_xml_targets(file_name: str) -> dict[str, tuple[int, str]]
+```
+
+Return sheet order and XML target path for each workbook sheet.
+
+<a id="tableio.tableio_excel_pylightxl._xml_text"></a>
+
+#### \_xml\_text
+
+```python
+def _xml_text(element: Optional[ET.Element]) -> str
+```
+
+Return the text of one XML element, defaulting to the empty string.
+
+<a id="tableio.tableio_excel_pylightxl._inline_string_text"></a>
+
+#### \_inline\_string\_text
+
+```python
+def _inline_string_text(cell: ET.Element) -> str
+```
+
+Return the concatenated text of one inline string cell.
+
+<a id="tableio.tableio_excel_pylightxl._number_from_cell_text"></a>
+
+#### \_number\_from\_cell\_text
+
+```python
+def _number_from_cell_text(raw_value: str) -> object
+```
+
+Return one numeric cell text as int, float or the original string.
+
+<a id="tableio.tableio_excel_pylightxl._styled_number_value"></a>
+
+#### \_styled\_number\_value
+
+```python
+def _styled_number_value(number: object, style_code: str) -> object
+```
+
+Return one numeric worksheet value converted by its style code.
+
+<a id="tableio.tableio_excel_pylightxl._sheet_data_from_xml"></a>
+
+#### \_sheet\_data\_from\_xml
+
+```python
+def _sheet_data_from_xml(
+        xml_data: bytes, shared_strings: dict[int, str],
+        styles: dict[int, str]) -> dict[str, dict[str, object]]
+```
+
+Return one worksheet cell dictionary parsed from worksheet XML.
+
+<a id="tableio.tableio_excel_pylightxl._load_named_ranges"></a>
+
+#### \_load\_named\_ranges
+
+```python
+def _load_named_ranges(workbook_root: ET.Element, database: Database) -> None
+```
+
+Load workbook defined names into the pylightxl database.
+
+<a id="tableio.tableio_excel_pylightxl._read_database"></a>
+
+#### \_read\_database
+
+```python
+def _read_database(file_name: str) -> Database
+```
+
+Read one workbook with pylightxl plus workbook-namespace fixes.
+
+<a id="tableio.tableio_excel_pylightxl._style_index_for_code"></a>
+
+#### \_style\_index\_for\_code
+
+```python
+def _style_index_for_code(style_code: str) -> Optional[str]
+```
+
+Return the compact styles.xml xf index for one stored style code.
+
+<a id="tableio.tableio_excel_pylightxl._styles_xml"></a>
+
+#### \_styles\_xml
+
+```python
+def _styles_xml() -> bytes
+```
+
+Return a minimal styles.xml supporting date, time and datetime tags.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl"></a>
+
+## TableIOExcelPylightxl Objects
+
+```python
+class TableIOExcelPylightxl(TableIOExcelBased)
+```
+
+TableIO reader/writer class for Excel files using pylightxl.
+
+The backend uses pylightxl for workbook IO and keeps the public
+spreadsheet semantics from TableIOSpreadsheetBased. Cell formatting and
+filtered ranges are ignored because pylightxl does not write those Excel
+features, but core data reads and writes, multi-sheet handling, boxed
+operations and value search are supported.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(
+        file_name: PathLike,
+        file_access: FileAccess,
+        file_exists_callback: Optional[Callable[[str], None]] = None) -> None
+```
+
+Initialize the pylightxl-backed Excel reader/writer.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_description"></a>
+
+#### get\_description
+
+```python
+@classmethod
+def get_description(cls) -> Descriptor
+```
+
+Return the descriptor for the pylightxl Excel backend.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_capabilities"></a>
+
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Return the honest capabilities of the pylightxl backend.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open the workbook.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._initialize_sheet_style_codes"></a>
+
+#### \_initialize\_sheet\_style\_codes
+
+```python
+def _initialize_sheet_style_codes() -> None
+```
+
+Load compact style metadata from the open database.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._end_state"></a>
+
+#### \_end\_state
+
+```python
+def _end_state() -> None
+```
+
+Finalize in-memory state before closing.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._write_file_suffix"></a>
+
+#### \_write\_file\_suffix
+
+```python
+def _write_file_suffix() -> None
+```
+
+Write the workbook to disk when the file is writable.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._close"></a>
+
+#### \_close
+
+```python
+def _close() -> None
+```
+
+Release workbook references.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._temporary_workbook_path"></a>
+
+#### \_temporary\_workbook\_path
+
+```python
+@staticmethod
+def _temporary_workbook_path(source_path: Path) -> Path
+```
+
+Return a temporary workbook path that does not yet exist.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._invalid_placeholder_cell"></a>
+
+#### \_invalid\_placeholder\_cell
+
+```python
+@staticmethod
+def _invalid_placeholder_cell(cell: ET.Element) -> bool
+```
+
+Return whether one written cell is a pylightxl blank placeholder.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._normalize_written_bool_cell"></a>
+
+#### \_normalize\_written\_bool\_cell
+
+```python
+@staticmethod
+def _normalize_written_bool_cell(cell: ET.Element) -> bool
+```
+
+Convert one written True/False text cell into a real bool cell.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._rewrite_workbook_xml"></a>
+
+#### \_rewrite\_workbook\_xml
+
+```python
+def _rewrite_workbook_xml(file_name: Path) -> None
+```
+
+Clean written worksheet XML and add style metadata when needed.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._content_types_with_styles"></a>
+
+#### \_content\_types\_with\_styles
+
+```python
+def _content_types_with_styles(data: bytes) -> bytes
+```
+
+Return content types XML updated with the styles part.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._workbook_rels_with_styles"></a>
+
+#### \_workbook\_rels\_with\_styles
+
+```python
+def _workbook_rels_with_styles(data: bytes) -> bytes
+```
+
+Return workbook relations XML updated with the styles relation.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._entry_style_codes"></a>
+
+#### \_entry\_style\_codes
+
+```python
+def _entry_style_codes(
+        entry_name: str,
+        sheet_targets: dict[str, tuple[int, str]]) -> dict[str, str]
+```
+
+Return the compact style codes for one worksheet archive entry.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._rewrite_row_xml"></a>
+
+#### \_rewrite\_row\_xml
+
+```python
+def _rewrite_row_xml(row: ET.Element, style_codes: dict[str, str]) -> bool
+```
+
+Clean one row element and apply compact cell styles.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._worksheet_xml_for_output"></a>
+
+#### \_worksheet\_xml\_for\_output
+
+```python
+def _worksheet_xml_for_output(
+        entry_name: str, data: bytes,
+        sheet_targets: dict[str, tuple[int, str]]) -> bytes
+```
+
+Return cleaned worksheet XML updated with compact style markers.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._current_style_codes"></a>
+
+#### \_current\_style\_codes
+
+```python
+def _current_style_codes() -> dict[str, str]
+```
+
+Return the compact style map for the current sheet.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._list_sheets"></a>
+
+#### \_list\_sheets
+
+```python
+def _list_sheets() -> list[str]
+```
+
+List the sheets in the workbook.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._select_sheet"></a>
+
+#### \_select\_sheet
+
+```python
+def _select_sheet(sheet_name: str, create: bool = False) -> None
+```
+
+Select one workbook sheet, optionally creating it.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._current_sheet_name"></a>
+
+#### \_current\_sheet\_name
+
+```python
+def _current_sheet_name() -> str
+```
+
+Return the name of the selected worksheet.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._read_sheet"></a>
+
+#### \_read\_sheet
+
+```python
+def _read_sheet() -> object
+```
+
+Return the readable worksheet.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._write_sheet"></a>
+
+#### \_write\_sheet
+
+```python
+def _write_sheet() -> object
+```
+
+Return the writable worksheet.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._write_value_to_sheet"></a>
+
+#### \_write\_value\_to\_sheet
+
+```python
+def _write_value_to_sheet(sheet: object, row: int, column: int,
+                          value: object) -> None
+```
+
+Write one value to one worksheet cell.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._set_cell_format"></a>
+
+#### \_set\_cell\_format
+
+```python
+def _set_cell_format(sheet: object, row: int, column: int,
+                     fmt: Optional[Fmt]) -> None
+```
+
+Ignore cell formatting because pylightxl cannot write it.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._apply_heading_style"></a>
+
+#### \_apply\_heading\_style
+
+```python
+def _apply_heading_style(row: int, column: int, level: int) -> None
+```
+
+Ignore heading styling because pylightxl cannot write it.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._last_used_row"></a>
+
+#### \_last\_used\_row
+
+```python
+def _last_used_row(sheet: object) -> int
+```
+
+Return the last used row index on a worksheet.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._last_used_column"></a>
+
+#### \_last\_used\_column
+
+```python
+def _last_used_column(sheet: object) -> int
+```
+
+Return the last used column index on a worksheet.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._cell_value"></a>
+
+#### \_cell\_value
+
+```python
+def _cell_value(sheet: object, row: int, column: int) -> Value
+```
+
+Return one worksheet cell as a public Value.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._parse_typed_cell_value"></a>
+
+#### \_parse\_typed\_cell\_value
+
+```python
+@classmethod
+def _parse_typed_cell_value(cls, value: object, style_code: str) -> Value
+```
+
+Convert one stored pylightxl cell value to the public Value type.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._filtered_range_infos"></a>
+
+#### \_filtered\_range\_infos
+
+```python
+def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
+```
+
+Return no filtered ranges because pylightxl ignores them.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._delete_filtered_range"></a>
+
+#### \_delete\_filtered\_range
+
+```python
+def _delete_filtered_range(name: str) -> None
+```
+
+Ignore filtered-range deletion because none are written.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._add_filtered_range"></a>
+
+#### \_add\_filtered\_range
+
+```python
+def _add_filtered_range(bounds: tuple[int, int, int, int], name: str) -> None
+```
+
+Ignore filtered-range requests.
+
+pylightxl cannot write Excel filtered ranges.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._set_column_width_if_wider"></a>
+
+#### \_set\_column\_width\_if\_wider
+
+```python
+def _set_column_width_if_wider(column: int, width: float) -> None
+```
+
+Ignore width updates because pylightxl cannot write them.
 
 <a id="tableio.optional_args"></a>
 
@@ -5644,17 +6238,6 @@ def get_description(cls) -> Descriptor
 
 Return the descriptor for the XlsxWriter Excel backend.
 
-<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.file_name_extension"></a>
-
-#### file\_name\_extension
-
-```python
-@classmethod
-def file_name_extension(cls) -> str
-```
-
-Return the file name extension of the implementation.
-
 <a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.open"></a>
 
 #### open
@@ -6481,6 +7064,18 @@ def _sheet_key(sheet_name: str) -> str
 
 Return the normalized dictionary key for one sheet name.
 
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._find_matching_sheet_name"></a>
+
+#### \_find\_matching\_sheet\_name
+
+```python
+@classmethod
+def _find_matching_sheet_name(cls, existing_sheet_names: list[str],
+                              sheet_name: str) -> Optional[str]
+```
+
+Return the existing sheet name matching the requested name.
+
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._current_sheet_key"></a>
 
 #### \_current\_sheet\_key
@@ -6653,6 +7248,17 @@ def _set_column_width_if_wider(column: int, width: float) -> None
 
 Widen one backend column if the target width is larger.
 
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._used_bounds_by_cell_scan"></a>
+
+#### \_used\_bounds\_by\_cell\_scan
+
+```python
+def _used_bounds_by_cell_scan(sheet: object, row_limit: int,
+                              column_limit: int) -> tuple[int, int]
+```
+
+Return the last used row and column by scanning cell values.
+
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_value"></a>
 
 #### \_write\_value
@@ -6685,6 +7291,16 @@ def _read_limits(box: Optional[Box]) -> tuple[int, int, int, Optional[int]]
 ```
 
 Return the row and column limits for a read operation.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_limit_bottom"></a>
+
+#### \_scan\_limit\_bottom
+
+```python
+def _scan_limit_bottom(sheet: object, top: int) -> int
+```
+
+Return the exclusive bottom limit used when scanning rows.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._scan_limit_right"></a>
 
@@ -7431,6 +8047,17 @@ Initialize the TableIO_SpreadsheetBased class.
   backup.)
   (Default is to raise an exception.)
 
+<a id="tableio.tableio_excelbased.TableIOExcelBased.file_name_extension"></a>
+
+#### file\_name\_extension
+
+```python
+@classmethod
+def file_name_extension(cls) -> str
+```
+
+Return the standard file name extension for Excel files.
+
 <a id="tableio.tableio_excelbased.TableIOExcelBased._datetime_number_format"></a>
 
 #### \_datetime\_number\_format
@@ -7452,6 +8079,17 @@ def _excel_column_name(column: int) -> str
 ```
 
 Return the Excel A1 column name for one zero-based column.
+
+<a id="tableio.tableio_excelbased.TableIOExcelBased._excel_cell_ref"></a>
+
+#### \_excel\_cell\_ref
+
+```python
+@classmethod
+def _excel_cell_ref(cls, row: int, column: int) -> str
+```
+
+Return one Excel A1 cell reference for zero-based coordinates.
 
 <a id="tableio.tableio_excelbased.TableIOExcelBased._excel_range_ref"></a>
 
@@ -7559,17 +8197,6 @@ def get_description(cls) -> Descriptor
 ```
 
 Get the description of the TableIOExcelOpenPyXL class.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension"></a>
-
-#### file\_name\_extension
-
-```python
-@classmethod
-def file_name_extension(cls) -> str
-```
-
-Get the file name extension of the Excel implementation.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open"></a>
 
@@ -7725,16 +8352,6 @@ def _apply_heading_style(row: int, column: int, level: int) -> None
 ```
 
 Apply the heading font to one worksheet cell.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._used_bounds"></a>
-
-#### \_used\_bounds
-
-```python
-def _used_bounds(sheet: object) -> tuple[int, int]
-```
-
-Return the last used row and column on a worksheet.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_row"></a>
 

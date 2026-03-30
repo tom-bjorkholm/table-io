@@ -89,6 +89,14 @@
   * [TableIOTextBased](#tableio.tableio_textbased.TableIOTextBased)
     * [\_\_init\_\_](#tableio.tableio_textbased.TableIOTextBased.__init__)
     * [open](#tableio.tableio_textbased.TableIOTextBased.open)
+* [tableio.tableio\_excel\_pylightxl](#tableio.tableio_excel_pylightxl)
+  * [\_WorksheetLike](#tableio.tableio_excel_pylightxl._WorksheetLike)
+    * [update\_address](#tableio.tableio_excel_pylightxl._WorksheetLike.update_address)
+  * [TableIOExcelPylightxl](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl)
+    * [\_\_init\_\_](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.__init__)
+    * [get\_description](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_description)
+    * [get\_capabilities](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_capabilities)
+    * [open](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.open)
 * [tableio.optional\_args](#tableio.optional_args)
   * [CsvDialect](#tableio.optional_args.CsvDialect)
     * [EXCEL](#tableio.optional_args.CsvDialect.EXCEL)
@@ -262,7 +270,6 @@
     * [\_\_init\_\_](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.__init__)
     * [get\_capabilities](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_capabilities)
     * [get\_description](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.get_description)
-    * [file\_name\_extension](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.file_name_extension)
     * [open](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.open)
 * [tableio.tableio\_csv](#tableio.tableio_csv)
   * [CsvDefinitions](#tableio.tableio_csv.CsvDefinitions)
@@ -290,6 +297,7 @@
 * [tableio.tableio\_excelbased](#tableio.tableio_excelbased)
   * [TableIOExcelBased](#tableio.tableio_excelbased.TableIOExcelBased)
     * [\_\_init\_\_](#tableio.tableio_excelbased.TableIOExcelBased.__init__)
+    * [file\_name\_extension](#tableio.tableio_excelbased.TableIOExcelBased.file_name_extension)
 * [tableio.reg\_pkg\_formats](#tableio.reg_pkg_formats)
   * [register\_formats\_in\_pkg](#tableio.reg_pkg_formats.register_formats_in_pkg)
 * [tableio.tableio\_excel\_openpyxl](#tableio.tableio_excel_openpyxl)
@@ -297,7 +305,6 @@
     * [\_\_init\_\_](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__)
     * [get\_capabilities](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities)
     * [get\_description](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description)
-    * [file\_name\_extension](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension)
     * [open](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open)
 
 <a id="tableio.tableio"></a>
@@ -1816,6 +1823,93 @@ Open the file.
 
 Avoid using this method directly.
 Use derived class as a context manager instead, using a with statement.
+
+<a id="tableio.tableio_excel_pylightxl"></a>
+
+# tableio.tableio\_excel\_pylightxl
+
+TableIO reader/writer class for Excel files using pylightxl.
+
+<a id="tableio.tableio_excel_pylightxl._WorksheetLike"></a>
+
+## \_WorksheetLike Objects
+
+```python
+class _WorksheetLike(Protocol)
+```
+
+Typed subset of the pylightxl worksheet API used here.
+
+<a id="tableio.tableio_excel_pylightxl._WorksheetLike.update_address"></a>
+
+#### update\_address
+
+```python
+def update_address(address: str, val: object) -> None
+```
+
+Update one worksheet cell by Excel address.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl"></a>
+
+## TableIOExcelPylightxl Objects
+
+```python
+class TableIOExcelPylightxl(TableIOExcelBased)
+```
+
+TableIO reader/writer class for Excel files using pylightxl.
+
+The backend uses pylightxl for workbook IO and keeps the public
+spreadsheet semantics from TableIOSpreadsheetBased. Cell formatting and
+filtered ranges are ignored because pylightxl does not write those Excel
+features, but core data reads and writes, multi-sheet handling, boxed
+operations and value search are supported.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(
+        file_name: PathLike,
+        file_access: FileAccess,
+        file_exists_callback: Optional[Callable[[str], None]] = None) -> None
+```
+
+Initialize the pylightxl-backed Excel reader/writer.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_description"></a>
+
+#### get\_description
+
+```python
+@classmethod
+def get_description(cls) -> Descriptor
+```
+
+Return the descriptor for the pylightxl Excel backend.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_capabilities"></a>
+
+#### get\_capabilities
+
+```python
+@classmethod
+def get_capabilities(cls) -> Capabilities
+```
+
+Return the honest capabilities of the pylightxl backend.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open the workbook.
 
 <a id="tableio.optional_args"></a>
 
@@ -4344,17 +4438,6 @@ def get_description(cls) -> Descriptor
 
 Return the descriptor for the XlsxWriter Excel backend.
 
-<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.file_name_extension"></a>
-
-#### file\_name\_extension
-
-```python
-@classmethod
-def file_name_extension(cls) -> str
-```
-
-Return the file name extension of the implementation.
-
 <a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter.open"></a>
 
 #### open
@@ -4681,6 +4764,17 @@ Initialize the TableIO_SpreadsheetBased class.
   backup.)
   (Default is to raise an exception.)
 
+<a id="tableio.tableio_excelbased.TableIOExcelBased.file_name_extension"></a>
+
+#### file\_name\_extension
+
+```python
+@classmethod
+def file_name_extension(cls) -> str
+```
+
+Return the standard file name extension for Excel files.
+
 <a id="tableio.reg_pkg_formats"></a>
 
 # tableio.reg\_pkg\_formats
@@ -4754,17 +4848,6 @@ def get_description(cls) -> Descriptor
 ```
 
 Get the description of the TableIOExcelOpenPyXL class.
-
-<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.file_name_extension"></a>
-
-#### file\_name\_extension
-
-```python
-@classmethod
-def file_name_extension(cls) -> str
-```
-
-Get the file name extension of the Excel implementation.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open"></a>
 
