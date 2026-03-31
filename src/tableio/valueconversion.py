@@ -12,7 +12,7 @@ from one public ``Value`` representation to another expected concrete type.
 
 from datetime import datetime, date, time
 from types import NoneType
-from typing import Optional
+from typing import Optional, cast
 from tableio.value_type import Value, value_to_str
 
 _TRUE_STRINGS = frozenset({'true', '1', 'yes', 'on'})
@@ -346,7 +346,8 @@ def value2type[T](value: Value,  # noqa: D103
         The converted value.
     """
     if to_type is NoneType:
-        return value2none(value)  # type: ignore[func-returns-value, no-any-return] # noqa: E501
+        value2none(value)
+        return cast(T, None)
     if to_type is datetime:
         ret_dt = value2datetime(value, datetime_format_string)
         assert isinstance(ret_dt, to_type)
