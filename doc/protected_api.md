@@ -163,13 +163,14 @@
   * [\_database\_worksheet](#tableio.tableio_excel_pylightxl._database_worksheet)
   * [\_worksheet\_cells](#tableio.tableio_excel_pylightxl._worksheet_cells)
   * [\_recalculate\_worksheet\_size](#tableio.tableio_excel_pylightxl._recalculate_worksheet_size)
-  * [\_xml\_bytes](#tableio.tableio_excel_pylightxl._xml_bytes)
   * [\_worksheet\_id\_attr](#tableio.tableio_excel_pylightxl._worksheet_id_attr)
   * [\_sheet\_xml\_targets](#tableio.tableio_excel_pylightxl._sheet_xml_targets)
   * [\_xml\_text](#tableio.tableio_excel_pylightxl._xml_text)
   * [\_inline\_string\_text](#tableio.tableio_excel_pylightxl._inline_string_text)
   * [\_number\_from\_cell\_text](#tableio.tableio_excel_pylightxl._number_from_cell_text)
-  * [\_styled\_number\_value](#tableio.tableio_excel_pylightxl._styled_number_value)
+  * [\_xml\_bytes](#tableio.tableio_excel_pylightxl._xml_bytes)
+  * [\_datetime\_from\_excel\_number](#tableio.tableio_excel_pylightxl._datetime_from_excel_number)
+  * [\_datetime\_to\_excel\_number](#tableio.tableio_excel_pylightxl._datetime_to_excel_number)
   * [\_sheet\_data\_from\_xml](#tableio.tableio_excel_pylightxl._sheet_data_from_xml)
   * [\_load\_named\_ranges](#tableio.tableio_excel_pylightxl._load_named_ranges)
   * [\_read\_database](#tableio.tableio_excel_pylightxl._read_database)
@@ -3098,16 +3099,6 @@ def _recalculate_worksheet_size(worksheet: _WorksheetLike) -> None
 
 Recalculate the cached worksheet size after cell deletion.
 
-<a id="tableio.tableio_excel_pylightxl._xml_bytes"></a>
-
-#### \_xml\_bytes
-
-```python
-def _xml_bytes(root: ET.Element) -> bytes
-```
-
-Return one XML element serialized as UTF-8 bytes.
-
 <a id="tableio.tableio_excel_pylightxl._worksheet_id_attr"></a>
 
 #### \_worksheet\_id\_attr
@@ -3158,15 +3149,35 @@ def _number_from_cell_text(raw_value: str) -> object
 
 Return one numeric cell text as int, float or the original string.
 
-<a id="tableio.tableio_excel_pylightxl._styled_number_value"></a>
+<a id="tableio.tableio_excel_pylightxl._xml_bytes"></a>
 
-#### \_styled\_number\_value
+#### \_xml\_bytes
 
 ```python
-def _styled_number_value(number: object, style_code: str) -> object
+def _xml_bytes(root: ET.Element) -> bytes
 ```
 
-Return one numeric worksheet value converted by its style code.
+Return one XML element serialized as UTF-8 bytes.
+
+<a id="tableio.tableio_excel_pylightxl._datetime_from_excel_number"></a>
+
+#### \_datetime\_from\_excel\_number
+
+```python
+def _datetime_from_excel_number(number: int | float) -> datetime
+```
+
+Return one Excel serial number converted to a Python datetime.
+
+<a id="tableio.tableio_excel_pylightxl._datetime_to_excel_number"></a>
+
+#### \_datetime\_to\_excel\_number
+
+```python
+def _datetime_to_excel_number(value: datetime) -> float
+```
+
+Return one Python datetime converted to an Excel serial number.
 
 <a id="tableio.tableio_excel_pylightxl._sheet_data_from_xml"></a>
 

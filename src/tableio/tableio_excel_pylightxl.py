@@ -25,6 +25,8 @@ _DEFAULT_SHEET_NAME = 'Sheet1'
 _DATE_STYLE_CODES = {'14', '15', '16', '17'}
 _TIME_STYLE_CODES = {'18', '19', '20', '21'}
 _DATETIME_STYLE_CODE = '22'
+_DATETIME_NUMFMT_ID = '164'
+_DATETIME_DISPLAY_FORMAT = 'yyyy-mm-dd hh:mm:ss'
 _STYLE_CODE_TO_INDEX = {
     '14': '1',
     '18': '2',
@@ -35,6 +37,18 @@ _XML_NS = {
     'main': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main',
     'rels': 'http://schemas.openxmlformats.org/package/2006/relationships'
 }
+_WORKSHEET_XML_NS = {
+    'mc': 'http://schemas.openxmlformats.org/markup-compatibility/2006',
+    'r': 'http://schemas.openxmlformats.org/officeDocument/2006/'
+    'relationships',
+    'x14ac': 'http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac',
+    'xr': 'http://schemas.microsoft.com/office/spreadsheetml/2014/revision'
+}
+_IGNORABLE_PREFIXES = 'x14ac xr'
+
+ET.register_namespace('', _XML_NS['main'])
+for _prefix, _namespace in _WORKSHEET_XML_NS.items():
+    ET.register_namespace(_prefix, _namespace)
 
 
 class _WorksheetLike(Protocol):  # pylint: disable=too-few-public-methods
@@ -69,12 +83,6 @@ def _worksheet_cells(worksheet: _WorksheetLike) -> dict[str, dict[str,
 def _recalculate_worksheet_size(worksheet: _WorksheetLike) -> None:
     """Recalculate the cached worksheet size after cell deletion."""
     worksheet._calc_size()  # pylint: disable=protected-access
-
-
-def _xml_bytes(root: ET.Element) -> bytes:
-    """Return one XML element serialized as UTF-8 bytes."""
-    return cast(bytes, ET.tostring(root, encoding='utf-8',
-                                   xml_declaration=True))
 
 
 def _worksheet_id_attr(tag_sheet: ET.Element) -> Optional[str]:
@@ -143,26 +151,28 @@ def _number_from_cell_text(raw_value: str) -> object:
         return raw_value
 
 
-def _styled_number_value(number: object, style_code: str) -> object:
-    """Return one numeric worksheet value converted by its style code."""
-    if not isinstance(number, (int, float)):
-        return number
-    if style_code in _DATE_STYLE_CODES:
-        date_value = pylightxl_impl.EXCEL_STARTDATE + timedelta(
-            days=float(number))
-        return date_value.isoformat()[:10].replace('-', '/')
-    if style_code in _TIME_STYLE_CODES:
-        partial_day = float(number) % 1
-        time_value = pylightxl_impl.EXCEL_STARTDATE + timedelta(
-            days=2, seconds=round(partial_day * 86400))
-        return time_value.strftime('%H:%M:%S')
-    if style_code == _DATETIME_STYLE_CODE:
-        partial_day = float(number) % 1
-        datetime_value = pylightxl_impl.EXCEL_STARTDATE + timedelta(
-            days=int(float(number)),
-            seconds=round(partial_day * 86400))
-        return datetime_value.isoformat().replace('T', ' ').replace('-', '/')
-    return number
+def _xml_bytes(root: ET.Element) -> bytes:
+    """Return one XML element serialized as UTF-8 bytes."""
+    ET.register_namespace('', _XML_NS['main'])
+    for prefix, namespace in _WORKSHEET_XML_NS.items():
+        ET.register_namespace(prefix, namespace)
+    return cast(bytes, ET.tostring(root, encoding='utf-8',
+                                   xml_declaration=True))
+
+
+def _datetime_from_excel_number(number: int | float) -> datetime:
+    """Return one Excel serial number converted to a Python datetime."""
+    excel_start = cast(datetime, pylightxl_impl.EXCEL_STARTDATE)
+    total_seconds = round(float(number) * 86400)
+    return excel_start + timedelta(seconds=total_seconds)
+
+
+def _datetime_to_excel_number(value: datetime) -> float:
+    """Return one Python datetime converted to an Excel serial number."""
+    excel_start = cast(datetime, pylightxl_impl.EXCEL_STARTDATE)
+    delta = value - excel_start
+    return delta.days + delta.seconds / 86400 + \
+        delta.microseconds / 86400000000
 
 
 def _sheet_data_from_xml(
@@ -196,8 +206,7 @@ def _sheet_data_from_xml(
         elif cell_type in ('str', 'e') or raw_value == '':
             value = raw_value
         else:
-            value = _styled_number_value(
-                _number_from_cell_text(raw_value), style_code)
+            value = _number_from_cell_text(raw_value)
         ret[address] = {'v': value,
                         'f': _xml_text(tag_formula),
                         's': style_code,
@@ -255,6 +264,8 @@ def _styles_xml() -> bytes:
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
         '<styleSheet xmlns="http://schemas.openxmlformats.org/'
         'spreadsheetml/2006/main">',
+        f'<numFmts count="1"><numFmt numFmtId="{_DATETIME_NUMFMT_ID}" '
+        f'formatCode="{_DATETIME_DISPLAY_FORMAT}"/></numFmts>',
         '<fonts count="1"><font><sz val="11"/><name val="Calibri"/>'
         '<family val="2"/></font></fonts>',
         '<fills count="2"><fill><patternFill patternType="none"/>'
@@ -267,7 +278,8 @@ def _styles_xml() -> bytes:
         'borderId="0" xfId="0"/><xf numFmtId="14" fontId="0" '
         'fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
         '<xf numFmtId="18" fontId="0" fillId="0" borderId="0" '
-        'xfId="0" applyNumberFormat="1"/><xf numFmtId="22" '
+        'xfId="0" applyNumberFormat="1"/><xf numFmtId="'
+        f'{_DATETIME_NUMFMT_ID}" '
         'fontId="0" fillId="0" borderId="0" xfId="0" '
         'applyNumberFormat="1"/></cellXfs>',
         '<cellStyles count="1"><cellStyle name="Normal" xfId="0" '
@@ -525,17 +537,17 @@ class TableIOExcelPylightxl(TableIOExcelBased):
         """Return cleaned worksheet XML updated with compact style markers."""
         style_codes = self._entry_style_codes(entry_name, sheet_targets)
         root = ET.fromstring(data)
+        root.set('{%s}Ignorable' % _WORKSHEET_XML_NS['mc'],
+                 _IGNORABLE_PREFIXES)
         sheet_data = root.find('./main:sheetData', _XML_NS)
         if sheet_data is None:
-            return data
+            return _xml_bytes(root)
         changed = False
         for row in list(sheet_data.findall('main:row', _XML_NS)):
             changed = self._rewrite_row_xml(row, style_codes) or changed
             if not row.findall('main:c', _XML_NS):
                 sheet_data.remove(row)
                 changed = True
-        if not changed:
-            return data
         return _xml_bytes(root)
 
     def _current_style_codes(self) -> dict[str, str]:
@@ -599,9 +611,12 @@ class TableIOExcelPylightxl(TableIOExcelBased):
             return
         write_value = value
         if isinstance(value, datetime):
-            write_value = value.strftime('%Y/%m/%d %H:%M:%S')
+            write_value = _datetime_to_excel_number(value)
             style_codes[address] = _DATETIME_STYLE_CODE
         worksheet.update_address(address, write_value)
+        if address in _worksheet_cells(worksheet):
+            _worksheet_cells(worksheet)[address]['s'] = \
+                style_codes.get(address, '')
 
     def _set_cell_format(self, sheet: object, row: int, column: int,
                          fmt: Optional[Fmt]) -> None:
@@ -656,8 +671,18 @@ class TableIOExcelPylightxl(TableIOExcelBased):
         """Convert one stored pylightxl cell value to the public Value type."""
         if style_code in _DATE_STYLE_CODES and isinstance(value, str):
             return datetime.strptime(value, '%Y/%m/%d')
+        if style_code in _DATE_STYLE_CODES and isinstance(value, (int, float)):
+            date_value = _datetime_from_excel_number(value)
+            return datetime(date_value.year, date_value.month,
+                            date_value.day)
+        if style_code in _TIME_STYLE_CODES and isinstance(value, (int, float)):
+            time_value = _datetime_from_excel_number(value)
+            return time_value.strftime('%H:%M:%S')
         if style_code == _DATETIME_STYLE_CODE and isinstance(value, str):
             return datetime.strptime(value, '%Y/%m/%d %H:%M:%S')
+        if style_code == _DATETIME_STYLE_CODE and \
+                isinstance(value, (int, float)):
+            return _datetime_from_excel_number(value)
         return cls._python_value_from_spreadsheet(value)
 
     def _filtered_range_infos(self) -> list[tuple[str, tuple[int, int,

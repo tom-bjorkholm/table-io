@@ -7,6 +7,7 @@
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from zipfile import ZipFile
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
@@ -239,7 +240,7 @@ def test_excel_pylightxl_reads_openpyxl_datetime_cells(
 
 def test_excel_pylightxl_writes_datetime_readably_and_reads_it_back(
         capsys: CaptureFixture[str]) -> None:
-    """Written datetime cells stay readable in Excel and round-trip here."""
+    """Written datetime cells use ISO display format and round-trip here."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'datetime_roundtrip'
         when = datetime(2026, 3, 24, 14, 30, 0)
@@ -248,7 +249,8 @@ def test_excel_pylightxl_writes_datetime_readably_and_reads_it_back(
         workbook = load_workbook(Path(temp_dir) / 'datetime_roundtrip.xlsx')
         worksheet = workbook.active
         assert isinstance(worksheet, Worksheet)
-        assert worksheet['A2'].value == '2026/03/24 14:30:00'
+        assert worksheet['A2'].value == when
+        assert worksheet['A2'].number_format == 'yyyy-mm-dd hh:mm:ss'
         workbook.close()
         with TableIOExcelPylightxl(
                 Path(temp_dir) / 'datetime_roundtrip',
@@ -278,7 +280,7 @@ def test_excel_pylightxl_update_keeps_datetime_cells_readable(
         workbook = load_workbook(file_name)
         worksheet = workbook.active
         assert isinstance(worksheet, Worksheet)
-        assert worksheet['A1'].value == '2026/03/24 14:30:00'
+        assert worksheet['A1'].value == when
         assert worksheet['B1'].value == 'start'
         assert worksheet['A3'].value == 'new'
         workbook.close()
@@ -289,4 +291,21 @@ def test_excel_pylightxl_update_keeps_datetime_cells_readable(
             second_result = table_io.read_table_listdata()
         assert first_result.data == [[when, 'start']]
         assert second_result.data == [['new', 'row']]
+    check_capsys(capsys)
+
+
+def test_excel_pylightxl_rewrites_worksheet_xml_with_excel_prefixes(
+        capsys: CaptureFixture[str]) -> None:
+    """Rewritten worksheet XML keeps namespace prefixes Excel accepts."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'xml_prefixes'
+        with TableIOExcelPylightxl(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata([['value'], [True]])
+        with ZipFile(Path(temp_dir) / 'xml_prefixes.xlsx') as zip_file:
+            worksheet_xml = zip_file.read(
+                'xl/worksheets/sheet1.xml').decode('utf-8')
+        assert 'mc:Ignorable="x14ac xr"' in worksheet_xml
+        assert 'xmlns:mc="' in worksheet_xml
+        assert 'xmlns:x14ac="' in worksheet_xml
+        assert 'xmlns:xr="' in worksheet_xml
     check_capsys(capsys)
