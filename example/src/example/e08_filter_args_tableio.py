@@ -10,11 +10,9 @@ from tempfile import TemporaryDirectory
 from typing import Optional
 from mformat.paper_size import PaperSize
 from mformat.document_class import DocumentClass
-from tableio.factory import create_tableio, filter_args_tableio
-from tableio.optional_args import OptionalArgs, OptionalArgsDict
-from tableio.tableio import FileAccess
-from tableio.value_type import Value, ListData
-from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED
+from tableio import CAP_NEEDED, CAP_NOT_USED, Capabilities, FileAccess, \
+    ListData, OptionalArgs, OptionalArgsDict, Value, create_tableio, \
+    filter_args_tableio
 from .cmd_for_examples import cmd_parse_and_run_example
 from .write_writer_info import write_writer_info
 

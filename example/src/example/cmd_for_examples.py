@@ -11,19 +11,18 @@ from typing import Callable, Optional
 from mformat.enum_str_util import from_str, possible_values
 from mformat.paper_size import PaperSize
 from mformat.document_class import DocumentClass
-from tableio.factory import list_registered_tableio, \
-    list_implementations_tableio
-from tableio.optional_args import OptionalArgs, OptionalArgsDict, CsvDialect
-from tableio.capability import Capabilities
+from tableio import Capabilities, CsvDialect, OptionalArgs, \
+    OptionalArgsDict, list_implementations_tableio, \
+    list_registered_tableio
 
 
 type ExampleFunc = Callable[[str, str, Optional[str], OptionalArgs], int]
 """The function type for the example functions.
 
-   example_func(format_name: str, output_file_name: str,
-                implementation_name: Optional[str],
-                optional_args: OptionalArgs) -> int
-   """
+example_func(format_name: str, output_file_name: str,
+             implementation_name: Optional[str],
+             optional_args: OptionalArgs) -> int
+"""
 
 _CLI_STR_ARGS: list[str] = [
     'character_encoding', 'lang', 'title', 'css_file',

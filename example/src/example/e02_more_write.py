@@ -1,20 +1,15 @@
 #! /usr/bin/env python3
-"""Example of how to use the tableio package."""
+"""Show several ways to write formatted table data."""
 
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
 from typing import Optional
 from datetime import datetime, timedelta
-from tableio.factory import create_tableio
-from tableio.optional_args import OptionalArgs
-from tableio.tableio import FileAccess
-from tableio.value_type import Fmt, ValueFmt, \
-    DictData, ListData, FmtListData, FmtDictData, \
-    FmtListRow, FmtDictRow
-from tableio.color import Color
-from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED, \
-    CAP_IGNORABLE
+from tableio import CAP_IGNORABLE, CAP_NEEDED, CAP_NOT_USED, \
+    Capabilities, Color, DictData, FileAccess, Fmt, FmtDictData, \
+    FmtDictRow, FmtListData, FmtListRow, ListData, OptionalArgs, \
+    ValueFmt, create_tableio
 from .cmd_for_examples import cmd_parse_and_run_example
 
 
@@ -40,7 +35,7 @@ CAPS = Capabilities(
 def e02_more_write(format_name: str, output_file_name: str,
                    implementation_name: Optional[str],
                    optional_args: OptionalArgs) -> int:
-    """Write a table to show how to use the more capabilities."""
+    """Write several tables that demonstrate formatting features."""
     #
     # This example is write-only.
     #
@@ -68,7 +63,7 @@ def e02_more_write(format_name: str, output_file_name: str,
         data1: ListData[ValueFmt] = [
             [ValueFmt(value='Jira key', fmt=Fmt(bold=True)),
              ValueFmt(value='Type', fmt=Fmt(bold=True)),
-             ValueFmt(value='Satus', fmt=Fmt(bold=True, italic=True))],
+             ValueFmt(value='Status', fmt=Fmt(bold=True, italic=True))],
             [ValueFmt(value='TIO-123', fmt=Fmt(italic=True)),
              ValueFmt(value='Task', fmt=Fmt(italic=True)),
              ValueFmt(value='In Progress', fmt=Fmt(italic=True))],
@@ -104,25 +99,25 @@ def e02_more_write(format_name: str, output_file_name: str,
         data2: DictData[ValueFmt] = [
             {'Jira key': ValueFmt(value='TIO-123', fmt=Fmt(italic=True)),
              'Reporter': ValueFmt(value='John Doe', fmt=Fmt(bold=True)),
-             'Assgnee': ValueFmt(value='Jane Doe', fmt=Fmt(italic=True,
-                                                           bold=True))},
+             'Assignee': ValueFmt(value='Jane Doe', fmt=Fmt(italic=True,
+                                                            bold=True))},
             {'Jira key': ValueFmt(value='TIO-456', fmt=Fmt()),
              'Reporter': ValueFmt(value='Jane Doe', fmt=Fmt()),
-             'Assgnee': ValueFmt(value='John Doe',
-                                 fmt=Fmt(italic=True,
-                                         bold=True,
-                                         highlight=Color.GREEN))},
+             'Assignee': ValueFmt(value='John Doe',
+                                  fmt=Fmt(italic=True,
+                                          bold=True,
+                                          highlight=Color.GREEN))},
             {'Jira key': ValueFmt(value='TIO-789', fmt=Fmt()),
              'Reporter': ValueFmt(value='John Doe', fmt=Fmt()),
-             'Assgnee': ValueFmt(value='Unassigned',
-                                 fmt=Fmt(italic=True,
-                                         bold=True,
-                                         highlight=Color.RED))}]
+             'Assignee': ValueFmt(value='Unassigned',
+                                  fmt=Fmt(italic=True,
+                                          bold=True,
+                                          highlight=Color.RED))}]
         #
         # When writing dict rows, column_order decides both which columns
         # appear and in what order they are written.
         #
-        column_order2: list[str] = ['Jira key', 'Assgnee', 'Reporter']
+        column_order2: list[str] = ['Jira key', 'Assignee', 'Reporter']
         #
         # first_row_format styles the generated header row that tableio
         # creates from the dictionary keys.

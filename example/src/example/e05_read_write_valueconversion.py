@@ -1,18 +1,15 @@
 #! /usr/bin/env python3
-"""How to use the tableio package to read data with value conversion."""
+"""Show how to read data back with value conversion helpers."""
 
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
 from typing import Optional
 from datetime import datetime, timedelta
-from tableio.factory import create_tableio
-from tableio.optional_args import OptionalArgs
-from tableio.tableio import FileAccess
-from tableio.value_type import Value, ListData, DictData, ReadResult
+from tableio import CAP_NEEDED, CAP_NOT_USED, Capabilities, DictData, \
+    FileAccess, ListData, OptionalArgs, ReadResult, Value, create_tableio
 from tableio.valueconversion import value2int, value2float, value2datetime, \
     value2bool, value2type, value2type_of
-from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED
 from .cmd_for_examples import cmd_parse_and_run_example
 
 #
@@ -68,10 +65,9 @@ def compare_written_to_read2(written: ListData[Value],
     The written and read data should carry the same information, but the
     limitations of the file type may have changed the types of the values.
     We will convert the values to the expected type and compare them.
-    Here we do it the easy way by using value2type to convert the
-    value to the type of the data written, which is the type of the variable
-    we are comparing to. This is done by using value2type_of with the expected
-    type as the second argument.
+    Here we do it the easy way by using value2type() to convert each
+    read value to the type of the written value we compare it with.
+
     Args:
         written: The written data.
         result: The read data.
@@ -92,11 +88,9 @@ def compare_written_to_read3(written: DictData[Value],
     The written and read data should carry the same information, but the
     limitations of the file type may have changed the types of the values.
     We will convert the values to the expected type and compare them.
-    Here we do it the easy way by using value2type to convert the
-    value to the type of the data written, which is the type of the variable
-    we are comparing to. This is done by using value2type_of with the
-    value we compare with (that is of the expected type) as the second
-    argument.
+    Here we do it the easy way by using value2type_of() with the written
+    value as the type example we want to convert to.
+
     Args:
         written: The written data.
         result: The read data.
@@ -113,18 +107,15 @@ def compare_written_to_read3(written: DictData[Value],
 def e05_read_write_valueconversion(format_name: str, output_file_name: str,
                                    implementation_name: Optional[str],
                                    optional_args: OptionalArgs) -> int:
-    """Read data with value conversion."""
+    """Read data back and convert values to the expected Python types."""
     #
-    # In e01_simple_read_write.py we did set the csv parameters to
-    # get the data to be read back as the same type that it was written.
-    # That is not always possible. Many times the file format will not
-    # convert a value to a type the file format can support.
+    # In e01_simple_read_write.py we set CSV parameters so values were
+    # often read back as the same type they were written. That is not
+    # always possible. Many file formats cannot preserve every Python type.
     #
-    # A more general way to get a value of the type we know it actually was
-    # is to use value conversion. When using value conversion, the actual
-    # value we read is what the file format could store it as. Then we can
-    # convert it to the type we know is correct for the information it
-    # carries.
+    # A more general solution is to use value conversion. The value we read
+    # back is whatever representation the file format could store, and we
+    # then convert that value to the Python type we actually want.
     #
     # We will read and write both list and dict data.
     # Here is some example data that we will read and write:
@@ -149,7 +140,7 @@ def e05_read_write_valueconversion(format_name: str, output_file_name: str,
     # We create the tableio object using the factory and use it as
     # a context manager to ensure it is closed properly. The file is
     # created if it does not exist. If it exists, an exception is raised.
-    # With this tableio object we only write the data to the file.
+    # In this first context manager we only write the data to the file.
     #
     with create_tableio(format_name=format_name,
                         file_name=output_file_name,
@@ -163,9 +154,9 @@ def e05_read_write_valueconversion(format_name: str, output_file_name: str,
         tableio.write_table_listdata(data=data1)
         tableio.write_table_dictdata(data=datad1, column_order=column_order)
     #
-    # Now we pretend to be another program that reads the data from the file.
-    # As usual we do this by creating a new tableio object using the factory
-    # and use it as a context manager to ensure it is closed properly.
+    # Now we pretend to be another program that reads the data from the
+    # file. As usual we do this by creating a new tableio object with the
+    # factory and using it as a context manager.
     #
     with create_tableio(format_name=format_name,
                         file_name=output_file_name,

@@ -5,12 +5,9 @@
 # MIT License
 
 from typing import Optional
-from tableio.factory import create_tableio
-from tableio.optional_args import OptionalArgs
-from tableio.tableio import FileAccess, Box
-from tableio.value_type import Value, ListData, ValueFmt, Fmt
-from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED
-from tableio.color import Color
+from tableio import CAP_NEEDED, CAP_NOT_USED, Box, Capabilities, Color, \
+    FileAccess, Fmt, ListData, OptionalArgs, Value, ValueFmt, \
+    create_tableio
 from .cmd_for_examples import cmd_parse_and_run_example
 
 

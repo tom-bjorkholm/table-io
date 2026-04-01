@@ -6,10 +6,8 @@
 
 from typing import Optional
 from datetime import datetime
-from tableio.factory import create_tableio
-from tableio.optional_args import OptionalArgs
-from tableio.tableio import FileAccess
-from tableio.value_type import Value, ListDataSeq
+from tableio import FileAccess, ListDataSeq, OptionalArgs, Value, \
+    create_tableio
 from .cmd_for_examples import cmd_parse_and_run_example
 from .write_writer_info import write_writer_info
 
@@ -19,22 +17,21 @@ def e00_really_simple_write_table(format_name: str,
                                   output_file_name: str,
                                   implementation_name: Optional[str],
                                   optional_args: OptionalArgs) -> int:
-    """Write a table to a file."""
+    """Write one small table with the recommended public API."""
     # As we want to keep this really simple,
     # we ignore some command line arguments.
     #
     _ = optional_args  # pylint: disable=unused-variable
     #
     # We are going to write a table from a list of lists.
-    # The list of lists is a list of rows, where each row is a list of values.
-    # The values are the data to write to the file.
+    # Each inner list is one row, and each item in that row becomes one cell.
     #
     data: ListDataSeq[Value] = [
         ['English', 'German', 'Swedish'],
         ['Hello', 'Hallo', 'Hej'],
         ['World', 'Welt', 'Värld'],
-        # And we are not restricted to strings
-        # We can use numbers, booleans, and dates.
+        # We are not restricted to strings.
+        # tableio also accepts numbers, booleans and datetimes.
         [3.14159, True, datetime.now()]
     ]
     #
@@ -45,8 +42,8 @@ def e00_really_simple_write_table(format_name: str,
     # default implementation for the format name.
     # We do not pass any capabilities, so the factory will use the
     # best implementation for the format name.
-    # We use the context manager to ensure that the file get proper
-    # file suffixes written and is properly closed when we are done.
+    # We use the context manager so the writer is finalized and closed
+    # properly when we are done.
     # If we do more complicated things it is safest to specify the
     # capabilities explicitly, as you will see in the later examples.
     #
@@ -55,14 +52,14 @@ def e00_really_simple_write_table(format_name: str,
                         file_access=FileAccess.CREATE) as tableio:
         #
         # Write the table to the file.
-        # The tableio object has a write_table_listdata method that
+        # The tableio object has a write_table_listdata() method that
         # writes the table to the file.
         #
         tableio.write_table_listdata(data)
         #
         # That was all we need to do to write the table to the file.
         #
-        # As somebody may get confused by the fact that we did not
+        # As someone may get confused by the fact that we did not
         # use the command line arguments, we will write out what
         # we actually did.
         #
@@ -78,7 +75,6 @@ def e00_really_simple_write_table(format_name: str,
 
 
 if __name__ == '__main__':
-    # Call the command line parser to parse the command line arguments,
-    # and then call the function above with the parsed arguments.
+    # Parse the command line and call the example function.
     cmd_parse_and_run_example(example_name='e00_really_simple_write_table',
                               func=e00_really_simple_write_table)

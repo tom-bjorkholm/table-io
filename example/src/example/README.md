@@ -24,6 +24,14 @@ correct type to write to different file formats. They demonstrate
 the simplest way to use the factory by calling the `create_tableio()`
 function.
 
+Most examples now also use the recommended public API directly from the
+package root, for example `from tableio import create_tableio,
+FileAccess, OptionalArgs`. That keeps the beginner-facing examples easy
+to scan. A few advanced topics still import lower-level helpers from
+submodules on purpose, such as the value-conversion helpers in `e05`,
+the capability-detail types in `e10`, and the backend implementation
+helpers in `e13`.
+
 ## e00_really_simple_write_table.py
 
 Source:
@@ -34,6 +42,10 @@ smallest working write example. It shows how to call
 `create_tableio()`, how to use `FileAccess.CREATE`, how to write table
 data from a list of rows with `write_table_listdata()`, and how to let
 the context manager close the writer correctly when the work is done.
+
+It also reflects the recommended import style for new users: the common
+names in the example are imported directly from `tableio` instead of
+from several different submodules.
 
 It also shows that `tableio` can write more than plain strings. The
 sample data includes numbers, booleans and a `datetime`, so a beginner
@@ -121,6 +133,11 @@ file format may not preserve enough typing information, so the example
 uses helpers such as `value2int()`, `value2float()`, `value2datetime()`,
 `value2bool()`, `value2type()` and `value2type_of()` to convert values
 back into the type the program expects.
+
+Unlike the everyday `tableio` entry points, those conversion helpers are
+still imported from `tableio.valueconversion`. That is intentional: they
+are useful, but they are a specialized helper family rather than part of
+the small beginner-facing root API.
 
 It reads and writes both list-shaped and dict-shaped tables, and it
 shows both the explicit “convert each known cell” approach and the more
@@ -211,6 +228,12 @@ capability set and writes a small demo table, so the reader can see how
 the factory chooses a backend and how optional features may or may not be
 honored in practice.
 
+Most of the example now uses the root-level `tableio` API, but it still
+imports `SingleCapability` and `Strictness` from
+`tableio.capability`. That is a good signal that those two names are
+more detailed capability-modeling tools than part of the smallest common
+API surface.
+
 ## e11_find_value_read_cells_write_cells.py
 
 Source:
@@ -276,6 +299,11 @@ implement using only the Python standard-library `csv` module. The
 example class derives from `TableIOTextBased`, which itself derives from
 `TableIO`, so the example can focus on the custom hooks instead of basic
 text-file open and close handling.
+
+This example is also the deliberate exception to the simplified import
+style used by the earlier scripts. It still imports several names from
+submodules because implementing a backend needs lower-level extension
+hooks that are not part of the beginner-facing root API.
 
 Another important lesson in this example is *when* registration happens.
 The call to `register_tableio()` is not done at module import time.

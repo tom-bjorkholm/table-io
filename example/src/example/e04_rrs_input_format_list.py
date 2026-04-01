@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-"""Example of how to use the tableio package."""
+"""Write list-shaped data in the row order expected by RRS."""
 
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
@@ -8,11 +8,8 @@
 # a list of lists instead of a list of dictionaries.
 
 from typing import Optional
-from tableio.factory import create_tableio
-from tableio.optional_args import OptionalArgs
-from tableio.tableio import FileAccess
-from tableio.value_type import Value
-from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED
+from tableio import CAP_NEEDED, CAP_NOT_USED, Capabilities, FileAccess, \
+    OptionalArgs, Value, create_tableio
 from .cmd_for_examples import cmd_parse_and_run_example
 
 # Define the capabilities we want to use for this example:
@@ -38,12 +35,11 @@ CAPS = Capabilities(
 def e04_rrs_input_format_list(format_name: str, output_file_name: str,
                               implementation_name: Optional[str],
                               optional_args: OptionalArgs) -> int:
-    """Write a table to show how to use the more capabilities."""
+    """Write list-shaped data in the row order expected by RRS."""
     # Create the tableio object with the factory.
-    # We pass the capabilities we want to use for this example,
-    # to the factory to filter out readers/writers that do not support
-    # the capabilities.
-    # Use the TableIO object as context manageer for writing data.
+    # We pass the capabilities needed for this example so the factory can
+    # filter out readers and writers that do not support them.
+    # Use the TableIO object as a context manager for writing data.
     with create_tableio(format_name=format_name,
                         file_name=output_file_name,
                         file_access=FileAccess.CREATE,
@@ -69,19 +65,16 @@ def e04_rrs_input_format_list(format_name: str, output_file_name: str,
              'Viel Spaß', 'Thöß', 'Müller', 'Hamburger Segelclub',
              'keiner.empfaenger@beispiel.de', '+491234567', '+491234567']]
         # Write the data to the file.
-        # We pass the data, the column order and the filtered data range.
-        # The filtered data range is set to True so that human readers
-        # of the resulting excel file can easily find the data they are
+        # filtered_data_range=True helps human readers of the resulting
+        # Excel file to easily find the data they are
         # looking for.
         tableio.write_table_listdata(data, filtered_data_range=True)
     return 0
 
 
 if __name__ == '__main__':
-    # Parse the command line arguments and run the example.
-    # We pass the capabilities we want to use for this example,
-    # to the command line parser to filter out the possibility for the
-    # user to specify a reader/writer that does not support
-    # the capabilities.
+    # Parse the command line and run the example.
+    # The shared parser uses CAPS so it can hide backends that do not
+    # support the features demonstrated here.
     cmd_parse_and_run_example(example_name='e04_rrs_input_format_list',
                               func=e04_rrs_input_format_list, caps=CAPS)

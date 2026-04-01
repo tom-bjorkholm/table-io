@@ -8,16 +8,17 @@ import csv
 import io
 from typing import Callable, Literal, Optional, Sequence
 from mformat.mformat import PathLike
-from tableio.capability import Capabilities, CAP_IMPLEMENTED, CAP_IGNORED, \
-    CAP_NEEDED, CAP_NOT_USED, CAP_UNSUPPORTED, CapabilityNotSupported
-from tableio.factory import create_tableio, register_tableio
-from tableio.optional_args import CsvDialect, OptionalArgs
-from tableio.tableio import Box, Descriptor, FileAccess, Position
+from tableio import CAP_NEEDED, CAP_NOT_USED, Box, Capabilities, CellT, \
+    CsvDialect, DictData, DictDataMap, FileAccess, FmtDictData, \
+    FmtListData, ListData, ListDataSeq, OptionalArgs, Position, \
+    ReadResult, Value, create_tableio
+from tableio.capability import CAP_IMPLEMENTED, CAP_IGNORED, \
+    CAP_UNSUPPORTED, CapabilityNotSupported
+from tableio.factory import register_tableio
+from tableio.tableio import Descriptor
 from tableio.tableio_textbased import TableIOTextBased
-from tableio.value_type import CellT, DictData, DictDataMap, FmtDictData, \
-    FmtListData, ListData, ListDataSeq, ReadResult, Value, \
-    row_strip_format_dict, row_strip_format_list, strip_format_dict, \
-    strip_format_list
+from tableio.value_type import row_strip_format_dict, \
+    row_strip_format_list, strip_format_dict, strip_format_list
 from .cmd_for_examples import cmd_parse_and_run_example
 from .write_writer_info import write_writer_info
 
@@ -75,6 +76,11 @@ class LineNumberedCsvTableIO(TableIOTextBased):
     The important teaching point is that this class is not part of the
     tableio package itself. It lives in an ordinary example script, just like
     user application code would.
+
+    Most example programs in this directory import common public names
+    directly from tableio. This example is different on purpose: a custom
+    backend needs some lower-level implementation helpers that stay in
+    submodules because they are not part of the beginner-facing public API.
 
     The class derives from TableIOTextBased instead of directly from TableIO.
     That is still a valid TableIO subclass, but it lets the example reuse the

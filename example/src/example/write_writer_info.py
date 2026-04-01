@@ -5,20 +5,14 @@
 # MIT License
 
 from typing import Optional
-from tableio.tableio import TableIO
+from tableio import ListData, TableIO, Value
 from tableio.capability import capability_to_str
-from tableio.value_type import Value, ListData
 
 
 def write_writer_info(tableio: TableIO,
                       requested_format_name: Optional[str] = None,
                       requested_implementation: Optional[str] = None) -> None:
-    """Use the writer object to write informaion about itself.
-
-    Use the writer object (TableIO derived class instance)
-    to write information aboutthe writer object to the
-    output file of the writer object.
-    """
+    """Write a small table that describes the chosen writer backend."""
     data: ListData[Value] = [
         ['Attribute', 'Value', 'Requested value'],
         ['Type name', tableio.get_description().format_name,

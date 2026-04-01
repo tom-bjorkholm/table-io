@@ -5,14 +5,11 @@
 # MIT License
 
 from typing import Optional
-from tableio.factory import create_tableio, list_registered_tableio, \
-    list_implementations_tableio
-from tableio.optional_args import OptionalArgs
-from tableio.tableio import FileAccess
-from tableio.capability import Capabilities, SingleCapability, Strictness, \
-    CAP_NEEDED, CAP_NOT_USED, CAP_IGNORABLE
-from tableio.value_type import Value, ListData, FmtListData, FmtListRow, Fmt
-from tableio.color import Color
+from tableio import CAP_IGNORABLE, CAP_NEEDED, CAP_NOT_USED, \
+    Capabilities, Color, FileAccess, Fmt, FmtListData, FmtListRow, \
+    ListData, OptionalArgs, Value, create_tableio, \
+    list_implementations_tableio, list_registered_tableio
+from tableio.capability import SingleCapability, Strictness
 from .cmd_for_examples import cmd_parse_and_run_example
 from .write_writer_info import write_writer_info
 

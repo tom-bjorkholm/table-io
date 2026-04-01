@@ -1,15 +1,12 @@
 #! /usr/bin/env python3
-"""Example of how to use the tableio package."""
+"""Write a table, read it back and verify the round-trip."""
 
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
 from typing import Optional
-from tableio.factory import create_tableio
-from tableio.optional_args import OptionalArgs, OptionalArgsDict
-from tableio.tableio import FileAccess
-from tableio.value_type import Value, ListDataSeq
-from tableio.capability import Capabilities, CAP_NEEDED, CAP_NOT_USED
+from tableio import CAP_NEEDED, CAP_NOT_USED, Capabilities, FileAccess, \
+    ListDataSeq, OptionalArgs, OptionalArgsDict, Value, create_tableio
 from .cmd_for_examples import cmd_parse_and_run_example
 from .write_writer_info import write_writer_info
 
@@ -36,7 +33,7 @@ CAPS = Capabilities(
 def e01_simple_read_write(format_name: str, output_file_name: str,
                           implementation_name: Optional[str],
                           optional_args: OptionalArgs) -> int:
-    """Write a table and read it back to verify round-trip."""
+    """Write a small table and read it back again."""
     #
     # We use two headings so the example shows that headings are separate
     # from the table data itself.
