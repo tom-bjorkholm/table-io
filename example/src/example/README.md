@@ -226,3 +226,23 @@ fictive company table is written with economic figures for 2024 and
 that same row are rewritten so they become bold with a green highlight.
 It is a good reference when you need to find one cell by content and
 then update other cells relative to that match.
+
+## e12_find_value_multiple_matches.py
+
+Source:
+<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e12_find_value_multiple_matches.py>
+
+This example teaches two more advanced `find_value()` patterns. First,
+it searches for more than one cell at a time by looking for the 1x2
+value area `[['ABBA', 1974]]`, which is more precise than searching for
+just `ABBA` or just `1974`. Second, it shows how to find several
+matches: after each match is handled, the example builds a new search
+box that starts below the previous match and calls `find_value()` again.
+
+The table contains several 1970s singles where only some rows match the
+requested combination of artist and year. For every matching `ABBA`
+`1974` row, the example writes text into the `Remark` column on that
+same row. Because the visible change is ordinary cell content rather
+than formatting, this example is also useful for spreadsheet
+implementations that support search and exact cell writes but not rich
+formatting.
