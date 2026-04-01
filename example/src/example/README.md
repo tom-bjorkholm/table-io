@@ -3,9 +3,10 @@
 This directory contains small example programs for programmers who are
 new to the `tableio` API. The examples are arranged from the smallest
 possible write example to more advanced topics such as value conversion,
-box read and write, multi-sheet workbooks and capability-driven backend
-selection. A good way to learn the API is to read the examples in order
-and run the ones that match the file format you are interested in.
+box read and write, value search, multi-sheet workbooks and
+capability-driven backend selection. A good way to learn the API is to
+read the examples in order and run the ones that match the file format
+you are interested in.
 
 All examples use the shared command-line helper in
 `cmd_for_examples.py`. That means they follow the same basic style:
@@ -207,3 +208,21 @@ the example makes the difference between `CAP_NEEDED` and
 capability set and writes a small demo table, so the reader can see how
 the factory chooses a backend and how optional features may or may not be
 honored in practice.
+
+## e11_find_value_read_cells_write_cells.py
+
+Source:
+<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e11_find_value_read_cells_write_cells.py>
+
+This example demonstrates a very practical spreadsheet workflow: write a
+small table, search for a label cell with `find_value()`, use the found
+position to build a new box for neighboring cells, read those cells with
+`read_cells()`, and then write the same values back with formatting by
+calling `write_cells()`.
+
+The example is intentionally easy to inspect in the produced workbook. A
+fictive company table is written with economic figures for 2024 and
+2025, the row labelled `Revenue` is located, and the two year values on
+that same row are rewritten so they become bold with a green highlight.
+It is a good reference when you need to find one cell by content and
+then update other cells relative to that match.
