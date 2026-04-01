@@ -4,15 +4,15 @@ The tableio package contains a number of classes providing a uniform way for
 a python program to write table data (rows of columns) to and read table data
 from a number of different common file formats.
 
-An increasing number of users want output from programs to de in a format
+An increasing number of users want output from programs to be in a format
 like a spreadsheet, and not the old fashoned raw text files. Similarly,
 many users want the data they feed into programs to be in a particular format
-(like a spreadsheet). The tableio packade tries to make it easier for the
+(like a spreadsheet). The tableio package tries to make it easier for the
 programmer to fullfil requests like that.
 
-The primary intended use is for text output from a python program, where the
-programmer would like the user to be able to select the input and output file
-formats.
+The primary intended use is for data table output from a python program
+and data table input to a python program, where the programmer would like
+the user to be able to select the input and output file formats.
 
 The support for spreadsheets is for reading and writing data. There is no
 intention to support reading or writing formulas. There is no support for
@@ -42,6 +42,8 @@ The currently supported formats are:
 |-------------|----------------|-----------|----------|
 | CSV         | csv            | yes       | yes      |
 | Excel       | OpenPyXL       | yes       | yes      |
+| Excel       | XlsxWriter     | yes       | -        |
+| Excel       | pylightxl      | yes       | yes      |
 | ODS         | odfdo          | yes       | yes      |
 | HTML        | mformat        | yes       | -        |
 | LaTeX       | mformat        | yes       | -        |
@@ -83,6 +85,8 @@ The main features are:
 - writing a table to a specific location in a spreadsheet (specified by a box)
 - reading table data from a specific location in a spreadsheet (specified by a box)
 - using multiple sheets in spreadsheets
+- finding location where some data is present in spreadsheet and doing modifications
+  at that position or at positions relative to that position.
 
 ## Example programs
 
@@ -91,8 +95,6 @@ example programs:
 [https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/README.md](https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/README.md).
 
 ## API documentation
-
-Be aware that this is still in early development. The APIs may change between versions.
 
 You can find the public API documentation at [https://bitbucket.org/tom-bjorkholm/table-io/src/master/doc/api.md](https://bitbucket.org/tom-bjorkholm/table-io/src/master/doc/api.md)
 
@@ -106,15 +108,16 @@ a better start by reading the examples.
 
 ## Version history
 
-| Version | Date        | Python version | Comment                    |
-|---------|-------------|----------------|----------------------------|
-| 0.2     | 2026 Mar 28 | 3.12 or newer  | More features, API changes |
-| 0.1     | 2026 Mar 23 | 3.12 or newer  | First released version     |
+| Version | Date        | Python version | Comment                     |
+|---------|-------------|----------------|-----------------------------|
+| 0.3     | 2023 Apr 01 | 3.12 or newer  | Improved API, more backends |
+| 0.2     | 2026 Mar 28 | 3.12 or newer  | More features, API changes  |
+| 0.1     | 2026 Mar 23 | 3.12 or newer  | First released version      |
 
 ## Test summary
 
-- Test result: 1010 passed in 17s
+- Test result: 1010 passed in 15s
 - No flake8 warnings.
 - No mypy errors found.
-- Built version(s): 0.2.1
+- Built version(s): 0.3
 - Build and test using Python 3.14.3
