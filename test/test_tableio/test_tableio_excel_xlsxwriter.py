@@ -8,6 +8,7 @@ import io
 from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Optional
 
 import pytest
 from openpyxl import Workbook, load_workbook
@@ -49,6 +50,61 @@ from .spreadsheet_test_helper import \
 
 
 _XLSXWRITER_WIDTH_OFFSET = 0.7109375
+
+
+class _FailingWorksheet:
+    """Worksheet double whose add_table call always reports failure."""
+
+    def __init__(self) -> None:
+        """Initialize the minimal worksheet state used by the tests."""
+        self.tables: list[dict[str, object]] = []
+        self.table_cells: dict[tuple[int, int], str] = {}
+        self.filter_cells: dict[tuple[int, int], tuple[str, str]] = {}
+
+    def add_table(self, *args: object, **kwargs: object) -> int:
+        """Simulate a backend failure when adding a table."""
+        _ = args
+        _ = kwargs
+        return 1
+
+    def set_column(self, *args: object, **kwargs: object) -> object:
+        """Ignore width requests because the test never inspects them."""
+        _ = args
+        _ = kwargs
+        return 0
+
+    def write(self, row: int, col: int, *args: object) -> object:
+        """Ignore cell writes because the failure happens earlier."""
+        _ = row
+        _ = col
+        _ = args
+        return 0
+
+    def write_blank(self, row: int, col: int, blank: object,
+                    cell_format: Optional[object] = None) -> object:
+        """Ignore blank writes because the failure happens earlier."""
+        _ = row
+        _ = col
+        _ = blank
+        _ = cell_format
+        return 0
+
+
+class _InspectableTableIOExcelXlsxWriter(TableIOExcelXlsxWriter):
+    """Expose protected XlsxWriter helpers needed by the tests."""
+
+    def run_write_file_suffix(self) -> None:
+        """Expose the workbook-finalize hook for tests."""
+        self._write_file_suffix()
+
+    def run_last_used_column(self) -> int:
+        """Expose the empty-sheet column helper for tests."""
+        return self._last_used_column(self._write_sheet())
+
+    def run_add_filtered_range(self, bounds: tuple[int, int, int, int],
+                               name: str) -> None:
+        """Expose filtered-range creation for tests."""
+        self._add_filtered_range(bounds, name)
 
 
 def test_excel_xlsxwriter_get_capabilities(
@@ -335,4 +391,47 @@ def test_excel_xlsxwriter_write_cells_writes_exact_box_and_formatting(
         assert worksheet['B4'].fill.fgColor.rgb == 'FFFFFF00'
         assert worksheet['C4'].font.bold is True
         workbook.close()
+    check_capsys(capsys)
+
+
+def test_excel_xlsxwriter_write_file_suffix_is_noop_without_workbook(
+        capsys: CaptureFixture[str]) -> None:
+    """Closing an unopened writer leaves the target file untouched."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _InspectableTableIOExcelXlsxWriter(
+            Path(temp_dir) / 'no_workbook',
+            FileAccess.CREATE)
+        table_io.run_write_file_suffix()
+        assert not Path(temp_dir, 'no_workbook.xlsx').exists()
+    check_capsys(capsys)
+
+
+def test_excel_xlsxwriter_last_used_column_is_minus_one_on_empty_sheet(
+        capsys: CaptureFixture[str]) -> None:
+    """Empty worksheets report no used column."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _InspectableTableIOExcelXlsxWriter(
+            Path(temp_dir) / 'empty_sheet',
+            FileAccess.CREATE)
+        with table_io:
+            assert table_io.run_last_used_column() == -1
+    check_capsys(capsys)
+
+
+def test_excel_xlsxwriter_filtered_range_raises_on_table_failure(
+        capsys: CaptureFixture[str]) -> None:
+    """Filtered range creation raises when XlsxWriter rejects the table."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _InspectableTableIOExcelXlsxWriter(
+            Path(temp_dir) / 'table_failure',
+            FileAccess.CREATE)
+        with table_io:
+            assert table_io.sheet_state is not None
+            table_io.sheet_state.values[(0, 0)] = 'name'
+            table_io.sheet_state.values[(0, 1)] = 'active'
+            table_io.sheet_state.worksheet = _FailingWorksheet()
+            with pytest.raises(ValueError,
+                               match='Unable to create filtered Excel table'):
+                table_io.run_add_filtered_range((0, 0, 2, 2),
+                                                'BrokenFilter')
     check_capsys(capsys)

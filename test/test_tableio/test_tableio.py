@@ -920,6 +920,18 @@ def test_write_table_listdata_rejects_box_when_supported_is_strict(
     check_capsys(capsys)
 
 
+def test_write_cells_rejects_box_when_supported_is_strict(
+        capsys: CaptureFixture[str]) -> None:
+    """Test the write-cells box error message for strict support."""
+    table_io = WriteStrictBoxTableIO('sample')
+    data: list[list[Value]] = [['alpha', 1]]
+    with pytest.raises(CapabilityNotSupported) as exc_info:
+        table_io.write_cells(data, Box(1, 1, 2, 3))
+    assert exc_info.value.action == 'Writing to a box is not supported'
+    assert not table_io.events
+    check_capsys(capsys)
+
+
 def test_write_table_listdata_ignores_filtered_data_range_when_allowed(
         capsys: CaptureFixture[str]) -> None:
     """Test that filtered data range requests can be ignored."""

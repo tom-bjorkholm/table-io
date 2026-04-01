@@ -693,6 +693,19 @@ def test_spreadsheet_find_value_matches_per_cell_with_type_conversion(
     check_capsys(capsys)
 
 
+def test_spreadsheet_find_value_returns_none_for_too_small_box(
+        capsys: CaptureFixture[str]) -> None:
+    """Grid search returns None when the search box cannot fit the grid."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample')
+        with table_io:
+            table_io.seed_value(0, 0, 'alpha')
+            assert table_io.run_find_value(
+                [['alpha', 'beta']],
+                box=Box(top=0, left=0, bottom=1, right=1)) is None
+    check_capsys(capsys)
+
+
 def test_spreadsheet_read_and_write_cells_keep_cursor_positions(
         capsys: CaptureFixture[str]) -> None:
     """Exact cell reads and writes do not move the sequential cursors."""
@@ -727,6 +740,23 @@ def test_spreadsheet_boxed_table_write_rejects_partial_overwrite(
     """Boxed table writes reject overlaps that leave part behind."""
     run_boxed_table_partial_overwrite_raises(
         _RecordingSpreadsheetTableIO, capsys)
+
+
+def test_spreadsheet_sheet_table_regions_skip_headings_and_blank_breaks(
+        capsys: CaptureFixture[str]) -> None:
+    """Inferred table regions skip headings and stop at blank rows."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample')
+        with table_io:
+            table_io.seed_value(0, 0, 'Report')
+            table_io.seed_value(2, 1, 'name')
+            table_io.seed_value(3, 2, 'Alice')
+            table_io.seed_value(5, 0, 'tail')
+            assert table_io.run_sheet_table_regions() == [
+                (2, 1, 4, 3),
+                (5, 0, 6, 1)
+            ]
+    check_capsys(capsys)
 
 
 def test_spreadsheet_boxed_table_write_allows_full_replacement(
