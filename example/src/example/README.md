@@ -4,9 +4,11 @@ This directory contains small example programs for programmers who are
 new to the `tableio` API. The examples are arranged from the smallest
 possible write example to more advanced topics such as value conversion,
 box read and write, value search, multi-sheet workbooks and
-capability-driven backend selection. A good way to learn the API is to
-read the examples in order and run the ones that match the file format
-you are interested in.
+capability-driven backend selection. The last example also shows a more
+advanced extension point: user code can define its own `TableIO`
+subclass and register it with the factory. A good way to learn the API
+is to read the examples in order and run the ones that match the file
+format you are interested in.
 
 All examples use the shared command-line helper in
 `cmd_for_examples.py`. That means they follow the same basic style:
@@ -246,3 +248,39 @@ same row. Because the visible change is ordinary cell content rather
 than formatting, this example is also useful for spreadsheet
 implementations that support search and exact cell writes but not rich
 formatting.
+
+## e13_register_custom_tableio.py
+
+Source:
+<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e13_register_custom_tableio.py>
+
+This example introduces an advanced but very useful extension point:
+user code can define its own class derived from `TableIO`, register it
+with `register_tableio()`, and then use the ordinary factory API to
+create it. The example keeps the custom class in the same script so the
+reader can see the full flow in one place: the backend class, the
+registration call, the ordinary `create_tableio()` calls, and the
+round-trip read-back check.
+
+This is especially useful when a programmer wants to offer both their
+own application-specific format and some of the predefined `tableio`
+formats to the end user. Once the custom class has been registered, the
+same factory can create both the custom format and the built-in formats,
+and the caller gets the same `TableIO` API in either case.
+
+The custom format is a simple `LineNumberedCSV` file where every
+physical line starts with a five-digit line number and a colon before the
+usual CSV content. That is intentionally a format that the built-in
+package backends do not already provide, but it is still small enough to
+implement using only the Python standard-library `csv` module. The
+example class derives from `TableIOTextBased`, which itself derives from
+`TableIO`, so the example can focus on the custom hooks instead of basic
+text-file open and close handling.
+
+Another important lesson in this example is *when* registration happens.
+The call to `register_tableio()` is not done at module import time.
+Instead, it happens in the `if __name__ == '__main__':` block, just
+before the shared command-line parser is started. That shows a programmer
+who dislikes module-load side effects that normal runtime registration is
+fully sufficient, as long as it happens before code asks the factory
+which formats are available.
