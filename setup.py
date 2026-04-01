@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
   name='tableio',
-  version='0.3',
+  version='0.3.1',
   description='Uniform way to write table data to and read from different ' \
     'file formats',
   author='Tom Björkholm',
