@@ -18,7 +18,7 @@ from .spreadsheet_checkers import (
     check_spreadsheet_file,
     check_spreadsheet_styles,
     check_spreadsheet_syntax,
-    spreadsheet_output_path
+    _spreadsheet_output_path
 )
 
 
@@ -98,7 +98,7 @@ def test_expected_cell_style_defaults_to_dont_care() -> None:
 
 def test_spreadsheet_output_path_appends_suffix_once() -> None:
     """Test spreadsheet_output_path appends one normalized suffix."""
-    path = spreadsheet_output_path(Path('tmp') / 'example', 'xlsx')
+    path = _spreadsheet_output_path(Path('tmp') / 'example', 'xlsx')
     assert path == Path('tmp') / 'example.xlsx'
 
 

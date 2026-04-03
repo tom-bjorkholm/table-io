@@ -70,7 +70,7 @@ class SheetContentExpectation(NamedTuple):
     row_fragments: list[list[str]]
 
 
-def spreadsheet_output_path(output_base: Path | str, suffix: str) -> Path:
+def _spreadsheet_output_path(output_base: Path | str, suffix: str) -> Path:
     """Return the actual file path after tableio appends its suffix."""
     normalized_suffix = suffix if suffix.startswith('.') else f'.{suffix}'
     return Path(f'{output_base}{normalized_suffix}')
