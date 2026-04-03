@@ -5,6 +5,7 @@
 # MIT License
 
 import sys
+import os
 from typing import NamedTuple, Callable, Optional
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -24,7 +25,7 @@ class Example(NamedTuple):
 
 
 type SheetContentExpectations = list[SheetContentExpectation]
-type AnchoredStyleExpectations = list[AnchoredStyleExpectation]
+type AnchoredStyleExpectations = Optional[list[AnchoredStyleExpectation]]
 
 
 def _print_text(text: str) -> None:
@@ -73,15 +74,22 @@ def check_text_in_order(text: str, expected_txts: list[str]) -> None:
 
 def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
                               expected_fragments: SheetContentExpectations,
-                              style_expectations: AnchoredStyleExpectations) \
-                                  -> None:
-    """Check the example spreadsheet."""
+                              style_expectations: AnchoredStyleExpectations
+                              = None) -> None:
+    """Check the example spreadsheet.
+
+    Args:
+        example: The example function and arguments.
+        capture: The capture fixture.
+        expected_fragments: The expected fragments.
+        style_expectations: The style expectations.
+    """
     with TemporaryDirectory() as tmp_dir:
         output_path = Path(tmp_dir) / 'output'
-        assert example.format_name.lower() in ['ods', 'xlsx']
+        assert example.format_name.lower() in ['ods', 'excel']
         if example.format_name.lower() == 'ods':
             output_path = output_path.with_suffix('.ods')
-        elif example.format_name.lower() == 'xlsx':
+        elif example.format_name.lower() == 'excel':
             output_path = output_path.with_suffix('.xlsx')
         else:
             raise ValueError(f'Unsupported format: {example.format_name}')
@@ -89,6 +97,7 @@ def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
                                           str(output_path),
                                           example.implementation_name,
                                           example.optional_args)
+        os.system(f'ls -l {tmp_dir}')
         check_spreadsheet_file(output_path, expected_fragments,
                                style_expectations)
         assert result == 0
@@ -99,10 +108,16 @@ def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
 
 def check_example_md_csv(example: Example, capture: CaptureFixture[str],
                          expected_fragments: list[str]) -> None:
-    """Check the example generating a markdown or CSV file."""
+    """Check the example generating a markdown or CSV file.
+
+    Args:
+        example: The example function and arguments.
+        capture: The capture fixture.
+        expected_fragments: The expected fragments.
+    """
     with TemporaryDirectory() as tmp_dir:
         output_path = Path(tmp_dir) / 'output'
-        assert example.format_name.lower() in ['ods', 'xlsx']
+        assert example.format_name.lower() in ['md', 'csv']
         if example.format_name.lower() == 'md':
             output_path = output_path.with_suffix('.md')
         elif example.format_name.lower() == 'csv':
@@ -113,6 +128,7 @@ def check_example_md_csv(example: Example, capture: CaptureFixture[str],
                                           str(output_path),
                                           example.implementation_name,
                                           example.optional_args)
+        os.system(f'ls -l {tmp_dir}')
         with open(output_path, 'r', encoding='utf-8') as file:
             text = file.read()
         check_text_in_order(text, expected_fragments)

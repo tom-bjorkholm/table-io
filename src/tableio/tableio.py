@@ -85,6 +85,8 @@ class TableIO:
         """Return the file name with the extension."""
         if not extension.startswith('.'):
             extension = f'.{extension}'
+        if str(file_name).lower().endswith(extension.lower()):
+            return str(file_name)
         return f'{str(file_name)}{extension}'
 
     @classmethod
