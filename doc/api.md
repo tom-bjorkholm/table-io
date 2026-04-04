@@ -132,6 +132,7 @@
     * [\_\_init\_\_](#tableio.factory.FactoryFormatInfo.__init__)
     * [add\_implementation](#tableio.factory.FactoryFormatInfo.add_implementation)
     * [best\_match\_names](#tableio.factory.FactoryFormatInfo.best_match_names)
+    * [correct\_implementation\_name](#tableio.factory.FactoryFormatInfo.correct_implementation_name)
   * [TableIOFactory](#tableio.factory.TableIOFactory)
     * [\_\_init\_\_](#tableio.factory.TableIOFactory.__init__)
     * [i\_get\_factory](#tableio.factory.TableIOFactory.i_get_factory)
@@ -2299,6 +2300,16 @@ Get the best matching implementation names for the capabilities.
   is compatible with more software.)
   If no implementations match and empty_is_ok is True, an
   empty BestMatch is returned.
+
+<a id="tableio.factory.FactoryFormatInfo.correct_implementation_name"></a>
+
+#### correct\_implementation\_name
+
+```python
+def correct_implementation_name(implementation_name: str) -> str
+```
+
+Correct the implementation name to the correct case.
 
 <a id="tableio.factory.TableIOFactory"></a>
 

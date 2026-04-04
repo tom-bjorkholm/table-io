@@ -274,6 +274,17 @@ class FactoryFormatInfo:
             raise TableIOFactoryNoCapabilityMatch(msg)
         return ret
 
+    def correct_implementation_name(self, implementation_name: str) -> str:
+        """Correct the implementation name to the correct case."""
+        if implementation_name in self._registry:
+            return implementation_name
+        if implementation_name.lower() in self._lower2correct:
+            return self._lower2correct[implementation_name.lower()]
+        raise TableIOFactoryNoSuchError(
+            f'Implementation "{implementation_name}" is not registered. ' +
+            'Available implementations: ' +
+            f'{", ".join(list(self._registry.keys()))}')
+
 
 class TableIOFactory:
     """Factory class for creating instances of TableIO subclasses.
@@ -416,21 +427,16 @@ class TableIOFactory:
         best_matches = format_info.best_match_names(
             capabilities=capabilities, empty_is_ok=False)
         if implementation is not None:
-            fikeys = list(format_info._registry.keys())  # pylint: disable=protected-access # noqa: E501
-            if implementation not in fikeys:
-                raise TableIOFactoryNoSuchError(
-                    f'Implementation "{implementation}" is not registered. ' +
-                    'Available implementations: ' +
-                    f'{", ".join(list(fikeys))}'
-                )
+            corrected_implementation = \
+                format_info.correct_implementation_name(implementation)
             bmatches_impls = [impl.implementation
                               for impl in best_matches.combined()]
-            if implementation not in bmatches_impls:
+            if corrected_implementation not in bmatches_impls:
                 msg3 = f'Implementation "{implementation}" '
                 msg3 += 'does not match the capabilities. Available matches: '
                 msg3 += f'{", ".join(bmatches_impls)}'
                 raise TableIOFactoryNoCapabilityMatch(msg3)
-            chosen_impl = implementation
+            chosen_impl = corrected_implementation
         else:
             chosen_impl = best_matches.combined()[0].implementation
         format_class = format_info._registry[chosen_impl]  # pylint: disable=protected-access # noqa: E501
