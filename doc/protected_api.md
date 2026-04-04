@@ -58,6 +58,11 @@
     * [GREEN](#tableio.color.Color.GREEN)
     * [YELLOW](#tableio.color.Color.YELLOW)
 * [tableio.tableio\_ods\_odfdo](#tableio.tableio_ods_odfdo)
+  * [\_manifest\_xml\_without\_configuration\_entries](#tableio.tableio_ods_odfdo._manifest_xml_without_configuration_entries)
+  * [\_referenced\_style\_names](#tableio.tableio_ods_odfdo._referenced_style_names)
+  * [\_content\_xml\_without\_unused\_styles](#tableio.tableio_ods_odfdo._content_xml_without_unused_styles)
+  * [\_styles\_xml\_with\_required\_defaults](#tableio.tableio_ods_odfdo._styles_xml_with_required_defaults)
+  * [\_rewrite\_saved\_document](#tableio.tableio_ods_odfdo._rewrite_saved_document)
   * [TableIOOdsOdfdo](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo)
     * [\_\_init\_\_](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.__init__)
     * [get\_capabilities](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo.get_capabilities)
@@ -176,6 +181,7 @@
   * [\_read\_database](#tableio.tableio_excel_pylightxl._read_database)
   * [\_style\_index\_for\_code](#tableio.tableio_excel_pylightxl._style_index_for_code)
   * [\_styles\_xml](#tableio.tableio_excel_pylightxl._styles_xml)
+  * [\_theme\_xml](#tableio.tableio_excel_pylightxl._theme_xml)
   * [TableIOExcelPylightxl](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl)
     * [\_\_init\_\_](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.__init__)
     * [get\_description](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl.get_description)
@@ -189,8 +195,8 @@
     * [\_invalid\_placeholder\_cell](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._invalid_placeholder_cell)
     * [\_normalize\_written\_bool\_cell](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._normalize_written_bool_cell)
     * [\_rewrite\_workbook\_xml](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._rewrite_workbook_xml)
-    * [\_content\_types\_with\_styles](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._content_types_with_styles)
-    * [\_workbook\_rels\_with\_styles](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._workbook_rels_with_styles)
+    * [\_content\_types\_with\_required\_parts](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._content_types_with_required_parts)
+    * [\_workbook\_rels\_with\_required\_parts](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._workbook_rels_with_required_parts)
     * [\_entry\_style\_codes](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._entry_style_codes)
     * [\_rewrite\_row\_xml](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._rewrite_row_xml)
     * [\_worksheet\_xml\_for\_output](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._worksheet_xml_for_output)
@@ -320,6 +326,9 @@
   * [\_normalize\_dict\_data\_with\_missing\_cell](#tableio.value_type._normalize_dict_data_with_missing_cell)
   * [\_normalize\_dict\_data\_impl](#tableio.value_type._normalize_dict_data_impl)
   * [normalize\_dict\_data](#tableio.value_type.normalize_dict_data)
+* [tableio.\_archive\_rewrite](#tableio._archive_rewrite)
+  * [temporary\_output\_path](#tableio._archive_rewrite.temporary_output_path)
+  * [rewrite\_zip\_archive](#tableio._archive_rewrite.rewrite_zip_archive)
 * [tableio.valueconversion](#tableio.valueconversion)
   * [UnreasonableTypeConversion](#tableio.valueconversion.UnreasonableTypeConversion)
     * [\_\_init\_\_](#tableio.valueconversion.UnreasonableTypeConversion.__init__)
@@ -551,6 +560,9 @@
 * [tableio.reg\_pkg\_formats](#tableio.reg_pkg_formats)
   * [register\_formats\_in\_pkg](#tableio.reg_pkg_formats.register_formats_in_pkg)
 * [tableio.tableio\_excel\_openpyxl](#tableio.tableio_excel_openpyxl)
+  * [\_font\_child\_sort\_key](#tableio.tableio_excel_openpyxl._font_child_sort_key)
+  * [\_styles\_xml\_with\_sorted\_fonts](#tableio.tableio_excel_openpyxl._styles_xml_with_sorted_fonts)
+  * [\_rewrite\_saved\_workbook](#tableio.tableio_excel_openpyxl._rewrite_saved_workbook)
   * [TableIOExcelOpenPyXL](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL)
     * [\_\_init\_\_](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__)
     * [get\_capabilities](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities)
@@ -1743,6 +1755,56 @@ Yellow highlight color.
 # tableio.tableio\_ods\_odfdo
 
 TableIO class for OpenDocument Spreadsheet files using ODFdo.
+
+<a id="tableio.tableio_ods_odfdo._manifest_xml_without_configuration_entries"></a>
+
+#### \_manifest\_xml\_without\_configuration\_entries
+
+```python
+def _manifest_xml_without_configuration_entries(data: bytes) -> bytes
+```
+
+Return manifest XML without unused Configurations2 file entries.
+
+<a id="tableio.tableio_ods_odfdo._referenced_style_names"></a>
+
+#### \_referenced\_style\_names
+
+```python
+def _referenced_style_names(root: ET.Element) -> set[str]
+```
+
+Return the set of style names referenced from one XML tree.
+
+<a id="tableio.tableio_ods_odfdo._content_xml_without_unused_styles"></a>
+
+#### \_content\_xml\_without\_unused\_styles
+
+```python
+def _content_xml_without_unused_styles(data: bytes) -> bytes
+```
+
+Return content XML with unused automatic styles removed.
+
+<a id="tableio.tableio_ods_odfdo._styles_xml_with_required_defaults"></a>
+
+#### \_styles\_xml\_with\_required\_defaults
+
+```python
+def _styles_xml_with_required_defaults(data: bytes) -> bytes
+```
+
+Return styles XML with default table and table-row styles added.
+
+<a id="tableio.tableio_ods_odfdo._rewrite_saved_document"></a>
+
+#### \_rewrite\_saved\_document
+
+```python
+def _rewrite_saved_document(file_name: Path) -> None
+```
+
+Rewrite one saved ODS archive to remove validator complaints.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo"></a>
 
@@ -3231,6 +3293,16 @@ def _styles_xml() -> bytes
 
 Return a minimal styles.xml supporting date, time and datetime tags.
 
+<a id="tableio.tableio_excel_pylightxl._theme_xml"></a>
+
+#### \_theme\_xml
+
+```python
+def _theme_xml() -> bytes
+```
+
+Return the standard Excel theme XML.
+
 <a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl"></a>
 
 ## TableIOExcelPylightxl Objects
@@ -3373,27 +3445,27 @@ Convert one written True/False text cell into a real bool cell.
 def _rewrite_workbook_xml(file_name: Path) -> None
 ```
 
-Clean written worksheet XML and add style metadata when needed.
+Clean written worksheet XML and add required workbook metadata.
 
-<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._content_types_with_styles"></a>
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._content_types_with_required_parts"></a>
 
-#### \_content\_types\_with\_styles
-
-```python
-def _content_types_with_styles(data: bytes) -> bytes
-```
-
-Return content types XML updated with the styles part.
-
-<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._workbook_rels_with_styles"></a>
-
-#### \_workbook\_rels\_with\_styles
+#### \_content\_types\_with\_required\_parts
 
 ```python
-def _workbook_rels_with_styles(data: bytes) -> bytes
+def _content_types_with_required_parts(data: bytes) -> bytes
 ```
 
-Return workbook relations XML updated with the styles relation.
+Return content types XML updated with styles and theme parts.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._workbook_rels_with_required_parts"></a>
+
+#### \_workbook\_rels\_with\_required\_parts
+
+```python
+def _workbook_rels_with_required_parts(data: bytes) -> bytes
+```
+
+Return workbook relations XML updated with styles and theme.
 
 <a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._entry_style_codes"></a>
 
@@ -5306,6 +5378,66 @@ data and the original data object in argument list is not modified.
 **Returns**:
 
   The normalized data that may be the same object as the input data.
+
+<a id="tableio._archive_rewrite"></a>
+
+# tableio.\_archive\_rewrite
+
+Helpers for rewriting spreadsheet ZIP archives safely.
+
+Spreadsheet writers first save library output to a temporary archive.
+These helpers then build a rewritten copy in a second temporary archive
+and replace the first archive only after both ZIP files are closed.
+
+<a id="tableio._archive_rewrite.temporary_output_path"></a>
+
+#### temporary\_output\_path
+
+```python
+def temporary_output_path(source_path: Path, suffix: str) -> Path
+```
+
+Return one missing temporary path next to ``source_path``.
+
+The temporary file is created in the same directory as
+``source_path`` so a later ``Path.replace()`` stays on the same
+filesystem. The file name uses ``suffix`` and the returned path does
+not exist when this function returns.
+
+<a id="tableio._archive_rewrite.rewrite_zip_archive"></a>
+
+#### rewrite\_zip\_archive
+
+```python
+def rewrite_zip_archive(
+        archive_path: Path,
+        rewrite_entry: Callable[[ZipInfo, bytes], Optional[bytes]],
+        extra_entries: Optional[dict[str, bytes]] = None) -> None
+```
+
+Rewrite one ZIP archive by copying it into a new archive.
+
+The original archive at ``archive_path`` is read entry by entry and
+a rewritten archive is written to a sibling temporary file. The
+callback receives each original ``ZipInfo`` together with its bytes.
+Returning ``None`` drops the entry. Any mapping passed in
+``extra_entries`` is appended after copied entries, except for names
+that were already written.
+
+The original archive is replaced only after both ZIP files have been
+closed. This avoids replacing an archive while it is still open,
+which is a safer pattern on Windows as well as on Unix-like systems.
+
+**Arguments**:
+
+- `archive_path` - Path to the archive to rewrite in place.
+- `rewrite_entry` - Callback invoked once for each original ZIP entry.
+  The callback receives the original ``ZipInfo`` together with
+  the entry bytes. It returns replacement bytes for the output
+  archive, or ``None`` to drop the entry completely.
+- `extra_entries` - Optional mapping of extra archive members to add
+  after copying rewritten entries. Names that were already
+  written are left unchanged.
 
 <a id="tableio.valueconversion"></a>
 
@@ -8160,6 +8292,36 @@ Get formats defined in the package to register with the factory.
 # tableio.tableio\_excel\_openpyxl
 
 TableIO reader/writer class for Excel files using OpenPyXL.
+
+<a id="tableio.tableio_excel_openpyxl._font_child_sort_key"></a>
+
+#### \_font\_child\_sort\_key
+
+```python
+def _font_child_sort_key(element: ET.Element) -> int
+```
+
+Return the schema-order key for one Excel font child element.
+
+<a id="tableio.tableio_excel_openpyxl._styles_xml_with_sorted_fonts"></a>
+
+#### \_styles\_xml\_with\_sorted\_fonts
+
+```python
+def _styles_xml_with_sorted_fonts(data: bytes) -> bytes
+```
+
+Return styles XML with font child elements in schema order.
+
+<a id="tableio.tableio_excel_openpyxl._rewrite_saved_workbook"></a>
+
+#### \_rewrite\_saved\_workbook
+
+```python
+def _rewrite_saved_workbook(file_name: Path) -> None
+```
+
+Rewrite the saved workbook so styles XML follows validator order.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL"></a>
 

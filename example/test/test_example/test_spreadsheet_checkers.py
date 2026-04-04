@@ -7,6 +7,9 @@
 from pathlib import Path
 import pytest
 from odfdo import Cell, Document, Style, Table
+from openpyxl import Workbook as OpenPyXLWorkbook
+from openpyxl.styles import Font
+from openpyxl.worksheet.worksheet import Worksheet
 from xlsxwriter import Workbook  # type: ignore[import-untyped]
 from tableio.color import Color
 from .spreadsheet_checkers import (
@@ -88,6 +91,17 @@ def _create_styled_ods(file_path: Path) -> None:
     document.save(file_path)
 
 
+def _create_invalid_xlsx_with_custom_font(file_path: Path) -> None:
+    """Create one `.xlsx` file with a validator-rejected font definition."""
+    workbook = OpenPyXLWorkbook()
+    worksheet = workbook.active
+    assert isinstance(worksheet, Worksheet)
+    worksheet['A1'] = 'hello'
+    worksheet['A1'].font = Font(bold=True, size=14)
+    workbook.save(file_path)
+    workbook.close()
+
+
 def test_expected_cell_style_defaults_to_dont_care() -> None:
     """Test ExpectedCellStyle defaults every style aspect to unchecked."""
     style = ExpectedCellStyle()
@@ -129,6 +143,32 @@ def test_check_spreadsheet_content_matches_subsequence_in_xlsx(
     )
 
 
+def test_check_spreadsheet_content_matches_typed_values_in_xlsx(
+        tmp_path: Path) -> None:
+    """Content checks can match numeric and boolean fragments in `.xlsx`."""
+    file_path = tmp_path / 'example.xlsx'
+    workbook = Workbook(file_path)
+    worksheet = workbook.add_worksheet('Sheet1')
+    worksheet.write_row(0, 0, ['hello', 'wonderful', 'world'])
+    worksheet.write_string(1, 0, 'later')
+    worksheet.write_row(2, 0, [3.14159, True, 'done'])
+    workbook.add_worksheet('Second')
+    workbook.close()
+    check_spreadsheet_content(
+        file_path,
+        [
+            SheetContentExpectation(
+                sheet_name='Sheet1',
+                row_fragments=[['hello', 'world'], [3.14159, True]]
+            ),
+            SheetContentExpectation(
+                sheet_name='Second',
+                row_fragments=[]
+            )
+        ]
+    )
+
+
 def test_check_spreadsheet_content_matches_subsequence_in_ods(
         tmp_path: Path) -> None:
     """Content checks accept subsequence row fragments in `.ods` files."""
@@ -147,6 +187,25 @@ def test_check_spreadsheet_content_matches_subsequence_in_ods(
             )
         ]
     )
+
+
+def test_check_spreadsheet_syntax_accepts_expected_error_fragments(
+        tmp_path: Path) -> None:
+    """Expected validator errors can be allowed explicitly."""
+    file_path = tmp_path / 'invalid.xlsx'
+    _create_invalid_xlsx_with_custom_font(file_path)
+    check_spreadsheet_syntax(file_path,
+                             expected_errors=['Unexpected element'])
+
+
+def test_check_spreadsheet_syntax_rejects_missing_expected_errors(
+        tmp_path: Path) -> None:
+    """Expected-error matching fails when a fragment is not reported."""
+    file_path = tmp_path / 'invalid.xlsx'
+    _create_invalid_xlsx_with_custom_font(file_path)
+    with pytest.raises(AssertionError, match='Missing expected errors'):
+        check_spreadsheet_syntax(file_path,
+                                 expected_errors=['not reported'])
 
 
 def test_check_spreadsheet_content_checks_sheet_order(

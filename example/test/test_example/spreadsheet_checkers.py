@@ -4,9 +4,9 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+from datetime import date, datetime, time
 from pathlib import Path
 from typing import NamedTuple, Optional, cast
-import pandas as pd  # type: ignore[import-untyped]
 from odfdo import Document, Table
 from odfdo.style import Style
 from openpyxl import load_workbook
@@ -16,8 +16,13 @@ from openxml_audit import (  # type: ignore[import-untyped]
     OpenXmlValidator,
     ValidationResult
 )
+from python_calamine import (
+    CalamineSheet,
+    CalamineWorkbook,
+    load_workbook as load_calamine_workbook
+)
 from tableio.color import Color
-from tableio.value_type import get_checked_type
+from tableio.value_type import Value, get_checked_type
 
 
 class ExpectedCellStyle(NamedTuple):
@@ -54,7 +59,7 @@ class AnchoredStyleExpectation(NamedTuple):
     """
 
     sheet_name: str
-    anchor_row_fragment: list[str]
+    anchor_row_fragment: list[Value]
     relative_expectations: list[RelativeStyleExpectation]
 
 
@@ -67,7 +72,7 @@ class SheetContentExpectation(NamedTuple):
     """
 
     sheet_name: str
-    row_fragments: list[list[str]]
+    row_fragments: list[list[Value]]
 
 
 def _spreadsheet_output_path(output_base: Path | str, suffix: str) -> Path:
@@ -114,34 +119,91 @@ def _raise_syntax_error(file_path: Path,
     )
 
 
-def _read_spreadsheet_content(file_path: Path) -> dict[str, pd.DataFrame]:
-    """Read one spreadsheet into a mapping of sheet names to data frames."""
-    workbook_data = pd.read_excel(
-        file_path,
-        sheet_name=None,
-        header=None,
-        dtype=object
+def _match_expected_error(actual_errors: list[str],
+                          used_indexes: set[int],
+                          expected_error: str) -> Optional[int]:
+    """Return the index of the first unmatched actual error containing text."""
+    for index, actual_error in enumerate(actual_errors):
+        if index in used_indexes:
+            continue
+        if expected_error in actual_error:
+            return index
+    return None
+
+
+def _check_expected_syntax_errors(
+        file_path: Path,
+        validation_result: ValidationResult,
+        expected_errors: Optional[list[str]]) -> None:
+    """Check actual syntax errors against optional expected substrings."""
+    actual_errors = [
+        str(error) for error in validation_result.errors
+    ]
+    if expected_errors is None:
+        if actual_errors:
+            _raise_syntax_error(file_path, validation_result)
+        return
+    used_indexes: set[int] = set()
+    missing_expected: list[str] = []
+    for expected_error in expected_errors:
+        index = _match_expected_error(actual_errors, used_indexes,
+                                      expected_error)
+        if index is None:
+            missing_expected.append(expected_error)
+            continue
+        used_indexes.add(index)
+    unexpected_errors = [
+        error for index, error in enumerate(actual_errors)
+        if index not in used_indexes
+    ]
+    if not missing_expected and not unexpected_errors:
+        return
+    formatted_expected = '\n'.join(missing_expected[:20]) or '(none)'
+    formatted_unexpected = '\n'.join(unexpected_errors[:20]) or '(none)'
+    raise AssertionError(
+        f'Syntax validation mismatch for {file_path}:\n'
+        f'Missing expected errors:\n{formatted_expected}\n'
+        f'Unexpected errors:\n{formatted_unexpected}'
     )
-    return cast(dict[str, pd.DataFrame], workbook_data)
 
 
-def _normalize_cell_value(value: object) -> str:
-    """Return one cell value normalized to text for fragment matching."""
-    if bool(pd.isna(value)):
+def _normalize_cell_value(value: object) -> Value:
+    """Return one spreadsheet cell value normalized to one public Value."""
+    if value is None:
         return ''
+    if isinstance(value, datetime):
+        return value
+    if isinstance(value, date):
+        return datetime.combine(value, time())
+    if isinstance(value, (str, bool, int, float)):
+        return cast(Value, value)
     return str(value)
 
 
-def _sheet_rows(sheet_data: pd.DataFrame) -> list[list[str]]:
-    """Return one sheet as normalized rows of text."""
+def _sheet_rows(sheet: CalamineSheet) -> list[list[Value]]:
+    """Return one sheet as normalized rows of Value cells."""
+    rows = cast(list[list[object]],
+                sheet.to_python(skip_empty_area=False))
     return [
         [_normalize_cell_value(value) for value in row]
-        for row in sheet_data.itertuples(index=False, name=None)
+        for row in rows
     ]
 
 
-def _match_row_fragment(row_values: list[str],
-                        row_fragment: list[str]) -> Optional[int]:
+def _read_spreadsheet_content(file_path: Path) -> dict[str, list[list[Value]]]:
+    """Read one spreadsheet into typed rows keyed by sheet name."""
+    workbook: CalamineWorkbook = load_calamine_workbook(file_path)
+    try:
+        return {
+            sheet_name: _sheet_rows(workbook.get_sheet_by_name(sheet_name))
+            for sheet_name in workbook.sheet_names
+        }
+    finally:
+        workbook.close()
+
+
+def _match_row_fragment(row_values: list[Value],
+                        row_fragment: list[Value]) -> Optional[int]:
     """Return the first matching column for one row fragment."""
     if not row_fragment:
         raise AssertionError('Row fragments must not be empty.')
@@ -159,8 +221,8 @@ def _match_row_fragment(row_values: list[str],
     return None
 
 
-def _find_matching_row(rows: list[list[str]],
-                       row_fragment: list[str],
+def _find_matching_row(rows: list[list[Value]],
+                       row_fragment: list[Value],
                        start_row: int = 0) -> Optional[tuple[int, int]]:
     """Return the first row and column matching one row fragment."""
     for row_index in range(start_row, len(rows)):
@@ -309,8 +371,8 @@ def _check_style_match(location_text: str,
         )
 
 
-def _anchor_match(rows: list[list[str]],
-                  row_fragment: list[str],
+def _anchor_match(rows: list[list[Value]],
+                  row_fragment: list[Value],
                   sheet_name: str,
                   file_path: Path) -> tuple[int, int]:
     """Return one anchor match or raise a clear assertion."""
@@ -324,14 +386,14 @@ def _anchor_match(rows: list[list[str]],
 
 
 def _check_excel_styles(file_path: Path,
-                        workbook_data: dict[str, pd.DataFrame],
+                        workbook_data: dict[str, list[list[Value]]],
                         style_expectations:
                         list[AnchoredStyleExpectation]) -> None:
     """Check style expectations in one Excel workbook."""
     workbook = load_workbook(file_path)
     try:
         for style_expectation in style_expectations:
-            rows = _sheet_rows(workbook_data[style_expectation.sheet_name])
+            rows = workbook_data[style_expectation.sheet_name]
             anchor_row_index, anchor_col_index = _anchor_match(
                 rows,
                 style_expectation.anchor_row_fragment,
@@ -369,13 +431,13 @@ def _check_excel_styles(file_path: Path,
 
 
 def _check_ods_styles(file_path: Path,
-                      workbook_data: dict[str, pd.DataFrame],
+                      workbook_data: dict[str, list[list[Value]]],
                       style_expectations:
                       list[AnchoredStyleExpectation]) -> None:
     """Check style expectations in one ODS document."""
     document = Document(file_path)
     for style_expectation in style_expectations:
-        rows = _sheet_rows(workbook_data[style_expectation.sheet_name])
+        rows = workbook_data[style_expectation.sheet_name]
         anchor_row_index, anchor_col_index = _anchor_match(
             rows,
             style_expectation.anchor_row_fragment,
@@ -408,13 +470,21 @@ def _check_ods_styles(file_path: Path,
             )
 
 
-def check_spreadsheet_syntax(file_name: Path | str) -> None:
-    """Check that one spreadsheet file passes syntax validation."""
+def check_spreadsheet_syntax(
+        file_name: Path | str,
+        expected_errors: Optional[list[str]] = None) -> None:
+    """Check that one spreadsheet file passes syntax validation.
+
+    When ``expected_errors`` is provided, each item is matched as a
+    substring against one reported validator error. Every actual error must
+    match one expected item, and every expected item must match one actual
+    error.
+    """
     file_path = _normalize_file_path(file_name)
     _check_file_exists(file_path)
     validation_result = _syntax_validation_result(file_path)
-    if not validation_result.is_valid:
-        _raise_syntax_error(file_path, validation_result)
+    _check_expected_syntax_errors(file_path, validation_result,
+                                  expected_errors)
 
 
 def check_spreadsheet_content(
@@ -431,7 +501,7 @@ def check_spreadsheet_content(
     workbook_data = _read_spreadsheet_content(file_path)
     _check_sheet_names(list(workbook_data.keys()), expected_fragments)
     for sheet_expectation in expected_fragments:
-        rows = _sheet_rows(workbook_data[sheet_expectation.sheet_name])
+        rows = workbook_data[sheet_expectation.sheet_name]
         next_row_index = 0
         for row_fragment in sheet_expectation.row_fragments:
             match = _find_matching_row(rows, row_fragment, next_row_index)
@@ -464,9 +534,10 @@ def check_spreadsheet_file(
         file_name: Path | str,
         expected_fragments: list[SheetContentExpectation],
         style_expectations:
-        Optional[list[AnchoredStyleExpectation]] = None) -> None:
+        Optional[list[AnchoredStyleExpectation]] = None,
+        expected_errors: Optional[list[str]] = None) -> None:
     """Check spreadsheet syntax, content and optional style expectations."""
-    check_spreadsheet_syntax(file_name)
+    check_spreadsheet_syntax(file_name, expected_errors)
     check_spreadsheet_content(file_name, expected_fragments)
     if style_expectations is not None:
         check_spreadsheet_styles(file_name, style_expectations)

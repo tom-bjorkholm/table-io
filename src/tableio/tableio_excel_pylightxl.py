@@ -6,15 +6,15 @@
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Callable, Optional, Protocol, cast
 from xml.etree import ElementTree as ET
-from zipfile import ZIP_DEFLATED, ZipFile
-
+from zipfile import ZipFile
 from mformat.mformat import PathLike
+from openpyxl.writer.theme import theme_xml
 from pylightxl import Database, writexl  # type: ignore[import-untyped]
 from pylightxl import pylightxl as pylightxl_impl
-
+from tableio._archive_rewrite import rewrite_zip_archive, \
+    temporary_output_path
 from tableio.capability import CAP_IMPLEMENTED, CAP_IGNORED, Capabilities
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_excelbased import TableIOExcelBased
@@ -292,6 +292,11 @@ def _styles_xml() -> bytes:
     return text.encode('utf-8')
 
 
+def _theme_xml() -> bytes:
+    """Return the standard Excel theme XML."""
+    return theme_xml.encode('utf-8')
+
+
 class TableIOExcelPylightxl(TableIOExcelBased):
     """TableIO reader/writer class for Excel files using pylightxl.
 
@@ -399,11 +404,7 @@ class TableIOExcelPylightxl(TableIOExcelBased):
     @staticmethod
     def _temporary_workbook_path(source_path: Path) -> Path:
         """Return a temporary workbook path that does not yet exist."""
-        with NamedTemporaryFile(delete=False, dir=source_path.parent,
-                                suffix='.xlsx') as temp_file:
-            temp_path = Path(temp_file.name)
-        temp_path.unlink()
-        return temp_path
+        return temporary_output_path(source_path, '.xlsx')
 
     @staticmethod
     def _invalid_placeholder_cell(cell: ET.Element) -> bool:
@@ -431,70 +432,91 @@ class TableIOExcelPylightxl(TableIOExcelBased):
         return True
 
     def _rewrite_workbook_xml(self, file_name: Path) -> None:
-        """Clean written worksheet XML and add style metadata when needed."""
-        style_metadata = any(self._sheet_style_codes.values())
+        """Clean written worksheet XML and add required workbook metadata."""
         sheet_targets = _sheet_xml_targets(str(file_name))
-        temp_path = self._temporary_workbook_path(file_name)
-        with ZipFile(file_name, 'r') as source_zip, \
-                ZipFile(temp_path, 'w',
-                        compression=ZIP_DEFLATED) as target_zip:
-            written_names: set[str] = set()
-            for item in source_zip.infolist():
-                if style_metadata and item.filename == 'xl/styles.xml':
-                    continue
-                data = source_zip.read(item.filename)
-                if style_metadata and item.filename == '[Content_Types].xml':
-                    data = self._content_types_with_styles(data)
-                elif style_metadata and \
-                        item.filename == 'xl/_rels/workbook.xml.rels':
-                    data = self._workbook_rels_with_styles(data)
-                elif item.filename.startswith('xl/worksheets/'):
-                    data = self._worksheet_xml_for_output(item.filename,
-                                                          data,
-                                                          sheet_targets)
-                target_zip.writestr(item, data)
-                written_names.add(item.filename)
-            if style_metadata and 'xl/styles.xml' not in written_names:
-                target_zip.writestr('xl/styles.xml', _styles_xml())
-        temp_path.replace(file_name)
 
-    def _content_types_with_styles(self, data: bytes) -> bytes:
-        """Return content types XML updated with the styles part."""
+        def rewrite_entry(item: object, data: bytes) -> Optional[bytes]:
+            """Rewrite or drop one workbook archive entry when needed."""
+            file_name_text = getattr(item, 'filename')
+            if file_name_text in ['xl/styles.xml', 'xl/theme/theme1.xml']:
+                return None
+            if file_name_text == '[Content_Types].xml':
+                return self._content_types_with_required_parts(data)
+            if file_name_text == 'xl/_rels/workbook.xml.rels':
+                return self._workbook_rels_with_required_parts(data)
+            if file_name_text.startswith('xl/worksheets/'):
+                return self._worksheet_xml_for_output(file_name_text,
+                                                      data,
+                                                      sheet_targets)
+            return data
+        rewrite_zip_archive(
+            file_name,
+            rewrite_entry,
+            {'xl/styles.xml': _styles_xml(),
+             'xl/theme/theme1.xml': _theme_xml()}
+        )
+
+    def _content_types_with_required_parts(self, data: bytes) -> bytes:
+        """Return content types XML updated with styles and theme parts."""
         root = ET.fromstring(data)
-        part_name = '/xl/styles.xml'
-        content_type = ('application/vnd.openxmlformats-officedocument.'
-                        'spreadsheetml.styles+xml')
-        for override in root.findall('content:Override', _XML_NS):
-            if override.get('PartName') == part_name:
+        required_parts = {
+            '/xl/styles.xml': (
+                'application/vnd.openxmlformats-officedocument.'
+                'spreadsheetml.styles+xml'
+            ),
+            '/xl/theme/theme1.xml': (
+                'application/vnd.openxmlformats-officedocument.theme+xml'
+            )
+        }
+        existing_parts = {
+            override.get('PartName'): override
+            for override in root.findall('content:Override', _XML_NS)
+            if override.get('PartName') is not None
+        }
+        for part_name, content_type in required_parts.items():
+            override = existing_parts.get(part_name)
+            if override is not None:
                 override.set('ContentType', content_type)
-                return _xml_bytes(root)
-        ET.SubElement(root, '{%s}Override' % _XML_NS['content'],
-                      {'PartName': part_name, 'ContentType': content_type})
+                continue
+            ET.SubElement(root, '{%s}Override' % _XML_NS['content'],
+                          {'PartName': part_name,
+                           'ContentType': content_type})
         return _xml_bytes(root)
 
-    def _workbook_rels_with_styles(self, data: bytes) -> bytes:
-        """Return workbook relations XML updated with the styles relation."""
+    def _workbook_rels_with_required_parts(self, data: bytes) -> bytes:
+        """Return workbook relations XML updated with styles and theme."""
         root = ET.fromstring(data)
-        style_type = ('http://schemas.openxmlformats.org/officeDocument/2006/'
-                      'relationships/styles')
-        for relationship in root.findall('rels:Relationship', _XML_NS):
-            if relationship.get('Type') == style_type:
-                relationship.set('Target', 'styles.xml')
-                return _xml_bytes(root)
+        required_relationships = {
+            ('http://schemas.openxmlformats.org/officeDocument/2006/'
+             'relationships/styles'): 'styles.xml',
+            ('http://schemas.openxmlformats.org/officeDocument/2006/'
+             'relationships/theme'): 'theme/theme1.xml'
+        }
+        existing_relationships = {
+            relationship.get('Type'): relationship
+            for relationship in root.findall('rels:Relationship', _XML_NS)
+            if relationship.get('Type') is not None
+        }
         used_ids = {
             relationship.get('Id')
             for relationship in root.findall('rels:Relationship', _XML_NS)
             if relationship.get('Id') is not None
         }
         next_index = 1
-        next_id = f'rId{next_index}'
-        while next_id in used_ids:
-            next_index += 1
+        for relationship_type, target in required_relationships.items():
+            relationship = existing_relationships.get(relationship_type)
+            if relationship is not None:
+                relationship.set('Target', target)
+                continue
             next_id = f'rId{next_index}'
-        ET.SubElement(root, '{%s}Relationship' % _XML_NS['rels'],
-                      {'Id': next_id,
-                       'Type': style_type,
-                       'Target': 'styles.xml'})
+            while next_id in used_ids:
+                next_index += 1
+                next_id = f'rId{next_index}'
+            ET.SubElement(root, '{%s}Relationship' % _XML_NS['rels'],
+                          {'Id': next_id,
+                           'Type': relationship_type,
+                           'Target': target})
+            used_ids.add(next_id)
         return _xml_bytes(root)
 
     def _entry_style_codes(

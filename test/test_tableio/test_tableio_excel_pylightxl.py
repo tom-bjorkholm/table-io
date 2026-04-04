@@ -9,13 +9,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import xml.etree.ElementTree as ET
 from zipfile import ZipFile
-
 from pylightxl import Database  # type: ignore[import-untyped]
 import pytest
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
+from openxml_audit import OpenXmlValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
-
 import tableio.tableio_excel_pylightxl as tableio_excel_pylightxl_module
 from tableio.capability import CAP_IGNORED, CAP_IMPLEMENTED
 from tableio.color import Color
@@ -32,7 +31,6 @@ from tableio.tableio_excel_pylightxl import TableIOExcelPylightxl, \
     _worksheet_id_attr as worksheet_id_attr, \
     _XML_NS as XML_NS
 from tableio.value_type import Fmt, FmtDictRow, ValueFmt
-
 from .check_capsys import check_capsys
 from .excel_test_file_helper import create_formula_workbook, \
     create_update_workbook, inspect_find_and_write_cells_workbook, \
@@ -239,6 +237,16 @@ def test_excel_pylightxl_multi_sheet_write_positions_are_per_sheet(
     """Sequential writes keep an independent default position per sheet."""
     run_multi_sheet_write_positions_are_per_sheet(
         TableIOExcelPylightxl, capsys)
+
+
+def test_excel_pylightxl_written_workbook_is_validator_clean() -> None:
+    """Plain `.xlsx` output includes the required validator metadata."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'validator_clean.xlsx'
+        with TableIOExcelPylightxl(file_path, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata([['left', 'right']])
+        result = OpenXmlValidator().validate(file_path)
+        assert result.is_valid
 
 
 def test_excel_pylightxl_multi_sheet_read_positions_are_per_sheet(

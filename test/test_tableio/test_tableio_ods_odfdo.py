@@ -7,17 +7,15 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Optional, cast
-
 import pytest
 from odfdo import Cell, Document, Element, Table
 from odfdo.body import Spreadsheet
 from odfdo.style import Style
+from openxml_audit import OdfValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
-
 from tableio.tableio import FileAccess
 from tableio.tableio_ods_odfdo import TableIOOdsOdfdo
 from tableio.value_type import Fmt, get_checked_type
-
 from .check_capsys import check_capsys
 from .spreadsheet_test_helper import \
     run_boxed_table_partial_overwrite_raises, \
@@ -235,6 +233,16 @@ def _inspect_fmtdict_header_fmt_document(file_path: Path) -> None:
     assert header_text_props['fo:font-weight'] == 'bold'
     assert data_text_props['fo:font-style'] == 'italic'
     assert data_table_props['fo:background-color'] == '#c6efce'
+
+
+def test_ods_written_workbook_is_validator_clean() -> None:
+    """Plain `.ods` output is normalized to validator-clean package XML."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'validator_clean.ods'
+        with TableIOOdsOdfdo(file_path, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata([['left', 'right']])
+        result = OdfValidator().validate(file_path)
+        assert result.is_valid
 
 
 def _make_database_range(name: Optional[str], display_buttons: str,

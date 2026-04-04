@@ -4,13 +4,17 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+from pathlib import Path
 from typing import Callable, Optional
+from xml.etree import ElementTree as ET
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils.cell import get_column_letter, range_boundaries
 from openpyxl.worksheet.table import Table
 from openpyxl.worksheet.worksheet import Worksheet
 from mformat.mformat import PathLike
+from tableio._archive_rewrite import rewrite_zip_archive, \
+    temporary_output_path
 from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_excelbased import TableIOExcelBased
@@ -22,6 +26,50 @@ _HIGHLIGHT_RGB: dict[Color, str] = {
     Color.GREEN: 'FFC6EFCE',
     Color.YELLOW: 'FFFFFF00'
 }
+_XML_NS = {'main': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+_FONT_CHILD_ORDER = [
+    'b',
+    'i',
+    'u',
+    'strike',
+    'outline',
+    'shadow',
+    'condense',
+    'extend',
+    'sz',
+    'color',
+    'name',
+    'family',
+    'charset',
+    'scheme'
+]
+
+
+def _font_child_sort_key(element: ET.Element) -> int:
+    """Return the schema-order key for one Excel font child element."""
+    tag_name = element.tag.split('}', 1)[-1]
+    if tag_name in _FONT_CHILD_ORDER:
+        return _FONT_CHILD_ORDER.index(tag_name)
+    return len(_FONT_CHILD_ORDER)
+
+
+def _styles_xml_with_sorted_fonts(data: bytes) -> bytes:
+    """Return styles XML with font child elements in schema order."""
+    root = ET.fromstring(data)
+    for font in root.findall('main:fonts/main:font', _XML_NS):
+        font[:] = sorted(list(font), key=_font_child_sort_key)
+    return bytes(ET.tostring(root, encoding='utf-8',
+                             xml_declaration=True))
+
+
+def _rewrite_saved_workbook(file_name: Path) -> None:
+    """Rewrite the saved workbook so styles XML follows validator order."""
+    def rewrite_entry(item: object, data: bytes) -> bytes:
+        """Rewrite one workbook archive entry when needed."""
+        if getattr(item, 'filename') == 'xl/styles.xml':
+            return _styles_xml_with_sorted_fonts(data)
+        return data
+    rewrite_zip_archive(file_name, rewrite_entry)
 
 
 class TableIOExcelOpenPyXL(TableIOExcelBased):
@@ -91,7 +139,15 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         if self.file_access == FileAccess.READ:
             return
         assert self.workbook is not None
-        self.workbook.save(self.file_name)
+        file_path = Path(self.file_name)
+        temp_path = temporary_output_path(file_path, '.xlsx')
+        try:
+            self.workbook.save(temp_path)
+            _rewrite_saved_workbook(temp_path)
+            temp_path.replace(file_path)
+        finally:
+            if temp_path.exists():
+                temp_path.unlink()
 
     def _close(self) -> None:
         """Close any open workbook handles."""

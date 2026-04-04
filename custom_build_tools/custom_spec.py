@@ -16,7 +16,7 @@ def custom_spec() -> Optional[BuildSpec]:
     return BuildSpec(
         additional_venv_packages=[
             'openxml-audit >= 0.4.9',
-            'pandas >= 3.0.2',
+            'python-calamine >= 0.6.2',
             'odfpy >= 1.4.1'],
         custom_after_test=[run_examples_hook],
     )

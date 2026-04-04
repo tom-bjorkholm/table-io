@@ -198,6 +198,9 @@
   * [DataForExtraColumn](#tableio.value_type.DataForExtraColumn)
     * [\_\_init\_\_](#tableio.value_type.DataForExtraColumn.__init__)
   * [normalize\_dict\_data](#tableio.value_type.normalize_dict_data)
+* [tableio.\_archive\_rewrite](#tableio._archive_rewrite)
+  * [temporary\_output\_path](#tableio._archive_rewrite.temporary_output_path)
+  * [rewrite\_zip\_archive](#tableio._archive_rewrite.rewrite_zip_archive)
 * [tableio.valueconversion](#tableio.valueconversion)
   * [UnreasonableTypeConversion](#tableio.valueconversion.UnreasonableTypeConversion)
     * [\_\_init\_\_](#tableio.valueconversion.UnreasonableTypeConversion.__init__)
@@ -3526,6 +3529,66 @@ data and the original data object in argument list is not modified.
 **Returns**:
 
   The normalized data that may be the same object as the input data.
+
+<a id="tableio._archive_rewrite"></a>
+
+# tableio.\_archive\_rewrite
+
+Helpers for rewriting spreadsheet ZIP archives safely.
+
+Spreadsheet writers first save library output to a temporary archive.
+These helpers then build a rewritten copy in a second temporary archive
+and replace the first archive only after both ZIP files are closed.
+
+<a id="tableio._archive_rewrite.temporary_output_path"></a>
+
+#### temporary\_output\_path
+
+```python
+def temporary_output_path(source_path: Path, suffix: str) -> Path
+```
+
+Return one missing temporary path next to ``source_path``.
+
+The temporary file is created in the same directory as
+``source_path`` so a later ``Path.replace()`` stays on the same
+filesystem. The file name uses ``suffix`` and the returned path does
+not exist when this function returns.
+
+<a id="tableio._archive_rewrite.rewrite_zip_archive"></a>
+
+#### rewrite\_zip\_archive
+
+```python
+def rewrite_zip_archive(
+        archive_path: Path,
+        rewrite_entry: Callable[[ZipInfo, bytes], Optional[bytes]],
+        extra_entries: Optional[dict[str, bytes]] = None) -> None
+```
+
+Rewrite one ZIP archive by copying it into a new archive.
+
+The original archive at ``archive_path`` is read entry by entry and
+a rewritten archive is written to a sibling temporary file. The
+callback receives each original ``ZipInfo`` together with its bytes.
+Returning ``None`` drops the entry. Any mapping passed in
+``extra_entries`` is appended after copied entries, except for names
+that were already written.
+
+The original archive is replaced only after both ZIP files have been
+closed. This avoids replacing an archive while it is still open,
+which is a safer pattern on Windows as well as on Unix-like systems.
+
+**Arguments**:
+
+- `archive_path` - Path to the archive to rewrite in place.
+- `rewrite_entry` - Callback invoked once for each original ZIP entry.
+  The callback receives the original ``ZipInfo`` together with
+  the entry bytes. It returns replacement bytes for the output
+  archive, or ``None`` to drop the entry completely.
+- `extra_entries` - Optional mapping of extra archive members to add
+  after copying rewritten entries. Names that were already
+  written are left unchanged.
 
 <a id="tableio.valueconversion"></a>
 

@@ -4,11 +4,15 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+from pathlib import Path
 from typing import Any, Callable, Optional
+from xml.etree import ElementTree as ET
 from odfdo import Cell, Document, Element, Style, Table
 from odfdo.body import Spreadsheet
 from odfdo.utils import is_RFC3066
 from mformat.mformat import PathLike
+from tableio._archive_rewrite import rewrite_zip_archive, \
+    temporary_output_path
 from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased, \
@@ -23,8 +27,96 @@ _HIGHLIGHT_RGB: dict[Color, str] = {
     Color.GREEN: '#c6efce',
     Color.YELLOW: '#ffff00'
 }
-
 _COLUMN_WIDTH_CM_PER_UNIT = 0.25
+_XML_NS = {
+    'manifest': 'urn:oasis:names:tc:opendocument:xmlns:manifest:1.0',
+    'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0',
+    'style': 'urn:oasis:names:tc:opendocument:xmlns:style:1.0',
+    'table': 'urn:oasis:names:tc:opendocument:xmlns:table:1.0',
+    'text': 'urn:oasis:names:tc:opendocument:xmlns:text:1.0',
+    'calcext': 'urn:org:documentfoundation:names:experimental:calc:'
+    'xmlns:calcext:1.0',
+    'svg': 'urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0'
+}
+
+for _prefix, _namespace in _XML_NS.items():
+    ET.register_namespace(_prefix, _namespace)
+
+
+def _manifest_xml_without_configuration_entries(data: bytes) -> bytes:
+    """Return manifest XML without unused Configurations2 file entries."""
+    root = ET.fromstring(data)
+    for entry in list(root.findall('manifest:file-entry', _XML_NS)):
+        full_path = entry.get('{%s}full-path' % _XML_NS['manifest'])
+        if full_path is None or not full_path.startswith('Configurations2/'):
+            continue
+        root.remove(entry)
+    return bytes(ET.tostring(root, encoding='utf-8',
+                             xml_declaration=True))
+
+
+def _referenced_style_names(root: ET.Element) -> set[str]:
+    """Return the set of style names referenced from one XML tree."""
+    referenced: set[str] = set()
+    for element in root.iter():
+        for attr_name, attr_value in element.attrib.items():
+            if attr_name.endswith('}style-name') and attr_value:
+                referenced.add(attr_value)
+    return referenced
+
+
+def _content_xml_without_unused_styles(data: bytes) -> bytes:
+    """Return content XML with unused automatic styles removed."""
+    root = ET.fromstring(data)
+    automatic_styles = root.find('office:automatic-styles', _XML_NS)
+    if automatic_styles is None:
+        return bytes(ET.tostring(root, encoding='utf-8',
+                                 xml_declaration=True))
+    referenced_names = _referenced_style_names(root)
+    for style in list(automatic_styles.findall('style:style', _XML_NS)):
+        style_name = style.get('{%s}name' % _XML_NS['style'])
+        if style_name is None or style_name in referenced_names:
+            continue
+        automatic_styles.remove(style)
+    return bytes(ET.tostring(root, encoding='utf-8',
+                             xml_declaration=True))
+
+
+def _styles_xml_with_required_defaults(data: bytes) -> bytes:
+    """Return styles XML with default table and table-row styles added."""
+    root = ET.fromstring(data)
+    office_styles = root.find('office:styles', _XML_NS)
+    if office_styles is None:
+        return bytes(ET.tostring(root, encoding='utf-8',
+                                 xml_declaration=True))
+    existing_families = {
+        style.get('{%s}family' % _XML_NS['style'])
+        for style in office_styles.findall('style:default-style', _XML_NS)
+    }
+    for family in ['table', 'table-row']:
+        if family in existing_families:
+            continue
+        ET.SubElement(office_styles, '{%s}default-style' % _XML_NS['style'],
+                      {'{%s}family' % _XML_NS['style']: family})
+    return bytes(ET.tostring(root, encoding='utf-8',
+                             xml_declaration=True))
+
+
+def _rewrite_saved_document(file_name: Path) -> None:
+    """Rewrite one saved ODS archive to remove validator complaints."""
+    def rewrite_entry(item: object, data: bytes) -> Optional[bytes]:
+        """Rewrite or drop one ODS archive entry when needed."""
+        file_name_text = getattr(item, 'filename')
+        if file_name_text.startswith('Configurations2/'):
+            return None
+        if file_name_text == 'META-INF/manifest.xml':
+            return _manifest_xml_without_configuration_entries(data)
+        if file_name_text == 'content.xml':
+            return _content_xml_without_unused_styles(data)
+        if file_name_text == 'styles.xml':
+            return _styles_xml_with_required_defaults(data)
+        return data
+    rewrite_zip_archive(file_name, rewrite_entry)
 
 
 class TableIOOdsOdfdo(TableIOSpreadsheetBased):
@@ -138,7 +230,15 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         if self.file_access == FileAccess.READ:
             return
         assert self.document is not None
-        self.document.save(self.file_name)
+        file_path = Path(self.file_name)
+        temp_path = temporary_output_path(file_path, '.ods')
+        try:
+            self.document.save(temp_path)
+            _rewrite_saved_document(temp_path)
+            temp_path.replace(file_path)
+        finally:
+            if temp_path.exists():
+                temp_path.unlink()
 
     def _close(self) -> None:
         """Release document references."""

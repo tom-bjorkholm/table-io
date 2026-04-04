@@ -6,11 +6,10 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from openxml_audit import OpenXmlValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
-
 from tableio.tableio import FileAccess
 from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
-
 from .check_capsys import check_capsys
 from .excel_test_file_helper import create_formula_workbook, \
     create_update_workbook, inspect_find_and_write_cells_workbook as \
@@ -215,6 +214,17 @@ def test_excel_select_missing_sheet_without_create_raises_key_error(
     """Selecting a missing sheet without create=True raises KeyError."""
     run_select_missing_sheet_without_create_raises_key_error(
         TableIOExcelOpenPyXL, capsys)
+
+
+def test_excel_written_heading_workbook_is_validator_clean() -> None:
+    """Heading styles are written to validator-clean `.xlsx` files."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'validator_clean.xlsx'
+        with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
+            table_io.write_heading('Example heading')
+            table_io.write_table_listdata([['left', 'right']])
+        result = OpenXmlValidator().validate(file_path)
+        assert result.is_valid
 
 
 def test_excel_update_creates_new_read_sheet_and_normalizes_table_headers(

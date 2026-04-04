@@ -75,6 +75,8 @@ def check_text_in_order(text: str, expected_txts: list[str]) -> None:
 def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
                               expected_fragments: SheetContentExpectations,
                               style_expectations: AnchoredStyleExpectations
+                              = None,
+                              expected_errors: Optional[list[str]]
                               = None) -> None:
     """Check the example spreadsheet.
 
@@ -83,6 +85,7 @@ def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
         capture: The capture fixture.
         expected_fragments: The expected fragments.
         style_expectations: The style expectations.
+        expected_errors: Expected syntax-error substrings, if any.
     """
     with TemporaryDirectory() as tmp_dir:
         output_path = Path(tmp_dir) / 'output'
@@ -99,7 +102,7 @@ def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
                                           example.optional_args)
         os.system(f'ls -l {tmp_dir}')
         check_spreadsheet_file(output_path, expected_fragments,
-                               style_expectations)
+                               style_expectations, expected_errors)
         assert result == 0
     out, err = capture.readouterr()
     assert out == ''
