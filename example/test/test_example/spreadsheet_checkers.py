@@ -5,8 +5,9 @@
 # MIT License
 
 from datetime import date, datetime, time
+from functools import partial
 from pathlib import Path
-from typing import NamedTuple, Optional, cast
+from typing import Callable, NamedTuple, Optional, cast
 from odfdo import Document, Table
 from odfdo.style import Style
 from openpyxl import load_workbook
@@ -26,10 +27,10 @@ from tableio.value_type import Value, get_checked_type
 
 
 class ExpectedCellStyle(NamedTuple):
-    """Expected style values for one spreadsheet cell.
+    """Expected style values for one or more spreadsheet cells.
 
-    A value of ``None`` means that the corresponding style aspect is not
-    checked.
+    Each non-``None`` field must match in every checked cell. A value of
+    ``None`` means that the corresponding style aspect is not checked.
     """
 
     bold: Optional[bool] = None
@@ -38,14 +39,20 @@ class ExpectedCellStyle(NamedTuple):
 
 
 class RelativeStyleExpectation(NamedTuple):
-    """Expected style for one cell relative to an anchor cell.
+    """Expected style for a rectangular area relative to an anchor cell.
 
-    The anchor cell is at offset ``(0, 0)``.
+    The anchor cell is at offset ``(0, 0)``. ``row_offset`` and
+    ``col_offset`` point to the top-left cell of the checked area relative
+    to the anchor cell. ``number_of_rows`` and ``number_of_columns`` define
+    the size of that area and must both be positive. Omitting the offsets
+    and size checks the anchor cell itself.
     """
 
-    row_offset: int
-    col_offset: int
     expected_style: ExpectedCellStyle
+    row_offset: int = 0
+    col_offset: int = 0
+    number_of_rows: int = 1
+    number_of_columns: int = 1
 
 
 class AnchoredStyleExpectation(NamedTuple):
@@ -55,7 +62,8 @@ class AnchoredStyleExpectation(NamedTuple):
     ordered subsequence within one row. For example ``['hello', 'world']``
     matches the row ``['hello', 'wonderful', 'world']``. The anchor cell is
     the first cell of the first match, selected by the lowest row number and
-    then the lowest column number.
+    then the lowest column number. Each relative expectation checks one cell
+    or one rectangular area starting from that anchor.
     """
 
     sheet_name: str
@@ -346,28 +354,110 @@ def _cell_location_text(file_path: Path,
     )
 
 
-def _check_style_match(location_text: str,
-                       expected_style: ExpectedCellStyle,
-                       actual_style: ExpectedCellStyle) -> None:
-    """Check one actual style against one expected style."""
+def _area_location_text(file_path: Path,
+                        sheet_name: str,
+                        top_left: tuple[int, int],
+                        relative_expectation:
+                        RelativeStyleExpectation) -> str:
+    """Return a readable style-area location string."""
+    row_index, col_index = top_left
+    return (
+        f'area starting at {_cell_position_text(row_index, col_index)} '
+        f'with size {relative_expectation.number_of_rows} x '
+        f'{relative_expectation.number_of_columns} '
+        f'in sheet {sheet_name!r} of {file_path}'
+    )
+
+
+def _style_mismatch_messages(
+        location_text: str,
+        expected_style: ExpectedCellStyle,
+        actual_style: ExpectedCellStyle) -> list[str]:
+    """Return mismatch messages for one actual style."""
+    mismatches: list[str] = []
     if (expected_style.bold is not None and
             actual_style.bold != expected_style.bold):
-        raise AssertionError(
+        mismatches.append(
             f'Unexpected bold value at {location_text}. '
             f'Expected {expected_style.bold}, got {actual_style.bold}.'
         )
     if (expected_style.italic is not None and
             actual_style.italic != expected_style.italic):
-        raise AssertionError(
+        mismatches.append(
             f'Unexpected italic value at {location_text}. '
             f'Expected {expected_style.italic}, got {actual_style.italic}.'
         )
     if (expected_style.background_color is not None and
             actual_style.background_color != expected_style.background_color):
-        raise AssertionError(
+        mismatches.append(
             f'Unexpected background color at {location_text}. '
             f'Expected {expected_style.background_color}, '
             f'got {actual_style.background_color}.'
+        )
+    return mismatches
+
+
+def _checked_style_area_top_left(
+        anchor_cell: tuple[int, int],
+        relative_expectation: RelativeStyleExpectation) -> tuple[int, int]:
+    """Return the checked area's top-left cell after validation."""
+    anchor_row_index, anchor_col_index = anchor_cell
+    if relative_expectation.number_of_rows <= 0:
+        raise ValueError('number_of_rows must be positive.')
+    if relative_expectation.number_of_columns <= 0:
+        raise ValueError('number_of_columns must be positive.')
+    target_row_index = anchor_row_index + relative_expectation.row_offset
+    target_col_index = anchor_col_index + relative_expectation.col_offset
+    if target_row_index < 0:
+        raise ValueError(
+            'row_offset points before the first spreadsheet row.'
+        )
+    if target_col_index < 0:
+        raise ValueError(
+            'col_offset points before the first spreadsheet column.'
+        )
+    return target_row_index, target_col_index
+
+
+def _check_relative_style_expectation(
+        file_path: Path,
+        sheet_name: str,
+        anchor_cell: tuple[int, int],
+        relative_expectation: RelativeStyleExpectation,
+        actual_style_at:
+        Callable[[int, int], ExpectedCellStyle]) -> None:
+    """Check one relative style expectation against actual cell styles."""
+    target_row_index, target_col_index = _checked_style_area_top_left(
+        anchor_cell, relative_expectation
+    )
+    mismatch_messages: list[str] = []
+    for row_index in range(
+            target_row_index,
+            target_row_index + relative_expectation.number_of_rows):
+        for col_index in range(
+                target_col_index,
+                target_col_index + relative_expectation.number_of_columns):
+            actual_style = actual_style_at(row_index, col_index)
+            mismatch_messages.extend(
+                _style_mismatch_messages(
+                    _cell_location_text(
+                        file_path, sheet_name, row_index, col_index
+                    ),
+                    relative_expectation.expected_style,
+                    actual_style
+                )
+            )
+    if mismatch_messages:
+        area_text = _area_location_text(
+            file_path,
+            sheet_name,
+            (target_row_index, target_col_index),
+            relative_expectation
+        )
+        formatted_mismatches = '\n'.join(mismatch_messages)
+        raise AssertionError(
+            f'Style mismatches in {area_text}:\n'
+            f'{formatted_mismatches}'
         )
 
 
@@ -405,26 +495,12 @@ def _check_excel_styles(file_path: Path,
             )
             for relative_expectation in (
                     style_expectation.relative_expectations):
-                target_row_index = (
-                    anchor_row_index + relative_expectation.row_offset
-                )
-                target_col_index = (
-                    anchor_col_index + relative_expectation.col_offset
-                )
-                actual_style = _excel_actual_style(
-                    worksheet,
-                    target_row_index,
-                    target_col_index
-                )
-                _check_style_match(
-                    _cell_location_text(
-                        file_path,
-                        style_expectation.sheet_name,
-                        target_row_index,
-                        target_col_index
-                    ),
-                    relative_expectation.expected_style,
-                    actual_style
+                _check_relative_style_expectation(
+                    file_path,
+                    style_expectation.sheet_name,
+                    (anchor_row_index, anchor_col_index),
+                    relative_expectation,
+                    partial(_excel_actual_style, worksheet)
                 )
     finally:
         workbook.close()
@@ -446,27 +522,12 @@ def _check_ods_styles(file_path: Path,
         )
         table = _ods_table(document, style_expectation.sheet_name)
         for relative_expectation in style_expectation.relative_expectations:
-            target_row_index = (
-                anchor_row_index + relative_expectation.row_offset
-            )
-            target_col_index = (
-                anchor_col_index + relative_expectation.col_offset
-            )
-            actual_style = _ods_actual_style(
-                document,
-                table,
-                target_row_index,
-                target_col_index
-            )
-            _check_style_match(
-                _cell_location_text(
-                    file_path,
-                    style_expectation.sheet_name,
-                    target_row_index,
-                    target_col_index
-                ),
-                relative_expectation.expected_style,
-                actual_style
+            _check_relative_style_expectation(
+                file_path,
+                style_expectation.sheet_name,
+                (anchor_row_index, anchor_col_index),
+                relative_expectation,
+                partial(_ods_actual_style, document, table)
             )
 
 
@@ -517,7 +578,14 @@ def check_spreadsheet_content(
 def check_spreadsheet_styles(
         file_name: Path | str,
         style_expectations: list[AnchoredStyleExpectation]) -> None:
-    """Check spreadsheet styles against anchored style expectations."""
+    """Check spreadsheet styles against anchored style expectations.
+
+    Every anchored expectation finds the first matching anchor cell on its
+    sheet and then checks each relative expectation from that anchor. A
+    relative expectation can target one cell or one rectangular area.
+    Cells outside the populated content are treated as unformatted cells if
+    the underlying spreadsheet reader reports them that way.
+    """
     file_path = _normalize_file_path(file_name)
     _check_file_exists(file_path)
     suffix = _spreadsheet_suffix(file_path)

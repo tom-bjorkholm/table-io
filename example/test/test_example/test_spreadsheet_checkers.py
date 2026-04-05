@@ -42,8 +42,8 @@ def _create_styled_xlsx(file_path: Path) -> None:
     yellow_bold_italic = workbook.add_format(
         {'bold': True, 'italic': True, 'bg_color': '#FFFF00'}
     )
-    worksheet.write_string(0, 0, 'hello')
-    worksheet.write_string(0, 1, 'wonderful')
+    worksheet.write_string(0, 0, 'hello', yellow_bold_italic)
+    worksheet.write_string(0, 1, 'wonderful', yellow_bold_italic)
     worksheet.write_string(0, 2, 'world', yellow_bold_italic)
     worksheet.write_string(1, 0, 'hello')
     worksheet.write_string(1, 1, 'world')
@@ -81,11 +81,15 @@ def _create_styled_ods(file_path: Path) -> None:
     style_name = _yellow_ods_style(document)
     table = Table('Sheet1')
     document.body.append(table)
-    table.set_cell((0, 0), Cell('hello'), clone=False)
-    table.set_cell((1, 0), Cell('wonderful'), clone=False)
-    styled_cell = Cell('world')
-    styled_cell.style = style_name
-    table.set_cell((2, 0), styled_cell, clone=False)
+    styled_hello = Cell('hello')
+    styled_hello.style = style_name
+    table.set_cell((0, 0), styled_hello, clone=False)
+    styled_wonderful = Cell('wonderful')
+    styled_wonderful.style = style_name
+    table.set_cell((1, 0), styled_wonderful, clone=False)
+    styled_world = Cell('world')
+    styled_world.style = style_name
+    table.set_cell((2, 0), styled_world, clone=False)
     table.set_cell((0, 1), Cell('hello'), clone=False)
     table.set_cell((1, 1), Cell('world'), clone=False)
     document.save(file_path)
@@ -229,9 +233,9 @@ def test_check_spreadsheet_content_checks_sheet_order(
         )
 
 
-def test_check_spreadsheet_styles_uses_first_subsequence_anchor_in_xlsx(
+def test_check_spreadsheet_styles_uses_default_anchor_offset_in_xlsx(
         tmp_path: Path) -> None:
-    """Style checks use the first subsequence anchor in `.xlsx` files."""
+    """Style checks default to the anchor cell in `.xlsx` files."""
     file_path = tmp_path / 'example.xlsx'
     _create_styled_xlsx(file_path)
     check_spreadsheet_styles(
@@ -242,8 +246,6 @@ def test_check_spreadsheet_styles_uses_first_subsequence_anchor_in_xlsx(
                 anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
-                        row_offset=0,
-                        col_offset=2,
                         expected_style=ExpectedCellStyle(
                             bold=True,
                             italic=True,
@@ -256,9 +258,35 @@ def test_check_spreadsheet_styles_uses_first_subsequence_anchor_in_xlsx(
     )
 
 
-def test_check_spreadsheet_styles_uses_first_subsequence_anchor_in_ods(
+def test_check_spreadsheet_styles_checks_rectangular_area_in_xlsx(
         tmp_path: Path) -> None:
-    """Style checks use the first subsequence anchor in `.ods` files."""
+    """Style checks can verify one rectangular area in `.xlsx` files."""
+    file_path = tmp_path / 'example.xlsx'
+    _create_styled_xlsx(file_path)
+    check_spreadsheet_styles(
+        file_path,
+        [
+            AnchoredStyleExpectation(
+                sheet_name='Sheet1',
+                anchor_row_fragment=['hello', 'world'],
+                relative_expectations=[
+                    RelativeStyleExpectation(
+                        expected_style=ExpectedCellStyle(
+                            bold=True,
+                            italic=True,
+                            background_color=Color.YELLOW
+                        ),
+                        number_of_columns=3
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def test_check_spreadsheet_styles_uses_default_anchor_offset_in_ods(
+        tmp_path: Path) -> None:
+    """Style checks default to the anchor cell in `.ods` files."""
     file_path = tmp_path / 'example.ods'
     _create_styled_ods(file_path)
     check_spreadsheet_styles(
@@ -269,13 +297,126 @@ def test_check_spreadsheet_styles_uses_first_subsequence_anchor_in_ods(
                 anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
-                        row_offset=0,
-                        col_offset=2,
                         expected_style=ExpectedCellStyle(
                             bold=True,
                             italic=True,
                             background_color=Color.YELLOW
                         )
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def test_check_spreadsheet_styles_checks_rectangular_area_in_ods(
+        tmp_path: Path) -> None:
+    """Style checks can verify one rectangular area in `.ods` files."""
+    file_path = tmp_path / 'example.ods'
+    _create_styled_ods(file_path)
+    check_spreadsheet_styles(
+        file_path,
+        [
+            AnchoredStyleExpectation(
+                sheet_name='Sheet1',
+                anchor_row_fragment=['hello', 'world'],
+                relative_expectations=[
+                    RelativeStyleExpectation(
+                        expected_style=ExpectedCellStyle(
+                            bold=True,
+                            italic=True,
+                            background_color=Color.YELLOW
+                        ),
+                        number_of_columns=3
+                    )
+                ]
+            )
+        ]
+    )
+
+
+@pytest.mark.parametrize(
+    ('number_of_rows', 'number_of_columns', 'expected_message'),
+    [
+        (0, 1, 'number_of_rows'),
+        (-1, 1, 'number_of_rows'),
+        (1, 0, 'number_of_columns'),
+        (1, -1, 'number_of_columns')
+    ]
+)
+def test_check_spreadsheet_styles_rejects_non_positive_area_sizes(
+        tmp_path: Path,
+        number_of_rows: int,
+        number_of_columns: int,
+        expected_message: str) -> None:
+    """Style checks reject non-positive rectangular area sizes."""
+    file_path = tmp_path / 'example.xlsx'
+    _create_styled_xlsx(file_path)
+    with pytest.raises(ValueError, match=expected_message):
+        check_spreadsheet_styles(
+            file_path,
+            [
+                AnchoredStyleExpectation(
+                    sheet_name='Sheet1',
+                    anchor_row_fragment=['hello', 'world'],
+                    relative_expectations=[
+                        RelativeStyleExpectation(
+                            expected_style=ExpectedCellStyle(bold=True),
+                            number_of_rows=number_of_rows,
+                            number_of_columns=number_of_columns
+                        )
+                    ]
+                )
+            ]
+        )
+
+
+def test_check_spreadsheet_styles_reports_all_area_mismatches(
+        tmp_path: Path) -> None:
+    """Style mismatch reports include all mismatches in one area."""
+    file_path = tmp_path / 'example.xlsx'
+    _create_basic_xlsx(file_path)
+    with pytest.raises(AssertionError) as error_info:
+        check_spreadsheet_styles(
+            file_path,
+            [
+                AnchoredStyleExpectation(
+                    sheet_name='Sheet1',
+                    anchor_row_fragment=['hello', 'world'],
+                    relative_expectations=[
+                        RelativeStyleExpectation(
+                            expected_style=ExpectedCellStyle(bold=True),
+                            number_of_columns=2
+                        )
+                    ]
+                )
+            ]
+        )
+    assert 'Style mismatches in area' in str(error_info.value)
+    assert 'row 1, column 1' in str(error_info.value)
+    assert 'row 1, column 2' in str(error_info.value)
+    assert str(error_info.value).count('Unexpected bold value') == 2
+
+
+def test_check_spreadsheet_styles_treats_missing_cells_as_unformatted(
+        tmp_path: Path) -> None:
+    """Style checks treat missing cells outside content as unformatted."""
+    file_path = tmp_path / 'example.xlsx'
+    _create_basic_xlsx(file_path)
+    check_spreadsheet_styles(
+        file_path,
+        [
+            AnchoredStyleExpectation(
+                sheet_name='Sheet1',
+                anchor_row_fragment=['hello', 'world'],
+                relative_expectations=[
+                    RelativeStyleExpectation(
+                        expected_style=ExpectedCellStyle(
+                            bold=False,
+                            italic=False,
+                            background_color=Color.NONE
+                        ),
+                        number_of_columns=5
                     )
                 ]
             )
@@ -306,13 +447,12 @@ def test_check_spreadsheet_file_runs_full_xlsx_validation(
                 anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
-                        row_offset=0,
-                        col_offset=2,
                         expected_style=ExpectedCellStyle(
                             bold=True,
                             italic=True,
                             background_color=Color.YELLOW
-                        )
+                        ),
+                        number_of_columns=3
                     )
                 ]
             )
