@@ -210,9 +210,11 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
         ])
 ]
 
+# pylint: disable=duplicate-code
 EXPECTED_STYLES1: list[AnchoredStyleExpectation] = \
     change_sheet(anchored_style_expectations=EXPECTED_STYLES,
                  sheet_name='Sheet1')
+# pylint: enable=duplicate-code
 
 
 MD_FRAGMENTS: list[str] = [
@@ -267,6 +269,8 @@ CSV_FRAGMENTS: list[str] = [
     '"TIO-789","2010-12-25 00:00:00","3"',
 ]
 
+
+# pylint: disable=duplicate-code
 SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet',
     row_fragments=SHEET_ROW_FRAGMENTS)
@@ -274,6 +278,7 @@ SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
 SHEET_REST: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet1',
     row_fragments=SHEET_ROW_FRAGMENTS)
+# pylint: enable=duplicate-code
 
 
 @pytest.mark.parametrize('fmt, impl, expected, expected_styles',
@@ -287,7 +292,7 @@ def test_e02_more_write_spreadsheet(
         fmt: str,
         impl: str, expected: SheetContentExpectation,
         expected_styles: list[AnchoredStyleExpectation]) -> None:
-    """Test e01 for spreadsheet formats and implementations."""
+    """Test e02 for spreadsheet formats and implementations."""
     example = Example(example_function=e02_more_write,
                       format_name=fmt, implementation_name=impl)
     check_example_spreadsheet(example, capture=capsys,

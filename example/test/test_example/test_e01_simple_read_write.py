@@ -21,6 +21,7 @@ SHEET_ROW_FRAGMENTS1: list[list[Value]] = [
     ['Attribute', 'Value', 'Requested value'],
 ]
 
+# pylint: disable=duplicate-code
 SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet',
     row_fragments=SHEET_ROW_FRAGMENTS1 + [
@@ -41,6 +42,7 @@ SHEET_ODS: SheetContentExpectation = SheetContentExpectation(
         ['Implementation', 'odfdo', 'odfdo']
     ]
 )
+# pylint: enable=duplicate-code
 
 
 CSV_FRAGMENTS: list[str] = [
