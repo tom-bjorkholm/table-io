@@ -5,7 +5,6 @@
 # MIT License
 
 import sys
-import os
 from typing import NamedTuple, Callable, Optional
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -100,7 +99,6 @@ def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
                                           str(output_path),
                                           example.implementation_name,
                                           example.optional_args)
-        os.system(f'ls -l {tmp_dir}')
         check_spreadsheet_file(output_path, expected_fragments,
                                style_expectations, expected_errors)
         assert result == 0
@@ -131,7 +129,6 @@ def check_example_md_csv(example: Example, capture: CaptureFixture[str],
                                           str(output_path),
                                           example.implementation_name,
                                           example.optional_args)
-        os.system(f'ls -l {tmp_dir}')
         with open(output_path, 'r', encoding='utf-8') as file:
             text = file.read()
         check_text_in_order(text, expected_fragments)
@@ -139,3 +136,22 @@ def check_example_md_csv(example: Example, capture: CaptureFixture[str],
     out, err = capture.readouterr()
     assert out == ''
     assert err == ''
+
+
+def change_sheet(anchored_style_expectations: list[AnchoredStyleExpectation],
+                 sheet_name: str) -> list[AnchoredStyleExpectation]:
+    """Change the sheet name in the anchored style expectations.
+
+    Args:
+        anchored_style_expectations: The anchored style expectations.
+        sheet_name: The new sheet name.
+    Returns:
+        The anchored style expectations with the sheet name changed.
+    """
+    ret: list[AnchoredStyleExpectation] = []
+    for item in anchored_style_expectations:
+        ret.append(AnchoredStyleExpectation(
+            sheet_name=sheet_name,
+            anchor_row_fragment=item.anchor_row_fragment,
+            relative_expectations=item.relative_expectations))
+    return ret

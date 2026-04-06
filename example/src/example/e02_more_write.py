@@ -133,13 +133,15 @@ def e02_more_write(format_name: str, output_file_name: str,
         # This is useful when the whole row should share the same look and
         # you do not want to repeat the same Fmt for every cell.
         #
+        today: datetime = datetime.now()
+        today = today.replace(hour=13, minute=0, second=0, microsecond=0)
         data3: FmtListData = [
             FmtListRow(values=['Jira key', 'Story Points', 'report date'],
                        fmt=Fmt(bold=True)),
-            FmtListRow(values=['TIO-123', 13, datetime.now()],
+            FmtListRow(values=['TIO-123', 13, today],
                        fmt=Fmt(italic=True, highlight=Color.GREEN)),
             FmtListRow(values=['TIO-456', 5,
-                               datetime.now() - timedelta(days=30)],
+                               today - timedelta(days=30)],
                        fmt=Fmt()),
             FmtListRow(values=['TIO-789', 3,
                                datetime.fromisoformat('2010-12-25')],
@@ -157,11 +159,11 @@ def e02_more_write(format_name: str, output_file_name: str,
         #
         data4: FmtDictData = [
             FmtDictRow(values={'Jira key': 'TIO-123', 'Story Points': 13,
-                               'report date': datetime.now()},
+                               'report date': today},
                        fmt=Fmt(bold=True, highlight=Color.GREEN)),
             FmtDictRow(values={'Jira key': 'TIO-456', 'Story Points': 5,
                                'report date':
-                               datetime.now() - timedelta(days=30)},
+                               today - timedelta(days=30)},
                        fmt=Fmt(italic=True, highlight=Color.YELLOW)),
             FmtDictRow(values={'Jira key': 'TIO-789', 'Story Points': 3,
                                'report date':

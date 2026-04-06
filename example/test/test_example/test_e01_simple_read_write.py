@@ -70,10 +70,13 @@ def test_e01_simple_read_write_spreadsheet(
                               expected_fragments=[expected])
 
 
-def test_e01_simple_read_write_text(capsys: pytest.CaptureFixture[str]) \
+@pytest.mark.parametrize('fmt, expected',
+                         [('csv', CSV_FRAGMENTS)])
+def test_e01_simple_read_write_text(capsys: pytest.CaptureFixture[str],
+                                    fmt: str, expected: list[str]) \
         -> None:
-    """Test e01 for CSV text format."""
+    """Test e01 for md and csv text formats."""
     example = Example(example_function=e01_simple_read_write,
-                      format_name='csv')
+                      format_name=fmt)
     check_example_md_csv(example, capture=capsys,
-                         expected_fragments=CSV_FRAGMENTS)
+                         expected_fragments=expected)
