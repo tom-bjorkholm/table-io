@@ -17,6 +17,7 @@ from .example_checkers import check_example_md_csv, \
 
 FIXED_NOW: datetime = datetime(year=2026, month=4, day=6,
                                hour=13, minute=14, second=15)
+example_function = example_module.e05_read_write_valueconversion
 
 
 @pytest.fixture(autouse=True)
@@ -82,35 +83,41 @@ CSV_FRAGMENTS: list[str] = [
 ]
 
 
-@pytest.mark.parametrize('fmt, impl, expected, expected_styles',
-                         [('ods', 'odfdo', SHEET_REST, EXPECTED_STYLES1),
-                          ('excel', 'openpyxl', SHEET_OPX, EXPECTED_STYLES),
-                          ('excel', 'pylightxl', SHEET_REST,
-                           EXPECTED_STYLES1)])
+@pytest.mark.parametrize('example, expected, expected_styles',
+                         [(Example(
+                             example_function=example_function,
+                             format_name='ods',
+                             implementation_name='odfdo'),
+                           SHEET_REST, EXPECTED_STYLES1),
+                          (Example(
+                              example_function=example_function,
+                              format_name='excel',
+                              implementation_name='openpyxl'),
+                           SHEET_OPX, EXPECTED_STYLES),
+                          (Example(
+                              example_function=example_function,
+                              format_name='excel',
+                              implementation_name='pylightxl'),
+                           SHEET_REST, EXPECTED_STYLES1)])
 def test_e05_read_write_valueconversion_spreadsheet(
         capsys: pytest.CaptureFixture[str],
-        fmt: str,
-        impl: str,
+        example: Example,
         expected: SheetContentExpectation,
         expected_styles: list[AnchoredStyleExpectation]) -> None:
     """Test e05 for spreadsheet formats and implementations."""
-    example = Example(
-        example_function=example_module.e05_read_write_valueconversion,
-        format_name=fmt,
-        implementation_name=impl)
-    check_example_spreadsheet(example, capture=capsys,
+    check_example_spreadsheet(example=example, capture=capsys,
                               expected_fragments=[expected],
                               style_expectations=expected_styles)
 
 
-@pytest.mark.parametrize('fmt, expected',
-                         [('csv', CSV_FRAGMENTS)])
+@pytest.mark.parametrize('example, expected',
+                         [(Example(
+                             example_function=example_function,
+                             format_name='csv'),
+                           CSV_FRAGMENTS)])
 def test_e05_read_write_valueconversion_text(
         capsys: pytest.CaptureFixture[str],
-        fmt: str, expected: list[str]) -> None:
+        example: Example, expected: list[str]) -> None:
     """Test e05 for CSV text format."""
-    example = Example(
-        example_function=example_module.e05_read_write_valueconversion,
-        format_name=fmt)
-    check_example_md_csv(example, capture=capsys,
+    check_example_md_csv(example=example, capture=capsys,
                          expected_fragments=expected)
