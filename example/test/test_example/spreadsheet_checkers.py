@@ -609,3 +609,42 @@ def check_spreadsheet_file(
     check_spreadsheet_content(file_name, expected_fragments)
     if style_expectations is not None:
         check_spreadsheet_styles(file_name, style_expectations)
+
+
+PLAIN_STYLE: ExpectedCellStyle = \
+    ExpectedCellStyle(bold=False, italic=False, background_color=Color.NONE)
+BOLD_STYLE: ExpectedCellStyle = \
+    ExpectedCellStyle(bold=True, italic=False, background_color=Color.NONE)
+ITALIC_STYLE: ExpectedCellStyle = \
+    ExpectedCellStyle(bold=False, italic=True, background_color=Color.NONE)
+BOLD_ITALIC_STYLE: ExpectedCellStyle = ExpectedCellStyle(bold=True,
+                                                         italic=True)
+YELLOW_PLAIN: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.YELLOW, italic=False,
+                      bold=False)
+YELLOW_ITALIC: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.YELLOW, italic=True,
+                      bold=False)
+YELLOW_BOLD: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.YELLOW, italic=False,
+                      bold=True)
+YELLOW_BOLD_ITALIC: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.YELLOW, bold=True, italic=True)
+RED_PLAIN: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.RED, italic=False,
+                      bold=False)
+RED_BOLD: ExpectedCellStyle = ExpectedCellStyle(background_color=Color.RED,
+                                                bold=True, italic=False)
+RED_BOLD_ITALIC: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.RED, bold=True, italic=True)
+RED_ITALIC: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.RED, italic=True, bold=False)
+GREEN_PLAIN: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.GREEN, italic=False,
+                      bold=False)
+GREEN_BOLD_ITALIC: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.GREEN, bold=True, italic=True)
+GREEN_BOLD: ExpectedCellStyle = ExpectedCellStyle(background_color=Color.GREEN,
+                                                  bold=True, italic=False)
+GREEN_ITALIC: ExpectedCellStyle = \
+    ExpectedCellStyle(background_color=Color.GREEN, italic=True, bold=False)

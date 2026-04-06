@@ -6,11 +6,12 @@
 
 from datetime import datetime, timedelta
 import pytest
-from tableio import Value, Color
+from tableio import Value
 from example.e02_more_write import e02_more_write
 from .spreadsheet_checkers import SheetContentExpectation, \
-    ExpectedCellStyle, RelativeStyleExpectation, \
-    AnchoredStyleExpectation
+    RelativeStyleExpectation, AnchoredStyleExpectation, PLAIN_STYLE, \
+    BOLD_STYLE, ITALIC_STYLE, BOLD_ITALIC_STYLE, YELLOW_ITALIC, RED_BOLD, \
+    RED_BOLD_ITALIC, RED_ITALIC, GREEN_BOLD_ITALIC, GREEN_BOLD, GREEN_ITALIC
 from .example_checkers import check_example_md_csv, \
     check_example_spreadsheet, Example, change_sheet
 
@@ -41,30 +42,6 @@ SHEET_ROW_FRAGMENTS: list[list[Value]] = [
     ['TIO-456', today - timedelta(days=30), 5],
     ['TIO-789', datetime(year=2010, month=12, day=25), 3],
 ]
-
-PLAIN_STYLE: ExpectedCellStyle = \
-    ExpectedCellStyle(bold=False, italic=False, background_color=Color.NONE)
-BOLD_STYLE: ExpectedCellStyle = \
-    ExpectedCellStyle(bold=True, italic=False, background_color=Color.NONE)
-ITALIC_STYLE: ExpectedCellStyle = \
-    ExpectedCellStyle(bold=False, italic=True, background_color=Color.NONE)
-BOLD_ITALIC_STYLE: ExpectedCellStyle = ExpectedCellStyle(bold=True,
-                                                         italic=True)
-YELLOW_ITALIC: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.YELLOW, italic=True,
-                      bold=False)
-RED_BOLD: ExpectedCellStyle = ExpectedCellStyle(background_color=Color.RED,
-                                                bold=True, italic=False)
-RED_BOLD_ITALIC: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.RED, bold=True, italic=True)
-RED_ITALIC: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.RED, italic=True, bold=False)
-GREEN_BOLD_ITALIC: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.GREEN, bold=True, italic=True)
-GREEN_BOLD: ExpectedCellStyle = ExpectedCellStyle(background_color=Color.GREEN,
-                                                  bold=True, italic=False)
-GREEN_ITALIC: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.GREEN, italic=True, bold=False)
 
 EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
     AnchoredStyleExpectation(
