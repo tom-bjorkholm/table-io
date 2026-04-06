@@ -110,14 +110,15 @@ a better start by reading the examples.
 
 | Version | Date        | Python version | Comment                     |
 |---------|-------------|----------------|-----------------------------|
-| 0.3     | 2023 Apr 01 | 3.12 or newer  | Improved API, more backends |
+| 0.4     | 2026 Apr 06 | 3.12 or newer  | Fix .xlsx and .ods syntax   |
+| 0.3     | 2026 Apr 01 | 3.12 or newer  | Improved API, more backends |
 | 0.2     | 2026 Mar 28 | 3.12 or newer  | More features, API changes  |
 | 0.1     | 2026 Mar 23 | 3.12 or newer  | First released version      |
 
 ## Test summary
 
-- Test result: 1126 passed in 23s
+- Test result: 1126 passed in 17s
 - No flake8 warnings.
 - No mypy errors found.
-- Built version(s): 0.3.1
+- Built version(s): 0.4
 - Build and test using Python 3.14.3
