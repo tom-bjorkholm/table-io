@@ -101,7 +101,7 @@ You can find the public API documentation at [https://bitbucket.org/tom-bjorkhol
 
 You can find the protected API documentation at [https://bitbucket.org/tom-bjorkholm/table-io/src/master/doc/protected_api.md](https://bitbucket.org/tom-bjorkholm/table-io/src/master/doc/protected_api.md)
 The protected API documentation is only for developers that want to
-extend the framework with by adding their own classes as registered
+extend the framework by adding their own classes as registered
 readers/writers to the factory.
 
 Even though the API documentation exists, most users and programmers probably get
@@ -122,5 +122,5 @@ a better start by reading the examples.
 - Test result: 1173 passed in 18s
 - No flake8 warnings.
 - No mypy errors found.
-- Built version(s): 0.5
+- Built version(s): 0.5.1
 - Build and test using Python 3.14.3
