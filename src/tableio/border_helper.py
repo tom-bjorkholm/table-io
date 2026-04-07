@@ -5,11 +5,12 @@
 # MIT License
 
 from enum import IntEnum
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 from tableio.capability import Capabilities, CapabilityNotSupported, \
     Strictness
 from tableio.tableio_types import TableBorderStyle
+from tableio.value_type import Fmt
 
 
 class BorderWeight(IntEnum):
@@ -27,6 +28,26 @@ class CellBorder(NamedTuple):
     right: BorderWeight
     bottom: BorderWeight
     left: BorderWeight
+
+
+NO_BORDERS = CellBorder(
+    BorderWeight.NONE,
+    BorderWeight.NONE,
+    BorderWeight.NONE,
+    BorderWeight.NONE)
+"""The absence of borders on all four cell edges."""
+
+
+class CellStyleState(NamedTuple):
+    """Combined cell formatting state used by style-caching backends."""
+
+    fmt: Fmt = Fmt()
+    font_size: Optional[int] = None
+    borders: CellBorder = NO_BORDERS
+
+
+DEFAULT_CELL_STYLE = CellStyleState()
+"""The default cell formatting state with no extra styling."""
 
 
 class _BorderComponents(NamedTuple):

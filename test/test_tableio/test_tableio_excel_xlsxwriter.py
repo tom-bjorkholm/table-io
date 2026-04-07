@@ -13,11 +13,11 @@ from typing import Optional
 import pytest
 from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
+from openxml_audit import OpenXmlValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
 
-from tableio.capability import CAP_IGNORED, CAP_IMPLEMENTED, \
-    CAP_UNSUPPORTED, Capabilities, \
-    CapabilityNotSupported
+from tableio.capability import CAP_IMPLEMENTED, CAP_UNSUPPORTED, \
+    Capabilities, CapabilityNotSupported
 from tableio.factory import create_tableio
 from tableio.color import Color
 from tableio.tableio import Box, FileAccess
@@ -26,14 +26,17 @@ from tableio.tableio_excel_xlsxwriter import TableIOExcelXlsxWriter
 from tableio.value_type import Fmt, ValueFmt
 
 from .check_capsys import check_capsys
-from .excel_inspect_helper import inspect_datetime_cells_workbook, \
-    inspect_dict_header_fmt_workbook, \
+from .excel_inspect_helper import inspect_bordered_workbook, \
+    inspect_box_rewrite_clears_borders_workbook, \
+    inspect_datetime_cells_workbook, inspect_dict_header_fmt_workbook, \
     inspect_fmtdict_header_fmt_workbook, \
     inspect_formatted_workbook, inspect_multiple_filters_workbook, \
     inspect_normalized_header_workbook, inspect_rewrite_box_workbook, \
     inspect_row_formatted_workbook, inspect_table_width_cap_workbook, \
     inspect_table_width_heading_workbook
 from .spreadsheet_test_helper import \
+    run_bordered_workbook_is_validator_clean, \
+    run_box_rewrite_clears_old_borders, \
     run_box_write_removes_overlapping_filtered_range, \
     run_boxed_table_partial_overwrite_raises, \
     run_multi_sheet_heading_state_is_per_sheet, \
@@ -45,6 +48,7 @@ from .spreadsheet_test_helper import \
     run_write_dictdata_applies_first_row_format, \
     run_write_fmtdictdata_applies_first_row_format, \
     run_write_formatted_listdata_applies_formatting_and_filter, \
+    run_write_table_listdata_applies_borders, \
     run_write_multiple_filtered_ranges_keeps_all_ranges, \
     run_write_row_formatted_dictdata_applies_formatting
 
@@ -121,7 +125,7 @@ def test_excel_xlsxwriter_get_capabilities(
     assert capabilities.can_write_highlight == CAP_IMPLEMENTED
     assert capabilities.multi_sheet == CAP_IMPLEMENTED
     assert capabilities.can_find_value_position == CAP_UNSUPPORTED
-    assert capabilities.can_write_borders == CAP_IGNORED
+    assert capabilities.can_write_borders == CAP_IMPLEMENTED
     check_capsys(capsys)
 
 
@@ -335,6 +339,22 @@ def test_excel_xlsxwriter_write_fmtdictdata_applies_first_row_format(
         inspect_fmtdict_header_fmt_workbook, capsys)
 
 
+def test_excel_xlsxwriter_write_table_listdata_applies_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """Writes the requested table borders to saved XlsxWriter cells."""
+    run_write_table_listdata_applies_borders(
+        TableIOExcelXlsxWriter, '.xlsx',
+        inspect_bordered_workbook, capsys)
+
+
+def test_excel_xlsxwriter_box_rewrite_clears_old_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """Rewriting the same boxed area clears any stale cell borders."""
+    run_box_rewrite_clears_old_borders(
+        TableIOExcelXlsxWriter, '.xlsx',
+        inspect_box_rewrite_clears_borders_workbook, capsys)
+
+
 def test_excel_xlsxwriter_filtered_table_headers_are_normalized(
         capsys: CaptureFixture[str]) -> None:
     """Filtered table headers are normalized to valid Excel strings."""
@@ -436,3 +456,10 @@ def test_excel_xlsxwriter_filtered_range_raises_on_table_failure(
                 table_io.run_add_filtered_range((0, 0, 2, 2),
                                                 'BrokenFilter')
     check_capsys(capsys)
+
+
+def test_excel_xlsxwriter_bordered_workbook_is_validator_clean() -> None:
+    """Bordered tables are written to validator-clean `.xlsx` files."""
+    run_bordered_workbook_is_validator_clean(
+        TableIOExcelXlsxWriter, '.xlsx',
+        lambda file_path: OpenXmlValidator().validate(file_path).is_valid)

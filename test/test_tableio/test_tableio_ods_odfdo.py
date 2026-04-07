@@ -13,11 +13,14 @@ from odfdo.body import Spreadsheet
 from odfdo.style import Style
 from openxml_audit import OdfValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
+from tableio.capability import CAP_IMPLEMENTED
 from tableio.tableio import FileAccess
 from tableio.tableio_ods_odfdo import TableIOOdsOdfdo
 from tableio.value_type import Fmt, get_checked_type
 from .check_capsys import check_capsys
 from .spreadsheet_test_helper import \
+    run_bordered_workbook_is_validator_clean, \
+    run_box_rewrite_clears_old_borders, \
     run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
     run_find_value_and_write_cells, \
@@ -37,6 +40,7 @@ from .spreadsheet_test_helper import \
     run_write_dictdata_applies_first_row_format, \
     run_write_fmtdictdata_applies_first_row_format, \
     run_write_formatted_listdata_applies_formatting_and_filter, \
+    run_write_table_listdata_applies_borders, \
     run_write_multiple_filtered_ranges_keeps_all_ranges, \
     run_write_row_formatted_dictdata_applies_formatting
 
@@ -63,6 +67,26 @@ def _cell_style_properties(
         'table-cell') or {}
     text_props = get_checked_type(style, Style).get_properties('text') or {}
     return table_props, text_props
+
+
+def _cell_border_properties(
+        document: Document,
+        table: Table,
+        row: int,
+        column: int) -> tuple[Optional[str], Optional[str], Optional[str],
+                              Optional[str]]:
+    """Return one cell border tuple as top-right-bottom-left."""
+    cell = table.get_cell((column, row), clone=False)
+    if cell.style is None:
+        return None, None, None, None
+    style = document.get_style('table-cell', cell.style)
+    assert style is not None
+    table_props = get_checked_type(style, Style).get_properties(
+        'table-cell') or {}
+    return (cast(Optional[str], table_props.get('fo:border-top')),
+            cast(Optional[str], table_props.get('fo:border-right')),
+            cast(Optional[str], table_props.get('fo:border-bottom')),
+            cast(Optional[str], table_props.get('fo:border-left')))
 
 
 def _filtered_database_ranges(document: Document) -> list[Element]:
@@ -235,6 +259,39 @@ def _inspect_fmtdict_header_fmt_document(file_path: Path) -> None:
     assert data_table_props['fo:background-color'] == '#c6efce'
 
 
+def _inspect_bordered_document(file_path: Path) -> None:
+    """Check that one ODS file stores the requested table borders."""
+    document, table = _load_document(file_path)
+    thick = '1.75pt solid #000000'
+    thin = '0.75pt solid #000000'
+    assert _cell_border_properties(document, table, 0, 0) == (
+        thick, thin, thin, thick)
+    assert _cell_border_properties(document, table, 0, 1) == (
+        thick, thick, thin, thin)
+    assert _cell_border_properties(document, table, 1, 0) == (
+        thin, thin, thick, thick)
+    assert _cell_border_properties(document, table, 1, 1) == (
+        thin, thick, thick, thin)
+
+
+def _inspect_box_rewrite_clears_borders_document(file_path: Path) -> None:
+    """Check that boxed rewrites clear stale ODS borders."""
+    document, table = _load_document(file_path)
+    for row_index in range(2):
+        for column_index in range(2):
+            assert _cell_border_properties(
+                document, table, row_index, column_index) == (
+                    None, None, None, None)
+
+
+def test_ods_get_capabilities_support_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """The ODS backend reports border writing as supported."""
+    assert TableIOOdsOdfdo.get_capabilities().can_write_borders == \
+        CAP_IMPLEMENTED
+    check_capsys(capsys)
+
+
 def test_ods_written_workbook_is_validator_clean() -> None:
     """Plain `.ods` output is normalized to validator-clean package XML."""
     with TemporaryDirectory() as temp_dir:
@@ -243,6 +300,13 @@ def test_ods_written_workbook_is_validator_clean() -> None:
             table_io.write_table_listdata([['left', 'right']])
         result = OdfValidator().validate(file_path)
         assert result.is_valid
+
+
+def test_ods_bordered_workbook_is_validator_clean() -> None:
+    """Bordered `.ods` output remains validator clean."""
+    run_bordered_workbook_is_validator_clean(
+        TableIOOdsOdfdo, '.ods',
+        lambda file_path: OdfValidator().validate(file_path).is_valid)
 
 
 def _make_database_range(name: Optional[str], display_buttons: str,
@@ -436,6 +500,21 @@ def test_ods_write_fmtdictdata_applies_first_row_format(
     run_write_fmtdictdata_applies_first_row_format(
         TableIOOdsOdfdo, '.ods', _inspect_fmtdict_header_fmt_document,
         capsys)
+
+
+def test_ods_write_table_listdata_applies_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """Writes the requested table borders to saved ODS cells."""
+    run_write_table_listdata_applies_borders(
+        TableIOOdsOdfdo, '.ods', _inspect_bordered_document, capsys)
+
+
+def test_ods_box_rewrite_clears_old_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """Rewriting the same boxed area clears any stale ODS borders."""
+    run_box_rewrite_clears_old_borders(
+        TableIOOdsOdfdo, '.ods',
+        _inspect_box_rewrite_clears_borders_document, capsys)
 
 
 def test_ods_read_formula_uses_cached_value(

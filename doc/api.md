@@ -220,6 +220,9 @@
 * [tableio.border\_helper](#tableio.border_helper)
   * [BorderWeight](#tableio.border_helper.BorderWeight)
   * [CellBorder](#tableio.border_helper.CellBorder)
+  * [NO\_BORDERS](#tableio.border_helper.NO_BORDERS)
+  * [CellStyleState](#tableio.border_helper.CellStyleState)
+  * [DEFAULT\_CELL\_STYLE](#tableio.border_helper.DEFAULT_CELL_STYLE)
   * [BorderHelper](#tableio.border_helper.BorderHelper)
     * [\_\_init\_\_](#tableio.border_helper.BorderHelper.__init__)
     * [has\_borders](#tableio.border_helper.BorderHelper.has_borders)
@@ -4014,6 +4017,28 @@ class CellBorder(NamedTuple)
 ```
 
 Border weights for the four edges of one cell.
+
+<a id="tableio.border_helper.NO_BORDERS"></a>
+
+#### NO\_BORDERS
+
+The absence of borders on all four cell edges.
+
+<a id="tableio.border_helper.CellStyleState"></a>
+
+## CellStyleState Objects
+
+```python
+class CellStyleState(NamedTuple)
+```
+
+Combined cell formatting state used by style-caching backends.
+
+<a id="tableio.border_helper.DEFAULT_CELL_STYLE"></a>
+
+#### DEFAULT\_CELL\_STYLE
+
+The default cell formatting state with no extra styling.
 
 <a id="tableio.border_helper.BorderHelper"></a>
 

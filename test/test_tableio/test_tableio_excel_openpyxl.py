@@ -10,7 +10,6 @@ from openxml_audit import OpenXmlValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
 from tableio.tableio import FileAccess
 from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
-from tableio.tableio_types import Box, TableBorderStyle
 from .check_capsys import check_capsys
 from .excel_test_file_helper import create_formula_workbook, \
     create_update_workbook, inspect_find_and_write_cells_workbook as \
@@ -24,6 +23,8 @@ from .excel_inspect_helper import inspect_bordered_workbook, \
     inspect_row_formatted_workbook, inspect_table_width_cap_workbook, \
     inspect_table_width_heading_workbook
 from .spreadsheet_test_helper import \
+    run_bordered_workbook_is_validator_clean, \
+    run_box_rewrite_clears_old_borders, \
     run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
     run_find_value_and_write_cells, \
@@ -44,6 +45,7 @@ from .spreadsheet_test_helper import \
     run_write_dictdata_applies_first_row_format, \
     run_write_fmtdictdata_applies_first_row_format, \
     run_write_formatted_listdata_applies_formatting_and_filter, \
+    run_write_table_listdata_applies_borders, \
     run_write_multiple_filtered_ranges_keeps_all_ranges, \
     run_write_row_formatted_dictdata_applies_formatting
 
@@ -193,33 +195,16 @@ def test_excel_write_fmtdictdata_applies_first_row_format(
 def test_excel_write_table_listdata_applies_borders(
         capsys: CaptureFixture[str]) -> None:
     """Writes the requested table borders to saved OpenPyXL cells."""
-    with TemporaryDirectory() as temp_dir:
-        file_path = Path(temp_dir) / 'borders.xlsx'
-        with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
-            table_io.write_table_listdata(
-                [['name', 'value'], ['Alice', 1]],
-                border_style=TableBorderStyle.OUTER_THICK_INNER_THIN)
-        inspect_bordered_workbook(file_path)
-    check_capsys(capsys)
+    run_write_table_listdata_applies_borders(
+        TableIOExcelOpenPyXL, '.xlsx', inspect_bordered_workbook, capsys)
 
 
 def test_excel_box_rewrite_clears_old_borders(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting the same boxed area clears any stale cell borders."""
-    with TemporaryDirectory() as temp_dir:
-        file_path = Path(temp_dir) / 'rewrite_borders.xlsx'
-        box = Box(top=0, left=0, bottom=2, right=2)
-        with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
-            table_io.write_table_listdata(
-                [['left', 'right'], ['down', 'here']],
-                box=box,
-                border_style=TableBorderStyle.ALL_THICK)
-            table_io.write_table_listdata(
-                [['new', 'values'], ['stay', 'plain']],
-                box=box,
-                border_style=TableBorderStyle.NONE)
-        inspect_box_rewrite_clears_borders_workbook(file_path)
-    check_capsys(capsys)
+    run_box_rewrite_clears_old_borders(
+        TableIOExcelOpenPyXL, '.xlsx',
+        inspect_box_rewrite_clears_borders_workbook, capsys)
 
 
 def test_excel_read_formula_uses_cached_value(
@@ -264,14 +249,9 @@ def test_excel_written_heading_workbook_is_validator_clean() -> None:
 
 def test_excel_bordered_workbook_is_validator_clean() -> None:
     """Bordered tables are written to validator-clean `.xlsx` files."""
-    with TemporaryDirectory() as temp_dir:
-        file_path = Path(temp_dir) / 'validator_borders.xlsx'
-        with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
-            table_io.write_table_listdata(
-                [['left', 'right'], ['down', 'here']],
-                border_style=TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN)
-        result = OpenXmlValidator().validate(file_path)
-        assert result.is_valid
+    run_bordered_workbook_is_validator_clean(
+        TableIOExcelOpenPyXL, '.xlsx',
+        lambda file_path: OpenXmlValidator().validate(file_path).is_valid)
 
 
 def test_excel_update_creates_new_read_sheet_and_normalizes_table_headers(

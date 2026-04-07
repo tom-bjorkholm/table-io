@@ -13,13 +13,14 @@ from odfdo.utils import is_RFC3066
 from mformat.mformat import PathLike
 from tableio._archive_rewrite import rewrite_zip_archive, \
     temporary_output_path
+from tableio.border_helper import BorderWeight, CellBorder, CellStyleState, \
+    DEFAULT_CELL_STYLE, NO_BORDERS
 from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased, \
     excel_column_name
 from tableio.value_type import Fmt, Value, get_checked_type
-from tableio.capability import CAP_ALL_IMPLEMENTED, CAP_IGNORED, \
-    Capabilities
+from tableio.capability import CAP_ALL_IMPLEMENTED, Capabilities
 
 
 _DEFAULT_TABLE_NAME = 'Sheet1'
@@ -29,6 +30,10 @@ _HIGHLIGHT_RGB: dict[Color, str] = {
     Color.YELLOW: '#ffff00'
 }
 _COLUMN_WIDTH_CM_PER_UNIT = 0.25
+_BORDER_TEXT: dict[BorderWeight, str] = {
+    BorderWeight.THIN: '0.75pt solid #000000',
+    BorderWeight.THICK: '1.75pt solid #000000'
+}
 _XML_NS = {
     'manifest': 'urn:oasis:names:tc:opendocument:xmlns:manifest:1.0',
     'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0',
@@ -146,14 +151,17 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         self.document: Optional[Document] = None
         self.table: Optional[Table] = None
         self._style_index: int = 1
-        self._cell_style_names: dict[tuple[bool, bool, Color,
-                                           Optional[int]], str] = {}
+        self._cell_style_names: dict[
+            tuple[bool, bool, Color, Optional[int], CellBorder],
+            str] = {}
+        self._cell_style_states: dict[
+            tuple[str, int, int], CellStyleState] = {}
         self._column_style_names: dict[str, str] = {}
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
         """Return the standard spreadsheet backend capabilities."""
-        return CAP_ALL_IMPLEMENTED._replace(can_write_borders=CAP_IGNORED)
+        return CAP_ALL_IMPLEMENTED
 
     @classmethod
     def get_description(cls) -> Descriptor:
@@ -191,6 +199,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         self.table = table
         self._style_index = 1
         self._cell_style_names = {}
+        self._cell_style_states = {}
         self._column_style_names = {}
         self._initialize_positions()
 
@@ -245,6 +254,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         """Release document references."""
         self.table = None
         self.document = None
+        self._cell_style_states = {}
 
     def _table_name_map(self) -> dict[str, Table]:
         """Return the document tables indexed case-insensitively."""
@@ -401,6 +411,8 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         table.set_cell((column, row),
                        Cell(self._spreadsheet_value_from_python(value)),
                        clone=False)
+        self._cell_style_states.pop(self._cell_style_state_key(
+            table, row, column), None)
 
     def _set_cell_format(self, sheet: object, row: int, column: int,
                          fmt: Optional[Fmt]) -> None:
@@ -408,15 +420,33 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         if fmt is None:
             return
         table = get_checked_type(sheet, Table)
-        table.get_cell((column, row), clone=False).style = \
-            self._cell_style_name(fmt)
+        current = self._cell_style_state(table, row, column)
+        self._apply_cell_style(
+            table, row, column,
+            CellStyleState(fmt=fmt,
+                           font_size=current.font_size,
+                           borders=current.borders))
+
+    def _set_cell_borders(self, sheet: object, row: int, column: int,
+                          borders: CellBorder) -> None:
+        """Apply normalized borders to one ODS cell."""
+        table = get_checked_type(sheet, Table)
+        current = self._cell_style_state(table, row, column)
+        self._apply_cell_style(
+            table, row, column,
+            CellStyleState(fmt=current.fmt,
+                           font_size=current.font_size,
+                           borders=borders))
 
     def _apply_heading_style(self, row: int, column: int, level: int) -> None:
         """Apply the heading style to one ODS cell."""
         assert self.table is not None
-        self.table.get_cell((column, row), clone=False).style = \
-            self._cell_style_name(Fmt(bold=True),
-                                  font_size=self._heading_font_size(level))
+        current = self._cell_style_state(self.table, row, column)
+        self._apply_cell_style(
+            self.table, row, column,
+            CellStyleState(fmt=Fmt(bold=True),
+                           font_size=self._heading_font_size(level),
+                           borders=current.borders))
 
     def _last_used_row(self, sheet: object) -> int:
         """Return the last used row index on one ODS table."""
@@ -538,10 +568,45 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
             if self.document.get_style(family, name) is None:
                 return name
 
+    @staticmethod
+    def _cell_style_state_key(table: Table, row: int,
+                              column: int) -> tuple[str, int, int]:
+        """Return the cache key for one touched ODS cell."""
+        return str(table.name), row, column
+
+    def _cell_style_state(self, table: Table, row: int,
+                          column: int) -> CellStyleState:
+        """Return the current in-memory style state for one cell."""
+        return self._cell_style_states.get(
+            self._cell_style_state_key(table, row, column),
+            DEFAULT_CELL_STYLE)
+
+    def _apply_cell_style(self, table: Table, row: int, column: int,
+                          style: CellStyleState) -> None:
+        """Store and apply one composed ODS cell style."""
+        key = self._cell_style_state_key(table, row, column)
+        cell = table.get_cell((column, row), clone=False)
+        if style == DEFAULT_CELL_STYLE:
+            self._cell_style_states.pop(key, None)
+            setattr(cell, 'style', None)
+            return
+        self._cell_style_states[key] = style
+        cell.style = self._cell_style_name(style.fmt,
+                                           font_size=style.font_size,
+                                           borders=style.borders)
+
+    @staticmethod
+    def _border_property_text(weight: BorderWeight) -> Optional[str]:
+        """Return one ODF border property value."""
+        if weight == BorderWeight.NONE:
+            return None
+        return _BORDER_TEXT[weight]
+
     def _cell_style_name(self, fmt: Fmt,
-                         font_size: Optional[int] = None) -> str:
+                         font_size: Optional[int] = None,
+                         borders: CellBorder = NO_BORDERS) -> str:
         """Return the cached style name for one cell format combination."""
-        key = (fmt.bold, fmt.italic, fmt.highlight, font_size)
+        key = (fmt.bold, fmt.italic, fmt.highlight, font_size, borders)
         cached = self._cell_style_names.get(key)
         if cached is not None:
             return cached
@@ -560,10 +625,19 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
             text_props['style:font-size-complex'] = size_text
         if text_props:
             style.set_properties(text_props, area='text')
+        table_props: dict[str, Any] = {}
         if fmt.highlight != Color.NONE:
-            table_props: dict[str, Any] = {
-                'fo:background-color': _HIGHLIGHT_RGB[fmt.highlight]
-            }
+            table_props['fo:background-color'] = _HIGHLIGHT_RGB[
+                fmt.highlight]
+        for property_name, weight in [
+                ('fo:border-top', borders.top),
+                ('fo:border-right', borders.right),
+                ('fo:border-bottom', borders.bottom),
+                ('fo:border-left', borders.left)]:
+            border_text = self._border_property_text(weight)
+            if border_text is not None:
+                table_props[property_name] = border_text
+        if table_props:
             style.set_properties(table_props, area='table-cell')
         self.document.insert_style(style, automatic=True)
         self._cell_style_names[key] = style_name

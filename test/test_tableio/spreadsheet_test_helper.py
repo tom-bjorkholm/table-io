@@ -16,6 +16,7 @@ from pytest import CaptureFixture
 from tableio.color import Color
 from tableio.tableio import Box, FileAccess, Position, TableIO
 from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased
+from tableio.tableio_types import TableBorderStyle
 from tableio.value_type import Fmt, FmtDictRow, Value, ValueFmt
 
 from .check_capsys import check_capsys
@@ -188,6 +189,58 @@ def run_box_write_removes_overlapping_filtered_range(
                 [['updated', 'value'], ['new', 'row']], box=box)
         inspect_file(Path(temp_dir) / f'rewrite_box{extension}')
     check_capsys(capsys)
+
+
+def run_write_table_listdata_applies_borders(
+        tableio_class: type[TableIO],
+        extension: str,
+        inspect_file: Callable[[Path], None],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared bordered table write case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'borders'
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(
+                [['name', 'value'], ['Alice', 1]],
+                border_style=TableBorderStyle.OUTER_THICK_INNER_THIN)
+        inspect_file(Path(temp_dir) / f'borders{extension}')
+    check_capsys(capsys)
+
+
+def run_box_rewrite_clears_old_borders(
+        tableio_class: type[TableIO],
+        extension: str,
+        inspect_file: Callable[[Path], None],
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared border-clearing boxed rewrite case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'rewrite_borders'
+        box = Box(top=0, left=0, bottom=2, right=2)
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(
+                [['left', 'right'], ['down', 'here']],
+                box=box,
+                border_style=TableBorderStyle.ALL_THICK)
+            table_io.write_table_listdata(
+                [['new', 'values'], ['stay', 'plain']],
+                box=box,
+                border_style=TableBorderStyle.NONE)
+        inspect_file(Path(temp_dir) / f'rewrite_borders{extension}')
+    check_capsys(capsys)
+
+
+def run_bordered_workbook_is_validator_clean(
+        tableio_class: type[TableIO],
+        extension: str,
+        validate_file: Callable[[Path], bool]) -> None:
+    """Run the shared bordered-workbook validator case."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'validator_borders'
+        with tableio_class(file_name, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(
+                [['left', 'right'], ['down', 'here']],
+                border_style=TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN)
+        assert validate_file(Path(temp_dir) / f'validator_borders{extension}')
 
 
 def run_find_value_and_write_cells(

@@ -93,6 +93,7 @@
     * [\_database\_range\_bounds](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._database_range_bounds)
     * [\_write\_value\_to\_sheet](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._write_value_to_sheet)
     * [\_set\_cell\_format](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_cell_format)
+    * [\_set\_cell\_borders](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_cell_borders)
     * [\_apply\_heading\_style](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._apply_heading_style)
     * [\_last\_used\_row](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_row)
     * [\_last\_used\_column](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_column)
@@ -105,6 +106,10 @@
     * [\_current\_column\_width](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._current_column_width)
     * [\_set\_column\_width\_if\_wider](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_column_width_if_wider)
     * [\_next\_style\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._next_style_name)
+    * [\_cell\_style\_state\_key](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_style_state_key)
+    * [\_cell\_style\_state](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_style_state)
+    * [\_apply\_cell\_style](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._apply_cell_style)
+    * [\_border\_property\_text](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._border_property_text)
     * [\_cell\_style\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_style_name)
     * [\_column\_style\_name](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_style_name)
 * [tableio.tableio\_mformat](#tableio.tableio_mformat)
@@ -349,6 +354,9 @@
 * [tableio.border\_helper](#tableio.border_helper)
   * [BorderWeight](#tableio.border_helper.BorderWeight)
   * [CellBorder](#tableio.border_helper.CellBorder)
+  * [NO\_BORDERS](#tableio.border_helper.NO_BORDERS)
+  * [CellStyleState](#tableio.border_helper.CellStyleState)
+  * [DEFAULT\_CELL\_STYLE](#tableio.border_helper.DEFAULT_CELL_STYLE)
   * [\_BorderComponents](#tableio.border_helper._BorderComponents)
   * [\_thicker](#tableio.border_helper._thicker)
   * [BorderHelper](#tableio.border_helper.BorderHelper)
@@ -415,7 +423,6 @@
   * [CAP\_IGNORED](#tableio.capability.CAP_IGNORED)
   * [CAP\_UNSUPPORTED](#tableio.capability.CAP_UNSUPPORTED)
 * [tableio.tableio\_excel\_xlsxwriter](#tableio.tableio_excel_xlsxwriter)
-  * [\_CellStyle](#tableio.tableio_excel_xlsxwriter._CellStyle)
   * [\_FormatKey](#tableio.tableio_excel_xlsxwriter._FormatKey)
   * [\_WorksheetLike](#tableio.tableio_excel_xlsxwriter._WorksheetLike)
     * [add\_table](#tableio.tableio_excel_xlsxwriter._WorksheetLike.add_table)
@@ -458,7 +465,10 @@
     * [\_cell\_fmt](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._cell_fmt)
     * [\_remove\_table\_metadata](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._remove_table_metadata)
     * [\_write\_actual\_cell](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._write_actual_cell)
+    * [\_set\_stored\_cell\_style](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_stored_cell_style)
+    * [\_border\_style](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._border_style)
     * [\_xlsx\_format](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._xlsx_format)
+    * [\_set\_cell\_borders](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_cell_borders)
 * [tableio.tableio\_csv](#tableio.tableio_csv)
   * [\_validate\_quoting](#tableio.tableio_csv._validate_quoting)
   * [CsvDefinitions](#tableio.tableio_csv.CsvDefinitions)
@@ -2183,6 +2193,17 @@ def _set_cell_format(sheet: object, row: int, column: int,
 
 Apply cell formatting to one ODS cell.
 
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._set_cell_borders"></a>
+
+#### \_set\_cell\_borders
+
+```python
+def _set_cell_borders(sheet: object, row: int, column: int,
+                      borders: CellBorder) -> None
+```
+
+Apply normalized borders to one ODS cell.
+
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._apply_heading_style"></a>
 
 #### \_apply\_heading\_style
@@ -2305,12 +2326,58 @@ def _next_style_name(prefix: str, family: str) -> str
 
 Return a document-unique style name.
 
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_style_state_key"></a>
+
+#### \_cell\_style\_state\_key
+
+```python
+@staticmethod
+def _cell_style_state_key(table: Table, row: int,
+                          column: int) -> tuple[str, int, int]
+```
+
+Return the cache key for one touched ODS cell.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_style_state"></a>
+
+#### \_cell\_style\_state
+
+```python
+def _cell_style_state(table: Table, row: int, column: int) -> CellStyleState
+```
+
+Return the current in-memory style state for one cell.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._apply_cell_style"></a>
+
+#### \_apply\_cell\_style
+
+```python
+def _apply_cell_style(table: Table, row: int, column: int,
+                      style: CellStyleState) -> None
+```
+
+Store and apply one composed ODS cell style.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._border_property_text"></a>
+
+#### \_border\_property\_text
+
+```python
+@staticmethod
+def _border_property_text(weight: BorderWeight) -> Optional[str]
+```
+
+Return one ODF border property value.
+
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_style_name"></a>
 
 #### \_cell\_style\_name
 
 ```python
-def _cell_style_name(fmt: Fmt, font_size: Optional[int] = None) -> str
+def _cell_style_name(fmt: Fmt,
+                     font_size: Optional[int] = None,
+                     borders: CellBorder = NO_BORDERS) -> str
 ```
 
 Return the cached style name for one cell format combination.
@@ -5885,6 +5952,28 @@ class CellBorder(NamedTuple)
 
 Border weights for the four edges of one cell.
 
+<a id="tableio.border_helper.NO_BORDERS"></a>
+
+#### NO\_BORDERS
+
+The absence of borders on all four cell edges.
+
+<a id="tableio.border_helper.CellStyleState"></a>
+
+## CellStyleState Objects
+
+```python
+class CellStyleState(NamedTuple)
+```
+
+Combined cell formatting state used by style-caching backends.
+
+<a id="tableio.border_helper.DEFAULT_CELL_STYLE"></a>
+
+#### DEFAULT\_CELL\_STYLE
+
+The default cell formatting state with no extra styling.
+
 <a id="tableio.border_helper._BorderComponents"></a>
 
 ## \_BorderComponents Objects
@@ -6504,16 +6593,6 @@ to do is to raise an exception.
 
 TableIO writer class for Excel files using XlsxWriter.
 
-<a id="tableio.tableio_excel_xlsxwriter._CellStyle"></a>
-
-## \_CellStyle Objects
-
-```python
-class _CellStyle(NamedTuple)
-```
-
-Formatting stored for one in-memory cell.
-
 <a id="tableio.tableio_excel_xlsxwriter._FormatKey"></a>
 
 ## \_FormatKey Objects
@@ -6957,16 +7036,50 @@ def _write_actual_cell(sheet: _SheetState, row: int, column: int) -> None
 
 Write the current in-memory cell state to XlsxWriter.
 
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_stored_cell_style"></a>
+
+#### \_set\_stored\_cell\_style
+
+```python
+@staticmethod
+def _set_stored_cell_style(sheet: _SheetState, key: tuple[int, int],
+                           style: CellStyleState) -> None
+```
+
+Store or remove one in-memory cell style.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._border_style"></a>
+
+#### \_border\_style
+
+```python
+@staticmethod
+def _border_style(weight: BorderWeight) -> Optional[int]
+```
+
+Return one XlsxWriter border style code.
+
 <a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._xlsx_format"></a>
 
 #### \_xlsx\_format
 
 ```python
-def _xlsx_format(style: Optional[_CellStyle],
+def _xlsx_format(style: Optional[CellStyleState],
                  datetime_value: bool) -> Optional[object]
 ```
 
 Return the cached XlsxWriter format for one cell style.
+
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_cell_borders"></a>
+
+#### \_set\_cell\_borders
+
+```python
+def _set_cell_borders(sheet: object, row: int, column: int,
+                      borders: CellBorder) -> None
+```
+
+Apply normalized borders to one worksheet cell.
 
 <a id="tableio.tableio_csv"></a>
 

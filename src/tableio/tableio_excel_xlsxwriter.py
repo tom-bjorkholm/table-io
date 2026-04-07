@@ -12,8 +12,10 @@ from typing import Callable, NamedTuple, Optional, Protocol
 from mformat.mformat import PathLike
 import xlsxwriter  # type: ignore[import-untyped]
 
-from tableio.capability import CAP_ALL_IMPLEMENTED, CAP_IGNORED, \
-    CAP_UNSUPPORTED, Capabilities, CapabilityNotSupported
+from tableio.capability import CAP_ALL_IMPLEMENTED, CAP_UNSUPPORTED, \
+    Capabilities, CapabilityNotSupported
+from tableio.border_helper import BorderWeight, CellBorder, CellStyleState, \
+    DEFAULT_CELL_STYLE, NO_BORDERS
 from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_excelbased import TableIOExcelBased
@@ -28,13 +30,6 @@ _HIGHLIGHT_RGB: dict[Color, str] = {
 _DEFAULT_COLUMN_WIDTH = 13.0
 
 
-class _CellStyle(NamedTuple):
-    """Formatting stored for one in-memory cell."""
-
-    fmt: Fmt
-    font_size: Optional[int] = None
-
-
 class _FormatKey(NamedTuple):
     """Cache key for one XlsxWriter format object."""
 
@@ -43,6 +38,7 @@ class _FormatKey(NamedTuple):
     highlight: Color
     font_size: Optional[int]
     datetime_value: bool
+    borders: CellBorder
 
 
 class _WorksheetLike(Protocol):
@@ -88,7 +84,7 @@ class _SheetState:
     worksheet: _WorksheetLike
     name: str
     values: dict[tuple[int, int], Value] = field(default_factory=dict)
-    styles: dict[tuple[int, int], _CellStyle] = field(default_factory=dict)
+    styles: dict[tuple[int, int], CellStyleState] = field(default_factory=dict)
     filtered_ranges: dict[str, tuple[int, int, int, int]] = \
         field(default_factory=dict)
     column_widths: dict[int, float] = field(default_factory=dict)
@@ -126,8 +122,7 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         return CAP_ALL_IMPLEMENTED._replace(
             can_read=CAP_UNSUPPORTED,
             can_read_box=CAP_UNSUPPORTED,
-            can_find_value_position=CAP_UNSUPPORTED,
-            can_write_borders=CAP_IGNORED)
+            can_find_value_position=CAP_UNSUPPORTED)
 
     @classmethod
     def get_description(cls) -> Descriptor:
@@ -236,15 +231,25 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         if fmt is None:
             return
         assert isinstance(sheet, _SheetState)
-        sheet.styles[(row, column)] = _CellStyle(fmt=fmt)
+        key = (row, column)
+        current = sheet.styles.get(key, DEFAULT_CELL_STYLE)
+        self._set_stored_cell_style(
+            sheet, key,
+            CellStyleState(fmt=fmt,
+                           font_size=current.font_size,
+                           borders=current.borders))
         self._write_actual_cell(sheet, row, column)
 
     def _apply_heading_style(self, row: int, column: int, level: int) -> None:
         """Apply the heading style to one worksheet cell."""
         sheet = self._current_sheet_state()
-        sheet.styles[(row, column)] = _CellStyle(
-            fmt=Fmt(bold=True),
-            font_size=self._heading_font_size(level))
+        key = (row, column)
+        current = sheet.styles.get(key, DEFAULT_CELL_STYLE)
+        self._set_stored_cell_style(
+            sheet, key,
+            CellStyleState(fmt=Fmt(bold=True),
+                           font_size=self._heading_font_size(level),
+                           borders=current.borders))
         self._write_actual_cell(sheet, row, column)
 
     def _last_used_row(self, sheet: object) -> int:
@@ -371,22 +376,44 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
             return
         worksheet.write(row, column, value, cell_format)
 
-    def _xlsx_format(self, style: Optional[_CellStyle],
+    @staticmethod
+    def _set_stored_cell_style(sheet: _SheetState, key: tuple[int, int],
+                               style: CellStyleState) -> None:
+        """Store or remove one in-memory cell style."""
+        if style == DEFAULT_CELL_STYLE:
+            sheet.styles.pop(key, None)
+            return
+        sheet.styles[key] = style
+
+    @staticmethod
+    def _border_style(weight: BorderWeight) -> Optional[int]:
+        """Return one XlsxWriter border style code."""
+        if weight == BorderWeight.NONE:
+            return None
+        if weight == BorderWeight.THIN:
+            return 1
+        return 2
+
+    def _xlsx_format(self, style: Optional[CellStyleState],
                      datetime_value: bool) -> Optional[object]:
         """Return the cached XlsxWriter format for one cell style."""
+        if style == DEFAULT_CELL_STYLE:
+            style = None
         if style is None and not datetime_value:
             return None
         if style is None:
             key = _FormatKey(bold=False, italic=False,
                              highlight=Color.NONE,
                              font_size=None,
-                             datetime_value=True)
+                             datetime_value=True,
+                             borders=NO_BORDERS)
         else:
             key = _FormatKey(bold=style.fmt.bold,
                              italic=style.fmt.italic,
                              highlight=style.fmt.highlight,
                              font_size=style.font_size,
-                             datetime_value=datetime_value)
+                             datetime_value=datetime_value,
+                             borders=style.borders)
         cached = self._format_cache.get(key)
         if cached is not None:
             return cached
@@ -403,6 +430,27 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
             format_dict['font_size'] = key.font_size
         if key.datetime_value:
             format_dict['num_format'] = self._datetime_number_format()
+        for side_name, weight in [
+                ('left', key.borders.left),
+                ('right', key.borders.right),
+                ('top', key.borders.top),
+                ('bottom', key.borders.bottom)]:
+            border_style = self._border_style(weight)
+            if border_style is not None:
+                format_dict[side_name] = border_style
         xlsx_format = self.workbook.add_format(format_dict)
         self._format_cache[key] = xlsx_format
         return xlsx_format
+
+    def _set_cell_borders(self, sheet: object, row: int, column: int,
+                          borders: CellBorder) -> None:
+        """Apply normalized borders to one worksheet cell."""
+        assert isinstance(sheet, _SheetState)
+        key = (row, column)
+        current = sheet.styles.get(key, DEFAULT_CELL_STYLE)
+        self._set_stored_cell_style(
+            sheet, key,
+            CellStyleState(fmt=current.fmt,
+                           font_size=current.font_size,
+                           borders=borders))
+        self._write_actual_cell(sheet, row, column)
