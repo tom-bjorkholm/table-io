@@ -22,7 +22,11 @@ from python_calamine import (
     CalamineWorkbook,
     load_workbook as load_calamine_workbook
 )
+from tableio.border_helper import BorderHelper, BorderWeight, CellBorder, \
+    NO_BORDERS
+from tableio.capability import CAP_NEEDED, Capabilities
 from tableio.color import Color
+from tableio.tableio_types import TableBorderStyle
 from tableio.value_type import Value, get_checked_type
 
 
@@ -71,6 +75,34 @@ class AnchoredStyleExpectation(NamedTuple):
     relative_expectations: list[RelativeStyleExpectation]
 
 
+class RelativeBorderExpectation(NamedTuple):
+    """Expected border style for one rectangular area relative to an anchor.
+
+    The checked rectangular area is interpreted as one written table with the
+    given size. Each cell border in that area must match the normalized cell
+    borders implied by ``border_style``.
+    """
+
+    border_style: TableBorderStyle
+    row_offset: int = 0
+    col_offset: int = 0
+    number_of_rows: int = 1
+    number_of_columns: int = 1
+
+
+class AnchoredBorderExpectation(NamedTuple):
+    """Border checks anchored on the first matching row fragment.
+
+    The row fragment is matched like in ``AnchoredStyleExpectation``. The
+    anchor cell is the first cell of the first match, and each relative
+    border expectation checks one rectangular area starting from that anchor.
+    """
+
+    sheet_name: str
+    anchor_row_fragment: list[Value]
+    relative_expectations: list[RelativeBorderExpectation]
+
+
 class SheetContentExpectation(NamedTuple):
     """Ordered row-fragment expectations for one sheet.
 
@@ -81,6 +113,9 @@ class SheetContentExpectation(NamedTuple):
 
     sheet_name: str
     row_fragments: list[list[Value]]
+
+
+_BORDER_CHECK_CAPABILITIES = Capabilities(can_write_borders=CAP_NEEDED)
 
 
 def _spreadsheet_output_path(output_base: Path | str, suffix: str) -> Path:
@@ -262,6 +297,11 @@ def _ods_table(document: Document, sheet_name: str) -> Table:
     return get_checked_type(table, Table)
 
 
+def _border_weight_text(weight: BorderWeight) -> str:
+    """Return one readable border-weight name."""
+    return weight.name.lower()
+
+
 def _color_from_rgb_text(rgb_text: Optional[str]) -> Color:
     """Return one tableio color from a workbook RGB string."""
     if rgb_text is None:
@@ -278,6 +318,19 @@ def _color_from_rgb_text(rgb_text: Optional[str]) -> Color:
     return color_map.get(normalized, Color.NONE)
 
 
+def _excel_border_weight(style_name: Optional[str]) -> BorderWeight:
+    """Return one normalized border weight from one Excel side style."""
+    if style_name in [None, 'none']:
+        return BorderWeight.NONE
+    if style_name in ['hair', 'dashDot', 'dashDotDot', 'dashed',
+                      'dotted', 'slantDashDot', 'thin']:
+        return BorderWeight.THIN
+    if style_name in ['double', 'medium', 'mediumDashDot',
+                      'mediumDashDotDot', 'mediumDashed', 'thick']:
+        return BorderWeight.THICK
+    raise ValueError(f'Unsupported Excel border style: {style_name}')
+
+
 def _excel_fill_color(worksheet: Worksheet,
                       row_index: int,
                       col_index: int) -> Color:
@@ -291,6 +344,19 @@ def _excel_fill_color(worksheet: Worksheet,
     return _color_from_rgb_text(rgb_value)
 
 
+def _excel_actual_borders(worksheet: Worksheet,
+                          row_index: int,
+                          col_index: int) -> CellBorder:
+    """Return actual border weights for one Excel cell."""
+    cell = worksheet.cell(row=row_index + 1, column=col_index + 1)
+    return CellBorder(
+        top=_excel_border_weight(cell.border.top.style),
+        right=_excel_border_weight(cell.border.right.style),
+        bottom=_excel_border_weight(cell.border.bottom.style),
+        left=_excel_border_weight(cell.border.left.style)
+    )
+
+
 def _excel_actual_style(worksheet: Worksheet,
                         row_index: int,
                         col_index: int) -> ExpectedCellStyle:
@@ -300,6 +366,47 @@ def _excel_actual_style(worksheet: Worksheet,
         bold=bool(cell.font.bold),
         italic=bool(cell.font.italic),
         background_color=_excel_fill_color(worksheet, row_index, col_index)
+    )
+
+
+def _ods_border_weight(border_text: Optional[str]) -> BorderWeight:
+    """Return one normalized border weight from one ODS border string."""
+    if border_text is None or border_text == '':
+        return BorderWeight.NONE
+    size_text = border_text.split()[0]
+    if not size_text.endswith('pt'):
+        raise ValueError(f'Unsupported ODS border width: {border_text}')
+    try:
+        width = float(size_text[:-2])
+    except ValueError as exc:
+        raise ValueError(
+            f'Unsupported ODS border width: {border_text}'
+        ) from exc
+    if width < 1.0:
+        return BorderWeight.THIN
+    return BorderWeight.THICK
+
+
+def _ods_actual_borders(document: Document,
+                        table: Table,
+                        row_index: int,
+                        col_index: int) -> CellBorder:
+    """Return actual border weights for one ODS cell."""
+    cell = table.get_cell((col_index, row_index), clone=False)
+    if cell.style is None:
+        return NO_BORDERS
+    style = document.get_style('table-cell', cell.style)
+    if style is None:
+        return NO_BORDERS
+    checked_style = get_checked_type(style, Style)
+    table_props = cast(
+        dict[str, str], checked_style.get_properties('table-cell') or {}
+    )
+    return CellBorder(
+        top=_ods_border_weight(table_props.get('fo:border-top')),
+        right=_ods_border_weight(table_props.get('fo:border-right')),
+        bottom=_ods_border_weight(table_props.get('fo:border-bottom')),
+        left=_ods_border_weight(table_props.get('fo:border-left'))
     )
 
 
@@ -357,14 +464,13 @@ def _cell_location_text(file_path: Path,
 def _area_location_text(file_path: Path,
                         sheet_name: str,
                         top_left: tuple[int, int],
-                        relative_expectation:
-                        RelativeStyleExpectation) -> str:
-    """Return a readable style-area location string."""
+                        number_of_rows: int,
+                        number_of_columns: int) -> str:
+    """Return a readable checked-area location string."""
     row_index, col_index = top_left
     return (
         f'area starting at {_cell_position_text(row_index, col_index)} '
-        f'with size {relative_expectation.number_of_rows} x '
-        f'{relative_expectation.number_of_columns} '
+        f'with size {number_of_rows} x {number_of_columns} '
         f'in sheet {sheet_name!r} of {file_path}'
     )
 
@@ -397,17 +503,40 @@ def _style_mismatch_messages(
     return mismatches
 
 
-def _checked_style_area_top_left(
-        anchor_cell: tuple[int, int],
-        relative_expectation: RelativeStyleExpectation) -> tuple[int, int]:
+def _border_mismatch_messages(
+        location_text: str,
+        expected_borders: CellBorder,
+        actual_borders: CellBorder) -> list[str]:
+    """Return mismatch messages for one actual cell border."""
+    mismatches: list[str] = []
+    for side_name, expected_weight, actual_weight in [
+            ('top', expected_borders.top, actual_borders.top),
+            ('right', expected_borders.right, actual_borders.right),
+            ('bottom', expected_borders.bottom, actual_borders.bottom),
+            ('left', expected_borders.left, actual_borders.left)]:
+        if actual_weight == expected_weight:
+            continue
+        mismatches.append(
+            f'Unexpected {side_name} border at {location_text}. '
+            f'Expected {_border_weight_text(expected_weight)}, '
+            f'got {_border_weight_text(actual_weight)}.'
+        )
+    return mismatches
+
+
+def _checked_area_top_left(anchor_cell: tuple[int, int],
+                           row_offset: int,
+                           col_offset: int,
+                           number_of_rows: int,
+                           number_of_columns: int) -> tuple[int, int]:
     """Return the checked area's top-left cell after validation."""
     anchor_row_index, anchor_col_index = anchor_cell
-    if relative_expectation.number_of_rows <= 0:
+    if number_of_rows <= 0:
         raise ValueError('number_of_rows must be positive.')
-    if relative_expectation.number_of_columns <= 0:
+    if number_of_columns <= 0:
         raise ValueError('number_of_columns must be positive.')
-    target_row_index = anchor_row_index + relative_expectation.row_offset
-    target_col_index = anchor_col_index + relative_expectation.col_offset
+    target_row_index = anchor_row_index + row_offset
+    target_col_index = anchor_col_index + col_offset
     if target_row_index < 0:
         raise ValueError(
             'row_offset points before the first spreadsheet row.'
@@ -427,8 +556,12 @@ def _check_relative_style_expectation(
         actual_style_at:
         Callable[[int, int], ExpectedCellStyle]) -> None:
     """Check one relative style expectation against actual cell styles."""
-    target_row_index, target_col_index = _checked_style_area_top_left(
-        anchor_cell, relative_expectation
+    target_row_index, target_col_index = _checked_area_top_left(
+        anchor_cell,
+        relative_expectation.row_offset,
+        relative_expectation.col_offset,
+        relative_expectation.number_of_rows,
+        relative_expectation.number_of_columns
     )
     mismatch_messages: list[str] = []
     for row_index in range(
@@ -452,11 +585,65 @@ def _check_relative_style_expectation(
             file_path,
             sheet_name,
             (target_row_index, target_col_index),
-            relative_expectation
+            relative_expectation.number_of_rows,
+            relative_expectation.number_of_columns
         )
         formatted_mismatches = '\n'.join(mismatch_messages)
         raise AssertionError(
             f'Style mismatches in {area_text}:\n'
+            f'{formatted_mismatches}'
+        )
+
+
+def _check_relative_border_expectation(  # pylint: disable=too-many-locals
+        file_path: Path,
+        sheet_name: str,
+        anchor_cell: tuple[int, int],
+        relative_expectation: RelativeBorderExpectation,
+        actual_borders_at:
+        Callable[[int, int], CellBorder]) -> None:
+    """Check one relative border expectation against actual cell borders."""
+    target_row_index, target_col_index = _checked_area_top_left(
+        anchor_cell,
+        relative_expectation.row_offset,
+        relative_expectation.col_offset,
+        relative_expectation.number_of_rows,
+        relative_expectation.number_of_columns
+    )
+    border_helper = BorderHelper(relative_expectation.border_style,
+                                 _BORDER_CHECK_CAPABILITIES)
+    mismatch_messages: list[str] = []
+    for row_offset in range(relative_expectation.number_of_rows):
+        for col_offset in range(relative_expectation.number_of_columns):
+            row_index = target_row_index + row_offset
+            col_index = target_col_index + col_offset
+            expected_borders = border_helper.cell_border(
+                row_offset,
+                col_offset,
+                relative_expectation.number_of_rows,
+                relative_expectation.number_of_columns
+            )
+            actual_borders = actual_borders_at(row_index, col_index)
+            mismatch_messages.extend(
+                _border_mismatch_messages(
+                    _cell_location_text(
+                        file_path, sheet_name, row_index, col_index
+                    ),
+                    expected_borders,
+                    actual_borders
+                )
+            )
+    if mismatch_messages:
+        area_text = _area_location_text(
+            file_path,
+            sheet_name,
+            (target_row_index, target_col_index),
+            relative_expectation.number_of_rows,
+            relative_expectation.number_of_columns
+        )
+        formatted_mismatches = '\n'.join(mismatch_messages)
+        raise AssertionError(
+            f'Border mismatches in {area_text}:\n'
             f'{formatted_mismatches}'
         )
 
@@ -469,7 +656,7 @@ def _anchor_match(rows: list[list[Value]],
     anchor_match = _find_matching_row(rows, row_fragment)
     if anchor_match is None:
         raise AssertionError(
-            f'Could not find style anchor {row_fragment!r} '
+            f'Could not find anchor {row_fragment!r} '
             f'in sheet {sheet_name!r} of {file_path}.'
         )
     return anchor_match
@@ -506,6 +693,37 @@ def _check_excel_styles(file_path: Path,
         workbook.close()
 
 
+def _check_excel_borders(file_path: Path,
+                         workbook_data: dict[str, list[list[Value]]],
+                         border_expectations:
+                         list[AnchoredBorderExpectation]) -> None:
+    """Check border expectations in one Excel workbook."""
+    workbook = load_workbook(file_path)
+    try:
+        for border_expectation in border_expectations:
+            rows = workbook_data[border_expectation.sheet_name]
+            anchor_row_index, anchor_col_index = _anchor_match(
+                rows,
+                border_expectation.anchor_row_fragment,
+                border_expectation.sheet_name,
+                file_path
+            )
+            worksheet = get_checked_type(
+                workbook[border_expectation.sheet_name], Worksheet
+            )
+            for relative_expectation in (
+                    border_expectation.relative_expectations):
+                _check_relative_border_expectation(
+                    file_path,
+                    border_expectation.sheet_name,
+                    (anchor_row_index, anchor_col_index),
+                    relative_expectation,
+                    partial(_excel_actual_borders, worksheet)
+                )
+    finally:
+        workbook.close()
+
+
 def _check_ods_styles(file_path: Path,
                       workbook_data: dict[str, list[list[Value]]],
                       style_expectations:
@@ -528,6 +746,31 @@ def _check_ods_styles(file_path: Path,
                 (anchor_row_index, anchor_col_index),
                 relative_expectation,
                 partial(_ods_actual_style, document, table)
+            )
+
+
+def _check_ods_borders(file_path: Path,
+                       workbook_data: dict[str, list[list[Value]]],
+                       border_expectations:
+                       list[AnchoredBorderExpectation]) -> None:
+    """Check border expectations in one ODS document."""
+    document = Document(file_path)
+    for border_expectation in border_expectations:
+        rows = workbook_data[border_expectation.sheet_name]
+        anchor_row_index, anchor_col_index = _anchor_match(
+            rows,
+            border_expectation.anchor_row_fragment,
+            border_expectation.sheet_name,
+            file_path
+        )
+        table = _ods_table(document, border_expectation.sheet_name)
+        for relative_expectation in border_expectation.relative_expectations:
+            _check_relative_border_expectation(
+                file_path,
+                border_expectation.sheet_name,
+                (anchor_row_index, anchor_col_index),
+                relative_expectation,
+                partial(_ods_actual_borders, document, table)
             )
 
 
@@ -575,6 +818,22 @@ def check_spreadsheet_content(
             next_row_index = match[0] + 1
 
 
+def check_spreadsheet_borders(
+        file_name: Path | str,
+        border_expectations: list[AnchoredBorderExpectation]) -> None:
+    """Check spreadsheet borders against anchored border expectations."""
+    file_path = _normalize_file_path(file_name)
+    _check_file_exists(file_path)
+    suffix = _spreadsheet_suffix(file_path)
+    if not border_expectations:
+        return
+    workbook_data = _read_spreadsheet_content(file_path)
+    if suffix == '.xlsx':
+        _check_excel_borders(file_path, workbook_data, border_expectations)
+        return
+    _check_ods_borders(file_path, workbook_data, border_expectations)
+
+
 def check_spreadsheet_styles(
         file_name: Path | str,
         style_expectations: list[AnchoredStyleExpectation]) -> None:
@@ -603,12 +862,16 @@ def check_spreadsheet_file(
         expected_fragments: list[SheetContentExpectation],
         style_expectations:
         Optional[list[AnchoredStyleExpectation]] = None,
+        border_expectations:
+        Optional[list[AnchoredBorderExpectation]] = None,
         expected_errors: Optional[list[str]] = None) -> None:
-    """Check spreadsheet syntax, content and optional style expectations."""
+    """Check spreadsheet syntax, content and optional extra expectations."""
     check_spreadsheet_syntax(file_name, expected_errors)
     check_spreadsheet_content(file_name, expected_fragments)
     if style_expectations is not None:
         check_spreadsheet_styles(file_name, style_expectations)
+    if border_expectations is not None:
+        check_spreadsheet_borders(file_name, border_expectations)
 
 
 PLAIN_STYLE: ExpectedCellStyle = \

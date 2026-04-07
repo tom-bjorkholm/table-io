@@ -272,6 +272,41 @@ than formatting, this example is also useful for spreadsheet
 implementations that support search and exact cell writes but not rich
 formatting.
 
+## e13_table_borders.py
+
+Source:
+<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e13_table_borders.py>
+
+This example is the main beginner reference for *where* table borders
+are configured in the API. It shows the four table-writing calls that
+accept `border_style=...`: `write_table_listdata()`,
+`write_table_dictdata()`, `write_table_fmtlistdata()` and
+`write_table_fmtdictdata()`.
+
+That makes it a good example to study when you already know how to
+write a table, but you are not yet sure where the border style belongs
+in the call or how `TableBorderStyle` values are written in code. The
+four tables also show that borders work together with the other write
+features introduced earlier, such as `ValueFmt`, `FmtListRow`,
+`FmtDictRow` and `first_row_format`.
+
+## e14_all_table_borders.py
+
+Source:
+<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e14_all_table_borders.py>
+
+This example is the visual companion to `e13`. Instead of focusing on
+which API call to use, it writes one sample table for every
+`TableBorderStyle` value so a new programmer can open the produced file
+and compare the styles side by side.
+
+It is the best example to run when you already know that your program
+needs table borders, but you want to choose the style that is closest to
+the look you have in mind. It also demonstrates one practical `Box`
+pattern: place each demo table under its own heading and shift it one
+column to the right so the left outer border is easier to see in
+spreadsheet viewers such as Excel.
+
 ## e20_register_custom_tableio.py
 
 Source:

@@ -11,7 +11,8 @@ from tempfile import TemporaryDirectory
 from pytest import CaptureFixture
 from tableio import OptionalArgs
 from .spreadsheet_checkers import check_spreadsheet_file, \
-    SheetContentExpectation, AnchoredStyleExpectation
+    SheetContentExpectation, AnchoredStyleExpectation, \
+    AnchoredBorderExpectation
 
 
 class Example(NamedTuple):
@@ -71,12 +72,15 @@ def check_text_in_order(text: str, expected_txts: list[str]) -> None:
         start = pos + len(expected_txt)
 
 
-def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
-                              expected_fragments: SheetContentExpectations,
-                              style_expectations: AnchoredStyleExpectations
-                              = None,
-                              expected_errors: Optional[list[str]]
-                              = None) -> None:
+# pylint: disable-next=too-many-arguments,too-many-positional-arguments
+def check_example_spreadsheet(
+        example: Example,
+        capture: CaptureFixture[str],
+        expected_fragments: SheetContentExpectations,
+        style_expectations: AnchoredStyleExpectations = None,
+        border_expectations:
+        Optional[list[AnchoredBorderExpectation]] = None,
+        expected_errors: Optional[list[str]] = None) -> None:
     """Check the example spreadsheet.
 
     Args:
@@ -84,6 +88,7 @@ def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
         capture: The capture fixture.
         expected_fragments: The expected fragments.
         style_expectations: The style expectations.
+        border_expectations: The border expectations.
         expected_errors: Expected syntax-error substrings, if any.
     """
     with TemporaryDirectory() as tmp_dir:
@@ -99,8 +104,13 @@ def check_example_spreadsheet(example: Example, capture: CaptureFixture[str],
                                           str(output_path),
                                           example.implementation_name,
                                           example.optional_args)
-        check_spreadsheet_file(output_path, expected_fragments,
-                               style_expectations, expected_errors)
+        check_spreadsheet_file(
+            output_path,
+            expected_fragments,
+            style_expectations=style_expectations,
+            border_expectations=border_expectations,
+            expected_errors=expected_errors
+        )
         assert result == 0
     out, err = capture.readouterr()
     assert out == ''
@@ -151,6 +161,26 @@ def change_sheet(anchored_style_expectations: list[AnchoredStyleExpectation],
     ret: list[AnchoredStyleExpectation] = []
     for item in anchored_style_expectations:
         ret.append(AnchoredStyleExpectation(
+            sheet_name=sheet_name,
+            anchor_row_fragment=item.anchor_row_fragment,
+            relative_expectations=item.relative_expectations))
+    return ret
+
+
+def change_sheet_borders(
+        anchored_border_expectations: list[AnchoredBorderExpectation],
+        sheet_name: str) -> list[AnchoredBorderExpectation]:
+    """Change the sheet name in the anchored border expectations.
+
+    Args:
+        anchored_border_expectations: The anchored border expectations.
+        sheet_name: The new sheet name.
+    Returns:
+        The anchored border expectations with the sheet name changed.
+    """
+    ret: list[AnchoredBorderExpectation] = []
+    for item in anchored_border_expectations:
+        ret.append(AnchoredBorderExpectation(
             sheet_name=sheet_name,
             anchor_row_fragment=item.anchor_row_fragment,
             relative_expectations=item.relative_expectations))

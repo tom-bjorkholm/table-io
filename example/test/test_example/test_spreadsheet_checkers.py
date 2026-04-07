@@ -5,18 +5,25 @@
 # MIT License
 
 from pathlib import Path
+from typing import Any, Optional
 import pytest
 from odfdo import Cell, Document, Style, Table
 from openpyxl import Workbook as OpenPyXLWorkbook
 from openpyxl.styles import Font
 from openpyxl.worksheet.worksheet import Worksheet
 from xlsxwriter import Workbook  # type: ignore[import-untyped]
+from tableio.border_helper import BorderHelper, BorderWeight, CellBorder
+from tableio.capability import CAP_NEEDED, Capabilities
 from tableio.color import Color
+from tableio.tableio_types import TableBorderStyle
 from .spreadsheet_checkers import (
+    AnchoredBorderExpectation,
     AnchoredStyleExpectation,
     ExpectedCellStyle,
+    RelativeBorderExpectation,
     RelativeStyleExpectation,
     SheetContentExpectation,
+    check_spreadsheet_borders,
     check_spreadsheet_content,
     check_spreadsheet_file,
     check_spreadsheet_styles,
@@ -92,6 +99,99 @@ def _create_styled_ods(file_path: Path) -> None:
     table.set_cell((2, 0), styled_world, clone=False)
     table.set_cell((0, 1), Cell('hello'), clone=False)
     table.set_cell((1, 1), Cell('world'), clone=False)
+    document.save(file_path)
+
+
+def _border_helper(border_style: TableBorderStyle) -> BorderHelper:
+    """Return one border helper with border-writing capability enabled."""
+    return BorderHelper(border_style,
+                        Capabilities(can_write_borders=CAP_NEEDED))
+
+
+_XLSX_BORDER_CODES: dict[BorderWeight, int] = {
+    BorderWeight.THIN: 1,
+    BorderWeight.THICK: 2
+}
+
+
+def _xlsx_border_code(weight: BorderWeight) -> Optional[int]:
+    """Return one XlsxWriter border code for one normalized weight."""
+    return _XLSX_BORDER_CODES.get(weight)
+
+
+def _create_bordered_xlsx(file_path: Path) -> None:
+    """Create one `.xlsx` file with a bordered 2 x 2 table."""
+    workbook = Workbook(file_path)
+    worksheet = workbook.add_worksheet('Sheet1')
+    border_helper = _border_helper(TableBorderStyle.OUTER_THICK_INNER_THIN)
+    values = [['hello', 'world'], ['later', 'done']]
+    for row_index, row in enumerate(values):
+        for col_index, value in enumerate(row):
+            borders = border_helper.cell_border(row_index, col_index, 2, 2)
+            format_dict: dict[str, object] = {}
+            for side_name, weight in [('left', borders.left),
+                                      ('right', borders.right),
+                                      ('top', borders.top),
+                                      ('bottom', borders.bottom)]:
+                border_code = _xlsx_border_code(weight)
+                if border_code is not None:
+                    format_dict[side_name] = border_code
+            cell_format = workbook.add_format(format_dict)
+            worksheet.write(row_index, col_index, value, cell_format)
+    workbook.close()
+
+
+def _ods_border_text(weight: BorderWeight) -> Optional[str]:
+    """Return one ODS border property value for one normalized weight."""
+    if weight == BorderWeight.NONE:
+        return None
+    if weight == BorderWeight.THIN:
+        return '0.75pt solid #000000'
+    return '1.75pt solid #000000'
+
+
+def _ods_style_name(document: Document,
+                    borders: CellBorder,
+                    style_names: dict[CellBorder, str]) -> str:
+    """Return one cached ODS cell style name for one cell border."""
+    cached = style_names.get(borders)
+    if cached is not None:
+        return cached
+    style_name = f'ce_border_style_{len(style_names)}'
+    style = Style('table-cell', name=style_name)
+    table_props: dict[str, Any] = {}
+    for property_name, weight in [('fo:border-top', borders.top),
+                                  ('fo:border-right', borders.right),
+                                  ('fo:border-bottom', borders.bottom),
+                                  ('fo:border-left', borders.left)]:
+        border_text = _ods_border_text(weight)
+        if border_text is not None:
+            table_props[property_name] = border_text
+    if table_props:
+        style.set_properties(table_props, area='table-cell')
+    document.insert_style(style, automatic=True)
+    style_names[borders] = style_name
+    return style_name
+
+
+def _create_bordered_ods(file_path: Path) -> None:
+    """Create one `.ods` file with a bordered 2 x 2 table."""
+    document = Document('spreadsheet')
+    document.body.clear()
+    table = Table('Sheet1')
+    document.body.append(table)
+    border_helper = _border_helper(TableBorderStyle.OUTER_THICK_INNER_THIN)
+    style_names: dict[CellBorder, str] = {}
+    values = [['hello', 'world'], ['later', 'done']]
+    for row_index, row in enumerate(values):
+        for col_index, value in enumerate(row):
+            cell = Cell(value)
+            cell.style = _ods_style_name(
+                document,
+                border_helper.cell_border(row_index, col_index, 2, 2),
+                style_names
+            )
+            table.set_cell((col_index, row_index), cell, clone=False)
     document.save(file_path)
 
 
@@ -335,6 +435,52 @@ def test_check_spreadsheet_styles_checks_rectangular_area_in_ods(
     )
 
 
+def test_check_spreadsheet_borders_checks_table_style_in_xlsx(
+        tmp_path: Path) -> None:
+    """Border checks can verify one table style in `.xlsx` files."""
+    file_path = tmp_path / 'example.xlsx'
+    _create_bordered_xlsx(file_path)
+    check_spreadsheet_borders(
+        file_path,
+        [
+            AnchoredBorderExpectation(
+                sheet_name='Sheet1',
+                anchor_row_fragment=['hello', 'world'],
+                relative_expectations=[
+                    RelativeBorderExpectation(
+                        border_style=TableBorderStyle.OUTER_THICK_INNER_THIN,
+                        number_of_rows=2,
+                        number_of_columns=2
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def test_check_spreadsheet_borders_checks_table_style_in_ods(
+        tmp_path: Path) -> None:
+    """Border checks can verify one table style in `.ods` files."""
+    file_path = tmp_path / 'example.ods'
+    _create_bordered_ods(file_path)
+    check_spreadsheet_borders(
+        file_path,
+        [
+            AnchoredBorderExpectation(
+                sheet_name='Sheet1',
+                anchor_row_fragment=['hello', 'world'],
+                relative_expectations=[
+                    RelativeBorderExpectation(
+                        border_style=TableBorderStyle.OUTER_THICK_INNER_THIN,
+                        number_of_rows=2,
+                        number_of_columns=2
+                    )
+                ]
+            )
+        ]
+    )
+
+
 @pytest.mark.parametrize(
     ('number_of_rows', 'number_of_columns', 'expected_message'),
     [
@@ -398,6 +544,33 @@ def test_check_spreadsheet_styles_reports_all_area_mismatches(
     assert str(error_info.value).count('Unexpected bold value') == 2
 
 
+def test_check_spreadsheet_borders_reports_all_edge_mismatches(
+        tmp_path: Path) -> None:
+    """Border mismatch reports include the failing edge details."""
+    file_path = tmp_path / 'example.xlsx'
+    _create_basic_xlsx(file_path)
+    with pytest.raises(AssertionError) as error_info:
+        check_spreadsheet_borders(
+            file_path,
+            [
+                AnchoredBorderExpectation(
+                    sheet_name='Sheet1',
+                    anchor_row_fragment=['hello', 'world'],
+                    relative_expectations=[
+                        RelativeBorderExpectation(
+                            border_style=TableBorderStyle.OUTER_THICK,
+                            number_of_rows=1,
+                            number_of_columns=2
+                        )
+                    ]
+                )
+            ]
+        )
+    assert 'Border mismatches in area' in str(error_info.value)
+    assert 'Unexpected top border' in str(error_info.value)
+    assert 'row 1, column 1' in str(error_info.value)
+
+
 def test_check_spreadsheet_styles_treats_missing_cells_as_unformatted(
         tmp_path: Path) -> None:
     """Style checks treat missing cells outside content as unformatted."""
@@ -453,6 +626,35 @@ def test_check_spreadsheet_file_runs_full_xlsx_validation(
                             background_color=Color.YELLOW
                         ),
                         number_of_columns=3
+                    )
+                ]
+            )
+        ]
+    )
+
+
+def test_check_spreadsheet_file_runs_full_xlsx_validation_with_borders(
+        tmp_path: Path) -> None:
+    """The combined checker also validates border expectations."""
+    file_path = tmp_path / 'example.xlsx'
+    _create_bordered_xlsx(file_path)
+    check_spreadsheet_file(
+        file_path,
+        [
+            SheetContentExpectation(
+                sheet_name='Sheet1',
+                row_fragments=[['hello', 'world'], ['later', 'done']]
+            )
+        ],
+        border_expectations=[
+            AnchoredBorderExpectation(
+                sheet_name='Sheet1',
+                anchor_row_fragment=['hello', 'world'],
+                relative_expectations=[
+                    RelativeBorderExpectation(
+                        border_style=TableBorderStyle.OUTER_THICK_INNER_THIN,
+                        number_of_rows=2,
+                        number_of_columns=2
                     )
                 ]
             )

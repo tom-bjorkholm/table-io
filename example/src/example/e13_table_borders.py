@@ -32,11 +32,15 @@ def e13_table_borders(format_name: str, output_file_name: str,
                       optional_args: OptionalArgs) -> int:
     """Show example of using table borders.
 
-    This example shows how to use table borders on 4 different tables,
-    demonstrating the use of different border styles and the 4 different
-    methods for writing tables.
+    This example shows the four write_table_*() calls that accept
+    border_style=... and demonstrates how different TableBorderStyle values
+    look on the written tables.
     """
-    # As usual we create a tableio object and use it as a context manager.
+    # The setup is the same as in the earlier examples.
+    # As usual, we call the factory to create a TableIO object,
+    # and use it as a context manager to ensure that the file is closed.
+    # The new thing to look for in this file is border_style=... in the
+    # table-writing calls below.
     # pylint: disable=duplicate-code
     with create_tableio(format_name=format_name,
                         file_name=output_file_name,
@@ -45,8 +49,10 @@ def e13_table_borders(format_name: str, output_file_name: str,
                         capabilities=CAPS,
                         args=optional_args) as tio:
         # pylint: enable=duplicate-code
-        tio.write_heading('Table borders usage examples')
-        # Specify the data for the first table.
+        tio.write_heading('Table border API examples')
+        # 1. write_table_listdata()
+        # Pass a TableBorderStyle enum member to border_style=... in the
+        # same call where you write the table data.
         data1: ListData[ValueFmt] = [
             [ValueFmt(value='A-Column', fmt=Fmt(bold=True)),
              ValueFmt(value='B-Column', fmt=Fmt(bold=True)),
@@ -57,19 +63,21 @@ def e13_table_borders(format_name: str, output_file_name: str,
             [ValueFmt(value=True, fmt=Fmt(bold=True)),
              ValueFmt(value=False, fmt=Fmt()),
              ValueFmt(value='Lower right', fmt=Fmt(highlight=Color.RED))]]
-        # We right a heading to tell reader how table is written.
-        tio.write_heading('ListDate[ValueFmt] with '
+        # The heading in the output tells the reader which API call and
+        # border style produced the next table.
+        tio.write_heading('write_table_listdata() with '
                           'OUTER_FIRST_ROW_THICK_INNER_THIN')
-        # We just write the ListData[ValueFmt] as usual and
-        # specify the border style.
+        # The table data is written exactly as usual.
+        # The only border-specific part is border_style=...
         tio.write_table_listdata(
             data=data1,
             border_style=TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN)
-        # Specify the data for the second table.
+        # 2. write_table_dictdata()
+        # Dict-shaped tables use the same border_style=... keyword.
         data2: DictData[ValueFmt] = [
             {'A-Col': ValueFmt(value='Upper left', fmt=Fmt(italic=True)),
              'B-Col': ValueFmt(value=1.4142, fmt=Fmt()),
-             'C-Col': ValueFmt(value='Upper rigth',
+             'C-Col': ValueFmt(value='Upper right',
                                fmt=Fmt(highlight=Color.GREEN))},
             {'A-Col': ValueFmt(value=3.1415, fmt=Fmt(italic=True)),
              'B-Col': ValueFmt(value=2.7182, fmt=Fmt()),
@@ -79,15 +87,17 @@ def e13_table_borders(format_name: str, output_file_name: str,
              'B-Col': ValueFmt(value=False, fmt=Fmt()),
              'C-Col': ValueFmt(value='Lower right',
                                fmt=Fmt(highlight=Color.RED))}]
-        # We right a heading to tell reader how table is written.
-        tio.write_heading('DictData[ValueFmt] with OUTER_THICK_INNER_THIN')
-        # We just write the DictData[ValueFmt] as usual and
-        # specify the border style.
+        tio.write_heading('write_table_dictdata() with '
+                          'OUTER_THICK_INNER_THIN')
+        # first_row_format=... and border_style=... can be used together in
+        # the same write_table_dictdata() call.
         tio.write_table_dictdata(
             data=data2, column_order=['A-Col', 'B-Col', 'C-Col'],
             first_row_format=Fmt(bold=True),
             border_style=TableBorderStyle.OUTER_THICK_INNER_THIN)
-        # Specify the data for the third table.
+        # 3. write_table_fmtlistdata()
+        # Row-formatted list data still uses the same border_style=...
+        # argument when you want table borders.
         data3: FmtListData = [
             FmtListRow(values=['A-Column', 'B-Column', 'C-Column'],
                        fmt=Fmt(bold=True)),
@@ -95,17 +105,15 @@ def e13_table_borders(format_name: str, output_file_name: str,
                        fmt=Fmt(italic=True)),
             FmtListRow(values=[True, False, 'Lower right'],
                        fmt=Fmt(highlight=Color.RED))]
-        # We right a heading to tell reader how table is written.
-        tio.write_heading('FmtListData[Value] with ALL_THIN')
-        # We just write the FmtListData[Value] as usual and
-        # specify the border style.
+        tio.write_heading('write_table_fmtlistdata() with ALL_THIN')
         tio.write_table_fmtlistdata(
             data=data3,
             border_style=TableBorderStyle.ALL_THIN)
-        # Specify the data for the fourth table.
+        # 4. write_table_fmtdictdata()
+        # The border style is chosen the same way here too.
         data4: FmtDictData = [
             FmtDictRow(values={'A-Col': 'Upper left', 'B-Col': 1.4142,
-                               'C-Col': 'Upper rigth'},
+                               'C-Col': 'Upper right'},
                        fmt=Fmt(italic=True)),
             FmtDictRow(values={'A-Col': 3.1415, 'B-Col': 2.7182,
                                'C-Col': 'Right middle'},
@@ -113,10 +121,7 @@ def e13_table_borders(format_name: str, output_file_name: str,
             FmtDictRow(values={'A-Col': True, 'B-Col': False,
                                'C-Col': 'Lower right'},
                        fmt=Fmt(highlight=Color.RED))]
-        # We right a heading to tell reader how table is written.
-        tio.write_heading('FmtDictData[Value] with OUTER_THICK')
-        # We just write the FmtDictData[Value] as usual and
-        # specify the border style.
+        tio.write_heading('write_table_fmtdictdata() with OUTER_THICK')
         tio.write_table_fmtdictdata(
             data=data4,
             column_order=['A-Col', 'B-Col', 'C-Col'],
