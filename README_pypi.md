@@ -87,6 +87,7 @@ The main features are:
 - using multiple sheets in spreadsheets
 - finding location where some data is present in spreadsheet and doing modifications
   at that position or at positions relative to that position.
+- several border styles for tables
 
 ## Example programs
 
@@ -110,6 +111,7 @@ a better start by reading the examples.
 
 | Version | Date        | Python version | Comment                     |
 |---------|-------------|----------------|-----------------------------|
+| 0.5     | 2026 Apr 07 | 3.12 or newer  | Added table border styles   |
 | 0.4     | 2026 Apr 06 | 3.12 or newer  | Fix .xlsx and .ods syntax   |
 | 0.3     | 2026 Apr 01 | 3.12 or newer  | Improved API, more backends |
 | 0.2     | 2026 Mar 28 | 3.12 or newer  | More features, API changes  |
@@ -120,5 +122,5 @@ a better start by reading the examples.
 - Test result: 1173 passed in 19s
 - No flake8 warnings.
 - No mypy errors found.
-- Built version(s): 0.4.1
+- Built version(s): 0.5
 - Build and test using Python 3.14.3
