@@ -7,9 +7,9 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import pytest
-from example.e13_register_custom_tableio import \
+from example.e20_register_custom_tableio import \
     CUSTOM_FORMAT_NAME, CUSTOM_IMPLEMENTATION_NAME, LineNumberedCsvTableIO, \
-    e13_register_custom_tableio
+    e20_register_custom_tableio
 from tableio.capability import capability_to_str
 from tableio.factory import TableIOFactoryConflictError, register_tableio
 
@@ -62,13 +62,13 @@ def ensure_custom_backend_registered() -> None:
         pass
 
 
-def test_e13_register_custom_tableio_text(
+def test_e20_register_custom_tableio_text(
         capsys: pytest.CaptureFixture[str]) -> None:
-    """Test e13 using the custom line-numbered CSV backend."""
+    """Test e20 using the custom line-numbered CSV backend."""
     ensure_custom_backend_registered()
     with TemporaryDirectory() as tmp_dir:
         output_path = Path(tmp_dir) / 'output'
-        result = e13_register_custom_tableio(
+        result = e20_register_custom_tableio(
             format_name=CUSTOM_FORMAT_NAME,
             output_file_name=str(output_path),
             implementation_name=CUSTOM_IMPLEMENTATION_NAME,

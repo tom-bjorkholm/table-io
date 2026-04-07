@@ -362,7 +362,7 @@ class LineNumberedCsvTableIO(TableIOTextBased):
                           last_read_row=self.position_row)
 
 
-def e13_register_custom_tableio(format_name: str,
+def e20_register_custom_tableio(format_name: str,
                                 output_file_name: str,
                                 implementation_name: Optional[str],
                                 optional_args: OptionalArgs) -> int:
@@ -434,5 +434,5 @@ if __name__ == '__main__':
     # available for the -f argument.
     #
     register_tableio(LineNumberedCsvTableIO)
-    cmd_parse_and_run_example(example_name='e13_register_custom_tableio',
-                              func=e13_register_custom_tableio, caps=CAPS)
+    cmd_parse_and_run_example(example_name='e20_register_custom_tableio',
+                              func=e20_register_custom_tableio, caps=CAPS)

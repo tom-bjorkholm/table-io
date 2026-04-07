@@ -30,7 +30,7 @@ FileAccess, OptionalArgs`. That keeps the beginner-facing examples easy
 to scan. A few advanced topics still import lower-level helpers from
 submodules on purpose, such as the value-conversion helpers in `e05`,
 the capability-detail types in `e10`, and the backend implementation
-helpers in `e13`.
+helpers in `e20`.
 
 ## e00_really_simple_write_table.py
 
@@ -272,10 +272,10 @@ than formatting, this example is also useful for spreadsheet
 implementations that support search and exact cell writes but not rich
 formatting.
 
-## e13_register_custom_tableio.py
+## e20_register_custom_tableio.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e13_register_custom_tableio.py>
+<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e20_register_custom_tableio.py>
 
 This example introduces an advanced but very useful extension point:
 user code can define its own class derived from `TableIO`, register it
