@@ -6,13 +6,16 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Optional, cast
+from typing import Any, Callable, Optional, cast
+from xml.etree import ElementTree as ET
+
 import pytest
 from odfdo import Cell, Document, Element, Table
 from odfdo.body import Spreadsheet
 from odfdo.style import Style
 from openxml_audit import OdfValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
+from tableio import tableio_ods_odfdo
 from tableio.capability import CAP_IMPLEMENTED
 from tableio.tableio import FileAccess
 from tableio.tableio_ods_odfdo import TableIOOdsOdfdo
@@ -23,6 +26,7 @@ from .spreadsheet_test_helper import \
     run_box_rewrite_clears_old_borders, \
     run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
+    run_close_removes_temp_file_on_rewrite_failure, \
     run_find_value_and_write_cells, \
     run_multi_sheet_heading_state_is_per_sheet, \
     run_multi_sheet_read_only_create_raises, \
@@ -767,3 +771,56 @@ def test_ods_description_advertises_lang_optional_arg(
     description = TableIOOdsOdfdo.get_description()
     assert description.optional_args == ['lang']
     check_capsys(capsys)
+
+
+def test_ods_content_xml_without_unused_styles_accepts_missing_block(
+        capsys: CaptureFixture[str]) -> None:
+    """Missing `automatic-styles` is accepted without changing the XML."""
+    content_helper = cast(
+        Callable[[bytes], bytes],
+        getattr(tableio_ods_odfdo, '_content_xml_without_unused_styles'))
+    namespace_map = {
+        'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0'
+    }
+    content_xml = (
+        b'<?xml version="1.0" encoding="utf-8"?>'
+        b'<office:document-content '
+        b'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0">'
+        b'<office:body><office:spreadsheet/></office:body>'
+        b'</office:document-content>'
+    )
+    result = content_helper(content_xml)
+    root = ET.fromstring(result)
+    assert root.find('office:automatic-styles', namespace_map) is None
+    check_capsys(capsys)
+
+
+def test_ods_styles_xml_with_required_defaults_accepts_missing_block(
+        capsys: CaptureFixture[str]) -> None:
+    """Missing `office:styles` is accepted without adding defaults."""
+    styles_helper = cast(
+        Callable[[bytes], bytes],
+        getattr(tableio_ods_odfdo, '_styles_xml_with_required_defaults'))
+    namespace_map = {
+        'office': 'urn:oasis:names:tc:opendocument:xmlns:office:1.0'
+    }
+    styles_xml = (
+        b'<?xml version="1.0" encoding="utf-8"?>'
+        b'<office:document-styles '
+        b'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" '
+        b'xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0">'
+        b'<office:automatic-styles/></office:document-styles>'
+    )
+    result = styles_helper(styles_xml)
+    root = ET.fromstring(result)
+    assert root.find('office:styles', namespace_map) is None
+    check_capsys(capsys)
+
+
+def test_ods_close_removes_temp_file_on_rewrite_failure(
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: CaptureFixture[str]) -> None:
+    """ODS close cleans up the temporary `.ods` on rewrite failure."""
+    run_close_removes_temp_file_on_rewrite_failure(
+        TableIOOdsOdfdo, tableio_ods_odfdo,
+        '_rewrite_saved_document', monkeypatch, capsys)

@@ -6,8 +6,13 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Callable, cast
+from xml.etree import ElementTree as ET
+
 from openxml_audit import OpenXmlValidator  # type: ignore[import-untyped]
+import pytest
 from pytest import CaptureFixture
+from tableio import tableio_excel_openpyxl
 from tableio.tableio import FileAccess
 from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
 from .check_capsys import check_capsys
@@ -27,6 +32,7 @@ from .spreadsheet_test_helper import \
     run_box_rewrite_clears_old_borders, \
     run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
+    run_close_removes_temp_file_on_rewrite_failure, \
     run_find_value_and_write_cells, \
     run_multi_sheet_heading_state_is_per_sheet, \
     run_multi_sheet_read_only_create_raises, \
@@ -269,3 +275,44 @@ def test_excel_update_creates_new_read_sheet_and_normalizes_table_headers(
         inspect_normalized_header_workbook(
             Path(temp_dir) / 'update_headers.xlsx', 'Numbers')
     check_capsys(capsys)
+
+
+def test_excel_styles_xml_with_sorted_fonts_keeps_unknown_tags_last(
+        capsys: CaptureFixture[str]) -> None:
+    """Unknown font child tags sort after the known Excel schema order."""
+    sort_fonts = cast(Callable[[bytes], bytes],
+                      getattr(tableio_excel_openpyxl,
+                              '_styles_xml_with_sorted_fonts'))
+    styles_xml = (
+        b'<?xml version="1.0" encoding="utf-8"?>'
+        b'<styleSheet '
+        b'xmlns="http://schemas.openxmlformats.org/'
+        b'spreadsheetml/2006/main">'
+        b'<fonts count="1"><font><color rgb="FF000000"/>'
+        b'<mystery val="1"/><b/><name val="Calibri"/>'
+        b'</font></fonts></styleSheet>'
+    )
+    sorted_xml = sort_fonts(styles_xml)
+    namespace = (
+        '{http://schemas.openxmlformats.org/'
+        'spreadsheetml/2006/main}'
+    )
+    root = ET.fromstring(sorted_xml)
+    font = root.find(f'{namespace}fonts/{namespace}font')
+    assert font is not None
+    assert [element.tag.split('}', 1)[-1] for element in font] == [
+        'b',
+        'color',
+        'name',
+        'mystery'
+    ]
+    check_capsys(capsys)
+
+
+def test_excel_close_removes_temp_file_on_rewrite_failure(
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: CaptureFixture[str]) -> None:
+    """Workbook close cleans up the temporary `.xlsx` on rewrite failure."""
+    run_close_removes_temp_file_on_rewrite_failure(
+        TableIOExcelOpenPyXL, tableio_excel_openpyxl,
+        '_rewrite_saved_workbook', monkeypatch, capsys)

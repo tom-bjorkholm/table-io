@@ -9,6 +9,8 @@ from tempfile import TemporaryDirectory
 from typing import Optional
 from zipfile import ZipFile, ZipInfo
 
+import pytest
+
 from tableio._archive_rewrite import rewrite_zip_archive, \
     temporary_output_path
 
@@ -74,3 +76,22 @@ def test_rewrite_zip_archive_adds_extra_entries() -> None:
             assert set(archive.namelist()) == {'keep.txt', 'extra.txt'}
             assert archive.read('keep.txt') == b'keep'
             assert archive.read('extra.txt') == b'extra'
+
+
+def test_rewrite_zip_archive_removes_temp_file_after_failure() -> None:
+    """Test that failed rewrites remove the temporary sibling archive."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'example.zip'
+        _write_zip_file(file_path, {'keep.txt': b'keep'})
+
+        def rewrite_entry(_item: ZipInfo, _data: bytes) -> Optional[bytes]:
+            """Fail after the temporary target archive has been created."""
+            raise RuntimeError('rewrite failure')
+
+        with pytest.raises(RuntimeError, match='rewrite failure'):
+            rewrite_zip_archive(file_path, rewrite_entry)
+        assert [path.name for path in Path(temp_dir).iterdir()] == [
+            'example.zip'
+        ]
+        with ZipFile(file_path, 'r') as archive:
+            assert archive.read('keep.txt') == b'keep'

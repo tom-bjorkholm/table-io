@@ -243,6 +243,31 @@ def run_bordered_workbook_is_validator_clean(
         assert validate_file(Path(temp_dir) / f'validator_borders{extension}')
 
 
+def run_close_removes_temp_file_on_rewrite_failure(
+        tableio_class: type[TableIO],
+        rewrite_module: object,
+        rewrite_name: str,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: CaptureFixture[str]) -> None:
+    """Run the shared failing-close cleanup case for temp output files."""
+    with TemporaryDirectory() as temp_dir:
+        file_name = Path(temp_dir) / 'rewrite_failure'
+        table_io = tableio_class(file_name, FileAccess.CREATE)
+        table_io.open()
+        table_io.write_table_listdata([['left', 'right']])
+
+        def raise_rewrite_failure(_file_name: Path) -> None:
+            """Raise once the backend temp output file already exists."""
+            raise RuntimeError('rewrite failure')
+
+        monkeypatch.setattr(rewrite_module, rewrite_name,
+                            raise_rewrite_failure)
+        with pytest.raises(RuntimeError, match='rewrite failure'):
+            table_io.close()
+        assert not list(Path(temp_dir).iterdir())
+    check_capsys(capsys)
+
+
 def run_find_value_and_write_cells(
         tableio_class: type[TableIOSpreadsheetBased],
         extension: str,

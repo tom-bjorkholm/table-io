@@ -18,6 +18,7 @@ from pytest import CaptureFixture
 
 from tableio.capability import CAP_IMPLEMENTED, CAP_UNSUPPORTED, \
     Capabilities, CapabilityNotSupported
+from tableio.border_helper import CellStyleState, DEFAULT_CELL_STYLE
 from tableio.factory import create_tableio
 from tableio.color import Color
 from tableio.tableio import Box, FileAccess
@@ -109,6 +110,13 @@ class _InspectableTableIOExcelXlsxWriter(TableIOExcelXlsxWriter):
                                name: str) -> None:
         """Expose filtered-range creation for tests."""
         self._add_filtered_range(bounds, name)
+
+    def run_xlsx_format(
+            self,
+            style: Optional[CellStyleState],
+            datetime_value: bool) -> Optional[object]:
+        """Expose the XlsxWriter format-cache helper for tests."""
+        return self._xlsx_format(style, datetime_value)
 
 
 def test_excel_xlsxwriter_get_capabilities(
@@ -424,6 +432,16 @@ def test_excel_xlsxwriter_write_file_suffix_is_noop_without_workbook(
             FileAccess.CREATE)
         table_io.run_write_file_suffix()
         assert not Path(temp_dir, 'no_workbook.xlsx').exists()
+    check_capsys(capsys)
+
+
+def test_excel_xlsxwriter_default_cell_style_needs_no_format(
+        capsys: CaptureFixture[str]) -> None:
+    """The default style object is treated the same as no style."""
+    table_io = _InspectableTableIOExcelXlsxWriter(
+        Path('default_style'),
+        FileAccess.CREATE)
+    assert table_io.run_xlsx_format(DEFAULT_CELL_STYLE, False) is None
     check_capsys(capsys)
 
 
