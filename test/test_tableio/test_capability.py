@@ -21,13 +21,15 @@ def make_capability(
     return SingleCapability(supported=supported, strictness=strictness)
 
 
+# pylint: disable-next=too-many-arguments,too-many-positional-arguments
 def make_capabilities(
         can_write: SingleCapability = SingleCapability(),
         can_read: SingleCapability = SingleCapability(),
         can_fmt_row: SingleCapability = SingleCapability(),
         can_fmt_value: SingleCapability = SingleCapability(),
         filtered_data_range: SingleCapability = SingleCapability(),
-        ) -> Capabilities:
+        can_write_borders: SingleCapability = SingleCapability()) -> \
+        Capabilities:
     """Build a Capabilities value for tests."""
     return Capabilities(
         can_write=can_write,
@@ -35,7 +37,7 @@ def make_capabilities(
         can_fmt_row=can_fmt_row,
         can_fmt_value=can_fmt_value,
         filtered_data_range=filtered_data_range,
-    )
+        can_write_borders=can_write_borders)
 
 
 def expected_single_capability_match(
@@ -115,8 +117,12 @@ def test_capabilities_runtime_defaults(capsys: CaptureFixture[str]) -> None:
         can_fmt_row=default_single,
         can_fmt_value=default_single,
         filtered_data_range=default_single,
+        can_write_box=default_single,
+        can_read_box=default_single,
+        can_write_highlight=default_single,
         multi_sheet=default_single,
-    )
+        can_find_value_position=default_single,
+        can_write_borders=default_single)
     check_capsys(capsys)
 
 
@@ -315,6 +321,19 @@ def test_capability_match_has_readable_examples(
             False,
             False,
             id='strict-multi-sheet-mismatch',
+        ),
+        pytest.param(
+            make_capabilities(
+                can_write_borders=make_capability(
+                    False, Strictness.IGNORE),
+            ),
+            make_capabilities(
+                can_write_borders=make_capability(
+                    True, Strictness.IGNORE),
+            ),
+            True,
+            True,
+            id='ignored-border-mismatch-allowed',
         ),
     ],
 )

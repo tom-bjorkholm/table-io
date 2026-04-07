@@ -15,8 +15,8 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from pytest import CaptureFixture
 
-from tableio.capability import CAP_IMPLEMENTED, CAP_UNSUPPORTED, \
-    Capabilities, \
+from tableio.capability import CAP_IGNORED, CAP_IMPLEMENTED, \
+    CAP_UNSUPPORTED, Capabilities, \
     CapabilityNotSupported
 from tableio.factory import create_tableio
 from tableio.color import Color
@@ -121,6 +121,7 @@ def test_excel_xlsxwriter_get_capabilities(
     assert capabilities.can_write_highlight == CAP_IMPLEMENTED
     assert capabilities.multi_sheet == CAP_IMPLEMENTED
     assert capabilities.can_find_value_position == CAP_UNSUPPORTED
+    assert capabilities.can_write_borders == CAP_IGNORED
     check_capsys(capsys)
 
 

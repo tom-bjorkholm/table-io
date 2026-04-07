@@ -8,13 +8,14 @@ from pathlib import Path
 from typing import Callable, Optional
 from xml.etree import ElementTree as ET
 from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Font, PatternFill
+from openpyxl.styles import Border, Font, PatternFill, Side
 from openpyxl.utils.cell import get_column_letter, range_boundaries
 from openpyxl.worksheet.table import Table
 from openpyxl.worksheet.worksheet import Worksheet
 from mformat.mformat import PathLike
 from tableio._archive_rewrite import rewrite_zip_archive, \
     temporary_output_path
+from tableio.border_helper import BorderWeight, CellBorder
 from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_excelbased import TableIOExcelBased
@@ -92,6 +93,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         self.read_workbook: Optional[Workbook] = None
         self.worksheet: Optional[Worksheet] = None
         self.read_worksheet: Optional[Worksheet] = None
+        self._border_cache: dict[CellBorder, Border] = {}
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -109,6 +111,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         """Open the Excel workbook."""
         if self.workbook is not None:
             raise RuntimeError(f'File {self.file_name} already open')
+        self._border_cache = {}
         if self.file_access == FileAccess.CREATE:
             workbook = Workbook()
             self.workbook = workbook
@@ -255,6 +258,35 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         cell = worksheet.cell(row=row + 1, column=column + 1)
         cell.font = Font(bold=fmt.bold, italic=fmt.italic)
         cell.fill = self._highlight_fill(fmt.highlight)
+
+    @staticmethod
+    def _border_side(weight: BorderWeight) -> Side:
+        """Return one OpenPyXL side object for the requested weight."""
+        if weight == BorderWeight.NONE:
+            return Side()
+        if weight == BorderWeight.THIN:
+            return Side(style='thin')
+        return Side(style='medium')
+
+    def _border_value(self, borders: CellBorder) -> Border:
+        """Return one cached OpenPyXL border object."""
+        cached = self._border_cache.get(borders)
+        if cached is not None:
+            return cached
+        border = Border(
+            left=self._border_side(borders.left),
+            right=self._border_side(borders.right),
+            top=self._border_side(borders.top),
+            bottom=self._border_side(borders.bottom))
+        self._border_cache[borders] = border
+        return border
+
+    def _set_cell_borders(self, sheet: object, row: int, column: int,
+                          borders: CellBorder) -> None:
+        """Apply normalized borders to one worksheet cell."""
+        worksheet = get_checked_type(sheet, Worksheet)
+        cell = worksheet.cell(row=row + 1, column=column + 1)
+        cell.border = self._border_value(borders)
 
     def _apply_heading_style(self, row: int, column: int, level: int) -> None:
         """Apply the heading font to one worksheet cell."""

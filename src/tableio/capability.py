@@ -90,6 +90,9 @@ class Capabilities(NamedTuple):
     can_find_value_position: SingleCapability = SingleCapability()
     """The reader/writer class can find the position of a value."""
 
+    can_write_borders: SingleCapability = SingleCapability()
+    """The writer class can write borders to the table."""
+
 
 def single_capability_match(offered: SingleCapability,
                             will_use: SingleCapability,
@@ -246,4 +249,5 @@ CAP_ALL_IMPLEMENTED = Capabilities(can_read=CAP_IMPLEMENTED,
                                    can_read_box=CAP_IMPLEMENTED,
                                    can_write_highlight=CAP_IMPLEMENTED,
                                    multi_sheet=CAP_IMPLEMENTED,
-                                   can_find_value_position=CAP_IMPLEMENTED)
+                                   can_find_value_position=CAP_IMPLEMENTED,
+                                   can_write_borders=CAP_IMPLEMENTED)

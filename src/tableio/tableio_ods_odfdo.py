@@ -18,7 +18,8 @@ from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased, \
     excel_column_name
 from tableio.value_type import Fmt, Value, get_checked_type
-from tableio.capability import Capabilities, CAP_ALL_IMPLEMENTED
+from tableio.capability import CAP_ALL_IMPLEMENTED, CAP_IGNORED, \
+    Capabilities
 
 
 _DEFAULT_TABLE_NAME = 'Sheet1'
@@ -152,7 +153,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
     @classmethod
     def get_capabilities(cls) -> Capabilities:
         """Return the standard spreadsheet backend capabilities."""
-        return CAP_ALL_IMPLEMENTED
+        return CAP_ALL_IMPLEMENTED._replace(can_write_borders=CAP_IGNORED)
 
     @classmethod
     def get_description(cls) -> Descriptor:

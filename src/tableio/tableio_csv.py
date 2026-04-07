@@ -181,7 +181,8 @@ class TableIOCsv(TableIOTextBased):
                             filtered_data_range=not_sup_ignore,
                             can_write_box=not_sup_strict,
                             can_read_box=not_sup_strict,
-                            can_write_highlight=not_sup_ignore)
+                            can_write_highlight=not_sup_ignore,
+                            can_write_borders=not_sup_ignore)
 
     def _end_state(self) -> None:
         """End the state of the CSV file."""

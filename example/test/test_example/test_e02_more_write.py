@@ -17,6 +17,9 @@ from .example_checkers import check_example_md_csv, \
 
 today: datetime = datetime.now()
 today = today.replace(hour=13, minute=0, second=0, microsecond=0)
+THIRTY_DAYS_AGO = today - timedelta(days=30)
+TODAY_TEXT = today.strftime('%Y-%m-%d %H:%M:%S')
+THIRTY_DAYS_AGO_TEXT = THIRTY_DAYS_AGO.strftime('%Y-%m-%d %H:%M:%S')
 
 SHEET_ROW_FRAGMENTS: list[list[Value]] = [
     ['Example of how to write formatted data.'],
@@ -34,12 +37,12 @@ SHEET_ROW_FRAGMENTS: list[list[Value]] = [
     ['Formatted List data with FmtListRow.'],
     ['Jira key', 'Story Points', 'report date'],
     ['TIO-123', 13, today],
-    ['TIO-456', 5, today - timedelta(days=30)],
+    ['TIO-456', 5, THIRTY_DAYS_AGO],
     ['TIO-789', 3, datetime(year=2010, month=12, day=25)],
     ['Formatted Dict data with FmtDictRow.'],
     ['Jira key', 'report date', 'Story Points'],
     ['TIO-123', today, 13],
-    ['TIO-456', today - timedelta(days=30), 5],
+    ['TIO-456', THIRTY_DAYS_AGO, 5],
     ['TIO-789', datetime(year=2010, month=12, day=25), 3],
 ]
 
@@ -166,7 +169,7 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
         ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
-        anchor_row_fragment=['TIO-456', 5, today - timedelta(days=30)],
+        anchor_row_fragment=['TIO-456', 5, THIRTY_DAYS_AGO],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=PLAIN_STYLE,
                                      number_of_columns=3),
@@ -195,7 +198,7 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
         ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
-        anchor_row_fragment=['TIO-456', today - timedelta(days=30), 5],
+        anchor_row_fragment=['TIO-456', THIRTY_DAYS_AGO, 5],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=YELLOW_ITALIC,
                                      number_of_columns=3),
@@ -259,13 +262,13 @@ CSV_FRAGMENTS: list[str] = [
     '"TIO-789","Unassigned","John Doe"',
     '## Formatted List data with FmtListRow.',
     '"Jira key","Story Points","report date"',
-    '"TIO-123","13","2026-04-06 13:00:00"',
-    '"TIO-456","5","2026-03-07 13:00:00"',
+    f'"TIO-123","13","{TODAY_TEXT}"',
+    f'"TIO-456","5","{THIRTY_DAYS_AGO_TEXT}"',
     '"TIO-789","3","2010-12-25 00:00:00"',
     '## Formatted Dict data with FmtDictRow.',
     '"Jira key","report date","Story Points"',
-    '"TIO-123","2026-04-06 13:00:00","13"',
-    '"TIO-456","2026-03-07 13:00:00","5"',
+    f'"TIO-123","{TODAY_TEXT}","13"',
+    f'"TIO-456","{THIRTY_DAYS_AGO_TEXT}","5"',
     '"TIO-789","2010-12-25 00:00:00","3"',
 ]
 

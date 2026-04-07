@@ -36,6 +36,7 @@
     * [\_check\_box\_read](#tableio.tableio.TableIO._check_box_read)
     * [\_check\_box\_impl](#tableio.tableio.TableIO._check_box_impl)
     * [\_check\_filtered\_data\_range](#tableio.tableio.TableIO._check_filtered_data_range)
+    * [\_check\_border\_style](#tableio.tableio.TableIO._check_border_style)
     * [\_write\_heading](#tableio.tableio.TableIO._write_heading)
     * [\_write\_table\_listdata](#tableio.tableio.TableIO._write_table_listdata)
     * [\_write\_table\_fmtlistdata](#tableio.tableio.TableIO._write_table_fmtlistdata)
@@ -345,6 +346,18 @@
   * [value2none](#tableio.valueconversion.value2none)
   * [value2type](#tableio.valueconversion.value2type)
   * [value2type\_of](#tableio.valueconversion.value2type_of)
+* [tableio.border\_helper](#tableio.border_helper)
+  * [BorderWeight](#tableio.border_helper.BorderWeight)
+  * [CellBorder](#tableio.border_helper.CellBorder)
+  * [\_BorderComponents](#tableio.border_helper._BorderComponents)
+  * [\_thicker](#tableio.border_helper._thicker)
+  * [BorderHelper](#tableio.border_helper.BorderHelper)
+    * [\_\_init\_\_](#tableio.border_helper.BorderHelper.__init__)
+    * [\_checked\_style](#tableio.border_helper.BorderHelper._checked_style)
+    * [has\_borders](#tableio.border_helper.BorderHelper.has_borders)
+    * [\_horizontal\_boundary](#tableio.border_helper.BorderHelper._horizontal_boundary)
+    * [\_vertical\_boundary](#tableio.border_helper.BorderHelper._vertical_boundary)
+    * [cell\_border](#tableio.border_helper.BorderHelper.cell_border)
 * [tableio.tableio\_types](#tableio.tableio_types)
   * [Descriptor](#tableio.tableio_types.Descriptor)
     * [format\_name](#tableio.tableio_types.Descriptor.format_name)
@@ -359,6 +372,18 @@
     * [READ](#tableio.tableio_types.FileAccess.READ)
     * [CREATE](#tableio.tableio_types.FileAccess.CREATE)
     * [UPDATE](#tableio.tableio_types.FileAccess.UPDATE)
+  * [TableBorderStyle](#tableio.tableio_types.TableBorderStyle)
+    * [NONE](#tableio.tableio_types.TableBorderStyle.NONE)
+    * [OUTER\_THIN](#tableio.tableio_types.TableBorderStyle.OUTER_THIN)
+    * [OUTER\_THICK](#tableio.tableio_types.TableBorderStyle.OUTER_THICK)
+    * [OUTER\_FIRST\_ROW\_THIN](#tableio.tableio_types.TableBorderStyle.OUTER_FIRST_ROW_THIN)
+    * [OUTER\_FIRST\_ROW\_THICK](#tableio.tableio_types.TableBorderStyle.OUTER_FIRST_ROW_THICK)
+    * [OUTER\_THICK\_FIRST\_ROW\_THIN](#tableio.tableio_types.TableBorderStyle.OUTER_THICK_FIRST_ROW_THIN)
+    * [OUTER\_FIRST\_ROW\_THICK\_VERTICAL\_THIN](#tableio.tableio_types.TableBorderStyle.OUTER_FIRST_ROW_THICK_VERTICAL_THIN)
+    * [OUTER\_FIRST\_ROW\_THICK\_INNER\_THIN](#tableio.tableio_types.TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN)
+    * [OUTER\_THICK\_INNER\_THIN](#tableio.tableio_types.TableBorderStyle.OUTER_THICK_INNER_THIN)
+    * [ALL\_THIN](#tableio.tableio_types.TableBorderStyle.ALL_THIN)
+    * [ALL\_THICK](#tableio.tableio_types.TableBorderStyle.ALL_THICK)
 * [tableio.capability](#tableio.capability)
   * [Strictness](#tableio.capability.Strictness)
     * [STRICT](#tableio.capability.Strictness.STRICT)
@@ -377,6 +402,7 @@
     * [can\_write\_highlight](#tableio.capability.Capabilities.can_write_highlight)
     * [multi\_sheet](#tableio.capability.Capabilities.multi_sheet)
     * [can\_find\_value\_position](#tableio.capability.Capabilities.can_find_value_position)
+    * [can\_write\_borders](#tableio.capability.Capabilities.can_write_borders)
   * [single\_capability\_match](#tableio.capability.single_capability_match)
   * [capability\_match](#tableio.capability.capability_match)
   * [CapabilityNotSupported](#tableio.capability.CapabilityNotSupported)
@@ -480,6 +506,7 @@
     * [\_write\_sheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_sheet)
     * [\_write\_value\_to\_sheet](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_value_to_sheet)
     * [\_set\_cell\_format](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_cell_format)
+    * [\_set\_cell\_borders](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_cell_borders)
     * [\_apply\_heading\_style](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._apply_heading_style)
     * [\_last\_used\_row](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._last_used_row)
     * [\_last\_used\_column](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._last_used_column)
@@ -519,6 +546,7 @@
     * [\_write\_start](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_start)
     * [\_update\_write\_position](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._update_write_position)
     * [\_write\_grid](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_grid)
+    * [\_write\_grid\_borders](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_grid_borders)
     * [\_write\_heading](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_heading)
     * [\_split\_cell\_value](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._split_cell_value)
     * [\_write\_table\_listdata](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_table_listdata)
@@ -582,6 +610,9 @@
     * [\_highlight\_fill](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._highlight_fill)
     * [\_write\_value\_to\_sheet](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._write_value_to_sheet)
     * [\_set\_cell\_format](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_cell_format)
+    * [\_border\_side](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._border_side)
+    * [\_border\_value](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._border_value)
+    * [\_set\_cell\_borders](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_cell_borders)
     * [\_apply\_heading\_style](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._apply_heading_style)
     * [\_last\_used\_row](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_row)
     * [\_last\_used\_column](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._last_used_column)
@@ -778,6 +809,12 @@ If True, data will be written as a range that can be filtered.
 
 The box to write the data into.
 
+<a id="tableio.tableio.TableIO.ImplMetaForWrite.borders"></a>
+
+#### borders
+
+The normalized borders of the table.
+
 <a id="tableio.tableio.TableIO.ImplMetaForDictWrite"></a>
 
 ## ImplMetaForDictWrite Objects
@@ -811,9 +848,11 @@ The format specification for the first row.
 #### write\_table\_listdata
 
 ```python
-def write_table_listdata(data: ListDataSeq[CellT],
-                         filtered_data_range: bool = False,
-                         box: Optional[Box] = None) -> Position
+def write_table_listdata(
+        data: ListDataSeq[CellT],
+        filtered_data_range: bool = False,
+        box: Optional[Box] = None,
+        border_style: TableBorderStyle = TableBorderStyle.NONE) -> Position
 ```
 
 Write a table of list data to the file.
@@ -821,7 +860,7 @@ Write a table of list data to the file.
 Write a table of list data to the file.
 If a box is provided the data will be written into the box.
 The data must fit into the box.
-Notice when spefifying a box: It is not allowed to write a
+Notice when specifying a box: It is not allowed to write a
 table that partly overwrites an existing table.
 
 **Arguments**:
@@ -831,6 +870,7 @@ table that partly overwrites an existing table.
   marked as a data range that can be filtered.
 - `box` - The box to write the data into. If box.bottom or box.right is
   not None, the data must fill the box.
+- `border_style` - The border style to apply to the written table.
 
 **Raises**:
 
@@ -849,9 +889,11 @@ table that partly overwrites an existing table.
 #### write\_table\_fmtlistdata
 
 ```python
-def write_table_fmtlistdata(data: FmtListData,
-                            filtered_data_range: bool = False,
-                            box: Optional[Box] = None) -> Position
+def write_table_fmtlistdata(
+        data: FmtListData,
+        filtered_data_range: bool = False,
+        box: Optional[Box] = None,
+        border_style: TableBorderStyle = TableBorderStyle.NONE) -> Position
 ```
 
 Write a table of list data to the file.
@@ -859,7 +901,7 @@ Write a table of list data to the file.
 Write a table of list data to the file.
 If a box is provided the data will be written into the box.
 The data must fit into the box.
-Notice when spefifying a box: It is not allowed to write a
+Notice when specifying a box: It is not allowed to write a
 table that partly overwrites an existing table.
 
 **Arguments**:
@@ -869,6 +911,7 @@ table that partly overwrites an existing table.
   marked as a data range that can be filtered.
 - `box` - The box to write the data into. If box.bottom or box.right is
   not None, the data must fill the box.
+- `border_style` - The border style to apply to the written table.
 
 **Raises**:
 
@@ -887,13 +930,15 @@ table that partly overwrites an existing table.
 #### write\_table\_dictdata
 
 ```python
-def write_table_dictdata(data: DictDataMap[CellT],
-                         column_order: list[str],
-                         first_row_format: Optional[Fmt] = None,
-                         missing_ok: bool = False,
-                         extra_ok: bool = False,
-                         filtered_data_range: bool = False,
-                         box: Optional[Box] = None) -> Position
+def write_table_dictdata(
+        data: DictDataMap[CellT],
+        column_order: list[str],
+        first_row_format: Optional[Fmt] = None,
+        missing_ok: bool = False,
+        extra_ok: bool = False,
+        filtered_data_range: bool = False,
+        box: Optional[Box] = None,
+        border_style: TableBorderStyle = TableBorderStyle.NONE) -> Position
 ```
 
 Write a table of dict data to the file.
@@ -901,7 +946,7 @@ Write a table of dict data to the file.
 Write a table of dict data to the file.
 If a box is provided the data will be written into the box.
 The data must fit into the box.
-Notice when spefifying a box: It is not allowed to write a
+Notice when specifying a box: It is not allowed to write a
 table that partly overwrites an existing table.
 
 **Arguments**:
@@ -922,6 +967,7 @@ table that partly overwrites an existing table.
   marked as a data range that can be filtered.
 - `box` - The box to write the data into. If box.bottom or box.right is
   not None, the data must fill the box.
+- `border_style` - The border style to apply to the written table.
 
 **Raises**:
 
@@ -944,13 +990,15 @@ table that partly overwrites an existing table.
 #### write\_table\_fmtdictdata
 
 ```python
-def write_table_fmtdictdata(data: FmtDictData,
-                            column_order: list[str],
-                            first_row_format: Optional[Fmt] = None,
-                            missing_ok: bool = False,
-                            extra_ok: bool = False,
-                            filtered_data_range: bool = False,
-                            box: Optional[Box] = None) -> Position
+def write_table_fmtdictdata(
+        data: FmtDictData,
+        column_order: list[str],
+        first_row_format: Optional[Fmt] = None,
+        missing_ok: bool = False,
+        extra_ok: bool = False,
+        filtered_data_range: bool = False,
+        box: Optional[Box] = None,
+        border_style: TableBorderStyle = TableBorderStyle.NONE) -> Position
 ```
 
 Write a table of dict data to the file.
@@ -958,7 +1006,7 @@ Write a table of dict data to the file.
 Write a table of dict data to the file.
 If a box is provided the data will be written into the box.
 The data must fit into the box.
-Notice when spefifying a box: It is not allowed to write a
+Notice when specifying a box: It is not allowed to write a
 table that partly overwrites an existing table.
 
 **Arguments**:
@@ -979,6 +1027,7 @@ table that partly overwrites an existing table.
   marked as a data range that can be filtered.
 - `box` - The box to write the data into. If box.bottom or box.right is
   not None, the data must fill the box.
+- `border_style` - The border style to apply to the written table.
 
 **Raises**:
 
@@ -1435,6 +1484,16 @@ Check if the filtered data range is supported.
 
 - `CapabilityNotSupported` - If writing a filtered data range is not
   supported and strict.
+
+<a id="tableio.tableio.TableIO._check_border_style"></a>
+
+#### \_check\_border\_style
+
+```python
+def _check_border_style(border_style: TableBorderStyle) -> BorderHelper
+```
+
+Check if the requested table border style is supported.
 
 <a id="tableio.tableio.TableIO._write_heading"></a>
 
@@ -5800,6 +5859,125 @@ function based on the type.
 
   The converted value.
 
+<a id="tableio.border_helper"></a>
+
+# tableio.border\_helper
+
+Helpers for working with normalized table borders.
+
+<a id="tableio.border_helper.BorderWeight"></a>
+
+## BorderWeight Objects
+
+```python
+class BorderWeight(IntEnum)
+```
+
+Semantic weight for one border edge.
+
+<a id="tableio.border_helper.CellBorder"></a>
+
+## CellBorder Objects
+
+```python
+class CellBorder(NamedTuple)
+```
+
+Border weights for the four edges of one cell.
+
+<a id="tableio.border_helper._BorderComponents"></a>
+
+## \_BorderComponents Objects
+
+```python
+class _BorderComponents(NamedTuple)
+```
+
+Normalized border weights for one table style.
+
+<a id="tableio.border_helper._thicker"></a>
+
+#### \_thicker
+
+```python
+def _thicker(first: BorderWeight, second: BorderWeight) -> BorderWeight
+```
+
+Return the thicker of two border weights.
+
+<a id="tableio.border_helper.BorderHelper"></a>
+
+## BorderHelper Objects
+
+```python
+class BorderHelper()
+```
+
+Normalize one public table-border style for backend use.
+
+<a id="tableio.border_helper.BorderHelper.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(border_style: TableBorderStyle, capabilities: Capabilities)
+```
+
+Initialize the normalized table-border helper.
+
+<a id="tableio.border_helper.BorderHelper._checked_style"></a>
+
+#### \_checked\_style
+
+```python
+@staticmethod
+def _checked_style(border_style: TableBorderStyle,
+                   capabilities: Capabilities) -> TableBorderStyle
+```
+
+Return the effective border style after capability handling.
+
+<a id="tableio.border_helper.BorderHelper.has_borders"></a>
+
+#### has\_borders
+
+```python
+def has_borders() -> bool
+```
+
+Return whether any border is active in this normalized style.
+
+<a id="tableio.border_helper.BorderHelper._horizontal_boundary"></a>
+
+#### \_horizontal\_boundary
+
+```python
+def _horizontal_boundary(boundary_index: int, row_count: int) -> BorderWeight
+```
+
+Return the weight of one horizontal table boundary.
+
+<a id="tableio.border_helper.BorderHelper._vertical_boundary"></a>
+
+#### \_vertical\_boundary
+
+```python
+def _vertical_boundary(boundary_index: int, column_count: int) -> BorderWeight
+```
+
+Return the weight of one vertical table boundary.
+
+<a id="tableio.border_helper.BorderHelper.cell_border"></a>
+
+#### cell\_border
+
+```python
+def cell_border(row_index: int, column_index: int, row_count: int,
+                column_count: int) -> CellBorder
+```
+
+Return the four border edges for one cell in a table.
+
 <a id="tableio.tableio_types"></a>
 
 # tableio.tableio\_types
@@ -5899,6 +6077,110 @@ The file is created and opened for writing and reading.
 #### UPDATE
 
 The file must exist and is opened for reading and writing.
+
+<a id="tableio.tableio_types.TableBorderStyle"></a>
+
+## TableBorderStyle Objects
+
+```python
+class TableBorderStyle(IntEnum)
+```
+
+Border style of a table.
+
+Used to describe the borders of a table. Borders are defined at the
+table level, not at the cell level. A table may have borders on all
+sides and also internally in the table. In the styles the words
+'thin' and 'thick' describe the semantic weight of the borders; they
+may be mapped to different physical border styles in the file format.
+When several parts of one style affect the same cell edge, the
+thickest weight is used. For example, if the separator below the
+first row should be thick and inner lines should be thin, the cell
+edge below the first row is thick.
+
+<a id="tableio.tableio_types.TableBorderStyle.NONE"></a>
+
+#### NONE
+
+No borders.
+
+<a id="tableio.tableio_types.TableBorderStyle.OUTER_THIN"></a>
+
+#### OUTER\_THIN
+
+Thin border around the table. No inner borders.
+
+<a id="tableio.tableio_types.TableBorderStyle.OUTER_THICK"></a>
+
+#### OUTER\_THICK
+
+Thick border around the table. No inner borders.
+
+<a id="tableio.tableio_types.TableBorderStyle.OUTER_FIRST_ROW_THIN"></a>
+
+#### OUTER\_FIRST\_ROW\_THIN
+
+Thin border around the table and thin separator below the first row.
+
+Thin lines on the outside of the table and under (the column names
+on) the first row. No other inner borders.
+
+<a id="tableio.tableio_types.TableBorderStyle.OUTER_FIRST_ROW_THICK"></a>
+
+#### OUTER\_FIRST\_ROW\_THICK
+
+Thick border around the table and thick separator below the first row.
+
+Thick lines on the outside of the table and under (the column names
+on) the first row. No other inner borders.
+
+<a id="tableio.tableio_types.TableBorderStyle.OUTER_THICK_FIRST_ROW_THIN"></a>
+
+#### OUTER\_THICK\_FIRST\_ROW\_THIN
+
+Thick border around the table and thin separator below the first row.
+
+Thick lines on the outside of the table and a thin line under (the
+column names on) the first row. No other lines inside the table.
+
+<a id="tableio.tableio_types.TableBorderStyle.OUTER_FIRST_ROW_THICK_VERTICAL_THIN"></a>
+
+#### OUTER\_FIRST\_ROW\_THICK\_VERTICAL\_THIN
+
+Thick border around the table, thick separator below the first
+row, and thin vertical inner borders.
+
+Thick lines on the outside of the table and under (the column names
+on) the first row. Thin vertical lines between the columns. No other
+inner borders.
+
+<a id="tableio.tableio_types.TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN"></a>
+
+#### OUTER\_FIRST\_ROW\_THICK\_INNER\_THIN
+
+Thick border around the table, thick separator below the first
+row, and thin inner borders.
+
+Thick lines on the outside of the table and under (the column names
+on) the first row. All other inner cell borders are thin.
+
+<a id="tableio.tableio_types.TableBorderStyle.OUTER_THICK_INNER_THIN"></a>
+
+#### OUTER\_THICK\_INNER\_THIN
+
+Thick border around the table and thin inner borders.
+
+<a id="tableio.tableio_types.TableBorderStyle.ALL_THIN"></a>
+
+#### ALL\_THIN
+
+All cell borders in the table have thin lines.
+
+<a id="tableio.tableio_types.TableBorderStyle.ALL_THICK"></a>
+
+#### ALL\_THICK
+
+All cell borders in the table have thick lines.
 
 <a id="tableio.capability"></a>
 
@@ -6049,6 +6331,12 @@ The reader/writer class can read from or write to multiple sheets.
 #### can\_find\_value\_position
 
 The reader/writer class can find the position of a value.
+
+<a id="tableio.capability.Capabilities.can_write_borders"></a>
+
+#### can\_write\_borders
+
+The writer class can write borders to the table.
 
 <a id="tableio.capability.single_capability_match"></a>
 
@@ -7322,6 +7610,17 @@ def _set_cell_format(sheet: object, row: int, column: int,
 
 Apply optional formatting to one backend cell.
 
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_cell_borders"></a>
+
+#### \_set\_cell\_borders
+
+```python
+def _set_cell_borders(sheet: object, row: int, column: int,
+                      borders: CellBorder) -> None
+```
+
+Apply normalized cell borders to one backend cell.
+
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._apply_heading_style"></a>
 
 #### \_apply\_heading\_style
@@ -7727,13 +8026,23 @@ Update the default write cursor after a write operation.
 #### \_write\_grid
 
 ```python
-def _write_grid(values: ListData[Value],
-                formats: list[list[Optional[Fmt]]],
-                filtered_data_range: bool = False,
-                box: Optional[Box] = None) -> Position
+def _write_grid(values: ListData[Value], formats: list[list[Optional[Fmt]]],
+                impl_meta: TableIO.ImplMetaForWrite) -> Position
 ```
 
 Write a rectangular grid of values and optional formats.
+
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_grid_borders"></a>
+
+#### \_write\_grid\_borders
+
+```python
+def _write_grid_borders(start_row: int, start_column: int,
+                        values: ListData[Value],
+                        borders: BorderHelper) -> None
+```
+
+Apply normalized table borders to all cells in a grid.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._write_heading"></a>
 
@@ -8526,6 +8835,38 @@ def _set_cell_format(sheet: object, row: int, column: int,
 ```
 
 Apply cell formatting to one worksheet cell.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._border_side"></a>
+
+#### \_border\_side
+
+```python
+@staticmethod
+def _border_side(weight: BorderWeight) -> Side
+```
+
+Return one OpenPyXL side object for the requested weight.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._border_value"></a>
+
+#### \_border\_value
+
+```python
+def _border_value(borders: CellBorder) -> Border
+```
+
+Return one cached OpenPyXL border object.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_cell_borders"></a>
+
+#### \_set\_cell\_borders
+
+```python
+def _set_cell_borders(sheet: object, row: int, column: int,
+                      borders: CellBorder) -> None
+```
+
+Apply normalized borders to one worksheet cell.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._apply_heading_style"></a>
 

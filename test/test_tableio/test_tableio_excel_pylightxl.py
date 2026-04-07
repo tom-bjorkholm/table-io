@@ -194,6 +194,7 @@ def test_excel_pylightxl_get_capabilities(
     assert capabilities.can_write_highlight == CAP_IGNORED
     assert capabilities.multi_sheet == CAP_IMPLEMENTED
     assert capabilities.can_find_value_position == CAP_IMPLEMENTED
+    assert capabilities.can_write_borders == CAP_IGNORED
     check_capsys(capsys)
 
 

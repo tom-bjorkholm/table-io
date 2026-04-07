@@ -10,16 +10,19 @@ from openxml_audit import OpenXmlValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
 from tableio.tableio import FileAccess
 from tableio.tableio_excel_openpyxl import TableIOExcelOpenPyXL
+from tableio.tableio_types import Box, TableBorderStyle
 from .check_capsys import check_capsys
 from .excel_test_file_helper import create_formula_workbook, \
     create_update_workbook, inspect_find_and_write_cells_workbook as \
     inspect_find_and_write_cells_workbook_common, \
     inspect_updated_workbook
-from .excel_inspect_helper import inspect_dict_header_fmt_workbook, \
-    inspect_fmtdict_header_fmt_workbook, inspect_formatted_workbook, \
-    inspect_multiple_filters_workbook, inspect_normalized_header_workbook, \
-    inspect_rewrite_box_workbook, inspect_row_formatted_workbook, \
-    inspect_table_width_cap_workbook, inspect_table_width_heading_workbook
+from .excel_inspect_helper import inspect_bordered_workbook, \
+    inspect_box_rewrite_clears_borders_workbook, \
+    inspect_dict_header_fmt_workbook, inspect_fmtdict_header_fmt_workbook, \
+    inspect_formatted_workbook, inspect_multiple_filters_workbook, \
+    inspect_normalized_header_workbook, inspect_rewrite_box_workbook, \
+    inspect_row_formatted_workbook, inspect_table_width_cap_workbook, \
+    inspect_table_width_heading_workbook
 from .spreadsheet_test_helper import \
     run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
@@ -187,6 +190,38 @@ def test_excel_write_fmtdictdata_applies_first_row_format(
         inspect_fmtdict_header_fmt_workbook, capsys)
 
 
+def test_excel_write_table_listdata_applies_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """Writes the requested table borders to saved OpenPyXL cells."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'borders.xlsx'
+        with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(
+                [['name', 'value'], ['Alice', 1]],
+                border_style=TableBorderStyle.OUTER_THICK_INNER_THIN)
+        inspect_bordered_workbook(file_path)
+    check_capsys(capsys)
+
+
+def test_excel_box_rewrite_clears_old_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """Rewriting the same boxed area clears any stale cell borders."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'rewrite_borders.xlsx'
+        box = Box(top=0, left=0, bottom=2, right=2)
+        with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(
+                [['left', 'right'], ['down', 'here']],
+                box=box,
+                border_style=TableBorderStyle.ALL_THICK)
+            table_io.write_table_listdata(
+                [['new', 'values'], ['stay', 'plain']],
+                box=box,
+                border_style=TableBorderStyle.NONE)
+        inspect_box_rewrite_clears_borders_workbook(file_path)
+    check_capsys(capsys)
+
+
 def test_excel_read_formula_uses_cached_value(
         capsys: CaptureFixture[str]) -> None:
     """A formula cell is read as its cached value."""
@@ -223,6 +258,18 @@ def test_excel_written_heading_workbook_is_validator_clean() -> None:
         with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
             table_io.write_heading('Example heading')
             table_io.write_table_listdata([['left', 'right']])
+        result = OpenXmlValidator().validate(file_path)
+        assert result.is_valid
+
+
+def test_excel_bordered_workbook_is_validator_clean() -> None:
+    """Bordered tables are written to validator-clean `.xlsx` files."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'validator_borders.xlsx'
+        with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata(
+                [['left', 'right'], ['down', 'here']],
+                border_style=TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN)
         result = OpenXmlValidator().validate(file_path)
         assert result.is_valid
 

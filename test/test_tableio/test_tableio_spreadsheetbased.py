@@ -13,8 +13,10 @@ from typing import Optional
 import pytest
 from pytest import CaptureFixture
 
+from tableio.border_helper import BorderWeight, CellBorder
 from tableio.capability import Capabilities
 from tableio.tableio import Box, Descriptor, FileAccess, Position
+from tableio.tableio_types import TableBorderStyle
 from tableio.tableio_spreadsheetbased import _ScanResult, \
     TableIOSpreadsheetBased
 from tableio.value_type import CellT, Fmt, FmtListRow, ListDataSeq, Value, \
@@ -32,6 +34,7 @@ class _MemorySheet:
         """Initialize the in-memory sheet."""
         self.values: dict[tuple[int, int], Value] = {}
         self.formats: dict[tuple[int, int], Fmt] = {}
+        self.borders: dict[tuple[int, int], CellBorder] = {}
         self.filtered_ranges: dict[str, tuple[int, int, int, int]] = {}
         self.column_widths: dict[int, float] = {}
         self.heading_levels: dict[tuple[int, int], int] = {}
@@ -116,6 +119,11 @@ class _MinimalSpreadsheetTableIO(TableIOSpreadsheetBased):
                             column: int, fmt: Optional[Fmt]) -> None:
         """Expose the inherited _set_cell_format method for tests."""
         self._set_cell_format(sheet, row, column, fmt)
+
+    def run_set_cell_borders(self, sheet: object, row: int, column: int,
+                             borders: CellBorder) -> None:
+        """Expose the inherited _set_cell_borders method for tests."""
+        self._set_cell_borders(sheet, row, column, borders)
 
     def run_apply_heading_style(self, row: int, column: int,
                                 level: int) -> None:
@@ -253,6 +261,7 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         assert isinstance(memory_sheet, _MemorySheet)
         key = (row, column)
         memory_sheet.formats.pop(key, None)
+        memory_sheet.borders.pop(key, None)
         memory_sheet.heading_levels.pop(key, None)
         if value is None:
             memory_sheet.values.pop(key, None)
@@ -269,6 +278,17 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
             memory_sheet.formats.pop(key, None)
             return
         memory_sheet.formats[key] = fmt
+
+    def _set_cell_borders(self, sheet: object, row: int, column: int,
+                          borders: CellBorder) -> None:
+        """Apply one normalized border value to one in-memory cell."""
+        memory_sheet = sheet
+        assert isinstance(memory_sheet, _MemorySheet)
+        key = (row, column)
+        if all(weight == BorderWeight.NONE for weight in borders):
+            memory_sheet.borders.pop(key, None)
+            return
+        memory_sheet.borders[key] = borders
 
     def _apply_heading_style(self, row: int, column: int, level: int) -> None:
         """Record one heading style application."""
@@ -488,6 +508,11 @@ def test_spreadsheet_base_abstract_hooks_raise_not_implemented(
         table_io.run_write_value_to_sheet(object(), 0, 0, 'value')
     with pytest.raises(NotImplementedError, match='_set_cell_format method'):
         table_io.run_set_cell_format(object(), 0, 0, Fmt())
+    with pytest.raises(NotImplementedError, match='_set_cell_borders method'):
+        table_io.run_set_cell_borders(
+            object(), 0, 0,
+            CellBorder(BorderWeight.NONE, BorderWeight.NONE,
+                       BorderWeight.NONE, BorderWeight.NONE))
     with pytest.raises(NotImplementedError,
                        match='_apply_heading_style method'):
         table_io.run_apply_heading_style(0, 0, 1)
@@ -671,6 +696,70 @@ def test_spreadsheet_write_table_fmtlistdata_applies_row_formats(
                 (1, 0): Fmt(italic=True),
                 (1, 1): Fmt(italic=True)
             }
+    check_capsys(capsys)
+
+
+def test_spreadsheet_write_table_listdata_applies_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """Table writes apply normalized borders to every affected cell."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample')
+        with table_io:
+            table_io.write_table_listdata(
+                [['name', 'value'], ['Alice', 1], ['Bob', 2]],
+                border_style=TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN)
+            assert table_io.write_sheet_data().borders == {
+                (0, 0): CellBorder(
+                    top=BorderWeight.THICK,
+                    right=BorderWeight.THIN,
+                    bottom=BorderWeight.THICK,
+                    left=BorderWeight.THICK),
+                (0, 1): CellBorder(
+                    top=BorderWeight.THICK,
+                    right=BorderWeight.THICK,
+                    bottom=BorderWeight.THICK,
+                    left=BorderWeight.THIN),
+                (1, 0): CellBorder(
+                    top=BorderWeight.THICK,
+                    right=BorderWeight.THIN,
+                    bottom=BorderWeight.THIN,
+                    left=BorderWeight.THICK),
+                (1, 1): CellBorder(
+                    top=BorderWeight.THICK,
+                    right=BorderWeight.THICK,
+                    bottom=BorderWeight.THIN,
+                    left=BorderWeight.THIN),
+                (2, 0): CellBorder(
+                    top=BorderWeight.THIN,
+                    right=BorderWeight.THIN,
+                    bottom=BorderWeight.THICK,
+                    left=BorderWeight.THICK),
+                (2, 1): CellBorder(
+                    top=BorderWeight.THIN,
+                    right=BorderWeight.THICK,
+                    bottom=BorderWeight.THICK,
+                    left=BorderWeight.THIN)
+            }
+    check_capsys(capsys)
+
+
+def test_spreadsheet_box_rewrite_clears_old_borders(
+        capsys: CaptureFixture[str]) -> None:
+    """Rewriting the same box with no borders clears old border styles."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample')
+        with table_io:
+            box = Box(top=1, left=2, bottom=3, right=4)
+            table_io.write_table_listdata(
+                [['left', 'right'], ['down', 'here']],
+                box=box,
+                border_style=TableBorderStyle.ALL_THICK)
+            assert table_io.write_sheet_data().borders
+            table_io.write_table_listdata(
+                [['new', 'values'], ['stay', 'plain']],
+                box=box,
+                border_style=TableBorderStyle.NONE)
+            assert table_io.write_sheet_data().borders == {}
     check_capsys(capsys)
 
 

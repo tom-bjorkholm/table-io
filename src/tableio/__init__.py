@@ -11,7 +11,8 @@ from tableio.color import Color
 from tableio.factory import create_tableio, filter_args_tableio, \
     list_implementations_tableio, list_registered_tableio
 from tableio.optional_args import CsvDialect, OptionalArgs, OptionalArgsDict
-from tableio.tableio import Box, FileAccess, Position, TableIO
+from tableio.tableio import TableIO
+from tableio.tableio_types import TableBorderStyle, Box, FileAccess, Position
 from tableio.value_type import CellT, DictData, DictDataMap, Fmt, \
     FmtDictData, FmtDictRow, FmtListData, FmtListRow, ListData, \
     ListDataSeq, ReadResult, Value, ValueFmt
@@ -20,6 +21,7 @@ __all__ = ['create_tableio',
            'TableIO',
            'FileAccess',
            'Box',
+           'TableBorderStyle',
            'Position',
            'OptionalArgs',
            'OptionalArgsDict',

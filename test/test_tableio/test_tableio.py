@@ -20,6 +20,7 @@ from tableio.value_type import CellT, DictDataMap, Fmt, FmtDictData, \
     ValueFmt
 
 from .check_capsys import check_capsys
+from .impl_meta_test_helper import make_no_border_helper
 
 
 def make_capability(
@@ -312,20 +313,23 @@ class MinimalTableIO(TableIO):
     def run_write_table_listdata(self, data: ListDataSeq[CellT]) -> Position:
         """Expose the inherited _write_table_listdata method for tests."""
         impl_meta = TableIO.ImplMetaForWrite(filtered_data_range=False,
-                                             box=None)
+                                             box=None,
+                                             borders=make_no_border_helper())
         return self._write_table_listdata(data, impl_meta)
 
     def run_write_table_fmtlistdata(self, data: FmtListData) -> Position:
         """Expose the inherited _write_table_fmtlistdata method."""
         impl_meta = TableIO.ImplMetaForWrite(filtered_data_range=False,
-                                             box=None)
+                                             box=None,
+                                             borders=make_no_border_helper())
         return self._write_table_fmtlistdata(data, impl_meta)
 
     def run_write_table_dictdata(self, data: DictDataMap[CellT],
                                  column_order: list[str]) -> Position:
         """Expose the inherited _write_table_dictdata method for tests."""
         common_impl = TableIO.ImplMetaForWrite(filtered_data_range=False,
-                                               box=None)
+                                               box=None,
+                                               borders=make_no_border_helper())
         impl_meta = TableIO.ImplMetaForDictWrite(
             common_impl=common_impl,
             column_order=column_order,
@@ -337,7 +341,8 @@ class MinimalTableIO(TableIO):
             column_order: list[str]) -> Position:
         """Expose the inherited _write_table_fmtdictdata method."""
         common_impl = TableIO.ImplMetaForWrite(filtered_data_range=False,
-                                               box=None)
+                                               box=None,
+                                               borders=make_no_border_helper())
         impl_meta = TableIO.ImplMetaForDictWrite(
             common_impl=common_impl,
             column_order=column_order,
@@ -443,7 +448,10 @@ def test_tableio_named_tuples_store_values_and_defaults(
     )
     box = Box(top=1, left=2, bottom=None, right=5)
     position = Position(row=3, column=4)
-    impl_meta = TableIO.ImplMetaForWrite(filtered_data_range=True, box=box)
+    impl_meta = TableIO.ImplMetaForWrite(
+        filtered_data_range=True,
+        box=box,
+        borders=make_no_border_helper())
     dict_impl_meta = TableIO.ImplMetaForDictWrite(
         common_impl=impl_meta,
         column_order=['alpha', 'beta'],

@@ -12,6 +12,15 @@ from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 
 
+def _cell_border_styles(
+        worksheet: Worksheet, row_index: int,
+        column_index: int) -> tuple[object, object, object, object]:
+    """Return the saved border styles for one cell as top-right-bottom-left."""
+    cell = worksheet.cell(row=row_index + 1, column=column_index + 1)
+    return (cell.border.top.style, cell.border.right.style,
+            cell.border.bottom.style, cell.border.left.style)
+
+
 def inspect_formatted_workbook(file_path: Path) -> None:
     """Check formatting and filtered-range metadata in one workbook."""
     workbook = load_workbook(file_path)
@@ -138,4 +147,32 @@ def inspect_datetime_cells_workbook(file_path: Path) -> None:
     assert isinstance(worksheet, Worksheet)
     assert worksheet['A2'].value is True
     assert worksheet['B2'].value == datetime(2026, 3, 24, 14, 30, 0)
+    workbook.close()
+
+
+def inspect_bordered_workbook(file_path: Path) -> None:
+    """Check that one workbook stores the requested table borders."""
+    workbook = load_workbook(file_path)
+    worksheet = workbook.active
+    assert isinstance(worksheet, Worksheet)
+    assert _cell_border_styles(worksheet, 0, 0) == (
+        'medium', 'thin', 'thin', 'medium')
+    assert _cell_border_styles(worksheet, 0, 1) == (
+        'medium', 'medium', 'thin', 'thin')
+    assert _cell_border_styles(worksheet, 1, 0) == (
+        'thin', 'thin', 'medium', 'medium')
+    assert _cell_border_styles(worksheet, 1, 1) == (
+        'thin', 'medium', 'medium', 'thin')
+    workbook.close()
+
+
+def inspect_box_rewrite_clears_borders_workbook(file_path: Path) -> None:
+    """Check that boxed rewrites clear stale cell borders."""
+    workbook = load_workbook(file_path)
+    worksheet = workbook.active
+    assert isinstance(worksheet, Worksheet)
+    for row_index in range(2):
+        for column_index in range(2):
+            assert _cell_border_styles(worksheet, row_index, column_index) == (
+                None, None, None, None)
     workbook.close()

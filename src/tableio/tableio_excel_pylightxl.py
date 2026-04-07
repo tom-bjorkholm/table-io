@@ -341,7 +341,8 @@ class TableIOExcelPylightxl(TableIOExcelBased):
                             can_read_box=CAP_IMPLEMENTED,
                             can_write_highlight=CAP_IGNORED,
                             multi_sheet=CAP_IMPLEMENTED,
-                            can_find_value_position=CAP_IMPLEMENTED)
+                            can_find_value_position=CAP_IMPLEMENTED,
+                            can_write_borders=CAP_IGNORED)
 
     def open(self) -> None:
         """Open the workbook."""

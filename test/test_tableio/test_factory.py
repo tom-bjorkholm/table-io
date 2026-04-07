@@ -667,6 +667,17 @@ class TestTableIOFactoryFormats:
         assert 'Excel' in names
         assert 'ODS' in names
 
+    def test_border_capability_matches_excel_only(self) -> None:
+        """Requesting border support matches only the Excel format."""
+        f = _make_factory_stubs()
+        caps = Capabilities(
+            can_write_borders=SingleCapability(
+                True, Strictness.STRICT))
+        names = f.i_get_registered_formats(capabilities=caps)
+        assert 'Excel' in names
+        assert 'ODS' not in names
+        assert 'CSV' not in names
+
     def test_no_matching_formats_raise_when_empty_is_not_allowed(self) -> \
             None:
         """Capability filtering raises when no configured format can match."""

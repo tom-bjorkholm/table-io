@@ -12,8 +12,8 @@ from typing import Callable, NamedTuple, Optional, Protocol
 from mformat.mformat import PathLike
 import xlsxwriter  # type: ignore[import-untyped]
 
-from tableio.capability import CAP_ALL_IMPLEMENTED, CAP_UNSUPPORTED, \
-    Capabilities, CapabilityNotSupported
+from tableio.capability import CAP_ALL_IMPLEMENTED, CAP_IGNORED, \
+    CAP_UNSUPPORTED, Capabilities, CapabilityNotSupported
 from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_excelbased import TableIOExcelBased
@@ -126,7 +126,8 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         return CAP_ALL_IMPLEMENTED._replace(
             can_read=CAP_UNSUPPORTED,
             can_read_box=CAP_UNSUPPORTED,
-            can_find_value_position=CAP_UNSUPPORTED)
+            can_find_value_position=CAP_UNSUPPORTED,
+            can_write_borders=CAP_IGNORED)
 
     @classmethod
     def get_description(cls) -> Descriptor:

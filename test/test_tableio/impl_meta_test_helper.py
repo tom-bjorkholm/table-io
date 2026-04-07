@@ -6,13 +6,22 @@
 
 from typing import Optional
 
+from tableio.border_helper import BorderHelper
+from tableio.capability import Capabilities
 from tableio.tableio import Box, TableIO
+from tableio.tableio_types import TableBorderStyle
 from tableio.value_type import Fmt
+
+
+def make_no_border_helper() -> BorderHelper:
+    """Build the default no-border helper used in tests."""
+    return BorderHelper(TableBorderStyle.NONE, Capabilities())
 
 
 def make_boxed_write_impl_meta(box: Box) -> TableIO.ImplMetaForWrite:
     """Build write metadata for a boxed write used in tests."""
-    return TableIO.ImplMetaForWrite(filtered_data_range=False, box=box)
+    return TableIO.ImplMetaForWrite(filtered_data_range=False, box=box,
+                                    borders=make_no_border_helper())
 
 
 def make_boxed_dict_write_impl_meta(

@@ -12,11 +12,13 @@ from typing import NamedTuple, Callable, Optional
 from mformat.mformat import PathLike
 from tableio.capability import Capabilities, SingleCapability, Strictness, \
     CapabilityNotSupported
-from tableio.tableio_types import Box, Descriptor, FileAccess, Position
+from tableio.tableio_types import Box, Descriptor, FileAccess, Position, \
+    TableBorderStyle
 from tableio.value_type import CellT, ListDataSeq, DictDataMap, \
     normalize_dict_data, ReadResult, ListData, Value, Fmt, DictData, \
     FmtListData, FmtDictData, FmtDictRow, row_strip_format_list, \
     row_strip_format_dict
+from tableio.border_helper import BorderHelper
 
 __all__ = ['Box', 'Descriptor', 'FileAccess', 'Position', 'TableIO']
 
@@ -174,6 +176,8 @@ class TableIO:
         """If True, data will be written as a range that can be filtered."""
         box: Optional[Box]
         """The box to write the data into."""
+        borders: BorderHelper
+        """The normalized borders of the table."""
 
     class ImplMetaForDictWrite(NamedTuple):
         """Meta data for writing dict table to pass to implementation."""
@@ -185,22 +189,26 @@ class TableIO:
         first_row_format: Optional[Fmt]
         """The format specification for the first row."""
 
-    def write_table_listdata(self, data: ListDataSeq[CellT],
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position:
+    def write_table_listdata(
+            self, data: ListDataSeq[CellT],
+            filtered_data_range: bool = False,
+            box: Optional[Box] = None,
+            border_style: TableBorderStyle = TableBorderStyle.NONE) -> \
+            Position:
         """Write a table of list data to the file.
 
         Write a table of list data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
-        Notice when spefifying a box: It is not allowed to write a
+        Notice when specifying a box: It is not allowed to write a
         table that partly overwrites an existing table.
         Args:
             data: The list data to write.
             filtered_data_range: If True, the data written will be
                                  marked as a data range that can be filtered.
             box: The box to write the data into. If box.bottom or box.right is
-                not None, the data must fill the box.
+                 not None, the data must fill the box.
+            border_style: The border style to apply to the written table.
         Raises:
             ValueError: If the data shape is invalid or does not fit in box.
             CapabilityNotSupported: If a requested capability is unsupported
@@ -214,27 +222,33 @@ class TableIO:
         c_box = self._check_box_write(box)
         self._check_listdimensions(data, c_box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
+        c_borders = self._check_border_style(border_style)
         impl_meta: TableIO.ImplMetaForWrite = \
             TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
-                                     box=c_box)
+                                     box=c_box,
+                                     borders=c_borders)
         return self._write_table_listdata(data=data, impl_meta=impl_meta)
 
-    def write_table_fmtlistdata(self, data: FmtListData,
-                                filtered_data_range: bool = False,
-                                box: Optional[Box] = None) -> Position:
+    def write_table_fmtlistdata(
+            self, data: FmtListData,
+            filtered_data_range: bool = False,
+            box: Optional[Box] = None,
+            border_style: TableBorderStyle = TableBorderStyle.NONE) -> \
+            Position:
         """Write a table of list data to the file.
 
         Write a table of list data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
-        Notice when spefifying a box: It is not allowed to write a
+        Notice when specifying a box: It is not allowed to write a
         table that partly overwrites an existing table.
         Args:
             data: The list data to write.
             filtered_data_range: If True, the data written will be
                                  marked as a data range that can be filtered.
             box: The box to write the data into. If box.bottom or box.right is
-                not None, the data must fill the box.
+                 not None, the data must fill the box.
+            border_style: The border style to apply to the written table.
         Raises:
             ValueError: If the data shape is invalid or does not fit in box.
             CapabilityNotSupported: If a requested capability is unsupported
@@ -248,25 +262,28 @@ class TableIO:
         c_box = self._check_box_write(box)
         self._check_listdimensions(row_strip_format_list(data), c_box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
+        c_borders = self._check_border_style(border_style)
         impl_meta: TableIO.ImplMetaForWrite = \
             TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
-                                     box=c_box)
+                                     box=c_box, borders=c_borders)
         return self._write_table_fmtlistdata(data=data, impl_meta=impl_meta)
 
-    def write_table_dictdata(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                             data: DictDataMap[CellT],
-                             column_order: list[str],
-                             first_row_format: Optional[Fmt] = None,
-                             missing_ok: bool = False,
-                             extra_ok: bool = False,
-                             filtered_data_range: bool = False,
-                             box: Optional[Box] = None) -> Position:
+    def write_table_dictdata(  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
+            self, data: DictDataMap[CellT],
+            column_order: list[str],
+            first_row_format: Optional[Fmt] = None,
+            missing_ok: bool = False,
+            extra_ok: bool = False,
+            filtered_data_range: bool = False,
+            box: Optional[Box] = None,
+            border_style: TableBorderStyle = TableBorderStyle.NONE) -> \
+            Position:
         """Write a table of dict data to the file.
 
         Write a table of dict data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
-        Notice when spefifying a box: It is not allowed to write a
+        Notice when specifying a box: It is not allowed to write a
         table that partly overwrites an existing table.
         Args:
             data: The dict data to write.
@@ -284,7 +301,8 @@ class TableIO:
             filtered_data_range: If True, the data written will be
                                  marked as a data range that can be filtered.
             box: The box to write the data into. If box.bottom or box.right is
-                not None, the data must fill the box.
+                 not None, the data must fill the box.
+            border_style: The border style to apply to the written table.
         Raises:
             ValueError: If missing_ok is False and data is missing for a
                         column in the column_order.
@@ -303,29 +321,32 @@ class TableIO:
         ndata = normalize_dict_data(data, column_order, missing_ok, extra_ok)
         self._check_dictdimensions(ndata, c_box)
         c_filt_range = self._check_filtered_data_range(filtered_data_range)
+        c_borders = self._check_border_style(border_style)
         common_impl: TableIO.ImplMetaForWrite = \
             TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
-                                     box=c_box)
+                                     box=c_box, borders=c_borders)
         impl_meta: TableIO.ImplMetaForDictWrite = \
             TableIO.ImplMetaForDictWrite(common_impl=common_impl,
                                          column_order=column_order,
                                          first_row_format=first_row_format)
         return self._write_table_dictdata(data=ndata, impl_meta=impl_meta)
 
-    def write_table_fmtdictdata(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                                data: FmtDictData,
-                                column_order: list[str],
-                                first_row_format: Optional[Fmt] = None,
-                                missing_ok: bool = False,
-                                extra_ok: bool = False,
-                                filtered_data_range: bool = False,
-                                box: Optional[Box] = None) -> Position:
+    def write_table_fmtdictdata(  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
+            self, data: FmtDictData,
+            column_order: list[str],
+            first_row_format: Optional[Fmt] = None,
+            missing_ok: bool = False,
+            extra_ok: bool = False,
+            filtered_data_range: bool = False,
+            box: Optional[Box] = None,
+            border_style: TableBorderStyle = TableBorderStyle.NONE) -> \
+            Position:
         """Write a table of dict data to the file.
 
         Write a table of dict data to the file.
         If a box is provided the data will be written into the box.
         The data must fit into the box.
-        Notice when spefifying a box: It is not allowed to write a
+        Notice when specifying a box: It is not allowed to write a
         table that partly overwrites an existing table.
         Args:
             data: The dict data to write.
@@ -343,7 +364,8 @@ class TableIO:
             filtered_data_range: If True, the data written will be
                                  marked as a data range that can be filtered.
             box: The box to write the data into. If box.bottom or box.right is
-                not None, the data must fill the box.
+                 not None, the data must fill the box.
+            border_style: The border style to apply to the written table.
         Raises:
             ValueError: If missing_ok is False and data is missing for a
                         column in the column_order.
@@ -370,10 +392,12 @@ class TableIO:
                 FmtDictRow(values=row_values, fmt=row.fmt)
                 for row, row_values in zip(data, normalized_values,
                                            strict=True)]
-        c_filt_range = self._check_filtered_data_range(filtered_data_range)
         common_impl: TableIO.ImplMetaForWrite = \
-            TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
-                                     box=c_box)
+            TableIO.ImplMetaForWrite(
+                filtered_data_range=self._check_filtered_data_range(
+                    filtered_data_range),
+                box=c_box,
+                borders=self._check_border_style(border_style))
         impl_meta: TableIO.ImplMetaForDictWrite = \
             TableIO.ImplMetaForDictWrite(common_impl=common_impl,
                                          column_order=column_order,
@@ -748,6 +772,11 @@ class TableIO:
         if cap_filtered_data_range.strictness == Strictness.IGNORE:
             return False
         raise CapabilityNotSupported('write a filtered data range')
+
+    def _check_border_style(self, border_style: TableBorderStyle) -> \
+            BorderHelper:
+        """Check if the requested table border style is supported."""
+        return BorderHelper(border_style, self.get_capabilities())
 
     def _write_heading(self, heading: str, level: int) -> Position:
         """Write a heading to the file.

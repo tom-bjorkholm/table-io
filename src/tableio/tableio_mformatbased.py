@@ -87,7 +87,8 @@ class TableIOMformatBased(TableIO):
             filtered_data_range=SingleCapability(supported=False),
             can_write_box=strict_no,
             can_read_box=strict_no,
-            can_write_highlight=SingleCapability(supported=False))
+            can_write_highlight=SingleCapability(supported=False),
+            can_write_borders=SingleCapability(supported=False))
 
     @classmethod
     def get_row_format_capability(cls) -> SingleCapability:

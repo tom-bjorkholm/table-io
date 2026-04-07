@@ -8,6 +8,7 @@ from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Callable, NamedTuple, Optional
 from mformat.mformat import PathLike
+from tableio.border_helper import BorderHelper, CellBorder
 from tableio.tableio import Box, FileAccess, Position, TableIO
 from tableio.valueconversion import UnreasonableTypeConversion, \
     UnreasonableValueConversion, value2type_of
@@ -188,6 +189,16 @@ class TableIOSpreadsheetBased(TableIO):
         _ = column
         _ = fmt
         err = 'Subclass must implement _set_cell_format method'
+        raise NotImplementedError(err)
+
+    def _set_cell_borders(self, sheet: object, row: int, column: int,
+                          borders: CellBorder) -> None:
+        """Apply normalized cell borders to one backend cell."""
+        _ = sheet
+        _ = row
+        _ = column
+        _ = borders
+        err = 'Subclass must implement _set_cell_borders method'
         raise NotImplementedError(err)
 
     def _apply_heading_style(self, row: int, column: int, level: int) -> None:
@@ -613,28 +624,27 @@ class TableIOSpreadsheetBased(TableIO):
     def _write_grid(self,  # pylint: disable=too-many-locals
                     values: ListData[Value],
                     formats: list[list[Optional[Fmt]]],
-                    filtered_data_range: bool = False,
-                    box: Optional[Box] = None) -> Position:
+                    impl_meta: TableIO.ImplMetaForWrite) -> Position:
         """Write a rectangular grid of values and optional formats."""
-        start_row, start_column = self._write_start(box)
+        start_row, start_column = self._write_start(impl_meta.box)
         row_count = len(values)
         column_count = len(values[0])
         write_bottom = start_row + row_count
         write_right = start_column + column_count
-        clear_bottom = box.bottom if box is not None and \
-            box.bottom is not None else write_bottom
-        clear_right = box.right if box is not None and \
-            box.right is not None else write_right
+        clear_bottom = impl_meta.box.bottom if impl_meta.box is not None and \
+            impl_meta.box.bottom is not None else write_bottom
+        clear_right = impl_meta.box.right if impl_meta.box is not None and \
+            impl_meta.box.right is not None else write_right
         affected_bounds = (
             start_row,
             start_column,
-            clear_bottom if box is not None else write_bottom,
-            clear_right if box is not None else write_right
+            clear_bottom if impl_meta.box is not None else write_bottom,
+            clear_right if impl_meta.box is not None else write_right
         )
-        if box is not None:
+        if impl_meta.box is not None:
             self._check_boxed_table_overwrite(affected_bounds)
         self._remove_overlapping_filtered_ranges(affected_bounds)
-        if box is not None:
+        if impl_meta.box is not None:
             self._clear_range(start_row, start_column, clear_bottom,
                               clear_right)
         for row_offset, row in enumerate(values):
@@ -642,15 +652,33 @@ class TableIOSpreadsheetBased(TableIO):
                 fmt = formats[row_offset][column_offset]
                 self._write_value(start_row + row_offset,
                                   start_column + column_offset, value, fmt)
-        if filtered_data_range:
+        if impl_meta.filtered_data_range:
             self._write_filtered_data_range((start_row, start_column,
                                              write_bottom, write_right))
+        if impl_meta.borders.has_borders():
+            self._write_grid_borders(start_row, start_column, values,
+                                     impl_meta.borders)
         self._update_table_column_widths(start_row, start_column,
                                          write_bottom, write_right)
         next_row = max(self.write_row, clear_bottom + 1)
         self._update_write_position(next_row)
         return Position(row=start_row + row_count - 1,
                         column=start_column + column_count - 1)
+
+    def _write_grid_borders(self, start_row: int, start_column: int,
+                            values: ListData[Value],
+                            borders: BorderHelper) -> None:
+        """Apply normalized table borders to all cells in a grid."""
+        write_sheet = self._write_sheet()
+        row_count = len(values)
+        column_count = len(values[0])
+        for row_offset in range(row_count):
+            for column_offset in range(column_count):
+                cell_border = borders.cell_border(row_offset, column_offset,
+                                                  row_count, column_count)
+                self._set_cell_borders(write_sheet, start_row + row_offset,
+                                       start_column + column_offset,
+                                       cell_border)
 
     def _write_heading(self, heading: str, level: int) -> Position:
         """Write a heading to the active sheet."""
@@ -672,9 +700,7 @@ class TableIOSpreadsheetBased(TableIO):
                               impl_meta: TableIO.ImplMetaForWrite) -> Position:
         """Write list data to the active sheet."""
         values, formats = self._split_cell_grid(data)
-        return self._write_grid(values, formats,
-                                impl_meta.filtered_data_range,
-                                impl_meta.box)
+        return self._write_grid(values, formats, impl_meta)
 
     def _write_table_fmtlistdata(
             self, data: FmtListData,
@@ -700,9 +726,7 @@ class TableIOSpreadsheetBased(TableIO):
                 format_row.append(fmt)
             values.append(value_row)
             formats.append(format_row)
-        return self._write_grid(values, formats,
-                                impl_meta.common_impl.filtered_data_range,
-                                impl_meta.common_impl.box)
+        return self._write_grid(values, formats, impl_meta.common_impl)
 
     def _write_table_fmtdictdata(
             self, data: FmtDictData,

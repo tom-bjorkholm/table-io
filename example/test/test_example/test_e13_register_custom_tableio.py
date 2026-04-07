@@ -10,48 +10,48 @@ import pytest
 from example.e13_register_custom_tableio import \
     CUSTOM_FORMAT_NAME, CUSTOM_IMPLEMENTATION_NAME, LineNumberedCsvTableIO, \
     e13_register_custom_tableio
+from tableio.capability import capability_to_str
 from tableio.factory import TableIOFactoryConflictError, register_tableio
 
 
-EXPECTED_LINES: list[str] = [
-    '00001:# A user-defined TableIO class was registered with the factory.',
-    '00002:',
-    '00003:## Each physical line in this format starts with 00001: style.',
-    '00004:',
-    '00005:"Step","What happens"',
-    '00006:"1","User code defines a TableIO-derived class"',
-    '00007:"2","User code registers that class with register_tableio()"',
-    '00008:"3","The factory can now create the custom backend"',
-    '00009:',
-    '00010:## Writer information:',
-    '00011:',
-    '00012:"Attribute","Value","Requested value"',
-    '00013:"Type name","LineNumberedCSV","LineNumberedCSV"',
-    ('00014:"Implementation","user_line_numbered_csv",'
-     '"user_line_numbered_csv"'),
-    '00015:"Priority","10",""',
-    '00016:"Mandatory arguments","(none)",""',
-    '00017:"Optional argument","file_exists_callback",""',
-    '00018:"Optional argument","character_encoding",""',
-    '00019:"Optional argument","csv_type",""',
-    '00020:"Optional argument","csv_delimiter",""',
-    '00021:"Optional argument","csv_quoting",""',
-    '00022:"Optional argument","csv_quotechar",""',
-    '00023:"Optional argument","csv_lineterminator",""',
-    '00024:"Optional argument","csv_escapechar",""',
-    '00025:"Capability can_write","supported (strict)",""',
-    '00026:"Capability can_read","supported (strict)",""',
-    '00027:"Capability can_fmt_row","not supported (ignore)",""',
-    '00028:"Capability can_fmt_value","not supported (ignore)",""',
-    '00029:"Capability filtered_data_range","not supported (ignore)",""',
-    '00030:"Capability can_write_box","not supported (strict)",""',
-    '00031:"Capability can_read_box","not supported (strict)",""',
-    '00032:"Capability can_write_highlight","not supported (ignore)",""',
-    '00033:"Capability multi_sheet","not supported (strict)",""',
-    ('00034:"Capability can_find_value_position",'
-     '"not supported (strict)",""'),
-    '00035:'
-]
+def expected_lines() -> list[str]:
+    """Return the expected numbered output lines for the custom backend."""
+    payloads = [
+        '# A user-defined TableIO class was registered with the factory.',
+        '',
+        '## Each physical line in this format starts with 00001: style.',
+        '',
+        '"Step","What happens"',
+        '"1","User code defines a TableIO-derived class"',
+        '"2","User code registers that class with register_tableio()"',
+        '"3","The factory can now create the custom backend"',
+        '',
+        '## Writer information:',
+        '',
+        '"Attribute","Value","Requested value"',
+        '"Type name","LineNumberedCSV","LineNumberedCSV"',
+        ('"Implementation","user_line_numbered_csv",'
+         '"user_line_numbered_csv"'),
+        '"Priority","10",""',
+        '"Mandatory arguments","(none)",""',
+        '"Optional argument","file_exists_callback",""',
+        '"Optional argument","character_encoding",""',
+        '"Optional argument","csv_type",""',
+        '"Optional argument","csv_delimiter",""',
+        '"Optional argument","csv_quoting",""',
+        '"Optional argument","csv_quotechar",""',
+        '"Optional argument","csv_lineterminator",""',
+        '"Optional argument","csv_escapechar",""'
+    ]
+    capabilities = LineNumberedCsvTableIO.get_description().capabilities
+    for key, value in zip(capabilities._fields, capabilities):
+        payloads.append(
+            f'"Capability {key}","{capability_to_str(value)}",""')
+    payloads.append('')
+    return [
+        f'{line_number:05d}:{payload}'
+        for line_number, payload in enumerate(payloads, start=1)
+    ]
 
 
 def ensure_custom_backend_registered() -> None:
@@ -74,7 +74,7 @@ def test_e13_register_custom_tableio_text(
             implementation_name=CUSTOM_IMPLEMENTATION_NAME,
             optional_args=None)
         text = Path(f'{output_path}.lncsv').read_text(encoding='utf-8')
-        assert text == '\n'.join(EXPECTED_LINES) + '\n'
+        assert text == '\n'.join(expected_lines()) + '\n'
         assert result == 0
     out, err = capsys.readouterr()
     assert out == ''
