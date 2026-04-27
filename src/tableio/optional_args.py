@@ -13,9 +13,9 @@ class CsvDialect(IntEnum):
     """The type of CSV file to write."""
 
     EXCEL = auto()
-    """Excel CSV file type."""
+    """Excel CSV file type/dialect."""
     UNIX = auto()
-    """Unix CSV file type."""
+    """Unix CSV file type/dialect."""
 
 
 class OptionalArgsDict(OptArgsDict, total=False):
@@ -30,8 +30,8 @@ class OptionalArgsDict(OptArgsDict, total=False):
     package.
     """
 
-    csv_type: Optional[CsvDialect]
-    """The type of CSV file to write. None for default type."""
+    csv_dialect: Optional[CsvDialect]
+    """The type/dialect of CSV file to write. None for default type."""
 
     csv_delimiter: Optional[str]
     """The delimiter to use for CSV files. None for default delimiter."""

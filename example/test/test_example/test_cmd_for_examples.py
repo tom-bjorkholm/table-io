@@ -48,13 +48,13 @@ class TestBuildOptionalArgs:
         ('excel', CsvDialect.EXCEL),
         ('Excel', CsvDialect.EXCEL),
         ('UNIX', CsvDialect.UNIX)])
-    def test_enum_csv_type(self, input_str: str,
-                           expected: CsvDialect) -> None:
+    def test_enum_csv_dialect(self, input_str: str,
+                              expected: CsvDialect) -> None:
         """Enum values for CsvDialect are parsed from strings."""
-        ns = argparse.Namespace(csv_type=[input_str])
+        ns = argparse.Namespace(csv_dialect=[input_str])
         result = _build_optional_args(ns)
         assert isinstance(result, dict)
-        assert result['csv_type'] == expected
+        assert result['csv_dialect'] == expected
 
     def test_enum_paper_size(self) -> None:
         """Enum value for PaperSize is parsed from string."""
@@ -67,12 +67,12 @@ class TestBuildOptionalArgs:
         """Multiple arguments of mixed types are all included."""
         ns = argparse.Namespace(
             lang=['en'], line_length=[80],
-            csv_type=['EXCEL'])
+            csv_dialect=['EXCEL'])
         result = _build_optional_args(ns)
         assert isinstance(result, dict)
         assert result['lang'] == 'en'
         assert result['line_length'] == 80
-        assert result['csv_type'] == CsvDialect.EXCEL
+        assert result['csv_dialect'] == CsvDialect.EXCEL
 
 
 class TestUnpackAndRunExample:

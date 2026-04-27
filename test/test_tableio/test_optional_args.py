@@ -32,7 +32,7 @@ def test_mformat_optargs_from_optionalargs_filters_tableio_args_and_none(
         'title': 'Report',
         'line_length': 72,
         'css_file': None,
-        'csv_type': CsvDialect.EXCEL,
+        'csv_dialect': CsvDialect.EXCEL,
         'csv_delimiter': ';',
         'csv_quotechar': None
     }
@@ -52,7 +52,7 @@ def test_mformat_optargs_from_optionalargs_returns_empty_dict(
     """Test conversion when no mformat values remain after filtering."""
     optional_args: OptionalArgsDict = {
         'title': None,
-        'csv_type': CsvDialect.UNIX,
+        'csv_dialect': CsvDialect.UNIX,
         'csv_delimiter': ';',
         'csv_escapechar': None
     }

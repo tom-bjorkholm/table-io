@@ -30,7 +30,7 @@ _CLI_STR_ARGS: list[str] = [
     'csv_quotechar', 'csv_lineterminator', 'csv_escapechar']
 _CLI_INT_ARGS: list[str] = ['line_length', 'table_max_line_length']
 _CLI_ENUM_ARGS: list[tuple[str, type[IntEnum]]] = [
-    ('csv_type', CsvDialect),
+    ('csv_dialect', CsvDialect),
     ('paper_size', PaperSize),
     ('document_class', DocumentClass)]
 _ALL_CLI_ARG_NAMES: list[str] = (

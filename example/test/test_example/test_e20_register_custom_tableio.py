@@ -36,7 +36,7 @@ def expected_lines() -> list[str]:
         '"Mandatory arguments","(none)",""',
         '"Optional argument","file_exists_callback",""',
         '"Optional argument","character_encoding",""',
-        '"Optional argument","csv_type",""',
+        '"Optional argument","csv_dialect",""',
         '"Optional argument","csv_delimiter",""',
         '"Optional argument","csv_quoting",""',
         '"Optional argument","csv_quotechar",""',

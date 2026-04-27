@@ -102,7 +102,7 @@
     * [EXCEL](#tableio.optional_args.CsvDialect.EXCEL)
     * [UNIX](#tableio.optional_args.CsvDialect.UNIX)
   * [OptionalArgsDict](#tableio.optional_args.OptionalArgsDict)
-    * [csv\_type](#tableio.optional_args.OptionalArgsDict.csv_type)
+    * [csv\_dialect](#tableio.optional_args.OptionalArgsDict.csv_dialect)
     * [csv\_delimiter](#tableio.optional_args.OptionalArgsDict.csv_delimiter)
     * [csv\_quoting](#tableio.optional_args.OptionalArgsDict.csv_quoting)
     * [csv\_quotechar](#tableio.optional_args.OptionalArgsDict.csv_quotechar)
@@ -1976,13 +1976,13 @@ The type of CSV file to write.
 
 #### EXCEL
 
-Excel CSV file type.
+Excel CSV file type/dialect.
 
 <a id="tableio.optional_args.CsvDialect.UNIX"></a>
 
 #### UNIX
 
-Unix CSV file type.
+Unix CSV file type/dialect.
 
 <a id="tableio.optional_args.OptionalArgsDict"></a>
 
@@ -2002,11 +2002,11 @@ The possible optional arguments includ the arguments in
 mformat.factory.OptArgsDict plus the arguments specific to the tableio
 package.
 
-<a id="tableio.optional_args.OptionalArgsDict.csv_type"></a>
+<a id="tableio.optional_args.OptionalArgsDict.csv_dialect"></a>
 
-#### csv\_type
+#### csv\_dialect
 
-The type of CSV file to write. None for default type.
+The type/dialect of CSV file to write. None for default type.
 
 <a id="tableio.optional_args.OptionalArgsDict.csv_delimiter"></a>
 

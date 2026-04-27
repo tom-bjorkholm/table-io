@@ -94,7 +94,7 @@ class LineNumberedCsvTableIO(TableIOTextBased):
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  character_encoding: str = 'utf-8',
-                 csv_type: CsvDialect = CsvDialect.UNIX,
+                 csv_dialect: CsvDialect = CsvDialect.UNIX,
                  csv_delimiter: Optional[str] = None,
                  csv_quoting: Optional[str] = None,
                  csv_quotechar: Optional[str] = None,
@@ -110,7 +110,7 @@ class LineNumberedCsvTableIO(TableIOTextBased):
         super().__init__(file_name=file_name, file_access=file_access,
                          file_exists_callback=file_exists_callback,
                          character_encoding=character_encoding)
-        if csv_type == CsvDialect.UNIX:
+        if csv_dialect == CsvDialect.UNIX:
             dialect: csv.Dialect = csv.unix_dialect()
         else:
             dialect = csv.excel()
@@ -146,7 +146,7 @@ class LineNumberedCsvTableIO(TableIOTextBased):
         possible implementations of the same format.
         """
         optional_args = [
-            'file_exists_callback', 'character_encoding', 'csv_type',
+            'file_exists_callback', 'character_encoding', 'csv_dialect',
             'csv_delimiter', 'csv_quoting', 'csv_quotechar',
             'csv_lineterminator', 'csv_escapechar'
         ]
