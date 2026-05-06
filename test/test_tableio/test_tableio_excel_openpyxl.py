@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Callable, cast
 from xml.etree import ElementTree as ET
+from zipfile import ZipFile
 
 from openxml_audit import OpenXmlValidator  # type: ignore[import-untyped]
 import pytest
@@ -251,6 +252,21 @@ def test_excel_written_heading_workbook_is_validator_clean() -> None:
             table_io.write_table_listdata([['left', 'right']])
         result = OpenXmlValidator().validate(file_path)
         assert result.is_valid
+
+
+def test_excel_written_strings_use_shared_string_table() -> None:
+    """String cells are saved through a populated shared-string table."""
+    with TemporaryDirectory() as temp_dir:
+        file_path = Path(temp_dir) / 'shared_strings.xlsx'
+        with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
+            table_io.write_table_listdata([['left', 'right']])
+        with ZipFile(file_path, 'r') as archive:
+            worksheet_xml = archive.read('xl/worksheets/sheet1.xml')
+            shared_strings_xml = archive.read('xl/sharedStrings.xml')
+        assert b'inlineStr' not in worksheet_xml
+        assert b'sharedStrings.xml' not in worksheet_xml
+        assert b'left' in shared_strings_xml
+        assert b'right' in shared_strings_xml
 
 
 def test_excel_bordered_workbook_is_validator_clean() -> None:

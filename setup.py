@@ -15,14 +15,14 @@ setup(
   package_dir={'tableio': 'src/tableio'},
   package_data={'tableio': ['src/py.typed']},
   install_requires=[  # pylint: disable=duplicate-code
-    'pip >= 26.0.1',
+    'pip >= 26.1.1',
     'setuptools >= 82.0.1',
-    'build >= 1.4.2',
-    'wheel >= 0.46.3',
+    'build >= 1.5.0',
+    'wheel >= 0.47.0',
     'mformat-ext >= 0.6',
     'openpyxl >= 3.1.5',
     'types-openpyxl >= 3.1.5.20260402',
-    'odfdo >= 3.22.4',
+    'odfdo >= 3.22.7',
     'xlsxwriter >= 3.2.9',
     'pylightxl >= 1.61'
   ]

@@ -7,6 +7,7 @@
 from pathlib import Path
 from typing import Callable, Optional
 from xml.etree import ElementTree as ET
+from zipfile import ZipFile, ZipInfo
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Border, Font, PatternFill, Side
 from openpyxl.utils.cell import get_column_letter, range_boundaries
@@ -27,7 +28,25 @@ _HIGHLIGHT_RGB: dict[Color, str] = {
     Color.GREEN: 'FFC6EFCE',
     Color.YELLOW: 'FFFFFF00'
 }
-_XML_NS = {'main': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
+_SPREADSHEET_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+_REL_NS = 'http://schemas.openxmlformats.org/package/2006/relationships'
+_CONTENT_TYPES_NS = (
+    'http://schemas.openxmlformats.org/package/2006/content-types'
+)
+_XML_NS = {'main': _SPREADSHEET_NS}
+_REL_XML_NS = {'rel': _REL_NS}
+_CONTENT_TYPES_XML_NS = {'ct': _CONTENT_TYPES_NS}
+_SHARED_STRINGS_PATH = 'xl/sharedStrings.xml'
+_WORKBOOK_RELS_PATH = 'xl/_rels/workbook.xml.rels'
+_CONTENT_TYPES_PATH = '[Content_Types].xml'
+_SHARED_STRINGS_REL_TYPE = (
+    'http://schemas.openxmlformats.org/officeDocument/2006/'
+    'relationships/sharedStrings'
+)
+_SHARED_STRINGS_CONTENT_TYPE = (
+    'application/vnd.openxmlformats-officedocument.'
+    'spreadsheetml.sharedStrings+xml'
+)
 _FONT_CHILD_ORDER = [
     'b',
     'i',
@@ -44,6 +63,11 @@ _FONT_CHILD_ORDER = [
     'charset',
     'scheme'
 ]
+
+
+def _xml_tag(namespace: str, tag_name: str) -> str:
+    """Return one fully qualified XML tag name."""
+    return f'{{{namespace}}}{tag_name}'
 
 
 def _font_child_sort_key(element: ET.Element) -> int:
@@ -63,14 +87,159 @@ def _styles_xml_with_sorted_fonts(data: bytes) -> bytes:
                              xml_declaration=True))
 
 
+def _new_shared_strings_root() -> ET.Element:
+    """Create an empty shared strings XML root element."""
+    return ET.Element(_xml_tag(_SPREADSHEET_NS, 'sst'))
+
+
+def _read_shared_strings_root(file_name: Path) -> ET.Element:
+    """Read the shared strings root, or create an empty one."""
+    try:
+        with ZipFile(file_name, 'r') as archive:
+            data = archive.read(_SHARED_STRINGS_PATH)
+    except KeyError:
+        return _new_shared_strings_root()
+    return ET.fromstring(data)
+
+
+def _shared_string_count(shared_strings_root: ET.Element) -> int:
+    """Return the number of shared string items in the root."""
+    return len(shared_strings_root.findall('main:si', _XML_NS))
+
+
+def _shared_strings_xml(shared_strings_root: ET.Element) -> bytes:
+    """Return finalized shared strings XML bytes."""
+    count_text = str(_shared_string_count(shared_strings_root))
+    shared_strings_root.set('count', count_text)
+    shared_strings_root.set('uniqueCount', count_text)
+    return bytes(ET.tostring(shared_strings_root, encoding='utf-8',
+                             xml_declaration=True))
+
+
+def _inline_string_to_shared_string(
+        cell: ET.Element,
+        shared_strings_root: ET.Element) -> None:
+    """Move one inline string cell value to the shared string table."""
+    inline_string = cell.find('main:is', _XML_NS)
+    if inline_string is None:
+        return
+    shared_index = _shared_string_count(shared_strings_root)
+    shared_item = ET.Element(_xml_tag(_SPREADSHEET_NS, 'si'))
+    for child in list(inline_string):
+        inline_string.remove(child)
+        shared_item.append(child)
+    shared_strings_root.append(shared_item)
+    cell.remove(inline_string)
+    cell.set('t', 's')
+    value = ET.Element(_xml_tag(_SPREADSHEET_NS, 'v'))
+    value.text = str(shared_index)
+    cell.append(value)
+
+
+def _sheet_xml_with_shared_strings(
+        data: bytes,
+        shared_strings_root: ET.Element) -> bytes:
+    """Return sheet XML with inline strings converted to shared strings."""
+    root = ET.fromstring(data)
+    for cell in root.findall('.//main:c[@t="inlineStr"]', _XML_NS):
+        _inline_string_to_shared_string(cell, shared_strings_root)
+    return bytes(ET.tostring(root, encoding='utf-8',
+                             xml_declaration=True))
+
+
+def _content_types_with_shared_strings(data: bytes) -> bytes:
+    """Return content types XML with a shared strings override."""
+    root = ET.fromstring(data)
+    for override in root.findall('ct:Override', _CONTENT_TYPES_XML_NS):
+        if override.get('PartName') == '/' + _SHARED_STRINGS_PATH:
+            return data
+    override = ET.Element(_xml_tag(_CONTENT_TYPES_NS, 'Override'))
+    override.set('PartName', '/' + _SHARED_STRINGS_PATH)
+    override.set('ContentType', _SHARED_STRINGS_CONTENT_TYPE)
+    root.append(override)
+    return bytes(ET.tostring(root, encoding='utf-8',
+                             xml_declaration=True))
+
+
+def _next_relationship_id(root: ET.Element) -> str:
+    """Return the next workbook relationship id."""
+    max_id = 0
+    for relationship in root.findall('rel:Relationship', _REL_XML_NS):
+        rel_id = relationship.get('Id', '')
+        if not rel_id.startswith('rId'):
+            continue
+        try:
+            max_id = max(max_id, int(rel_id[3:]))
+        except ValueError:
+            continue
+    return f'rId{max_id + 1}'
+
+
+def _workbook_rels_with_shared_strings(data: bytes) -> bytes:
+    """Return workbook relationships XML with a shared strings relation."""
+    root = ET.fromstring(data)
+    for relationship in root.findall('rel:Relationship', _REL_XML_NS):
+        if relationship.get('Type') == _SHARED_STRINGS_REL_TYPE:
+            return data
+    relationship = ET.Element(_xml_tag(_REL_NS, 'Relationship'))
+    relationship.set('Id', _next_relationship_id(root))
+    relationship.set('Type', _SHARED_STRINGS_REL_TYPE)
+    relationship.set('Target', 'sharedStrings.xml')
+    root.append(relationship)
+    return bytes(ET.tostring(root, encoding='utf-8',
+                             xml_declaration=True))
+
+
+def _is_worksheet_xml(filename: str) -> bool:
+    """Return True if an archive entry is a worksheet XML file."""
+    return filename.startswith('xl/worksheets/') and filename.endswith('.xml')
+
+
+def _worksheet_rewrites_with_shared_strings(
+        file_name: Path,
+        shared_strings_root: ET.Element) -> dict[str, bytes]:
+    """Return worksheet XML rewrites and update the shared string table."""
+    rewrites: dict[str, bytes] = {}
+    with ZipFile(file_name, 'r') as archive:
+        for filename in archive.namelist():
+            if not _is_worksheet_xml(filename):
+                continue
+            data = archive.read(filename)
+            if b'inlineStr' not in data:
+                continue
+            rewrites[filename] = _sheet_xml_with_shared_strings(
+                data, shared_strings_root)
+    return rewrites
+
+
 def _rewrite_saved_workbook(file_name: Path) -> None:
     """Rewrite the saved workbook so styles XML follows validator order."""
-    def rewrite_entry(item: object, data: bytes) -> bytes:
+    shared_strings_root = _read_shared_strings_root(file_name)
+    worksheet_rewrites = _worksheet_rewrites_with_shared_strings(
+        file_name, shared_strings_root)
+    use_shared_strings = _shared_string_count(shared_strings_root) > 0
+
+    def rewrite_entry(item: ZipInfo, data: bytes) -> Optional[bytes]:
         """Rewrite one workbook archive entry when needed."""
-        if getattr(item, 'filename') == 'xl/styles.xml':
+        filename = item.filename
+        if filename == 'xl/styles.xml':
             return _styles_xml_with_sorted_fonts(data)
+        if use_shared_strings and filename == _SHARED_STRINGS_PATH:
+            return None
+        if use_shared_strings and filename == _CONTENT_TYPES_PATH:
+            return _content_types_with_shared_strings(data)
+        if use_shared_strings and filename == _WORKBOOK_RELS_PATH:
+            return _workbook_rels_with_shared_strings(data)
+        if filename in worksheet_rewrites:
+            return worksheet_rewrites[filename]
         return data
-    rewrite_zip_archive(file_name, rewrite_entry)
+    extra_entries = None
+    if use_shared_strings:
+        extra_entries = {
+            _SHARED_STRINGS_PATH: _shared_strings_xml(shared_strings_root)
+        }
+    rewrite_zip_archive(file_name, rewrite_entry,
+                        extra_entries=extra_entries)
 
 
 class TableIOExcelOpenPyXL(TableIOExcelBased):
