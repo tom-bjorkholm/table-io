@@ -133,6 +133,7 @@
     * [add\_implementation](#tableio.factory.FactoryFormatInfo.add_implementation)
     * [best\_match\_names](#tableio.factory.FactoryFormatInfo.best_match_names)
     * [correct\_implementation\_name](#tableio.factory.FactoryFormatInfo.correct_implementation_name)
+    * [get\_usage](#tableio.factory.FactoryFormatInfo.get_usage)
   * [TableIOFactory](#tableio.factory.TableIOFactory)
     * [\_\_init\_\_](#tableio.factory.TableIOFactory.__init__)
     * [i\_get\_factory](#tableio.factory.TableIOFactory.i_get_factory)
@@ -2352,6 +2353,16 @@ def correct_implementation_name(implementation_name: str) -> str
 
 Correct the implementation name to the correct case.
 
+<a id="tableio.factory.FactoryFormatInfo.get_usage"></a>
+
+#### get\_usage
+
+```python
+def get_usage(implementation_name: str) -> Descriptor
+```
+
+Get usage information for one implementation.
+
 <a id="tableio.factory.TableIOFactory"></a>
 
 ## TableIOFactory Objects
@@ -2508,8 +2519,10 @@ Internally create an instance of a registered subclass.
 
 ```python
 @staticmethod
-def filter_args(args: OptionalArgs, format_name: str,
-                implementation: str) -> OptionalArgs
+def filter_args(args: OptionalArgs,
+                format_name: str,
+                implementation: Optional[str],
+                capabilities: Optional[Capabilities] = None) -> OptionalArgs
 ```
 
 Filter the arguments for a registered format.
@@ -2526,7 +2539,12 @@ be silently ignored, and the programming error will not be detected.)
 - `args` - The arguments to filter.
 - `format_name` - The name identifier of the format class to filter the
   arguments for.
-- `implementation` - The implementation name to use.
+- `implementation` - The implementation name to use. If implementation
+  is specified as None, filtering is done for the
+  implementation create() would use with a None value
+  for the implementation parameter.
+- `capabilities` - The capabilities to match. This is used to determine
+  the implementation to use if implementation is None.
 
 **Returns**:
 
@@ -2537,14 +2555,19 @@ be silently ignored, and the programming error will not be detected.)
 - `TableIOFactoryNoSuchError` - If the format_name is not registered
   or the implementation name is not
   registered.
+- `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
+  matched to the selected
+  implementation.
 
 <a id="tableio.factory.TableIOFactory.i_filter_args"></a>
 
 #### i\_filter\_args
 
 ```python
-def i_filter_args(args: OptionalArgs, format_name: str,
-                  implementation: str) -> OptionalArgs
+def i_filter_args(args: OptionalArgs,
+                  format_name: str,
+                  implementation: Optional[str],
+                  capabilities: Optional[Capabilities] = None) -> OptionalArgs
 ```
 
 Internally filter the arguments for a registered format.
@@ -2619,7 +2642,8 @@ def get_registered_implementations(format_name: Optional[str] = None,
                                    lower: bool = False,
                                    upper: bool = False,
                                    capabilities: Optional[Capabilities] = None,
-                                   empty_is_ok: bool = False) -> list[str]
+                                   empty_is_ok: bool = False,
+                                   alphabetical: bool = True) -> list[str]
 ```
 
 Get a list of all registered implementation names.
@@ -2650,6 +2674,12 @@ implementation names.)
   If False, a TableIOFactoryNoCapabilityMatch
   error is raised if no implementations match the
   capabilities.
+- `alphabetical` - If True, the implementations are returned in
+  alphabetical order. If False, the implementations
+  are returned with the strict matches first and the
+  nonstrict matches last. Both strict and nonstrict
+  matches are sorted by priority, from highest to
+  lowest.
 
 **Returns**:
 
@@ -2673,7 +2703,8 @@ def i_get_registered_implementations(
         lower: bool = False,
         upper: bool = False,
         capabilities: Optional[Capabilities] = None,
-        empty_is_ok: bool = False) -> list[str]
+        empty_is_ok: bool = False,
+        alphabetical: bool = True) -> list[str]
 ```
 
 Internally get a list of registered implementation names.
@@ -2765,8 +2796,11 @@ This is a shortcut for TableIOFactory.create().
 #### filter\_args\_tableio
 
 ```python
-def filter_args_tableio(args: OptionalArgs, format_name: str,
-                        implementation: str) -> OptionalArgs
+def filter_args_tableio(
+        args: OptionalArgs,
+        format_name: str,
+        implementation: Optional[str],
+        capabilities: Optional[Capabilities] = None) -> OptionalArgs
 ```
 
 Filter the arguments for a registered format.
@@ -2784,7 +2818,12 @@ ignored, and the programming error will not be detected.)
 - `args` - The arguments to filter.
 - `format_name` - The name identifier of the format class to filter
   the arguments for.
-- `implementation` - The implementation name to use.
+- `implementation` - The implementation name to use. If implementation
+  is specified as None, filtering is done for the
+  implementation create() would use with a None value
+  for the implementation parameter.
+- `capabilities` - The capabilities to match. This is used to determine
+  the implementation to use if implementation is None.
 
 **Returns**:
 
@@ -2794,6 +2833,9 @@ ignored, and the programming error will not be detected.)
 
 - `TableIOFactoryNoSuchError` - If the format_name or implementation
   name is not registered.
+- `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
+  matched to the selected
+  implementation.
 
 <a id="tableio.factory.list_registered_tableio"></a>
 
@@ -2842,7 +2884,8 @@ def list_implementations_tableio(format_name: Optional[str] = None,
                                  lower: bool = False,
                                  upper: bool = False,
                                  capabilities: Optional[Capabilities] = None,
-                                 empty_is_ok: bool = False) -> list[str]
+                                 empty_is_ok: bool = False,
+                                 alphabetical: bool = True) -> list[str]
 ```
 
 Get a list of all registered implementation names.
@@ -2865,6 +2908,12 @@ This is a shortcut for TableIOFactory.get_registered_implementations().
   If False, a TableIOFactoryNoCapabilityMatch
   error is raised if no implementations match the
   capabilities.
+- `alphabetical` - If True, the implementations are returned in
+  alphabetical order. If False, the implementations
+  are returned with the strict matches first and the
+  nonstrict matches last. Both strict and nonstrict
+  matches are sorted by priority, from highest to
+  lowest.
 
 **Returns**:
 

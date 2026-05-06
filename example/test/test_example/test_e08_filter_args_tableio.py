@@ -136,7 +136,7 @@ SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet',
     row_fragments=build_sheet_row_fragments(
         BackendExpectation(
-            actual_implementation='openpyxl',
+            actual_implementation='OpenPyXL',
             filtered_arg_count=0,
             kept_args=[],
             removed_args=ALL_REMOVED_ARGS,
@@ -177,7 +177,7 @@ SHEET_XW: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet1',
     row_fragments=build_sheet_row_fragments(
         BackendExpectation(
-            actual_implementation='xlsxwriter',
+            actual_implementation='XlsxWriter',
             filtered_arg_count=0,
             kept_args=[],
             removed_args=ALL_REMOVED_ARGS,
@@ -225,6 +225,21 @@ CSV_FRAGMENTS: list[str] = [
     'Capability can_write_box;not supported (strict);',
     '## A small table written with the filtered args.',
     'message;value',
+    'writer implementation;csv',
+    'arg count;3'
+]
+
+CSV_AUTO_FRAGMENTS: list[str] = [
+    '# Summary of the filtering.',
+    'Implementation;csv',
+    'Filtered arg count;3',
+    '## Arguments kept for this backend.',
+    'character_encoding;utf-8',
+    'csv_delimiter;";"',
+    'csv_quoting;minimal',
+    '## Information about the writer we created.',
+    'Implementation;csv;(none)',
+    '## A small table written with the filtered args.',
     'writer implementation;csv',
     'arg count;3'
 ]
@@ -294,6 +309,9 @@ def test_e08_filter_args_tableio_spreadsheet(
                                    format_name='csv',
                                    implementation_name='csv'),
                            CSV_FRAGMENTS),
+                          (Example(example_function=e08_filter_args_tableio,
+                                   format_name='csv'),
+                           CSV_AUTO_FRAGMENTS),
                           (Example(example_function=e08_filter_args_tableio,
                                    format_name='md',
                                    implementation_name='mformat'),

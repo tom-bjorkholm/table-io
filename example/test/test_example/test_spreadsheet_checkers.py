@@ -200,7 +200,7 @@ def _create_invalid_xlsx_with_custom_font(file_path: Path) -> None:
     workbook = OpenPyXLWorkbook()
     worksheet = workbook.active
     assert isinstance(worksheet, Worksheet)
-    worksheet['A1'] = 'hello'
+    worksheet['A1'] = 1
     worksheet['A1'].font = Font(bold=True, size=14)
     workbook.save(file_path)
     workbook.close()

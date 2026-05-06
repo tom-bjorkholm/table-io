@@ -189,11 +189,12 @@ the role of `filter_args_tableio()`, and the example also shows that the
 filtering depends on the actual implementation, not just the high-level
 format name.
 
-The program resolves the implementation that will be used, writes a
-summary of which arguments were kept and removed, and then creates the
-final writer with the filtered arguments. It is a good reference if you
-want one configuration layer in your application but still need to
-support several `tableio` backends cleanly.
+The program lets `filter_args_tableio()` use the same capability-driven
+implementation selection as `create_tableio()`, writes a summary of
+which arguments were kept and removed, and then creates the final writer
+with the filtered arguments. It is a good reference if you want one
+configuration layer in your application but still need to support several
+`tableio` backends cleanly.
 
 ## e09_multi_sheet.py
 

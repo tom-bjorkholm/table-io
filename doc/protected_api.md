@@ -261,6 +261,7 @@
     * [add\_implementation](#tableio.factory.FactoryFormatInfo.add_implementation)
     * [best\_match\_names](#tableio.factory.FactoryFormatInfo.best_match_names)
     * [correct\_implementation\_name](#tableio.factory.FactoryFormatInfo.correct_implementation_name)
+    * [get\_usage](#tableio.factory.FactoryFormatInfo.get_usage)
   * [TableIOFactory](#tableio.factory.TableIOFactory)
     * [\_\_init\_\_](#tableio.factory.TableIOFactory.__init__)
     * [i\_get\_factory](#tableio.factory.TableIOFactory.i_get_factory)
@@ -268,12 +269,17 @@
     * [i\_register](#tableio.factory.TableIOFactory.i_register)
     * [create](#tableio.factory.TableIOFactory.create)
     * [i\_create](#tableio.factory.TableIOFactory.i_create)
+    * [\_correct\_format\_name](#tableio.factory.TableIOFactory._correct_format_name)
+    * [\_format\_info](#tableio.factory.TableIOFactory._format_info)
+    * [\_select\_implementation\_name](#tableio.factory.TableIOFactory._select_implementation_name)
     * [filter\_args](#tableio.factory.TableIOFactory.filter_args)
     * [i\_filter\_args](#tableio.factory.TableIOFactory.i_filter_args)
     * [get\_registered\_formats](#tableio.factory.TableIOFactory.get_registered_formats)
     * [i\_get\_registered\_formats](#tableio.factory.TableIOFactory.i_get_registered_formats)
     * [get\_registered\_implementations](#tableio.factory.TableIOFactory.get_registered_implementations)
     * [i\_get\_registered\_implementations](#tableio.factory.TableIOFactory.i_get_registered_implementations)
+    * [\_implementation\_matches](#tableio.factory.TableIOFactory._implementation_matches)
+    * [\_implementation\_names](#tableio.factory.TableIOFactory._implementation_names)
     * [get\_usage](#tableio.factory.TableIOFactory.get_usage)
     * [i\_get\_usage](#tableio.factory.TableIOFactory.i_get_usage)
   * [create\_tableio](#tableio.factory.create_tableio)
@@ -599,8 +605,20 @@
 * [tableio.reg\_pkg\_formats](#tableio.reg_pkg_formats)
   * [register\_formats\_in\_pkg](#tableio.reg_pkg_formats.register_formats_in_pkg)
 * [tableio.tableio\_excel\_openpyxl](#tableio.tableio_excel_openpyxl)
+  * [\_xml\_tag](#tableio.tableio_excel_openpyxl._xml_tag)
   * [\_font\_child\_sort\_key](#tableio.tableio_excel_openpyxl._font_child_sort_key)
   * [\_styles\_xml\_with\_sorted\_fonts](#tableio.tableio_excel_openpyxl._styles_xml_with_sorted_fonts)
+  * [\_new\_shared\_strings\_root](#tableio.tableio_excel_openpyxl._new_shared_strings_root)
+  * [\_read\_shared\_strings\_root](#tableio.tableio_excel_openpyxl._read_shared_strings_root)
+  * [\_shared\_string\_count](#tableio.tableio_excel_openpyxl._shared_string_count)
+  * [\_shared\_strings\_xml](#tableio.tableio_excel_openpyxl._shared_strings_xml)
+  * [\_inline\_string\_to\_shared\_string](#tableio.tableio_excel_openpyxl._inline_string_to_shared_string)
+  * [\_sheet\_xml\_with\_shared\_strings](#tableio.tableio_excel_openpyxl._sheet_xml_with_shared_strings)
+  * [\_content\_types\_with\_shared\_strings](#tableio.tableio_excel_openpyxl._content_types_with_shared_strings)
+  * [\_next\_relationship\_id](#tableio.tableio_excel_openpyxl._next_relationship_id)
+  * [\_workbook\_rels\_with\_shared\_strings](#tableio.tableio_excel_openpyxl._workbook_rels_with_shared_strings)
+  * [\_is\_worksheet\_xml](#tableio.tableio_excel_openpyxl._is_worksheet_xml)
+  * [\_worksheet\_rewrites\_with\_shared\_strings](#tableio.tableio_excel_openpyxl._worksheet_rewrites_with_shared_strings)
   * [\_rewrite\_saved\_workbook](#tableio.tableio_excel_openpyxl._rewrite_saved_workbook)
   * [TableIOExcelOpenPyXL](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL)
     * [\_\_init\_\_](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__)
@@ -4216,6 +4234,16 @@ def correct_implementation_name(implementation_name: str) -> str
 
 Correct the implementation name to the correct case.
 
+<a id="tableio.factory.FactoryFormatInfo.get_usage"></a>
+
+#### get\_usage
+
+```python
+def get_usage(implementation_name: str) -> Descriptor
+```
+
+Get usage information for one implementation.
+
 <a id="tableio.factory.TableIOFactory"></a>
 
 ## TableIOFactory Objects
@@ -4366,14 +4394,49 @@ Internally create an instance of a registered subclass.
 - `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
   matched to any implementation.
 
+<a id="tableio.factory.TableIOFactory._correct_format_name"></a>
+
+#### \_correct\_format\_name
+
+```python
+def _correct_format_name(format_name: str) -> str
+```
+
+Correct a registered format name to its stored case.
+
+<a id="tableio.factory.TableIOFactory._format_info"></a>
+
+#### \_format\_info
+
+```python
+def _format_info(format_name: str) -> FactoryFormatInfo
+```
+
+Get registered format information by case-insensitive name.
+
+<a id="tableio.factory.TableIOFactory._select_implementation_name"></a>
+
+#### \_select\_implementation\_name
+
+```python
+@staticmethod
+def _select_implementation_name(format_info: FactoryFormatInfo,
+                                implementation: Optional[str],
+                                capabilities: Optional[Capabilities]) -> str
+```
+
+Select the implementation name matching the request.
+
 <a id="tableio.factory.TableIOFactory.filter_args"></a>
 
 #### filter\_args
 
 ```python
 @staticmethod
-def filter_args(args: OptionalArgs, format_name: str,
-                implementation: str) -> OptionalArgs
+def filter_args(args: OptionalArgs,
+                format_name: str,
+                implementation: Optional[str],
+                capabilities: Optional[Capabilities] = None) -> OptionalArgs
 ```
 
 Filter the arguments for a registered format.
@@ -4390,7 +4453,12 @@ be silently ignored, and the programming error will not be detected.)
 - `args` - The arguments to filter.
 - `format_name` - The name identifier of the format class to filter the
   arguments for.
-- `implementation` - The implementation name to use.
+- `implementation` - The implementation name to use. If implementation
+  is specified as None, filtering is done for the
+  implementation create() would use with a None value
+  for the implementation parameter.
+- `capabilities` - The capabilities to match. This is used to determine
+  the implementation to use if implementation is None.
 
 **Returns**:
 
@@ -4401,14 +4469,19 @@ be silently ignored, and the programming error will not be detected.)
 - `TableIOFactoryNoSuchError` - If the format_name is not registered
   or the implementation name is not
   registered.
+- `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
+  matched to the selected
+  implementation.
 
 <a id="tableio.factory.TableIOFactory.i_filter_args"></a>
 
 #### i\_filter\_args
 
 ```python
-def i_filter_args(args: OptionalArgs, format_name: str,
-                  implementation: str) -> OptionalArgs
+def i_filter_args(args: OptionalArgs,
+                  format_name: str,
+                  implementation: Optional[str],
+                  capabilities: Optional[Capabilities] = None) -> OptionalArgs
 ```
 
 Internally filter the arguments for a registered format.
@@ -4483,7 +4556,8 @@ def get_registered_implementations(format_name: Optional[str] = None,
                                    lower: bool = False,
                                    upper: bool = False,
                                    capabilities: Optional[Capabilities] = None,
-                                   empty_is_ok: bool = False) -> list[str]
+                                   empty_is_ok: bool = False,
+                                   alphabetical: bool = True) -> list[str]
 ```
 
 Get a list of all registered implementation names.
@@ -4514,6 +4588,12 @@ implementation names.)
   If False, a TableIOFactoryNoCapabilityMatch
   error is raised if no implementations match the
   capabilities.
+- `alphabetical` - If True, the implementations are returned in
+  alphabetical order. If False, the implementations
+  are returned with the strict matches first and the
+  nonstrict matches last. Both strict and nonstrict
+  matches are sorted by priority, from highest to
+  lowest.
 
 **Returns**:
 
@@ -4537,10 +4617,35 @@ def i_get_registered_implementations(
         lower: bool = False,
         upper: bool = False,
         capabilities: Optional[Capabilities] = None,
-        empty_is_ok: bool = False) -> list[str]
+        empty_is_ok: bool = False,
+        alphabetical: bool = True) -> list[str]
 ```
 
 Internally get a list of registered implementation names.
+
+<a id="tableio.factory.TableIOFactory._implementation_matches"></a>
+
+#### \_implementation\_matches
+
+```python
+def _implementation_matches(format_names: list[str],
+                            capabilities: Optional[Capabilities],
+                            empty_is_ok: bool) -> BestMatch
+```
+
+Get matching implementations for the requested format names.
+
+<a id="tableio.factory.TableIOFactory._implementation_names"></a>
+
+#### \_implementation\_names
+
+```python
+@staticmethod
+def _implementation_names(best_match: BestMatch,
+                          alphabetical: bool) -> list[str]
+```
+
+Get implementation names from best matches without duplicates.
 
 <a id="tableio.factory.TableIOFactory.get_usage"></a>
 
@@ -4629,8 +4734,11 @@ This is a shortcut for TableIOFactory.create().
 #### filter\_args\_tableio
 
 ```python
-def filter_args_tableio(args: OptionalArgs, format_name: str,
-                        implementation: str) -> OptionalArgs
+def filter_args_tableio(
+        args: OptionalArgs,
+        format_name: str,
+        implementation: Optional[str],
+        capabilities: Optional[Capabilities] = None) -> OptionalArgs
 ```
 
 Filter the arguments for a registered format.
@@ -4648,7 +4756,12 @@ ignored, and the programming error will not be detected.)
 - `args` - The arguments to filter.
 - `format_name` - The name identifier of the format class to filter
   the arguments for.
-- `implementation` - The implementation name to use.
+- `implementation` - The implementation name to use. If implementation
+  is specified as None, filtering is done for the
+  implementation create() would use with a None value
+  for the implementation parameter.
+- `capabilities` - The capabilities to match. This is used to determine
+  the implementation to use if implementation is None.
 
 **Returns**:
 
@@ -4658,6 +4771,9 @@ ignored, and the programming error will not be detected.)
 
 - `TableIOFactoryNoSuchError` - If the format_name or implementation
   name is not registered.
+- `TableIOFactoryNoCapabilityMatch` - If the capabilities cannot be
+  matched to the selected
+  implementation.
 
 <a id="tableio.factory.list_registered_tableio"></a>
 
@@ -4706,7 +4822,8 @@ def list_implementations_tableio(format_name: Optional[str] = None,
                                  lower: bool = False,
                                  upper: bool = False,
                                  capabilities: Optional[Capabilities] = None,
-                                 empty_is_ok: bool = False) -> list[str]
+                                 empty_is_ok: bool = False,
+                                 alphabetical: bool = True) -> list[str]
 ```
 
 Get a list of all registered implementation names.
@@ -4729,6 +4846,12 @@ This is a shortcut for TableIOFactory.get_registered_implementations().
   If False, a TableIOFactoryNoCapabilityMatch
   error is raised if no implementations match the
   capabilities.
+- `alphabetical` - If True, the implementations are returned in
+  alphabetical order. If False, the implementations
+  are returned with the strict matches first and the
+  nonstrict matches last. Both strict and nonstrict
+  matches are sorted by priority, from highest to
+  lowest.
 
 **Returns**:
 
@@ -8726,6 +8849,16 @@ Get formats defined in the package to register with the factory.
 
 TableIO reader/writer class for Excel files using OpenPyXL.
 
+<a id="tableio.tableio_excel_openpyxl._xml_tag"></a>
+
+#### \_xml\_tag
+
+```python
+def _xml_tag(namespace: str, tag_name: str) -> str
+```
+
+Return one fully qualified XML tag name.
+
 <a id="tableio.tableio_excel_openpyxl._font_child_sort_key"></a>
 
 #### \_font\_child\_sort\_key
@@ -8745,6 +8878,119 @@ def _styles_xml_with_sorted_fonts(data: bytes) -> bytes
 ```
 
 Return styles XML with font child elements in schema order.
+
+<a id="tableio.tableio_excel_openpyxl._new_shared_strings_root"></a>
+
+#### \_new\_shared\_strings\_root
+
+```python
+def _new_shared_strings_root() -> ET.Element
+```
+
+Create an empty shared strings XML root element.
+
+<a id="tableio.tableio_excel_openpyxl._read_shared_strings_root"></a>
+
+#### \_read\_shared\_strings\_root
+
+```python
+def _read_shared_strings_root(file_name: Path) -> ET.Element
+```
+
+Read the shared strings root, or create an empty one.
+
+<a id="tableio.tableio_excel_openpyxl._shared_string_count"></a>
+
+#### \_shared\_string\_count
+
+```python
+def _shared_string_count(shared_strings_root: ET.Element) -> int
+```
+
+Return the number of shared string items in the root.
+
+<a id="tableio.tableio_excel_openpyxl._shared_strings_xml"></a>
+
+#### \_shared\_strings\_xml
+
+```python
+def _shared_strings_xml(shared_strings_root: ET.Element) -> bytes
+```
+
+Return finalized shared strings XML bytes.
+
+<a id="tableio.tableio_excel_openpyxl._inline_string_to_shared_string"></a>
+
+#### \_inline\_string\_to\_shared\_string
+
+```python
+def _inline_string_to_shared_string(cell: ET.Element,
+                                    shared_strings_root: ET.Element) -> None
+```
+
+Move one inline string cell value to the shared string table.
+
+<a id="tableio.tableio_excel_openpyxl._sheet_xml_with_shared_strings"></a>
+
+#### \_sheet\_xml\_with\_shared\_strings
+
+```python
+def _sheet_xml_with_shared_strings(data: bytes,
+                                   shared_strings_root: ET.Element) -> bytes
+```
+
+Return sheet XML with inline strings converted to shared strings.
+
+<a id="tableio.tableio_excel_openpyxl._content_types_with_shared_strings"></a>
+
+#### \_content\_types\_with\_shared\_strings
+
+```python
+def _content_types_with_shared_strings(data: bytes) -> bytes
+```
+
+Return content types XML with a shared strings override.
+
+<a id="tableio.tableio_excel_openpyxl._next_relationship_id"></a>
+
+#### \_next\_relationship\_id
+
+```python
+def _next_relationship_id(root: ET.Element) -> str
+```
+
+Return the next workbook relationship id.
+
+<a id="tableio.tableio_excel_openpyxl._workbook_rels_with_shared_strings"></a>
+
+#### \_workbook\_rels\_with\_shared\_strings
+
+```python
+def _workbook_rels_with_shared_strings(data: bytes) -> bytes
+```
+
+Return workbook relationships XML with a shared strings relation.
+
+<a id="tableio.tableio_excel_openpyxl._is_worksheet_xml"></a>
+
+#### \_is\_worksheet\_xml
+
+```python
+def _is_worksheet_xml(filename: str) -> bool
+```
+
+Return True if an archive entry is a worksheet XML file.
+
+<a id="tableio.tableio_excel_openpyxl._worksheet_rewrites_with_shared_strings"></a>
+
+#### \_worksheet\_rewrites\_with\_shared\_strings
+
+```python
+def _worksheet_rewrites_with_shared_strings(
+        file_name: Path, shared_strings_root: ET.Element) -> dict[str, bytes]
+```
+
+Return worksheet XML rewrites and update the shared string table.
 
 <a id="tableio.tableio_excel_openpyxl._rewrite_saved_workbook"></a>
 

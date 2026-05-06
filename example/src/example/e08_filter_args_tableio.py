@@ -5,8 +5,6 @@
 # MIT License
 
 from enum import IntEnum
-from pathlib import Path
-from tempfile import TemporaryDirectory
 from typing import Optional
 from mformat.paper_size import PaperSize
 from mformat.document_class import DocumentClass
@@ -32,8 +30,7 @@ CAPS = Capabilities(
 # pylint: enable=duplicate-code
 
 
-def build_mixed_optional_args(
-        optional_args: OptionalArgs) -> OptionalArgsDict:
+def build_mixed_optional_args(optional_args: OptionalArgs) -> OptionalArgsDict:
     """Build one dictionary that contains arguments for several formats.
 
     The point of this example is that the dictionary intentionally mixes
@@ -61,29 +58,6 @@ def stringify_optional_arg_value(value: object) -> str:
     if isinstance(value, IntEnum):
         return value.name
     return str(value)
-
-
-def resolve_implementation_name(format_name: str,
-                                implementation_name: Optional[str],
-                                capabilities: Capabilities) -> str:
-    """Resolve the concrete implementation name to use for filtering.
-
-    filter_args_tableio() needs both a format name and an implementation
-    name. When the caller did not specify an implementation, we discover the
-    implementation the factory would choose by creating a temporary writer in
-    a temporary directory and reading its descriptor.
-    """
-    if implementation_name is not None:
-        return implementation_name
-    with TemporaryDirectory() as temp_dir:
-        probe_output = Path(temp_dir) / 'probe_output'
-        with create_tableio(format_name=format_name,
-                            file_name=probe_output,
-                            file_access=FileAccess.CREATE,
-                            capabilities=capabilities) as tableio:
-            return tableio.get_description().implementation
-    msg = 'Could not resolve the implementation name.'
-    raise RuntimeError(msg)
 
 
 def build_summary_table(actual_implementation: str,
@@ -134,25 +108,22 @@ def e08_filter_args_tableio(format_name: str, output_file_name: str,
 
     This example demonstrates a common pattern:
     1. Build one dictionary with arguments for several possible formats.
-    2. Resolve the concrete implementation that will actually be used.
-    3. Filter the dictionary for that backend.
-    4. Create the final writer with only the valid arguments.
+    2. Filter the dictionary for the backend the factory will choose.
+    3. Create the final writer with only the valid arguments.
     """
     mixed_args = build_mixed_optional_args(optional_args)
-    actual_implementation = resolve_implementation_name(
-        format_name=format_name,
-        implementation_name=implementation_name,
-        capabilities=CAPS)
     filtered_args = filter_args_tableio(
         args=mixed_args,
         format_name=format_name,
-        implementation=actual_implementation)
+        implementation=implementation_name,
+        capabilities=CAPS)
     with create_tableio(format_name=format_name,
                         file_name=output_file_name,
                         file_access=FileAccess.CREATE,
                         implementation=implementation_name,
                         capabilities=CAPS,
                         args=filtered_args) as tableio:
+        actual_implementation = tableio.get_description().implementation
         #
         # First write a short summary so the reader sees the resolved
         # implementation and how many arguments survived the filtering.

@@ -285,6 +285,11 @@ class FactoryFormatInfo:
             'Available implementations: ' +
             f'{", ".join(list(self._registry.keys()))}')
 
+    def get_usage(self, implementation_name: str) -> Descriptor:
+        """Get usage information for one implementation."""
+        return self._usage[
+            self.correct_implementation_name(implementation_name)]
+
 
 class TableIOFactory:
     """Factory class for creating instances of TableIO subclasses.
@@ -411,34 +416,10 @@ class TableIOFactory:
                                              matched to any implementation.
         """
         _check_capabilities_for_file_access(file_access, capabilities)
-        correct_name: Optional[str] = None
-        if format_name in self._formats:
-            correct_name = format_name
-        elif format_name.lower() in self._lower2correct:
-            correct_name = self._lower2correct[format_name.lower()]
-        else:
-            raise TableIOFactoryNoSuchError(
-                f'Format "{format_name}" is not registered. ' +
-                'Available formats: ' +
-                f'{", ".join(sorted(list(self._formats.keys())))}'
-            )
-        assert correct_name is not None
-        format_info: FactoryFormatInfo = self._formats[correct_name]
-        best_matches = format_info.best_match_names(
-            capabilities=capabilities, empty_is_ok=False)
-        if implementation is not None:
-            corrected_implementation = \
-                format_info.correct_implementation_name(implementation)
-            bmatches_impls = [impl.implementation
-                              for impl in best_matches.combined()]
-            if corrected_implementation not in bmatches_impls:
-                msg3 = f'Implementation "{implementation}" '
-                msg3 += 'does not match the capabilities. Available matches: '
-                msg3 += f'{", ".join(bmatches_impls)}'
-                raise TableIOFactoryNoCapabilityMatch(msg3)
-            chosen_impl = corrected_implementation
-        else:
-            chosen_impl = best_matches.combined()[0].implementation
+        format_info = self._format_info(format_name)
+        chosen_impl = self._select_implementation_name(
+            format_info=format_info, implementation=implementation,
+            capabilities=capabilities)
         format_class = format_info._registry[chosen_impl]  # pylint: disable=protected-access # noqa: E501
         if args is None:
             return format_class(file_name=file_name, file_access=file_access)
@@ -447,9 +428,47 @@ class TableIOFactory:
         # mypy cannot see which TableIO subclass is being created, so it
         # cannot know which arguments are valid.
 
+    def _correct_format_name(self, format_name: str) -> str:
+        """Correct a registered format name to its stored case."""
+        if format_name in self._formats:
+            return format_name
+        if format_name.lower() in self._lower2correct:
+            return self._lower2correct[format_name.lower()]
+        msg = f'Format "{format_name}" is not registered. '
+        msg += 'Available formats: '
+        msg += f'{", ".join(sorted(list(self._formats.keys())))}'
+        raise TableIOFactoryNoSuchError(msg)
+
+    def _format_info(self, format_name: str) -> FactoryFormatInfo:
+        """Get registered format information by case-insensitive name."""
+        return self._formats[self._correct_format_name(format_name)]
+
+    @staticmethod
+    def _select_implementation_name(
+            format_info: FactoryFormatInfo,
+            implementation: Optional[str],
+            capabilities: Optional[Capabilities]) -> str:
+        """Select the implementation name matching the request."""
+        best_matches = format_info.best_match_names(
+            capabilities=capabilities, empty_is_ok=False)
+        if implementation is None:
+            return best_matches.combined()[0].implementation
+        corrected_implementation = \
+            format_info.correct_implementation_name(implementation)
+        matching_names = [
+            impl.implementation for impl in best_matches.combined()]
+        if corrected_implementation in matching_names:
+            return corrected_implementation
+        msg = f'Implementation "{implementation}" '
+        msg += 'does not match the capabilities. Available matches: '
+        msg += f'{", ".join(matching_names)}'
+        raise TableIOFactoryNoCapabilityMatch(msg)
+
     @staticmethod
     def filter_args(args: OptionalArgs, format_name: str,
-                    implementation: str) -> OptionalArgs:
+                    implementation: Optional[str],
+                    capabilities: Optional[Capabilities] = None
+                    ) -> OptionalArgs:
         """Filter the arguments for a registered format.
 
         Filter the arguments to only include the arguments that are valid for
@@ -462,23 +481,37 @@ class TableIOFactory:
             args: The arguments to filter.
             format_name: The name identifier of the format class to filter the
                          arguments for.
-            implementation: The implementation name to use.
+            implementation: The implementation name to use. If implementation
+                            is specified as None, filtering is done for the
+                            implementation create() would use with a None value
+                            for the implementation parameter.
+            capabilities: The capabilities to match. This is used to determine
+                          the implementation to use if implementation is None.
         Returns:
             The filtered arguments.
         Raises:
             TableIOFactoryNoSuchError: If the format_name is not registered
                                        or the implementation name is not
                                        registered.
+            TableIOFactoryNoCapabilityMatch: If the capabilities cannot be
+                                             matched to the selected
+                                             implementation.
         """
         factory = TableIOFactory.i_get_factory()
         return factory.i_filter_args(args=args, format_name=format_name,
-                                     implementation=implementation)
+                                     implementation=implementation,
+                                     capabilities=capabilities)
 
     def i_filter_args(self, args: OptionalArgs, format_name: str,
-                      implementation: str) -> OptionalArgs:
+                      implementation: Optional[str],
+                      capabilities: Optional[Capabilities] = None
+                      ) -> OptionalArgs:
         """Internally filter the arguments for a registered format."""
-        format_usage = self.i_get_usage(format_name=format_name,
-                                        implementation=implementation)
+        format_info = self._format_info(format_name)
+        chosen_impl = self._select_implementation_name(
+            format_info=format_info, implementation=implementation,
+            capabilities=capabilities)
+        format_usage = format_info.get_usage(chosen_impl)
         if args is None:
             return None
         assert args is not None
@@ -557,12 +590,13 @@ class TableIOFactory:
         return ret
 
     @staticmethod
-    def get_registered_implementations(format_name: Optional[str] = None,
-                                       lower: bool = False,
-                                       upper: bool = False,
-                                       capabilities: Optional[Capabilities]
-                                       = None,
-                                       empty_is_ok: bool = False) -> list[str]:
+    def get_registered_implementations(  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
+            format_name: Optional[str] = None,
+            lower: bool = False,
+            upper: bool = False,
+            capabilities: Optional[Capabilities] = None,
+            empty_is_ok: bool = False,
+            alphabetical: bool = True) -> list[str]:
         """Get a list of all registered implementation names.
 
         The list includes all registered implementation names optionally
@@ -590,6 +624,12 @@ class TableIOFactory:
                          If False, a TableIOFactoryNoCapabilityMatch
                          error is raised if no implementations match the
                          capabilities.
+            alphabetical: If True, the implementations are returned in
+                         alphabetical order. If False, the implementations
+                         are returned with the strict matches first and the
+                         nonstrict matches last. Both strict and nonstrict
+                         matches are sorted by priority, from highest to
+                         lowest.
         Returns:
             A list of registered implementation name strings optionally
             filtered to only include implementations that offer the
@@ -602,46 +642,63 @@ class TableIOFactory:
         factory = TableIOFactory.i_get_factory()
         return factory.i_get_registered_implementations(
             format_name=format_name, lower=lower, upper=upper,
-            capabilities=capabilities, empty_is_ok=empty_is_ok)
+            capabilities=capabilities, empty_is_ok=empty_is_ok,
+            alphabetical=alphabetical)
 
-    def i_get_registered_implementations(  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
+    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
+    def i_get_registered_implementations(
             self, format_name: Optional[str] = None,
             lower: bool = False, upper: bool = False,
             capabilities: Optional[Capabilities] = None,
-            empty_is_ok: bool = False) -> list[str]:
+            empty_is_ok: bool = False,
+            alphabetical: bool = True) -> list[str]:
         """Internally get a list of registered implementation names."""
         fmtkeys: list[str] = list(self._formats.keys())
         if format_name is not None:
-            fmtkeys = [format_name]
-        implkeys: set[str] = set()
-        if capabilities is not None:
-            implmatches: list[BestMatch] = []
-            for fmtkey in fmtkeys:
-                format_info: FactoryFormatInfo = self._formats[fmtkey]
-                implmatches.append(
-                    format_info.best_match_names(capabilities=capabilities,
-                                                 empty_is_ok=True))
-            implkeys = {
-                impl.implementation for impl in
-                BestMatch.add_list(implmatches).combined()
-              }  # several format names may have the same implementation name
-            if not implkeys and not empty_is_ok:
-                msg = 'No implementations match the capabilities.'
-                raise TableIOFactoryNoCapabilityMatch(msg)
-        else:
-            implkeys = {
-                implkey
-                for fmtkey in fmtkeys
-                for implkey in self._formats[fmtkey]._registry.keys()  # pylint: disable=protected-access # noqa: E501
-            }
+            fmtkeys = [self._correct_format_name(format_name)]
+        best_match = self._implementation_matches(
+            format_names=fmtkeys, capabilities=capabilities,
+            empty_is_ok=empty_is_ok)
+        implkeys = self._implementation_names(best_match, alphabetical)
         ret: list[str] = []
-        for implkey in sorted(implkeys):  # order was lost using a set
+        for implkey in implkeys:
             ret.append(implkey)
             if lower and implkey != implkey.lower():
                 ret.append(implkey.lower())
             if upper and implkey != implkey.upper():
                 ret.append(implkey.upper())
         return ret
+
+    def _implementation_matches(
+            self, format_names: list[str],
+            capabilities: Optional[Capabilities],
+            empty_is_ok: bool) -> BestMatch:
+        """Get matching implementations for the requested format names."""
+        implmatches = [
+            self._formats[format_name].best_match_names(
+                capabilities=capabilities, empty_is_ok=True)
+            for format_name in format_names
+        ]
+        best_match = BestMatch.add_list(implmatches)
+        if len(best_match) == 0 and not empty_is_ok:
+            msg = 'No implementations match the capabilities.'
+            raise TableIOFactoryNoCapabilityMatch(msg)
+        return best_match
+
+    @staticmethod
+    def _implementation_names(best_match: BestMatch,
+                              alphabetical: bool) -> list[str]:
+        """Get implementation names from best matches without duplicates."""
+        names: list[str] = []
+        seen: set[str] = set()
+        for impl in best_match.combined():
+            if impl.implementation in seen:
+                continue
+            seen.add(impl.implementation)
+            names.append(impl.implementation)
+        if alphabetical:
+            return sorted(names)
+        return names
 
     @staticmethod
     def get_usage(format_name: str, implementation: str) -> Descriptor:
@@ -664,28 +721,7 @@ class TableIOFactory:
 
     def i_get_usage(self, format_name: str, implementation: str) -> Descriptor:
         """Internally get the usage information for a registered format."""
-        format_info: Optional[FactoryFormatInfo] = None
-        if format_name in self._formats:
-            format_info = self._formats[format_name]
-        elif format_name.lower() not in self._lower2correct:
-            msg1 = f'Format "{format_name}" is not registered. '
-            msg1 += 'Available formats: '
-            msg1 += f'{", ".join(sorted(list(self._formats.keys())))}'
-            raise TableIOFactoryNoSuchError(msg1)
-        else:
-            format_info = self._formats[self._lower2correct[format_name.lower()]]  # pylint: disable=protected-access # noqa: E501
-        assert format_info is not None
-        fusage = format_info._usage  # pylint: disable=protected-access # noqa: E501
-        if implementation in fusage:
-            return fusage[implementation]
-        l2correct = format_info._lower2correct  # pylint: disable=protected-access # noqa: E501
-        if implementation.lower() not in l2correct:
-            msg2 = f'Implementation "{implementation}" is not registered. '
-            msg2 += 'Available implementations: '
-            msg2 += f'{", ".join(list(format_info._registry.keys()))}'  # pylint: disable=protected-access # noqa: E501
-            raise TableIOFactoryNoSuchError(msg2)
-        correct_name = l2correct[implementation.lower()]
-        return format_info._usage[correct_name]  # pylint: disable=protected-access # noqa: E501
+        return self._format_info(format_name).get_usage(implementation)
 
 
 def create_tableio(format_name: str,  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: E501
@@ -729,7 +765,9 @@ def create_tableio(format_name: str,  # pylint: disable=too-many-arguments, too-
 
 
 def filter_args_tableio(args: OptionalArgs, format_name: str,
-                        implementation: str) -> OptionalArgs:
+                        implementation: Optional[str],
+                        capabilities: Optional[Capabilities] = None) \
+                            -> OptionalArgs:
     """Filter the arguments for a registered format.
 
     This is a shortcut for TableIOFactory.filter_args().
@@ -743,15 +781,24 @@ def filter_args_tableio(args: OptionalArgs, format_name: str,
         args: The arguments to filter.
         format_name: The name identifier of the format class to filter
                      the arguments for.
-        implementation: The implementation name to use.
+        implementation: The implementation name to use. If implementation
+                        is specified as None, filtering is done for the
+                        implementation create() would use with a None value
+                        for the implementation parameter.
+        capabilities: The capabilities to match. This is used to determine
+                      the implementation to use if implementation is None.
     Returns:
         The filtered arguments.
     Raises:
         TableIOFactoryNoSuchError: If the format_name or implementation
                                    name is not registered.
+        TableIOFactoryNoCapabilityMatch: If the capabilities cannot be
+                                         matched to the selected
+                                         implementation.
     """
     return TableIOFactory.filter_args(args=args, format_name=format_name,
-                                      implementation=implementation)
+                                      implementation=implementation,
+                                      capabilities=capabilities)
 
 
 def list_registered_tableio(lower: bool = False,
@@ -787,11 +834,12 @@ def list_registered_tableio(lower: bool = False,
                                                  empty_is_ok=empty_is_ok)
 
 
+# pylint: disable-next=too-many-arguments,too-many-positional-arguments
 def list_implementations_tableio(format_name: Optional[str] = None,
-                                 lower: bool = False,
-                                 upper: bool = False,
+                                 lower: bool = False, upper: bool = False,
                                  capabilities: Optional[Capabilities] = None,
-                                 empty_is_ok: bool = False) -> list[str]:
+                                 empty_is_ok: bool = False,
+                                 alphabetical: bool = True) -> list[str]:
     """Get a list of all registered implementation names.
 
     This is a shortcut for TableIOFactory.get_registered_implementations().
@@ -810,6 +858,12 @@ def list_implementations_tableio(format_name: Optional[str] = None,
                      If False, a TableIOFactoryNoCapabilityMatch
                      error is raised if no implementations match the
                      capabilities.
+        alphabetical: If True, the implementations are returned in
+                     alphabetical order. If False, the implementations
+                     are returned with the strict matches first and the
+                     nonstrict matches last. Both strict and nonstrict
+                     matches are sorted by priority, from highest to
+                     lowest.
     Returns:
         A list of registered implementation name strings optionally
         filtered to only include implementations that offer the
@@ -821,7 +875,8 @@ def list_implementations_tableio(format_name: Optional[str] = None,
     """
     return TableIOFactory.get_registered_implementations(
         format_name=format_name, lower=lower, upper=upper,
-        capabilities=capabilities, empty_is_ok=empty_is_ok)
+        capabilities=capabilities, empty_is_ok=empty_is_ok,
+        alphabetical=alphabetical)
 
 
 def usage_tableio(format_name: str, implementation: str) -> Descriptor:
