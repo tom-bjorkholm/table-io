@@ -44,8 +44,7 @@ class TableIOMformatBased(TableIO):
     to satisfy the type hints of the TableIO class.
     """
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None):
         """Initialize the TableIOMformatBased reader/writer class.
@@ -80,13 +79,11 @@ class TableIOMformatBased(TableIO):
         strict_no = SingleCapability(supported=False,
                                      strictness=Strictness.STRICT)
         return Capabilities(
-            can_write=SingleCapability(supported=True),
-            can_read=strict_no,
+            can_write=SingleCapability(supported=True), can_read=strict_no,
             can_fmt_row=cls.get_row_format_capability(),
             can_fmt_value=SingleCapability(supported=False),
             filtered_data_range=SingleCapability(supported=False),
-            can_write_box=strict_no,
-            can_read_box=strict_no,
+            can_write_box=strict_no, can_read_box=strict_no,
             can_write_highlight=SingleCapability(supported=False),
             can_write_borders=SingleCapability(supported=False))
 
@@ -162,8 +159,7 @@ class TableIOMformatBased(TableIO):
             The position of the last cell written. Not reliable.
         """
         row_fmt = row_fmt_from_cell_fmt_list(data)
-        return self._write_table_fmtlistdata(data=row_fmt,
-                                             impl_meta=impl_meta)
+        return self._write_table_fmtlistdata(data=row_fmt, impl_meta=impl_meta)
 
     def _write_table_fmtlistdata(self, data: FmtListData,
                                  impl_meta: TableIO.ImplMetaForWrite) \
@@ -211,8 +207,7 @@ class TableIOMformatBased(TableIO):
             The position of the last cell written. Not reliable.
         """
         row_fmt = row_fmt_from_cell_fmt_dict(data)
-        return self._write_table_fmtdictdata(
-            data=row_fmt, impl_meta=impl_meta)
+        return self._write_table_fmtdictdata(data=row_fmt, impl_meta=impl_meta)
 
     def _write_table_fmtdictdata(self, data: FmtDictData,
                                  impl_meta: TableIO.ImplMetaForDictWrite) \
@@ -243,8 +238,7 @@ class TableIOMformatBased(TableIO):
             values: list[Value] = [row.values[key]
                                    for key in
                                    impl_meta.column_order]
-            list_data.append(
-                FmtListRow(values=values, fmt=row.fmt))
+            list_data.append(FmtListRow(values=values, fmt=row.fmt))
         return self._write_table_fmtlistdata(
             data=list_data, impl_meta=impl_meta.common_impl)
 

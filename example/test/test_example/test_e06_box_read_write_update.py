@@ -33,21 +33,16 @@ SHEET_ROW_FRAGMENTS: list[list[Value]] = build_sheet_row_fragments()
 
 EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=[0, 1],
+        sheet_name='Sheet', anchor_row_fragment=[0, 1],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     number_of_rows=10,
-                                     number_of_columns=10),
+                                     number_of_rows=10, number_of_columns=10),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=[20, 21],
+        sheet_name='Sheet', anchor_row_fragment=[20, 21],
         relative_expectations=[
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=13,
-                                     number_of_rows=2,
-                                     number_of_columns=2),
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=13,
+                                     number_of_rows=2, number_of_columns=2),
         ])
 ]
 
@@ -56,14 +51,10 @@ EXPECTED_STYLES1: list[AnchoredStyleExpectation] = \
                  sheet_name='Sheet1')
 
 SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet',
-    row_fragments=SHEET_ROW_FRAGMENTS
-)
+    sheet_name='Sheet', row_fragments=SHEET_ROW_FRAGMENTS)
 
 SHEET_REST: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet1',
-    row_fragments=SHEET_ROW_FRAGMENTS
-)
+    sheet_name='Sheet1', row_fragments=SHEET_ROW_FRAGMENTS)
 
 
 @pytest.mark.parametrize('example, expected, expected_styles',
@@ -80,8 +71,7 @@ SHEET_REST: SheetContentExpectation = SheetContentExpectation(
                                    implementation_name='pylightxl'),
                            SHEET_REST, EXPECTED_STYLES1)])
 def test_e06_box_read_write_update_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected: SheetContentExpectation,
         expected_styles: list[AnchoredStyleExpectation]) -> None:
     """Test e06 for spreadsheet formats and implementations."""

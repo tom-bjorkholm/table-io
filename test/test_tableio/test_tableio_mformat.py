@@ -61,9 +61,8 @@ class ExposedTableIOMformatMd(TableIOMformatMd):
 @pytest.mark.parametrize(
     ('cls', 'expected'),
     [pytest.param(c, e, id=e.lstrip('.')) for c, e in _ALL_CLASSES])
-def test_file_name_extension(
-        cls: _MformatCls, expected: str,
-        capsys: CaptureFixture[str]) -> None:
+def test_file_name_extension(cls: _MformatCls, expected: str,
+                             capsys: CaptureFixture[str]) -> None:
     """Test file name extension for each mformat class."""
     assert cls.file_name_extension() == expected
     check_capsys(capsys)
@@ -102,9 +101,8 @@ _DESCRIPTION_PARAMS: list[tuple[_MformatCls, str, list[str]]] = [
 @pytest.mark.parametrize(
     ('cls', 'fmt_name', 'opt_args'),
     [pytest.param(c, f, o, id=f) for c, f, o in _DESCRIPTION_PARAMS])
-def test_get_description(
-        cls: _MformatCls, fmt_name: str, opt_args: list[str],
-        capsys: CaptureFixture[str]) -> None:
+def test_get_description(cls: _MformatCls, fmt_name: str, opt_args: list[str],
+                         capsys: CaptureFixture[str]) -> None:
     """Test get_description returns correct Descriptor for each class."""
     desc = cls.get_description()
     assert isinstance(desc, Descriptor)
@@ -133,9 +131,8 @@ def test_get_description(
         pytest.param(TableIOMformatPdf, True, id='pdf'),
         pytest.param(TableIOMformatRtf, True, id='rtf'),
     ])
-def test_row_format_capability(
-        cls: _MformatCls, supported: bool,
-        capsys: CaptureFixture[str]) -> None:
+def test_row_format_capability(cls: _MformatCls, supported: bool,
+                               capsys: CaptureFixture[str]) -> None:
     """Test row format capability for each mformat class."""
     cap = cls.get_row_format_capability()
     assert cap == SingleCapability(supported=supported)
@@ -148,9 +145,8 @@ def test_row_format_capability(
 @pytest.mark.parametrize(
     ('cls', 'ext'),
     [pytest.param(c, e, id=e.lstrip('.')) for c, e in _ALL_CLASSES])
-def test_common_capabilities(
-        cls: _MformatCls, ext: str,
-        capsys: CaptureFixture[str]) -> None:
+def test_common_capabilities(cls: _MformatCls, ext: str,
+                             capsys: CaptureFixture[str]) -> None:
     """Test capabilities common to all mformat-based classes."""
     _ = ext
     caps = cls.get_capabilities()
@@ -174,15 +170,13 @@ def test_common_capabilities(
         pytest.param(FileAccess.READ, id='read'),
         pytest.param(FileAccess.UPDATE, id='update'),
     ])
-def test_rejects_non_create_access(
-        file_access: FileAccess,
-        capsys: CaptureFixture[str]) -> None:
+def test_rejects_non_create_access(file_access: FileAccess,
+                                   capsys: CaptureFixture[str]) -> None:
     """Test that non-CREATE access raises CapabilityNotSupported."""
     with TemporaryDirectory() as td:
         (Path(td) / 'test.md').write_text('', encoding='utf-8')
         with pytest.raises(CapabilityNotSupported):
-            TableIOMformatMd(
-                Path(td) / 'test', file_access, None)
+            TableIOMformatMd(Path(td) / 'test', file_access, None)
     check_capsys(capsys)
 
 
@@ -198,13 +192,11 @@ def test_mformat_base_row_format_capability_must_be_overridden(
 # ── reading not supported ────────────────────────────────────────────
 
 
-def test_reading_not_supported(
-        capsys: CaptureFixture[str]) -> None:
+def test_reading_not_supported(capsys: CaptureFixture[str]) -> None:
     """Test that reading raises CapabilityNotSupported."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
-        with TableIOMformatMd(
-                path, FileAccess.CREATE, None) as w:
+        with TableIOMformatMd(path, FileAccess.CREATE, None) as w:
             w.write_table_listdata([['a', 'b'], ['c', 'd']])
             with pytest.raises(CapabilityNotSupported):
                 w.read_table_listdata()
@@ -216,20 +208,16 @@ def test_reading_not_supported(
 # ── box not supported ────────────────────────────────────────────────
 
 
-def test_box_not_supported_for_listdata(
-        capsys: CaptureFixture[str]) -> None:
+def test_box_rejects_listdata(capsys: CaptureFixture[str]) -> None:
     """Test that box is rejected for list data writes."""
     data = [
         FmtListRow(values=['a', 'b'], fmt=Fmt()),
         FmtListRow(values=['c', 'd'], fmt=Fmt())
     ]
     with TemporaryDirectory() as td:
-        with TableIOMformatMd(
-                Path(td) / 'test', FileAccess.CREATE,
-                None) as w:
+        with TableIOMformatMd(Path(td) / 'test', FileAccess.CREATE, None) as w:
             with pytest.raises(CapabilityNotSupported):
-                w.write_table_fmtlistdata(
-                    data, box=Box(0, 0, 5, 5))
+                w.write_table_fmtlistdata(data, box=Box(0, 0, 5, 5))
     check_capsys(capsys)
 
 
@@ -237,29 +225,23 @@ def test_box_not_supported_for_fmtdictdata(
         capsys: CaptureFixture[str]) -> None:
     """Test that box is rejected for formatted dict data writes."""
     data = [
-        FmtDictRow(
-            values={'a': '1', 'b': '2'}, fmt=Fmt())
+        FmtDictRow(values={'a': '1', 'b': '2'}, fmt=Fmt())
     ]
     with TemporaryDirectory() as td:
-        with TableIOMformatMd(
-                Path(td) / 'test', FileAccess.CREATE,
-                None) as w:
+        with TableIOMformatMd(Path(td) / 'test', FileAccess.CREATE, None) as w:
             with pytest.raises(CapabilityNotSupported):
-                w.write_table_fmtdictdata(
-                    data, ['a', 'b'],
-                    box=Box(0, 0, 5, 5))
+                w.write_table_fmtdictdata(data, ['a', 'b'],
+                                          box=Box(0, 0, 5, 5))
     check_capsys(capsys)
 
 
 # ── context manager test ─────────────────────────────────────────────
 
 
-def test_context_manager_opens_and_closes(
-        capsys: CaptureFixture[str]) -> None:
+def test_context_manager_closes(capsys: CaptureFixture[str]) -> None:
     """Test that the context manager opens and closes the file."""
     with TemporaryDirectory() as td:
-        obj = TableIOMformatMd(
-            Path(td) / 'test', FileAccess.CREATE, None)
+        obj = TableIOMformatMd(Path(td) / 'test', FileAccess.CREATE, None)
         assert not obj.is_open
         with obj:
             assert obj.is_open
@@ -267,12 +249,10 @@ def test_context_manager_opens_and_closes(
     check_capsys(capsys)
 
 
-def test_open_rejects_second_open(
-        capsys: CaptureFixture[str]) -> None:
+def test_open_rejects_second_open(capsys: CaptureFixture[str]) -> None:
     """Opening the same mformat object twice raises RuntimeError."""
     with TemporaryDirectory() as td:
-        obj = TableIOMformatMd(
-            Path(td) / 'test', FileAccess.CREATE, None)
+        obj = TableIOMformatMd(Path(td) / 'test', FileAccess.CREATE, None)
         obj.open()
         with pytest.raises(RuntimeError, match='already open'):
             obj.open()
@@ -283,8 +263,7 @@ def test_open_rejects_second_open(
 # ── file_exists_callback test ────────────────────────────────────────
 
 
-def test_file_exists_callback_is_called(
-        capsys: CaptureFixture[str]) -> None:
+def test_file_exists_callback(capsys: CaptureFixture[str]) -> None:
     """Test file_exists_callback is called for existing files."""
     called: list[str] = []
 
@@ -294,11 +273,9 @@ def test_file_exists_callback_is_called(
     with TemporaryDirectory() as td:
         file_path = Path(td) / 'test.md'
         file_path.write_text('', encoding='utf-8')
-        with TableIOMformatMd(
-                Path(td) / 'test',
-                FileAccess.CREATE, callback) as w:
-            w.write_table_listdata(
-                [['a', 'b'], ['c', 'd']])
+        with TableIOMformatMd(Path(td) / 'test', FileAccess.CREATE,
+                              callback) as w:
+            w.write_table_listdata([['a', 'b'], ['c', 'd']])
         assert len(called) == 1
     check_capsys(capsys)
 
@@ -307,9 +284,8 @@ def test_protected_fmtlist_writer_rejects_box(
         capsys: CaptureFixture[str]) -> None:
     """The internal formatted-list writer rejects boxed writes."""
     with TemporaryDirectory() as td:
-        with ExposedTableIOMformatMd(
-                Path(td) / 'test', FileAccess.CREATE,
-                None) as opened:
+        with ExposedTableIOMformatMd(Path(td) / 'test', FileAccess.CREATE,
+                                     None) as opened:
             table_io = cast(ExposedTableIOMformatMd, opened)
             with pytest.raises(CapabilityNotSupported,
                                match='Box is not supported for this class'):
@@ -323,24 +299,21 @@ def test_protected_fmtdict_writer_rejects_box(
         capsys: CaptureFixture[str]) -> None:
     """The internal formatted-dict writer rejects boxed writes."""
     with TemporaryDirectory() as td:
-        with ExposedTableIOMformatMd(
-                Path(td) / 'test', FileAccess.CREATE,
-                None) as opened:
+        with ExposedTableIOMformatMd(Path(td) / 'test', FileAccess.CREATE,
+                                     None) as opened:
             table_io = cast(ExposedTableIOMformatMd, opened)
             with pytest.raises(CapabilityNotSupported,
                                match='Box is not supported for this class'):
                 table_io.write_table_fmtdictdata_in_box(
                     [FmtDictRow(values={'a': '1', 'b': '2'}, fmt=Fmt())],
-                    ['a', 'b'],
-                    Box(0, 0, 2, 2))
+                    ['a', 'b'], Box(0, 0, 2, 2))
     check_capsys(capsys)
 
 
 # ── Markdown content tests ───────────────────────────────────────────
 
 
-def test_md_write_heading_and_listdata(
-        capsys: CaptureFixture[str]) -> None:
+def test_md_write_heading_listdata(capsys: CaptureFixture[str]) -> None:
     """Test Markdown output with heading and plain list data."""
     data: list[list[Value]] = [
         ['Name', 'Age'],
@@ -348,12 +321,10 @@ def test_md_write_heading_and_listdata(
     ]
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
-        with TableIOMformatMd(
-                path, FileAccess.CREATE, None) as w:
+        with TableIOMformatMd(path, FileAccess.CREATE, None) as w:
             w.write_heading('Report')
             w.write_table_listdata(data)
-        content = (Path(td) / 'test.md').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'test.md').read_text(encoding='utf-8')
         assert '# Report' in content
         assert '| Name' in content
         assert '| Alice' in content
@@ -361,29 +332,24 @@ def test_md_write_heading_and_listdata(
     check_capsys(capsys)
 
 
-def test_md_write_fmtlistdata_bold(
-        capsys: CaptureFixture[str]) -> None:
+def test_md_write_fmtlistdata_bold(capsys: CaptureFixture[str]) -> None:
     """Test Markdown output with bold formatted list data."""
     data = [
-        FmtListRow(values=['Name', 'Age'],
-                   fmt=Fmt(bold=True)),
+        FmtListRow(values=['Name', 'Age'], fmt=Fmt(bold=True)),
         FmtListRow(values=['Alice', '30'], fmt=Fmt())
     ]
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
-        with TableIOMformatMd(
-                path, FileAccess.CREATE, None) as w:
+        with TableIOMformatMd(path, FileAccess.CREATE, None) as w:
             w.write_table_fmtlistdata(data)
-        content = (Path(td) / 'test.md').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'test.md').read_text(encoding='utf-8')
         assert '**Name**' in content
         assert '**Age**' in content
         assert 'Alice' in content
     check_capsys(capsys)
 
 
-def test_md_write_dictdata(
-        capsys: CaptureFixture[str]) -> None:
+def test_md_write_dictdata(capsys: CaptureFixture[str]) -> None:
     """Test Markdown output with plain dict data."""
     data: list[dict[str, Value]] = [
         {'name': 'Alice', 'age': '30'},
@@ -391,11 +357,9 @@ def test_md_write_dictdata(
     ]
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
-        with TableIOMformatMd(
-                path, FileAccess.CREATE, None) as w:
+        with TableIOMformatMd(path, FileAccess.CREATE, None) as w:
             w.write_table_dictdata(data, ['name', 'age'])
-        content = (Path(td) / 'test.md').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'test.md').read_text(encoding='utf-8')
         assert '| name' in content
         assert 'Alice' in content
         assert 'Bob' in content
@@ -410,38 +374,27 @@ def test_md_write_dictdata_applies_first_row_format(
     ]
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
-        with TableIOMformatMd(
-                path, FileAccess.CREATE, None) as w:
-            w.write_table_dictdata(
-                data, ['name', 'age'],
-                first_row_format=Fmt(bold=True))
-        content = (Path(td) / 'test.md').read_text(
-            encoding='utf-8')
+        with TableIOMformatMd(path, FileAccess.CREATE, None) as w:
+            w.write_table_dictdata(data, ['name', 'age'],
+                                   first_row_format=Fmt(bold=True))
+        content = (Path(td) / 'test.md').read_text(encoding='utf-8')
         assert '**name**' in content
         assert '**age**' in content
         assert 'Alice' in content
     check_capsys(capsys)
 
 
-def test_md_write_fmtdictdata(
-        capsys: CaptureFixture[str]) -> None:
+def test_md_write_fmtdictdata(capsys: CaptureFixture[str]) -> None:
     """Test Markdown output with formatted dict data."""
     data = [
-        FmtDictRow(
-            values={'name': 'Alice', 'age': '30'},
-            fmt=Fmt(bold=True)),
-        FmtDictRow(
-            values={'name': 'Bob', 'age': '25'},
-            fmt=Fmt())
+        FmtDictRow(values={'name': 'Alice', 'age': '30'}, fmt=Fmt(bold=True)),
+        FmtDictRow(values={'name': 'Bob', 'age': '25'}, fmt=Fmt())
     ]
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
-        with TableIOMformatMd(
-                path, FileAccess.CREATE, None) as w:
-            w.write_table_fmtdictdata(
-                data, ['name', 'age'])
-        content = (Path(td) / 'test.md').read_text(
-            encoding='utf-8')
+        with TableIOMformatMd(path, FileAccess.CREATE, None) as w:
+            w.write_table_fmtdictdata(data, ['name', 'age'])
+        content = (Path(td) / 'test.md').read_text(encoding='utf-8')
         assert '| name' in content
         assert '**Alice**' in content
         assert 'Bob' in content
@@ -455,14 +408,12 @@ def test_md_write_multiple_tables_with_headings(
     t2: list[list[Value]] = [['c', 'd'], ['3', '4']]
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
-        with TableIOMformatMd(
-                path, FileAccess.CREATE, None) as w:
+        with TableIOMformatMd(path, FileAccess.CREATE, None) as w:
             w.write_heading('First')
             w.write_table_listdata(t1)
             w.write_heading('Second')
             w.write_table_listdata(t2)
-        content = (Path(td) / 'test.md').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'test.md').read_text(encoding='utf-8')
         assert '# First' in content
         assert '## Second' in content
         assert '| a' in content
@@ -470,17 +421,14 @@ def test_md_write_multiple_tables_with_headings(
     check_capsys(capsys)
 
 
-def test_md_write_none_values(
-        capsys: CaptureFixture[str]) -> None:
+def test_md_write_none_values(capsys: CaptureFixture[str]) -> None:
     """Test Markdown output with None values."""
     data: list[list[Value]] = [['a', 'b'], [None, '2']]
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
-        with TableIOMformatMd(
-                path, FileAccess.CREATE, None) as w:
+        with TableIOMformatMd(path, FileAccess.CREATE, None) as w:
             w.write_table_listdata(data)
-        content = (Path(td) / 'test.md').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'test.md').read_text(encoding='utf-8')
         assert '| a' in content
         assert '| 2' in content or '2' in content
     check_capsys(capsys)
@@ -509,8 +457,7 @@ _BINARY_CLASSES: list[tuple[_MformatCls, str]] = [
     [pytest.param(c, e, id=e.lstrip('.'))
      for c, e in _NON_MD_TEXT_CLASSES])
 def test_text_format_creates_nonempty_file(
-        cls: _MformatCls, ext: str,
-        capsys: CaptureFixture[str]) -> None:
+        cls: _MformatCls, ext: str, capsys: CaptureFixture[str]) -> None:
     """Test that text format writers create non-empty files."""
     data: list[list[Value]] = [
         ['Name', 'Age'], ['Alice', '30']]
@@ -530,8 +477,7 @@ def test_text_format_creates_nonempty_file(
     [pytest.param(c, e, id=e.lstrip('.'))
      for c, e in _BINARY_CLASSES])
 def test_binary_format_creates_nonempty_file(
-        cls: _MformatCls, ext: str,
-        capsys: CaptureFixture[str]) -> None:
+        cls: _MformatCls, ext: str, capsys: CaptureFixture[str]) -> None:
     """Test that binary format writers create non-empty files."""
     data: list[list[Value]] = [
         ['Name', 'Age'], ['Alice', '30']]
@@ -553,9 +499,8 @@ def test_binary_format_creates_nonempty_file(
     ('cls', 'ext'),
     [pytest.param(c, e, id=e.lstrip('.'))
      for c, e in _ALL_CLASSES])
-def test_dictdata_creates_nonempty_file(
-        cls: _MformatCls, ext: str,
-        capsys: CaptureFixture[str]) -> None:
+def test_dictdata_creates_file(cls: _MformatCls, ext: str,
+                               capsys: CaptureFixture[str]) -> None:
     """Test that writing dict data creates non-empty files."""
     data: list[dict[str, Value]] = [
         {'name': 'Alice', 'age': '30'}]
@@ -577,22 +522,16 @@ def test_dictdata_creates_nonempty_file(
     [pytest.param(c, e, id=e.lstrip('.'))
      for c, e in _ALL_CLASSES])
 def test_fmtdictdata_creates_nonempty_file(
-        cls: _MformatCls, ext: str,
-        capsys: CaptureFixture[str]) -> None:
+        cls: _MformatCls, ext: str, capsys: CaptureFixture[str]) -> None:
     """Test that writing formatted dict data creates non-empty files."""
     data = [
-        FmtDictRow(
-            values={'name': 'Alice', 'age': '30'},
-            fmt=Fmt(bold=True)),
-        FmtDictRow(
-            values={'name': 'Bob', 'age': '25'},
-            fmt=Fmt())
+        FmtDictRow(values={'name': 'Alice', 'age': '30'}, fmt=Fmt(bold=True)),
+        FmtDictRow(values={'name': 'Bob', 'age': '25'}, fmt=Fmt())
     ]
     with TemporaryDirectory() as td:
         path = Path(td) / 'test'
         with cls(path, FileAccess.CREATE, None) as w:
-            w.write_table_fmtdictdata(
-                data, ['name', 'age'])
+            w.write_table_fmtdictdata(data, ['name', 'age'])
         file_path = Path(td) / f'test{ext}'
         assert file_path.exists()
         assert file_path.stat().st_size > 0
@@ -607,12 +546,10 @@ def test_fmtdictdata_creates_nonempty_file(
     [pytest.param(c, e, id=e.lstrip('.'))
      for c, e in _ALL_CLASSES])
 def test_fmtlistdata_creates_nonempty_file(
-        cls: _MformatCls, ext: str,
-        capsys: CaptureFixture[str]) -> None:
+        cls: _MformatCls, ext: str, capsys: CaptureFixture[str]) -> None:
     """Test that writing formatted list data creates non-empty files."""
     data = [
-        FmtListRow(values=['Name', 'Age'],
-                   fmt=Fmt(bold=True)),
+        FmtListRow(values=['Name', 'Age'], fmt=Fmt(bold=True)),
         FmtListRow(values=['Alice', '30'], fmt=Fmt())
     ]
     with TemporaryDirectory() as td:

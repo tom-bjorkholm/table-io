@@ -28,8 +28,7 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
     _DATETIME_NUMBER_FORMAT = 'yyyy-mm-dd hh:mm:ss'
     """Excel number format used for datetime values."""
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None):
         """Initialize the TableIO_SpreadsheetBased class.
@@ -46,8 +45,7 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
                                   backup.)
                                   (Default is to raise an exception.)
         """
-        super().__init__(file_name=file_name,
-                         file_access=file_access,
+        super().__init__(file_name=file_name, file_access=file_access,
                          file_exists_callback=file_exists_callback)
 
     @classmethod
@@ -71,8 +69,8 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
         return f'{cls._excel_column_name(column)}{row + 1}'
 
     @classmethod
-    def _excel_range_ref(cls, top: int, left: int,
-                         bottom: int, right: int) -> str:
+    def _excel_range_ref(cls, top: int, left: int, bottom: int,
+                         right: int) -> str:
         """Return one Excel A1 range string for zero-based bounds."""
         start = cls._excel_cell_ref(top, left)
         end = cls._excel_cell_ref(bottom - 1, right - 1)

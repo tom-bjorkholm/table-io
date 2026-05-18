@@ -54,14 +54,12 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
             RelativeStyleExpectation(expected_style=BOLD_STYLE),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['Formatted List data.'],
+        sheet_name='Sheet', anchor_row_fragment=['Formatted List data.'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=BOLD_STYLE),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['Jira key', 'Type', 'Status'],
+        sheet_name='Sheet', anchor_row_fragment=['Jira key', 'Type', 'Status'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=BOLD_STYLE,
                                      number_of_columns=2),
@@ -97,8 +95,7 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
                                      number_of_columns=3),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['TIO-456', 'Bug', 'To Do'],
+        sheet_name='Sheet', anchor_row_fragment=['TIO-456', 'Bug', 'To Do'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=YELLOW_ITALIC,
                                      number_of_columns=3),
@@ -107,19 +104,17 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
         sheet_name='Sheet',
         anchor_row_fragment=['TIO-789', 'Story', 'Delayed'],
         relative_expectations=[
-            RelativeStyleExpectation(expected_style=RED_BOLD,
-                                     col_offset=2),
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=0, number_of_columns=2),
+            RelativeStyleExpectation(expected_style=RED_BOLD, col_offset=2),
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=0,
+                                     number_of_columns=2),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['TIO-101', 'Epic', 'Done'],
+        sheet_name='Sheet', anchor_row_fragment=['TIO-101', 'Epic', 'Done'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=GREEN_BOLD_ITALIC,
                                      col_offset=2),
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=0, number_of_columns=2),
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=0,
+                                     number_of_columns=2),
         ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
@@ -128,8 +123,7 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
             RelativeStyleExpectation(expected_style=ITALIC_STYLE),
             RelativeStyleExpectation(expected_style=BOLD_ITALIC_STYLE,
                                      col_offset=1),
-            RelativeStyleExpectation(expected_style=BOLD_STYLE,
-                                     col_offset=2)
+            RelativeStyleExpectation(expected_style=BOLD_STYLE, col_offset=2)
         ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
@@ -137,10 +131,8 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
         relative_expectations=[
             RelativeStyleExpectation(expected_style=GREEN_BOLD_ITALIC,
                                      col_offset=1),
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=0),
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=2)
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=0),
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=2)
         ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
@@ -148,10 +140,8 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
         relative_expectations=[
             RelativeStyleExpectation(expected_style=RED_BOLD_ITALIC,
                                      col_offset=1),
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=0),
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=2)
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=0),
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=2)
         ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
@@ -161,8 +151,7 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
                                      number_of_columns=3),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['TIO-123', 13, today],
+        sheet_name='Sheet', anchor_row_fragment=['TIO-123', 13, today],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=GREEN_ITALIC,
                                      number_of_columns=3),
@@ -190,8 +179,7 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
                                      number_of_columns=3),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['TIO-123', today, 13],
+        sheet_name='Sheet', anchor_row_fragment=['TIO-123', today, 13],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=GREEN_BOLD,
                                      number_of_columns=3),
@@ -275,41 +263,35 @@ CSV_FRAGMENTS: list[str] = [
 
 # pylint: disable=duplicate-code
 SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet',
-    row_fragments=SHEET_ROW_FRAGMENTS)
+    sheet_name='Sheet', row_fragments=SHEET_ROW_FRAGMENTS)
 
 SHEET_REST: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet1',
-    row_fragments=SHEET_ROW_FRAGMENTS)
+    sheet_name='Sheet1', row_fragments=SHEET_ROW_FRAGMENTS)
 # pylint: enable=duplicate-code
 
 
-@pytest.mark.parametrize('fmt, impl, expected, expected_styles',
+@pytest.mark.parametrize('fmt, impl, expected, styles',
                          [('ods', 'odfdo', SHEET_REST, EXPECTED_STYLES1),
                           ('excel', 'openpyxl', SHEET_OPX, EXPECTED_STYLES),
                           ('excel', 'pylightxl', SHEET_REST, None),
                           ('excel', 'xlsxwriter', SHEET_REST,
                            EXPECTED_STYLES1)])
-def test_e02_more_write_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        fmt: str,
-        impl: str, expected: SheetContentExpectation,
-        expected_styles: list[AnchoredStyleExpectation]) -> None:
+def test_e02_spreadsheet(capsys: pytest.CaptureFixture[str], fmt: str,
+                         impl: str, expected: SheetContentExpectation,
+                         styles: list[AnchoredStyleExpectation]) -> None:
     """Test e02 for spreadsheet formats and implementations."""
-    example = Example(example_function=e02_more_write,
-                      format_name=fmt, implementation_name=impl)
+    example = Example(example_function=e02_more_write, format_name=fmt,
+                      implementation_name=impl)
     check_example_spreadsheet(example, capture=capsys,
                               expected_fragments=[expected],
-                              style_expectations=expected_styles)
+                              style_expectations=styles)
 
 
 @pytest.mark.parametrize('fmt, expected',
                          [('md', MD_FRAGMENTS),
                           ('csv', CSV_FRAGMENTS)])
-def test_e02_more_write_text(capsys: pytest.CaptureFixture[str],
-                             fmt: str, expected: list[str]) -> None:
+def test_e02_more_write_text(capsys: pytest.CaptureFixture[str], fmt: str,
+                             expected: list[str]) -> None:
     """Test e02 for CSV text format."""
-    example = Example(example_function=e02_more_write,
-                      format_name=fmt)
-    check_example_md_csv(example, capture=capsys,
-                         expected_fragments=expected)
+    example = Example(example_function=e02_more_write, format_name=fmt)
+    check_example_md_csv(example, capture=capsys, expected_fragments=expected)

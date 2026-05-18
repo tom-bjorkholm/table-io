@@ -11,17 +11,11 @@ from tableio import CAP_NEEDED, CAP_NOT_USED, Box, Capabilities, Color, \
 from .cmd_for_examples import cmd_parse_and_run_example
 
 
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NEEDED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NEEDED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NEEDED,
-    can_read_box=CAP_NEEDED,
-    can_write_highlight=CAP_NEEDED,
-    multi_sheet=CAP_NOT_USED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NEEDED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NEEDED,
+                    filtered_data_range=CAP_NOT_USED, can_write_box=CAP_NEEDED,
+                    can_read_box=CAP_NEEDED, can_write_highlight=CAP_NEEDED,
+                    multi_sheet=CAP_NOT_USED)
 
 
 def build_labelled_table() -> ListData[Value]:
@@ -38,8 +32,7 @@ def build_bold_red_copy(data: ListData[Value]) -> ListData[ValueFmt]:
         result_row: list[ValueFmt] = []
         for value in row:
             result_row.append(ValueFmt(
-                value=value,
-                fmt=Fmt(bold=True, highlight=Color.RED)))
+                value=value, fmt=Fmt(bold=True, highlight=Color.RED)))
         result.append(result_row)
     return result
 
@@ -58,11 +51,9 @@ def e07_box_rewrite_with_format(format_name: str, output_file_name: str,
     5. Write the same values back into the same box, now with formatting.
     """
     table_data = build_labelled_table()
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # CREATE mode allows writing and then reading back from the same
@@ -81,10 +72,8 @@ def e07_box_rewrite_with_format(format_name: str, output_file_name: str,
         # bottom and right are exclusive, so bottom is last_row + 1 and
         # right is 2.
         #
-        lower_left_box = Box(top=table_end.row - 1,
-                             left=0,
-                             bottom=table_end.row + 1,
-                             right=2)
+        lower_left_box = Box(top=table_end.row - 1, left=0,
+                             bottom=table_end.row + 1, right=2)
         #
         # Read the existing values from that box.
         #

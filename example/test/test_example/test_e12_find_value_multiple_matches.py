@@ -39,24 +39,20 @@ SHEET_REST = SheetContentExpectation(sheet_name='Sheet1',
 
 
 @pytest.mark.parametrize('example, expected_fragments',
-                         [(Example(
-                             example_function=example_function,
-                             format_name='ods',
-                             implementation_name='odfdo'),
+                         [(Example(example_function=example_function,
+                                   format_name='ods',
+                                   implementation_name='odfdo'),
                            [SHEET_REST]),
-                          (Example(
-                              example_function=example_function,
-                              format_name='excel',
-                              implementation_name='openpyxl'),
+                          (Example(example_function=example_function,
+                                   format_name='excel',
+                                   implementation_name='openpyxl'),
                            [SHEET_OPX]),
-                          (Example(
-                              example_function=example_function,
-                              format_name='excel',
-                              implementation_name='pylightxl'),
+                          (Example(example_function=example_function,
+                                   format_name='excel',
+                                   implementation_name='pylightxl'),
                            [SHEET_REST])])
 def test_e12_find_value_multiple_matches_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected_fragments: list[SheetContentExpectation]) -> None:
     """Test e12 for spreadsheet formats and implementations."""
     check_example_spreadsheet(example=example, capture=capsys,

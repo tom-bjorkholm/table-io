@@ -7,7 +7,7 @@
 import pytest
 from tableio import Value
 from example.e11_find_value_read_cells_write_cells import \
-    e11_find_value_read_cells_write_cells
+    e11_find_read_write_cells
 from .spreadsheet_checkers import SheetContentExpectation, \
     RelativeStyleExpectation, AnchoredStyleExpectation, GREEN_BOLD, \
     PLAIN_STYLE
@@ -15,7 +15,7 @@ from .example_checkers import check_example_spreadsheet, Example, \
     change_sheet
 
 
-example_function = e11_find_value_read_cells_write_cells
+example_function = e11_find_read_write_cells
 
 
 SHEET_ROWS: list[list[Value]] = [
@@ -28,19 +28,16 @@ SHEET_ROWS: list[list[Value]] = [
 
 EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['Revenue', 1250000, 1390000],
+        sheet_name='Sheet', anchor_row_fragment=['Revenue', 1250000, 1390000],
         relative_expectations=[
-            RelativeStyleExpectation(expected_style=GREEN_BOLD,
-                                     col_offset=1,
+            RelativeStyleExpectation(expected_style=GREEN_BOLD, col_offset=1,
                                      number_of_columns=2),
         ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
         anchor_row_fragment=['Operating costs', 830000, 900000],
         relative_expectations=[
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=1,
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=1,
                                      number_of_columns=2),
         ])
 ]
@@ -56,19 +53,16 @@ SHEET_ODS = SheetContentExpectation(sheet_name='Sheet1',
 
 
 @pytest.mark.parametrize('example, expected_fragments, expected_styles',
-                         [(Example(
-                             example_function=example_function,
-                             format_name='ods',
-                             implementation_name='odfdo'),
+                         [(Example(example_function=example_function,
+                                   format_name='ods',
+                                   implementation_name='odfdo'),
                            [SHEET_ODS], EXPECTED_STYLES1),
-                          (Example(
-                              example_function=example_function,
-                              format_name='excel',
-                              implementation_name='openpyxl'),
+                          (Example(example_function=example_function,
+                                   format_name='excel',
+                                   implementation_name='openpyxl'),
                            [SHEET_OPX], EXPECTED_STYLES)])
 def test_e11_find_value_read_cells_write_cells_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected_fragments: list[SheetContentExpectation],
         expected_styles: list[AnchoredStyleExpectation]) -> None:
     """Test e11 for spreadsheet formats and implementations."""

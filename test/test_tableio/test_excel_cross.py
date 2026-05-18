@@ -32,8 +32,7 @@ def _all_formats() -> list[Fmt]:
         for italic in [False, True]:
             for highlight in [Color.NONE, Color.RED, Color.GREEN,
                               Color.YELLOW]:
-                ret.append(Fmt(bold=bold, italic=italic,
-                               highlight=highlight))
+                ret.append(Fmt(bold=bold, italic=italic, highlight=highlight))
     return ret
 
 
@@ -231,8 +230,7 @@ def test_formatted_listdata(capsys: CaptureFixture[str], writer: type[TableIO],
 @pytest.mark.parametrize('writer', _WRITERS)
 @pytest.mark.parametrize('reader', _READERS)
 def test_row_formatted_listdata(capsys: CaptureFixture[str],
-                                writer: type[TableIO],
-                                reader: type[TableIO],
+                                writer: type[TableIO], reader: type[TableIO],
                                 filtered: bool) -> None:
     """Test row-formatted list-data writes across Excel implementations."""
     data, formatted_data = _row_formatted_list_tables()
@@ -259,8 +257,7 @@ def test_formatted_dictdata(capsys: CaptureFixture[str], writer: type[TableIO],
         with writer(temp_path, FileAccess.CREATE) as w_tableio:
             for first_row_format in _ALL_FORMATS:
                 w_tableio.write_table_dictdata(
-                    data=formatted_data,
-                    column_order=column_order,
+                    data=formatted_data, column_order=column_order,
                     first_row_format=first_row_format,
                     filtered_data_range=filtered)
         with reader(temp_path, FileAccess.READ) as r_tableio:
@@ -274,8 +271,7 @@ def test_formatted_dictdata(capsys: CaptureFixture[str], writer: type[TableIO],
 @pytest.mark.parametrize('writer', _WRITERS)
 @pytest.mark.parametrize('reader', _READERS)
 def test_row_formatted_dictdata(capsys: CaptureFixture[str],
-                                writer: type[TableIO],
-                                reader: type[TableIO],
+                                writer: type[TableIO], reader: type[TableIO],
                                 filtered: bool) -> None:
     """Test row-formatted dict-data writes across Excel implementations."""
     data, formatted_data, column_order = _row_formatted_dict_tables()
@@ -284,8 +280,7 @@ def test_row_formatted_dictdata(capsys: CaptureFixture[str],
         with writer(temp_path, FileAccess.CREATE) as w_tableio:
             for first_row_format in _ALL_FORMATS:
                 w_tableio.write_table_fmtdictdata(
-                    data=formatted_data,
-                    column_order=column_order,
+                    data=formatted_data, column_order=column_order,
                     first_row_format=first_row_format,
                     filtered_data_range=filtered)
         with reader(temp_path, FileAccess.READ) as r_tableio:

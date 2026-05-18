@@ -107,8 +107,7 @@ SHEET_ODS: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet1',
     row_fragments=build_sheet_row_fragments(
         BackendExpectation(
-            actual_implementation='odfdo',
-            filtered_arg_count=1,
+            actual_implementation='odfdo', filtered_arg_count=1,
             kept_args=[('lang', 'en')],
             removed_args=[
                 'character_encoding',
@@ -121,77 +120,59 @@ SHEET_ODS: SheetContentExpectation = SheetContentExpectation(
                 'title'
             ],
             writer=WriterExpectation(
-                type_name='ODS',
-                writer_implementation='odfdo',
-                requested_implementation='odfdo',
-                priority=10,
+                type_name='ODS', writer_implementation='odfdo',
+                requested_implementation='odfdo', priority=10,
                 optional_arg_names=['lang'],
                 capability_rows=[
                     ('can_read', 'supported (strict)'),
                     ('can_find_value_position', 'supported (strict)'),
-                ])))
-)
+                ]))))
 
 SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet',
     row_fragments=build_sheet_row_fragments(
         BackendExpectation(
-            actual_implementation='OpenPyXL',
-            filtered_arg_count=0,
-            kept_args=[],
-            removed_args=ALL_REMOVED_ARGS,
+            actual_implementation='OpenPyXL', filtered_arg_count=0,
+            kept_args=[], removed_args=ALL_REMOVED_ARGS,
             writer=WriterExpectation(
-                type_name='Excel',
-                writer_implementation='OpenPyXL',
-                requested_implementation='openpyxl',
-                priority=10,
+                type_name='Excel', writer_implementation='OpenPyXL',
+                requested_implementation='openpyxl', priority=10,
                 optional_arg_names=[],
                 capability_rows=[
                     ('can_read', 'supported (strict)'),
                     ('can_write_highlight', 'supported (strict)'),
-                ])))
-)
+                ]))))
 
 SHEET_PYXL: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet1',
     row_fragments=build_sheet_row_fragments(
         BackendExpectation(
-            actual_implementation='pylightxl',
-            filtered_arg_count=0,
-            kept_args=[],
-            removed_args=ALL_REMOVED_ARGS,
+            actual_implementation='pylightxl', filtered_arg_count=0,
+            kept_args=[], removed_args=ALL_REMOVED_ARGS,
             writer=WriterExpectation(
-                type_name='Excel',
-                writer_implementation='pylightxl',
-                requested_implementation='pylightxl',
-                priority=8,
+                type_name='Excel', writer_implementation='pylightxl',
+                requested_implementation='pylightxl', priority=8,
                 optional_arg_names=[],
                 capability_rows=[
                     ('can_read', 'supported (strict)'),
                     ('can_fmt_row', 'not supported (ignore)'),
                     ('can_write_highlight', 'not supported (ignore)'),
-                ])))
-)
+                ]))))
 
 SHEET_XW: SheetContentExpectation = SheetContentExpectation(
     sheet_name='Sheet1',
     row_fragments=build_sheet_row_fragments(
         BackendExpectation(
-            actual_implementation='XlsxWriter',
-            filtered_arg_count=0,
-            kept_args=[],
-            removed_args=ALL_REMOVED_ARGS,
+            actual_implementation='XlsxWriter', filtered_arg_count=0,
+            kept_args=[], removed_args=ALL_REMOVED_ARGS,
             writer=WriterExpectation(
-                type_name='Excel',
-                writer_implementation='XlsxWriter',
-                requested_implementation='xlsxwriter',
-                priority=20,
+                type_name='Excel', writer_implementation='XlsxWriter',
+                requested_implementation='xlsxwriter', priority=20,
                 optional_arg_names=[],
                 capability_rows=[
                     ('can_read', 'not supported (strict)'),
                     ('can_find_value_position', 'not supported (strict)'),
-                ])))
-)
+                ]))))
 # pylint: enable=duplicate-code
 
 
@@ -296,8 +277,7 @@ MD_FRAGMENTS: list[str] = [
                                    implementation_name='xlsxwriter'),
                            SHEET_XW)])
 def test_e08_filter_args_tableio_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected: SheetContentExpectation) -> None:
     """Test e08 for spreadsheet formats and implementations."""
     check_example_spreadsheet(example=example, capture=capsys,
@@ -316,10 +296,8 @@ def test_e08_filter_args_tableio_spreadsheet(
                                    format_name='md',
                                    implementation_name='mformat'),
                            MD_FRAGMENTS)])
-def test_e08_filter_args_tableio_text(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
-        expected: list[str]) -> None:
+def test_e08_filter_args_text(capsys: pytest.CaptureFixture[str],
+                              example: Example, expected: list[str]) -> None:
     """Test e08 for text formats and implementations."""
     check_example_md_csv(example=example, capture=capsys,
                          expected_fragments=expected)

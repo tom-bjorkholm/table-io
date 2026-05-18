@@ -13,15 +13,11 @@ from .cmd_for_examples import cmd_parse_and_run_example
 
 
 # pylint: disable=duplicate-code
-CAPS = Capabilities(can_write=CAP_NEEDED,
-                    can_read=CAP_NOT_USED,
-                    can_fmt_row=CAP_IGNORABLE,
-                    can_fmt_value=CAP_IGNORABLE,
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NOT_USED,
+                    can_fmt_row=CAP_IGNORABLE, can_fmt_value=CAP_IGNORABLE,
                     filtered_data_range=CAP_IGNORABLE,
-                    can_write_box=CAP_NOT_USED,
-                    can_read_box=CAP_NOT_USED,
-                    can_write_borders=CAP_NEEDED,
-                    multi_sheet=CAP_NOT_USED,
+                    can_write_box=CAP_NOT_USED, can_read_box=CAP_NOT_USED,
+                    can_write_borders=CAP_NEEDED, multi_sheet=CAP_NOT_USED,
                     can_find_value_position=CAP_NOT_USED,
                     can_write_highlight=CAP_IGNORABLE)
 # pylint: enable=duplicate-code
@@ -42,11 +38,9 @@ def e13_table_borders(format_name: str, output_file_name: str,
     # The new thing to look for in this file is border_style=... in the
     # table-writing calls below.
     # pylint: disable=duplicate-code
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tio:
         # pylint: enable=duplicate-code
         tio.write_heading('Table border API examples')
@@ -101,14 +95,12 @@ def e13_table_borders(format_name: str, output_file_name: str,
         data3: FmtListData = [
             FmtListRow(values=['A-Column', 'B-Column', 'C-Column'],
                        fmt=Fmt(bold=True)),
-            FmtListRow(values=[3.1415, 2.7182, 1.4142],
-                       fmt=Fmt(italic=True)),
+            FmtListRow(values=[3.1415, 2.7182, 1.4142], fmt=Fmt(italic=True)),
             FmtListRow(values=[True, False, 'Lower right'],
                        fmt=Fmt(highlight=Color.RED))]
         tio.write_heading('write_table_fmtlistdata() with ALL_THIN')
-        tio.write_table_fmtlistdata(
-            data=data3,
-            border_style=TableBorderStyle.ALL_THIN)
+        tio.write_table_fmtlistdata(data=data3,
+                                    border_style=TableBorderStyle.ALL_THIN)
         # 4. write_table_fmtdictdata()
         # The border style is chosen the same way here too.
         data4: FmtDictData = [
@@ -122,11 +114,10 @@ def e13_table_borders(format_name: str, output_file_name: str,
                                'C-Col': 'Lower right'},
                        fmt=Fmt(highlight=Color.RED))]
         tio.write_heading('write_table_fmtdictdata() with OUTER_THICK')
-        tio.write_table_fmtdictdata(
-            data=data4,
-            column_order=['A-Col', 'B-Col', 'C-Col'],
-            first_row_format=Fmt(bold=True),
-            border_style=TableBorderStyle.OUTER_THICK)
+        tio.write_table_fmtdictdata(data=data4,
+                                    column_order=['A-Col', 'B-Col', 'C-Col'],
+                                    first_row_format=Fmt(bold=True),
+                                    border_style=TableBorderStyle.OUTER_THICK)
     return 0
 
 

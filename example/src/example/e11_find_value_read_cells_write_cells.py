@@ -12,18 +12,12 @@ from .cmd_for_examples import cmd_parse_and_run_example
 
 
 # pylint: disable=duplicate-code
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NEEDED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NEEDED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NEEDED,
-    can_read_box=CAP_NEEDED,
-    can_write_highlight=CAP_NEEDED,
-    multi_sheet=CAP_NOT_USED,
-    can_find_value_position=CAP_NEEDED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NEEDED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NEEDED,
+                    filtered_data_range=CAP_NOT_USED, can_write_box=CAP_NEEDED,
+                    can_read_box=CAP_NEEDED, can_write_highlight=CAP_NEEDED,
+                    multi_sheet=CAP_NOT_USED,
+                    can_find_value_position=CAP_NEEDED)
 # pylint: enable=duplicate-code
 
 
@@ -43,18 +37,15 @@ def build_bold_green_cells(data: ListData[Value]) -> ListData[ValueFmt]:
         result_row: list[ValueFmt] = []
         for value in row:
             result_row.append(
-                ValueFmt(
-                    value=value,
-                    fmt=Fmt(bold=True, highlight=Color.GREEN)))
+                ValueFmt(value=value,
+                         fmt=Fmt(bold=True, highlight=Color.GREEN)))
         result.append(result_row)
     return result
 
 
-def e11_find_value_read_cells_write_cells(
-        format_name: str,
-        output_file_name: str,
-        implementation_name: Optional[str],
-        optional_args: OptionalArgs) -> int:
+def e11_find_read_write_cells(format_name: str, output_file_name: str,
+                              implementation_name: Optional[str],
+                              optional_args: OptionalArgs) -> int:
     """Find a label cell, read nearby values and rewrite them formatted."""
     #
     # The table starts in the top-left corner of the sheet.
@@ -64,11 +55,9 @@ def e11_find_value_read_cells_write_cells(
     # label column.
     #
     economic_table = build_economic_table()
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # First write a normal table with no special formatting.
@@ -131,4 +120,4 @@ def e11_find_value_read_cells_write_cells(
 if __name__ == '__main__':
     cmd_parse_and_run_example(
         example_name='e11_find_value_read_cells_write_cells',
-        func=e11_find_value_read_cells_write_cells, caps=CAPS)
+        func=e11_find_read_write_cells, caps=CAPS)

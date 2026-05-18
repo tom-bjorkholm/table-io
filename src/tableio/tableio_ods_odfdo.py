@@ -57,8 +57,7 @@ def _manifest_xml_without_configuration_entries(data: bytes) -> bytes:
         if full_path is None or not full_path.startswith('Configurations2/'):
             continue
         root.remove(entry)
-    return bytes(ET.tostring(root, encoding='utf-8',
-                             xml_declaration=True))
+    return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
 
 def _referenced_style_names(root: ET.Element) -> set[str]:
@@ -76,16 +75,14 @@ def _content_xml_without_unused_styles(data: bytes) -> bytes:
     root = ET.fromstring(data)
     automatic_styles = root.find('office:automatic-styles', _XML_NS)
     if automatic_styles is None:
-        return bytes(ET.tostring(root, encoding='utf-8',
-                                 xml_declaration=True))
+        return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
     referenced_names = _referenced_style_names(root)
     for style in list(automatic_styles.findall('style:style', _XML_NS)):
         style_name = style.get('{%s}name' % _XML_NS['style'])
         if style_name is None or style_name in referenced_names:
             continue
         automatic_styles.remove(style)
-    return bytes(ET.tostring(root, encoding='utf-8',
-                             xml_declaration=True))
+    return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
 
 def _styles_xml_with_required_defaults(data: bytes) -> bytes:
@@ -93,8 +90,7 @@ def _styles_xml_with_required_defaults(data: bytes) -> bytes:
     root = ET.fromstring(data)
     office_styles = root.find('office:styles', _XML_NS)
     if office_styles is None:
-        return bytes(ET.tostring(root, encoding='utf-8',
-                                 xml_declaration=True))
+        return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
     existing_families = {
         style.get('{%s}family' % _XML_NS['style'])
         for style in office_styles.findall('style:default-style', _XML_NS)
@@ -104,8 +100,7 @@ def _styles_xml_with_required_defaults(data: bytes) -> bytes:
             continue
         ET.SubElement(office_styles, '{%s}default-style' % _XML_NS['style'],
                       {'{%s}family' % _XML_NS['style']: family})
-    return bytes(ET.tostring(root, encoding='utf-8',
-                             xml_declaration=True))
+    return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
 
 def _rewrite_saved_document(file_name: Path) -> None:
@@ -131,8 +126,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
     The implementation operates on one current sheet at a time.
     """
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  lang: str = 'en-UK'):
@@ -144,8 +138,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
             file_exists_callback: Callback used when CREATE would overwrite.
             lang: The RFC3066 language code for newly created ODS files.
         """
-        super().__init__(file_name=file_name,
-                         file_access=file_access,
+        super().__init__(file_name=file_name, file_access=file_access,
                          file_exists_callback=file_exists_callback)
         self.lang: str = self._checked_lang(lang)
         self.document: Optional[Document] = None
@@ -404,8 +397,8 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         right = max(start_column, end_column) + 1
         return start_table, (top, left, bottom, right)
 
-    def _write_value_to_sheet(self, sheet: object, row: int,
-                              column: int, value: object) -> None:
+    def _write_value_to_sheet(self, sheet: object, row: int, column: int,
+                              value: object) -> None:
         """Write one value to one ODS cell."""
         table = get_checked_type(sheet, Table)
         table.set_cell((column, row),
@@ -423,8 +416,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         current = self._cell_style_state(table, row, column)
         self._apply_cell_style(
             table, row, column,
-            CellStyleState(fmt=fmt,
-                           font_size=current.font_size,
+            CellStyleState(fmt=fmt, font_size=current.font_size,
                            borders=current.borders))
 
     def _set_cell_borders(self, sheet: object, row: int, column: int,
@@ -434,8 +426,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         current = self._cell_style_state(table, row, column)
         self._apply_cell_style(
             table, row, column,
-            CellStyleState(fmt=current.fmt,
-                           font_size=current.font_size,
+            CellStyleState(fmt=current.fmt, font_size=current.font_size,
                            borders=borders))
 
     def _apply_heading_style(self, row: int, column: int, level: int) -> None:
@@ -578,8 +569,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
                           column: int) -> CellStyleState:
         """Return the current in-memory style state for one cell."""
         return self._cell_style_states.get(
-            self._cell_style_state_key(table, row, column),
-            DEFAULT_CELL_STYLE)
+            self._cell_style_state_key(table, row, column), DEFAULT_CELL_STYLE)
 
     def _apply_cell_style(self, table: Table, row: int, column: int,
                           style: CellStyleState) -> None:
@@ -602,8 +592,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
             return None
         return _BORDER_TEXT[weight]
 
-    def _cell_style_name(self, fmt: Fmt,
-                         font_size: Optional[int] = None,
+    def _cell_style_name(self, fmt: Fmt, font_size: Optional[int] = None,
                          borders: CellBorder = NO_BORDERS) -> str:
         """Return the cached style name for one cell format combination."""
         key = (fmt.bold, fmt.italic, fmt.highlight, font_size, borders)

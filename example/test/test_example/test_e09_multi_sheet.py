@@ -36,8 +36,7 @@ def build_summary_rows(first_sheet_name: str) -> list[list[Value]]:
 
 
 SHEETS_SHEET: list[SheetContentExpectation] = [
-    SheetContentExpectation(sheet_name='Sheet',
-                            row_fragments=MAIN_SHEET_ROWS),
+    SheetContentExpectation(sheet_name='Sheet', row_fragments=MAIN_SHEET_ROWS),
     SheetContentExpectation(sheet_name='Summary',
                             row_fragments=build_summary_rows('Sheet'))
 ]
@@ -64,8 +63,7 @@ SHEETS_SHEET1: list[SheetContentExpectation] = [
                                    implementation_name='pylightxl'),
                            SHEETS_SHEET1)])
 def test_e09_multi_sheet_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected_fragments: list[SheetContentExpectation]) -> None:
     """Test e09 for spreadsheet formats and implementations."""
     check_example_spreadsheet(example=example, capture=capsys,

@@ -25,13 +25,9 @@ from .check_capsys import check_capsys
         pytest.param(True, 'True', id='bool'),
         pytest.param(7, '7', id='int'),
         pytest.param(2.5, '2.5', id='float'),
-        pytest.param(
-            datetime(2026, 3, 25, 7, 8, 9),
-            '2026-03-25T07:08:09',
-            id='datetime'
-        ),
-    ],
-)
+        pytest.param(datetime(2026, 3, 25, 7, 8, 9), '2026-03-25T07:08:09',
+                     id='datetime'),
+    ],)
 def test_value2str_converts_supported_values(
         value: str | bool | int | float | datetime, expected: str,
         capsys: CaptureFixture[str]) -> None:
@@ -67,8 +63,7 @@ def test_value2str_converts_none_to_empty_string(
         pytest.param('no', False, id='no'),
         pytest.param('On', True, id='on'),
         pytest.param('0', False, id='zero'),
-    ],
-)
+    ],)
 def test_value2bool_converts_supported_values(
         value: str | bool | int, expected: bool,
         capsys: CaptureFixture[str]) -> None:
@@ -93,13 +88,9 @@ def test_value2bool_converts_none_to_false(
         pytest.param(2, UnreasonableValueConversion, id='int-two'),
         pytest.param(-1, UnreasonableValueConversion, id='int-negative'),
         pytest.param(1.0, UnreasonableTypeConversion, id='float'),
-        pytest.param(
-            datetime(2026, 3, 25, 7, 8, 9),
-            UnreasonableTypeConversion,
-            id='datetime'
-        ),
-    ],
-)
+        pytest.param(datetime(2026, 3, 25, 7, 8, 9),
+                     UnreasonableTypeConversion, id='datetime'),
+    ],)
 def test_value2bool_rejects_unreasonable_values(
         value: str | int | float | datetime | None,
         expected_exception: type[Exception],
@@ -118,8 +109,7 @@ def test_value2bool_rejects_unreasonable_values(
         pytest.param('7', 7, id='string'),
         pytest.param(' 7', 7, id='string-with-space'),
         pytest.param('-3', -3, id='negative-string'),
-    ],
-)
+    ],)
 def test_value2int_converts_supported_values(
         value: int | float | str, expected: int,
         capsys: CaptureFixture[str]) -> None:
@@ -137,8 +127,7 @@ def test_value2int_validates_format_string(
     check_capsys(capsys)
 
 
-def test_value2int_converts_none_to_zero(
-        capsys: CaptureFixture[str]) -> None:
+def test_value2int_none_to_zero(capsys: CaptureFixture[str]) -> None:
     """Test that value2int can convert None to zero."""
     assert value2int(None, none_is_zero=True) == 0
     check_capsys(capsys)
@@ -152,13 +141,9 @@ def test_value2int_converts_none_to_zero(
         pytest.param(3.5, UnreasonableValueConversion, id='fractional-float'),
         pytest.param('', UnreasonableValueConversion, id='empty-string'),
         pytest.param('3.5', UnreasonableValueConversion, id='float-string'),
-        pytest.param(
-            datetime(2026, 3, 25, 7, 8, 9),
-            UnreasonableTypeConversion,
-            id='datetime'
-        ),
-    ],
-)
+        pytest.param(datetime(2026, 3, 25, 7, 8, 9),
+                     UnreasonableTypeConversion, id='datetime'),
+    ],)
 def test_value2int_rejects_unreasonable_values(
         value: bool | float | str | datetime | None,
         expected_exception: type[Exception],
@@ -176,8 +161,7 @@ def test_value2int_rejects_unreasonable_values(
         pytest.param(2, 2.0, id='int'),
         pytest.param('2', 2.0, id='int-string'),
         pytest.param('2.5', 2.5, id='float-string'),
-    ],
-)
+    ],)
 def test_value2float_converts_supported_values(
         value: int | float | str, expected: float,
         capsys: CaptureFixture[str]) -> None:
@@ -200,13 +184,9 @@ def test_value2float_converts_none_to_zero(
         pytest.param(True, UnreasonableTypeConversion, id='bool'),
         pytest.param('', UnreasonableValueConversion, id='empty-string'),
         pytest.param('x', UnreasonableValueConversion, id='bad-string'),
-        pytest.param(
-            datetime(2026, 3, 25, 7, 8, 9),
-            UnreasonableTypeConversion,
-            id='datetime'
-        ),
-    ],
-)
+        pytest.param(datetime(2026, 3, 25, 7, 8, 9),
+                     UnreasonableTypeConversion, id='datetime'),
+    ],)
 def test_value2float_rejects_unreasonable_values(
         value: bool | str | datetime | None,
         expected_exception: type[Exception],
@@ -228,26 +208,13 @@ def test_value2datetime_preserves_datetime_identity(
 @pytest.mark.parametrize(
     ('value', 'format_string', 'expected'),
     [
-        pytest.param(
-            '2026-03-25T07:08:09',
-            None,
-            datetime(2026, 3, 25, 7, 8, 9),
-            id='iso-datetime'
-        ),
-        pytest.param(
-            '2026-03-25',
-            None,
-            datetime(2026, 3, 25, 0, 0, 0),
-            id='iso-date'
-        ),
-        pytest.param(
-            '25/03/2026 07:08',
-            '%d/%m/%Y %H:%M',
-            datetime(2026, 3, 25, 7, 8, 0),
-            id='custom-format'
-        ),
-    ],
-)
+        pytest.param('2026-03-25T07:08:09', None,
+                     datetime(2026, 3, 25, 7, 8, 9), id='iso-datetime'),
+        pytest.param('2026-03-25', None, datetime(2026, 3, 25, 0, 0, 0),
+                     id='iso-date'),
+        pytest.param('25/03/2026 07:08', '%d/%m/%Y %H:%M',
+                     datetime(2026, 3, 25, 7, 8, 0), id='custom-format'),
+    ],)
 def test_value2datetime_parses_strings(
         value: str, format_string: str | None, expected: datetime,
         capsys: CaptureFixture[str]) -> None:
@@ -264,11 +231,9 @@ def test_value2datetime_parses_strings(
         pytest.param(2, UnreasonableTypeConversion, id='int'),
         pytest.param('25/03/2026', UnreasonableValueConversion,
                      id='bad-string'),
-    ],
-)
+    ],)
 def test_value2datetime_rejects_unreasonable_values(
-        value: bool | int | str | None,
-        expected_exception: type[Exception],
+        value: bool | int | str | None, expected_exception: type[Exception],
         capsys: CaptureFixture[str]) -> None:
     """Test that value2datetime rejects invalid values and types."""
     with pytest.raises(expected_exception):
@@ -279,32 +244,14 @@ def test_value2datetime_rejects_unreasonable_values(
 @pytest.mark.parametrize(
     ('value', 'format_string', 'expected'),
     [
-        pytest.param(
-            datetime(2026, 3, 25, 7, 8, 9),
-            None,
-            date(2026, 3, 25),
-            id='datetime'
-        ),
-        pytest.param(
-            '2026-03-25',
-            None,
-            date(2026, 3, 25),
-            id='iso-date'
-        ),
-        pytest.param(
-            '2026-03-25T07:08:09',
-            None,
-            date(2026, 3, 25),
-            id='iso-datetime'
-        ),
-        pytest.param(
-            '25/03/2026',
-            '%d/%m/%Y',
-            date(2026, 3, 25),
-            id='custom-format'
-        ),
-    ],
-)
+        pytest.param(datetime(2026, 3, 25, 7, 8, 9), None, date(2026, 3, 25),
+                     id='datetime'),
+        pytest.param('2026-03-25', None, date(2026, 3, 25), id='iso-date'),
+        pytest.param('2026-03-25T07:08:09', None, date(2026, 3, 25),
+                     id='iso-datetime'),
+        pytest.param('25/03/2026', '%d/%m/%Y', date(2026, 3, 25),
+                     id='custom-format'),
+    ],)
 def test_value2date_converts_supported_values(
         value: datetime | str, format_string: str | None, expected: date,
         capsys: CaptureFixture[str]) -> None:
@@ -321,11 +268,9 @@ def test_value2date_converts_supported_values(
         pytest.param(2, UnreasonableTypeConversion, id='int'),
         pytest.param('07:08:09', UnreasonableValueConversion,
                      id='time-string'),
-    ],
-)
+    ],)
 def test_value2date_rejects_unreasonable_values(
-        value: bool | int | str | None,
-        expected_exception: type[Exception],
+        value: bool | int | str | None, expected_exception: type[Exception],
         capsys: CaptureFixture[str]) -> None:
     """Test that value2date rejects invalid values and types."""
     with pytest.raises(expected_exception):
@@ -336,32 +281,14 @@ def test_value2date_rejects_unreasonable_values(
 @pytest.mark.parametrize(
     ('value', 'format_string', 'expected'),
     [
-        pytest.param(
-            datetime(2026, 3, 25, 7, 8, 9),
-            None,
-            time(7, 8, 9),
-            id='datetime'
-        ),
-        pytest.param(
-            '07:08:09',
-            None,
-            time(7, 8, 9),
-            id='iso-time'
-        ),
-        pytest.param(
-            '2026-03-25T07:08:09',
-            None,
-            time(7, 8, 9),
-            id='iso-datetime'
-        ),
-        pytest.param(
-            '07.08.09',
-            '%H.%M.%S',
-            time(7, 8, 9),
-            id='custom-format'
-        ),
-    ],
-)
+        pytest.param(datetime(2026, 3, 25, 7, 8, 9), None, time(7, 8, 9),
+                     id='datetime'),
+        pytest.param('07:08:09', None, time(7, 8, 9), id='iso-time'),
+        pytest.param('2026-03-25T07:08:09', None, time(7, 8, 9),
+                     id='iso-datetime'),
+        pytest.param('07.08.09', '%H.%M.%S', time(7, 8, 9),
+                     id='custom-format'),
+    ],)
 def test_value2time_converts_supported_values(
         value: datetime | str, format_string: str | None, expected: time,
         capsys: CaptureFixture[str]) -> None:
@@ -380,11 +307,9 @@ def test_value2time_converts_supported_values(
                      id='date-string'),
         pytest.param('not-a-time', UnreasonableValueConversion,
                      id='bad-string'),
-    ],
-)
+    ],)
 def test_value2time_rejects_unreasonable_values(
-        value: bool | int | str | None,
-        expected_exception: type[Exception],
+        value: bool | int | str | None, expected_exception: type[Exception],
         capsys: CaptureFixture[str]) -> None:
     """Test that value2time rejects invalid values and types."""
     with pytest.raises(expected_exception):
@@ -399,11 +324,9 @@ def test_value2time_rejects_unreasonable_values(
         pytest.param(False, id='bool-false'),
         pytest.param(0, id='int-zero'),
         pytest.param('', id='empty-string'),
-    ],
-)
+    ],)
 def test_value2none_converts_supported_values(
-        value: None | bool | int | str,
-        capsys: CaptureFixture[str]) -> None:
+        value: None | bool | int | str, capsys: CaptureFixture[str]) -> None:
     """Test that value2none converts supported falsey values to None."""
     value2none(value)
     check_capsys(capsys)
@@ -416,13 +339,9 @@ def test_value2none_converts_supported_values(
         pytest.param(1, UnreasonableValueConversion, id='int-one'),
         pytest.param('text', UnreasonableValueConversion, id='string'),
         pytest.param(0.0, UnreasonableTypeConversion, id='float'),
-        pytest.param(
-            datetime(2026, 3, 25, 7, 8, 9),
-            UnreasonableTypeConversion,
-            id='datetime'
-        ),
-    ],
-)
+        pytest.param(datetime(2026, 3, 25, 7, 8, 9),
+                     UnreasonableTypeConversion, id='datetime'),
+    ],)
 def test_value2none_rejects_unreasonable_values(
         value: bool | int | float | str | datetime,
         expected_exception: type[Exception],
@@ -440,18 +359,12 @@ def test_value2none_rejects_unreasonable_values(
         pytest.param('yes', bool, True, id='bool'),
         pytest.param('7', int, 7, id='int'),
         pytest.param('2.5', float, 2.5, id='float'),
-        pytest.param(
-            '2026-03-25T07:08:09',
-            datetime,
-            datetime(2026, 3, 25, 7, 8, 9),
-            id='datetime'
-        ),
+        pytest.param('2026-03-25T07:08:09', datetime,
+                     datetime(2026, 3, 25, 7, 8, 9), id='datetime'),
         pytest.param('', NoneType, None, id='none'),
-    ],
-)
+    ],)
 def test_value2type_converts_supported_values(
-        value: str,
-        to_type: type[object],
+        value: str, to_type: type[object],
         expected: str | bool | int | float | datetime | None,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2type dispatches to the right converter."""
@@ -466,12 +379,9 @@ def test_value2type_converts_supported_values(
         pytest.param(None, bool, False, id='none-to-bool'),
         pytest.param(None, int, 0, id='none-to-int'),
         pytest.param(None, float, 0.0, id='none-to-float'),
-    ],
-)
+    ],)
 def test_value2type_accept_none_passthrough(
-        value: None,
-        to_type: type[object],
-        expected: str | bool | int | float,
+        value: None, to_type: type[object], expected: str | bool | int | float,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2type forwards accept_none to converters."""
     assert value2type(value, to_type, accept_none=True) == expected
@@ -483,11 +393,8 @@ def test_value2type_passes_datetime_format_string(
     """Test that value2type forwards datetime format strings."""
     value = '25/03/2026 07:08'
     expected = datetime(2026, 3, 25, 7, 8, 0)
-    assert value2type(
-        value,
-        datetime,
-        datetime_format_string='%d/%m/%Y %H:%M'
-    ) == expected
+    assert value2type(value, datetime,
+                      datetime_format_string='%d/%m/%Y %H:%M') == expected
     check_capsys(capsys)
 
 
@@ -505,11 +412,9 @@ def test_value2type_passes_int_format_string(
     [
         pytest.param(date, id='date'),
         pytest.param(time, id='time'),
-    ],
-)
+    ],)
 def test_value2type_rejects_unsupported_target_types(
-        to_type: type[object],
-        capsys: CaptureFixture[str]) -> None:
+        to_type: type[object], capsys: CaptureFixture[str]) -> None:
     """Test that value2type rejects unsupported target types."""
     with pytest.raises(UnreasonableTypeConversion):
         value2type('2026-03-25', to_type)
@@ -523,18 +428,12 @@ def test_value2type_rejects_unsupported_target_types(
         pytest.param('on', False, True, id='bool'),
         pytest.param('7', 99, 7, id='int'),
         pytest.param('2.5', 1.25, 2.5, id='float'),
-        pytest.param(
-            '2026-03-25T07:08:09',
-            datetime(2030, 1, 1, 0, 0, 0),
-            datetime(2026, 3, 25, 7, 8, 9),
-            id='datetime'
-        ),
+        pytest.param('2026-03-25T07:08:09', datetime(2030, 1, 1, 0, 0, 0),
+                     datetime(2026, 3, 25, 7, 8, 9), id='datetime'),
         pytest.param('', None, None, id='none'),
-    ],
-)
+    ],)
 def test_value2type_of_converts_supported_values(
-        value: str,
-        to_type_of: str | bool | int | float | datetime | None,
+        value: str, to_type_of: str | bool | int | float | datetime | None,
         expected: str | bool | int | float | datetime | None,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2type_of uses the example value's type."""
@@ -549,11 +448,9 @@ def test_value2type_of_converts_supported_values(
         pytest.param(None, False, False, id='none-to-bool'),
         pytest.param(None, 0, 0, id='none-to-int'),
         pytest.param(None, 0.0, 0.0, id='none-to-float'),
-    ],
-)
+    ],)
 def test_value2type_of_accept_none_passthrough(
-        value: None,
-        to_type_of: str | bool | int | float,
+        value: None, to_type_of: str | bool | int | float,
         expected: str | bool | int | float,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2type_of forwards accept_none to converters."""
@@ -566,11 +463,8 @@ def test_value2type_of_passes_datetime_format_string(
     """Test that value2type_of forwards datetime format strings."""
     value = '25/03/2026 07:08'
     expected = datetime(2026, 3, 25, 7, 8, 0)
-    assert value2type_of(
-        value,
-        expected,
-        datetime_format_string='%d/%m/%Y %H:%M'
-    ) == expected
+    assert value2type_of(value, expected,
+                         datetime_format_string='%d/%m/%Y %H:%M') == expected
     check_capsys(capsys)
 
 
@@ -588,11 +482,9 @@ def test_value2type_of_passes_int_format_string(
     [
         pytest.param(date(2026, 3, 25), id='date'),
         pytest.param(time(7, 8, 9), id='time'),
-    ],
-)
+    ],)
 def test_value2type_of_rejects_unsupported_target_types(
-        to_type_of: date | time,
-        capsys: CaptureFixture[str]) -> None:
+        to_type_of: date | time, capsys: CaptureFixture[str]) -> None:
     """Test that value2type_of rejects unsupported target types."""
     with pytest.raises(UnreasonableTypeConversion):
         value2type_of('2026-03-25', to_type_of)

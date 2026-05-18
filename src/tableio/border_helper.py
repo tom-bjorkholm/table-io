@@ -30,11 +30,8 @@ class CellBorder(NamedTuple):
     left: BorderWeight
 
 
-NO_BORDERS = CellBorder(
-    BorderWeight.NONE,
-    BorderWeight.NONE,
-    BorderWeight.NONE,
-    BorderWeight.NONE)
+NO_BORDERS = CellBorder(BorderWeight.NONE, BorderWeight.NONE,
+                        BorderWeight.NONE, BorderWeight.NONE)
 """The absence of borders on all four cell edges."""
 
 
@@ -68,61 +65,40 @@ def _thicker(first: BorderWeight, second: BorderWeight) -> BorderWeight:
 
 _STYLE_COMPONENTS: dict[TableBorderStyle, _BorderComponents] = {
     TableBorderStyle.NONE: _BorderComponents(
-        outer=BorderWeight.NONE,
-        first_row_separator=BorderWeight.NONE,
-        inner_horizontal=BorderWeight.NONE,
-        inner_vertical=BorderWeight.NONE),
+        outer=BorderWeight.NONE, first_row_separator=BorderWeight.NONE,
+        inner_horizontal=BorderWeight.NONE, inner_vertical=BorderWeight.NONE),
     TableBorderStyle.OUTER_THIN: _BorderComponents(
-        outer=BorderWeight.THIN,
-        first_row_separator=BorderWeight.NONE,
-        inner_horizontal=BorderWeight.NONE,
-        inner_vertical=BorderWeight.NONE),
+        outer=BorderWeight.THIN, first_row_separator=BorderWeight.NONE,
+        inner_horizontal=BorderWeight.NONE, inner_vertical=BorderWeight.NONE),
     TableBorderStyle.OUTER_THICK: _BorderComponents(
-        outer=BorderWeight.THICK,
-        first_row_separator=BorderWeight.NONE,
-        inner_horizontal=BorderWeight.NONE,
-        inner_vertical=BorderWeight.NONE),
+        outer=BorderWeight.THICK, first_row_separator=BorderWeight.NONE,
+        inner_horizontal=BorderWeight.NONE, inner_vertical=BorderWeight.NONE),
     TableBorderStyle.OUTER_FIRST_ROW_THIN: _BorderComponents(
-        outer=BorderWeight.THIN,
-        first_row_separator=BorderWeight.THIN,
-        inner_horizontal=BorderWeight.NONE,
-        inner_vertical=BorderWeight.NONE),
+        outer=BorderWeight.THIN, first_row_separator=BorderWeight.THIN,
+        inner_horizontal=BorderWeight.NONE, inner_vertical=BorderWeight.NONE),
     TableBorderStyle.OUTER_FIRST_ROW_THICK: _BorderComponents(
-        outer=BorderWeight.THICK,
-        first_row_separator=BorderWeight.THICK,
-        inner_horizontal=BorderWeight.NONE,
-        inner_vertical=BorderWeight.NONE),
+        outer=BorderWeight.THICK, first_row_separator=BorderWeight.THICK,
+        inner_horizontal=BorderWeight.NONE, inner_vertical=BorderWeight.NONE),
     TableBorderStyle.OUTER_THICK_FIRST_ROW_THIN: _BorderComponents(
-        outer=BorderWeight.THICK,
-        first_row_separator=BorderWeight.THIN,
-        inner_horizontal=BorderWeight.NONE,
-        inner_vertical=BorderWeight.NONE),
+        outer=BorderWeight.THICK, first_row_separator=BorderWeight.THIN,
+        inner_horizontal=BorderWeight.NONE, inner_vertical=BorderWeight.NONE),
     TableBorderStyle.OUTER_FIRST_ROW_THICK_VERTICAL_THIN:
-        _BorderComponents(
-            outer=BorderWeight.THICK,
-            first_row_separator=BorderWeight.THICK,
-            inner_horizontal=BorderWeight.NONE,
-            inner_vertical=BorderWeight.THIN),
+        _BorderComponents(outer=BorderWeight.THICK,
+                          first_row_separator=BorderWeight.THICK,
+                          inner_horizontal=BorderWeight.NONE,
+                          inner_vertical=BorderWeight.THIN),
     TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN: _BorderComponents(
-        outer=BorderWeight.THICK,
-        first_row_separator=BorderWeight.THICK,
-        inner_horizontal=BorderWeight.THIN,
-        inner_vertical=BorderWeight.THIN),
+        outer=BorderWeight.THICK, first_row_separator=BorderWeight.THICK,
+        inner_horizontal=BorderWeight.THIN, inner_vertical=BorderWeight.THIN),
     TableBorderStyle.OUTER_THICK_INNER_THIN: _BorderComponents(
-        outer=BorderWeight.THICK,
-        first_row_separator=BorderWeight.NONE,
-        inner_horizontal=BorderWeight.THIN,
-        inner_vertical=BorderWeight.THIN),
+        outer=BorderWeight.THICK, first_row_separator=BorderWeight.NONE,
+        inner_horizontal=BorderWeight.THIN, inner_vertical=BorderWeight.THIN),
     TableBorderStyle.ALL_THIN: _BorderComponents(
-        outer=BorderWeight.THIN,
-        first_row_separator=BorderWeight.NONE,
-        inner_horizontal=BorderWeight.THIN,
-        inner_vertical=BorderWeight.THIN),
+        outer=BorderWeight.THIN, first_row_separator=BorderWeight.NONE,
+        inner_horizontal=BorderWeight.THIN, inner_vertical=BorderWeight.THIN),
     TableBorderStyle.ALL_THICK: _BorderComponents(
-        outer=BorderWeight.THICK,
-        first_row_separator=BorderWeight.NONE,
-        inner_horizontal=BorderWeight.THICK,
-        inner_vertical=BorderWeight.THICK)
+        outer=BorderWeight.THICK, first_row_separator=BorderWeight.NONE,
+        inner_horizontal=BorderWeight.THICK, inner_vertical=BorderWeight.THICK)
 }
 
 

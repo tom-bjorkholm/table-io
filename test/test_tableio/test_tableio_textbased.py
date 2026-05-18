@@ -37,12 +37,9 @@ class RecordingTextBasedTableIO(TableIOTextBased):
     def get_description(cls) -> Descriptor:
         """Return the descriptor for the recording implementation."""
         return Descriptor(
-            format_name='textbased',
-            implementation='test',
-            capabilities=Capabilities(),
-            mandatory_args=['file_access'],
-            optional_args=['file_exists_callback', 'character_encoding']
-        )
+            format_name='textbased', implementation='test',
+            capabilities=Capabilities(), mandatory_args=['file_access'],
+            optional_args=['file_exists_callback', 'character_encoding'])
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -110,9 +107,8 @@ def test_textbased_open_read_mode_is_read_only(
     with TemporaryDirectory() as temp_dir:
         file_path = Path(temp_dir) / 'sample.txtb'
         file_path.write_text('alpha', encoding='utf-8')
-        table_io = RecordingTextBasedTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.READ)
+        table_io = RecordingTextBasedTableIO(Path(temp_dir) / 'sample',
+                                             FileAccess.READ)
         with table_io:
             assert table_io.file is not None
             assert table_io.file.readable() is True
@@ -147,9 +143,8 @@ def test_textbased_open_update_mode_supports_read_and_write(
     with TemporaryDirectory() as temp_dir:
         file_path = Path(temp_dir) / 'sample.txtb'
         file_path.write_text('alpha', encoding='utf-8')
-        table_io = RecordingTextBasedTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.UPDATE)
+        table_io = RecordingTextBasedTableIO(Path(temp_dir) / 'sample',
+                                             FileAccess.UPDATE)
         with table_io:
             assert table_io.read_from_start() == 'alpha'
             table_io.seek_to_end()
@@ -176,9 +171,8 @@ def test_textbased_get_last_chars_written_preserves_position(
     """Test tail reading for ASCII text while keeping the write position."""
     with TemporaryDirectory() as temp_dir:
         file_path = Path(temp_dir) / 'sample.txtb'
-        table_io = RecordingTextBasedTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.CREATE)
+        table_io = RecordingTextBasedTableIO(Path(temp_dir) / 'sample',
+                                             FileAccess.CREATE)
         with table_io:
             table_io.write_text('abcdef')
             current_pos = table_io.tell()
@@ -194,9 +188,8 @@ def test_textbased_get_last_chars_written_handles_utf8_multibyte_text(
     """Test tail reading for multibyte UTF-8 text."""
     with TemporaryDirectory() as temp_dir:
         file_path = Path(temp_dir) / 'sample.txtb'
-        table_io = RecordingTextBasedTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.CREATE)
+        table_io = RecordingTextBasedTableIO(Path(temp_dir) / 'sample',
+                                             FileAccess.CREATE)
         with table_io:
             table_io.write_text('A😀åäö')
             current_pos = table_io.tell()
@@ -238,15 +231,13 @@ def test_textbased_get_last_chars_written_retries_after_decode_error(
             self._file_obj.close()
 
     with TemporaryDirectory() as temp_dir:
-        table_io = RecordingTextBasedTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.CREATE)
+        table_io = RecordingTextBasedTableIO(Path(temp_dir) / 'sample',
+                                             FileAccess.CREATE)
         with table_io:
             assert table_io.file is not None
             table_io.write_text('abcdef')
-            table_io.file = cast(
-                io.TextIOWrapper,
-                _ReadFailsOnceProxy(table_io.file))
+            table_io.file = cast(io.TextIOWrapper,
+                                 _ReadFailsOnceProxy(table_io.file))
             assert table_io.get_last_chars_written(3) == 'def'
             assert table_io.tell() == 6
     check_capsys(capsys)
@@ -256,9 +247,8 @@ def test_textbased_get_last_chars_written_returns_whole_short_file(
         capsys: CaptureFixture[str]) -> None:
     """Test tail reading when fewer characters exist than requested."""
     with TemporaryDirectory() as temp_dir:
-        table_io = RecordingTextBasedTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.CREATE)
+        table_io = RecordingTextBasedTableIO(Path(temp_dir) / 'sample',
+                                             FileAccess.CREATE)
         with table_io:
             table_io.write_text('hi')
             assert table_io.get_last_chars_written(5) == 'hi'
@@ -273,17 +263,15 @@ def test_textbased_get_last_chars_written_returns_whole_short_file(
         pytest.param('alpha\n', 'alpha\n\nbeta', id='single-newline'),
         pytest.param('alpha\n\n', 'alpha\n\nbeta', id='already-empty-line'),
         pytest.param('åäö', 'åäö\n\nbeta', id='multibyte-text')
-    ]
-)
+    ])
 def test_textbased_ensure_empty_line_before(
         initial_text: str, expected_text: str,
         capsys: CaptureFixture[str]) -> None:
     """Test inserting exactly one empty line before appended text."""
     with TemporaryDirectory() as temp_dir:
         file_path = Path(temp_dir) / 'sample.txtb'
-        table_io = RecordingTextBasedTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.CREATE)
+        table_io = RecordingTextBasedTableIO(Path(temp_dir) / 'sample',
+                                             FileAccess.CREATE)
         with table_io:
             table_io.write_text(initial_text)
             table_io.ensure_empty_line_before()

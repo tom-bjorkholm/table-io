@@ -55,15 +55,13 @@ class ExposedTableIOCsv(TableIOCsv):
 # ── module-level helper function tests ───────────────────────────────
 
 
-def test_get_csv_dialect_type_unix(
-        capsys: CaptureFixture[str]) -> None:
+def test_get_csv_dialect_type_unix(capsys: CaptureFixture[str]) -> None:
     """Test that UNIX dialect enum maps to csv.unix_dialect."""
     assert _get_csv_dialect_type(CsvDialect.UNIX) is csv.unix_dialect
     check_capsys(capsys)
 
 
-def test_get_csv_dialect_type_excel(
-        capsys: CaptureFixture[str]) -> None:
+def test_get_csv_dialect_type_excel(capsys: CaptureFixture[str]) -> None:
     """Test that EXCEL dialect enum maps to csv.excel."""
     assert _get_csv_dialect_type(CsvDialect.EXCEL) is csv.excel
     check_capsys(capsys)
@@ -82,28 +80,21 @@ def test_get_csv_dialect_type_rejects_unknown_value(
     [
         pytest.param('all', csv.QUOTE_ALL, id='all'),
         pytest.param('minimal', csv.QUOTE_MINIMAL, id='minimal'),
-        pytest.param(
-            'nonnumeric', csv.QUOTE_NONNUMERIC, id='nonnumeric'
-        ),
+        pytest.param('nonnumeric', csv.QUOTE_NONNUMERIC, id='nonnumeric'),
         pytest.param('none', csv.QUOTE_NONE, id='none'),
         pytest.param('strings', csv.QUOTE_STRINGS, id='strings'),
         pytest.param('notnull', csv.QUOTE_NOTNULL, id='notnull'),
         pytest.param('ALL', csv.QUOTE_ALL, id='uppercase'),
-        pytest.param(
-            'Minimal', csv.QUOTE_MINIMAL, id='mixed-case'
-        )
-    ]
-)
-def test_validate_quoting_valid_values(
-        quoting_str: str, expected: int,
-        capsys: CaptureFixture[str]) -> None:
+        pytest.param('Minimal', csv.QUOTE_MINIMAL, id='mixed-case')
+    ])
+def test_quoting_valid_values(quoting_str: str, expected: int,
+                              capsys: CaptureFixture[str]) -> None:
     """Test that all valid quoting strings are accepted."""
     assert _validate_quoting(quoting_str) == expected
     check_capsys(capsys)
 
 
-def test_validate_quoting_rejects_unknown(
-        capsys: CaptureFixture[str]) -> None:
+def test_quoting_rejects_unknown(capsys: CaptureFixture[str]) -> None:
     """Test that an unknown quoting string raises ValueError."""
     with pytest.raises(ValueError, match='Unknown quoting style'):
         _validate_quoting('bogus')
@@ -121,11 +112,9 @@ def test_validate_quoting_rejects_unknown(
         pytest.param('#no-space', False, id='hash-no-space'),
         pytest.param('', False, id='empty-line'),
         pytest.param('#', False, id='hash-only')
-    ]
-)
-def test_is_heading_line(
-        line: str, expected: bool,
-        capsys: CaptureFixture[str]) -> None:
+    ])
+def test_is_heading_line(line: str, expected: bool,
+                         capsys: CaptureFixture[str]) -> None:
     """Test heading line detection."""
     assert _is_heading_line(line) == expected
     check_capsys(capsys)
@@ -134,9 +123,9 @@ def test_is_heading_line(
 def test_get_csv_dialect_applies_overrides(
         capsys: CaptureFixture[str]) -> None:
     """Test that CSV definitions override dialect defaults."""
-    defs = CsvDefinitions(
-        type=CsvDialect.UNIX, delimiter=';', quoting='all',
-        quotechar="'", lineterminator='\r\n', escapechar='\\')
+    defs = CsvDefinitions(type=CsvDialect.UNIX, delimiter=';', quoting='all',
+                          quotechar="'", lineterminator='\r\n',
+                          escapechar='\\')
     dialect = _get_csv_dialect(defs)
     assert dialect.delimiter == ';'
     assert dialect.quoting == csv.QUOTE_ALL
@@ -149,9 +138,8 @@ def test_get_csv_dialect_applies_overrides(
 def test_get_csv_dialect_keeps_defaults_when_none(
         capsys: CaptureFixture[str]) -> None:
     """Test that None values leave dialect defaults unchanged."""
-    defs = CsvDefinitions(
-        type=CsvDialect.UNIX, delimiter=None, quoting=None,
-        quotechar=None, lineterminator=None, escapechar=None)
+    defs = CsvDefinitions(type=CsvDialect.UNIX, delimiter=None, quoting=None,
+                          quotechar=None, lineterminator=None, escapechar=None)
     dialect = _get_csv_dialect(defs)
     assert dialect.delimiter == ','
     assert dialect.quoting == csv.QUOTE_ALL
@@ -163,15 +151,13 @@ def test_get_csv_dialect_keeps_defaults_when_none(
 # ── TableIOCsv class-level tests ────────────────────────────────────
 
 
-def test_csv_file_name_extension(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_file_name_extension(capsys: CaptureFixture[str]) -> None:
     """Test that the CSV file name extension is 'csv'."""
     assert TableIOCsv.file_name_extension() == 'csv'
     check_capsys(capsys)
 
 
-def test_csv_get_description(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_get_description(capsys: CaptureFixture[str]) -> None:
     """Test the descriptor returned by get_description."""
     desc = TableIOCsv.get_description()
     assert desc.format_name == 'CSV'
@@ -182,8 +168,7 @@ def test_csv_get_description(
     check_capsys(capsys)
 
 
-def test_csv_get_capabilities(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_get_capabilities(capsys: CaptureFixture[str]) -> None:
     """Test the capabilities returned by get_capabilities."""
     caps = TableIOCsv.get_capabilities()
     assert caps.can_write.supported is True
@@ -218,15 +203,13 @@ def test_csv_context_manager_opens_and_closes(
 # ── write tests ──────────────────────────────────────────────────────
 
 
-def test_csv_write_heading(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_write_heading(capsys: CaptureFixture[str]) -> None:
     """Test writing a heading to a CSV file."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'sample'
         with TableIOCsv(path, FileAccess.CREATE) as w:
             w.write_heading('Report', level=1)
-        content = (Path(td) / 'sample.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'sample.csv').read_text(encoding='utf-8')
         assert content.startswith('# Report\n')
     check_capsys(capsys)
 
@@ -241,19 +224,16 @@ def test_csv_write_heading(
             id='listdata'),
         pytest.param(
             lambda table_io: table_io.write_table_dictdata(
-                [{'name': 'Alice', 'age': '30'}],
-                ['name', 'age']),
+                [{'name': 'Alice', 'age': '30'}], ['name', 'age']),
             id='dictdata'),
-    ]
-)
+    ])
 def test_csv_write_methods_reject_read_only_access(
         action: Callable[[TableIOCsv], object],
         capsys: CaptureFixture[str]) -> None:
     """Public write methods raise io.UnsupportedOperation in READ mode."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'read_only'
-        (Path(td) / 'read_only.csv').write_text('"a","b"\n',
-                                                encoding='utf-8')
+        (Path(td) / 'read_only.csv').write_text('"a","b"\n', encoding='utf-8')
         table_io = TableIOCsv(path, FileAccess.READ)
         with table_io:
             with pytest.raises(io.UnsupportedOperation,
@@ -291,8 +271,7 @@ def test_csv_protected_dict_writer_rejects_box(
     check_capsys(capsys)
 
 
-def test_csv_write_table_listdata(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_write_table_listdata(capsys: CaptureFixture[str]) -> None:
     """Test writing list data to a CSV file."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'data'
@@ -302,8 +281,7 @@ def test_csv_write_table_listdata(
         ]
         with TableIOCsv(path, FileAccess.CREATE) as w:
             w.write_table_listdata(data)
-        content = (Path(td) / 'data.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'data.csv').read_text(encoding='utf-8')
         assert '"Name","Age"\n' in content
         assert '"Alice","30"\n' in content
     check_capsys(capsys)
@@ -335,15 +313,13 @@ def test_csv_write_table_fmtlistdata_strips_format(
         ]
         with TableIOCsv(path, FileAccess.CREATE) as w:
             w.write_table_fmtlistdata(data)
-        content = (Path(td) / 'fmt.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'fmt.csv').read_text(encoding='utf-8')
         assert '"x","y"\n' in content
         assert '"1","2"\n' in content
     check_capsys(capsys)
 
 
-def test_csv_write_table_dictdata(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_write_table_dictdata(capsys: CaptureFixture[str]) -> None:
     """Test writing dict data to a CSV file."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'dict'
@@ -353,8 +329,7 @@ def test_csv_write_table_dictdata(
         ]
         with TableIOCsv(path, FileAccess.CREATE) as w:
             w.write_table_dictdata(data, ['name', 'age'])
-        content = (Path(td) / 'dict.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'dict.csv').read_text(encoding='utf-8')
         assert '"name","age"\n' in content
         assert '"Alice","30"\n' in content
         assert '"Bob","25"\n' in content
@@ -367,43 +342,37 @@ def test_csv_write_table_fmtdictdata_strips_format(
     with TemporaryDirectory() as td:
         path = Path(td) / 'fmtd'
         data = [
-            FmtDictRow(values={'a': '1', 'b': '2'},
-                       fmt=Fmt(bold=True))
+            FmtDictRow(values={'a': '1', 'b': '2'}, fmt=Fmt(bold=True))
         ]
         with TableIOCsv(path, FileAccess.CREATE) as w:
             w.write_table_fmtdictdata(data, ['a', 'b'])
-        content = (Path(td) / 'fmtd.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'fmtd.csv').read_text(encoding='utf-8')
         assert '"a","b"\n' in content
         assert '"1","2"\n' in content
     check_capsys(capsys)
 
 
-def test_csv_write_none_values(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_write_none_values(capsys: CaptureFixture[str]) -> None:
     """Test that None values are written as empty fields."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'nones'
         data: list[list[Value]] = [['a', None], [None, 'b']]
         with TableIOCsv(path, FileAccess.CREATE) as w:
             w.write_table_listdata(data)
-        content = (Path(td) / 'nones.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'nones.csv').read_text(encoding='utf-8')
         assert '"a",""\n' in content
         assert '"","b"\n' in content
     check_capsys(capsys)
 
 
-def test_csv_write_numeric_values(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_write_numeric_values(capsys: CaptureFixture[str]) -> None:
     """Test that numeric values are converted to strings."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'nums'
         data: list[list[Value]] = [['val', 'num'], [42, 3.14]]
         with TableIOCsv(path, FileAccess.CREATE) as w:
             w.write_table_listdata(data)
-        content = (Path(td) / 'nums.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'nums.csv').read_text(encoding='utf-8')
         assert '"42"' in content
         assert '"3.14"' in content
     check_capsys(capsys)
@@ -414,8 +383,7 @@ def test_csv_write_numeric_values(
     [
         pytest.param('read_table_listdata_in_box', id='listdata'),
         pytest.param('read_table_dictdata_in_box', id='dictdata')
-    ]
-)
+    ])
 def test_csv_protected_readers_reject_box(
         reader_name: str, capsys: CaptureFixture[str]) -> None:
     """The CSV implementation hooks reject boxed reads."""
@@ -445,18 +413,15 @@ def test_csv_read_table_dictdata_returns_empty_result_for_heading_only_input(
     check_capsys(capsys)
 
 
-def test_csv_write_with_custom_delimiter(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_write_custom_delimiter(capsys: CaptureFixture[str]) -> None:
     """Test writing with a custom delimiter."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'semi'
         data: list[list[Value]] = [['a', 'b'], ['c', 'd']]
-        with TableIOCsv(path, FileAccess.CREATE,
-                        csv_dialect=CsvDialect.EXCEL,
+        with TableIOCsv(path, FileAccess.CREATE, csv_dialect=CsvDialect.EXCEL,
                         csv_delimiter=';') as w:
             w.write_table_listdata(data)
-        content = (Path(td) / 'semi.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'semi.csv').read_text(encoding='utf-8')
         assert 'a;b' in content
         assert 'c;d' in content
     check_capsys(capsys)
@@ -482,23 +447,19 @@ def test_csv_write_table_dictdata_rejects_box(
         data: list[dict[str, Value]] = [{'a': '1', 'b': '2'}]
         with TableIOCsv(path, FileAccess.CREATE) as w:
             with pytest.raises(CapabilityNotSupported):
-                w.write_table_dictdata(
-                    data, ['a', 'b'], box=Box(0, 0, 2, 2))
+                w.write_table_dictdata(data, ['a', 'b'], box=Box(0, 0, 2, 2))
     check_capsys(capsys)
 
 
 # ── read tests ───────────────────────────────────────────────────────
 
 
-def test_csv_read_table_listdata(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_read_table_listdata(capsys: CaptureFixture[str]) -> None:
     """Test reading list data from a CSV file."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'data.csv'
-        csv_path.write_text('"a","b"\n"c","d"\n',
-                            encoding='utf-8')
-        with TableIOCsv(Path(td) / 'data',
-                        FileAccess.READ) as r:
+        csv_path.write_text('"a","b"\n"c","d"\n', encoding='utf-8')
+        with TableIOCsv(Path(td) / 'data', FileAccess.READ) as r:
             result = r.read_table_listdata()
         assert result.data == [['a', 'b'], ['c', 'd']]
         assert result.headings == []
@@ -510,9 +471,7 @@ def test_csv_read_table_listdata_with_headings(
     """Test reading list data preceded by headings."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'h.csv'
-        csv_path.write_text(
-            '# Title\n\n"x","y"\n"1","2"\n',
-            encoding='utf-8')
+        csv_path.write_text('# Title\n\n"x","y"\n"1","2"\n', encoding='utf-8')
         with TableIOCsv(Path(td) / 'h', FileAccess.READ) as r:
             result = r.read_table_listdata()
         assert result.headings == ['Title']
@@ -525,9 +484,7 @@ def test_csv_read_table_listdata_multiple_heading_levels(
     """Test reading headings at different levels."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'm.csv'
-        csv_path.write_text(
-            '# Main\n## Sub\n\n"a","b"\n',
-            encoding='utf-8')
+        csv_path.write_text('# Main\n## Sub\n\n"a","b"\n', encoding='utf-8')
         with TableIOCsv(Path(td) / 'm', FileAccess.READ) as r:
             result = r.read_table_listdata()
         assert result.headings == ['Main', 'Sub']
@@ -535,14 +492,12 @@ def test_csv_read_table_listdata_multiple_heading_levels(
     check_capsys(capsys)
 
 
-def test_csv_read_table_dictdata(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_read_table_dictdata(capsys: CaptureFixture[str]) -> None:
     """Test reading dict data from a CSV file."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'dd.csv'
-        csv_path.write_text(
-            '"name","age"\n"Alice","30"\n"Bob","25"\n',
-            encoding='utf-8')
+        csv_path.write_text('"name","age"\n"Alice","30"\n"Bob","25"\n',
+                            encoding='utf-8')
         with TableIOCsv(Path(td) / 'dd', FileAccess.READ) as r:
             result = r.read_table_dictdata()
         assert result.data == [
@@ -558,9 +513,7 @@ def test_csv_read_table_dictdata_with_headings(
     """Test reading dict data preceded by headings."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'dh.csv'
-        csv_path.write_text(
-            '## Info\n\n"k","v"\n"a","1"\n',
-            encoding='utf-8')
+        csv_path.write_text('## Info\n\n"k","v"\n"a","1"\n', encoding='utf-8')
         with TableIOCsv(Path(td) / 'dh', FileAccess.READ) as r:
             result = r.read_table_dictdata()
         assert result.headings == ['Info']
@@ -573,22 +526,19 @@ def test_csv_read_table_dictdata_header_only(
     """Test reading dict data when only the header row exists."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'ho.csv'
-        csv_path.write_text('"col1","col2"\n',
-                            encoding='utf-8')
+        csv_path.write_text('"col1","col2"\n', encoding='utf-8')
         with TableIOCsv(Path(td) / 'ho', FileAccess.READ) as r:
             result = r.read_table_dictdata()
         assert result.data == []
     check_capsys(capsys)
 
 
-def test_csv_read_empty_file(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_read_empty_file(capsys: CaptureFixture[str]) -> None:
     """Test reading from an empty file returns empty data."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'empty.csv'
         csv_path.write_text('', encoding='utf-8')
-        with TableIOCsv(Path(td) / 'empty',
-                        FileAccess.READ) as r:
+        with TableIOCsv(Path(td) / 'empty', FileAccess.READ) as r:
             result = r.read_table_listdata()
         assert result.data == []
         assert result.headings == []
@@ -612,8 +562,7 @@ def test_csv_read_table_dictdata_rejects_box(
     """Test that reading dict data with a box raises an error."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'rbd.csv'
-        csv_path.write_text('"k","v"\n"a","1"\n',
-                            encoding='utf-8')
+        csv_path.write_text('"k","v"\n"a","1"\n', encoding='utf-8')
         with TableIOCsv(Path(td) / 'rbd', FileAccess.READ) as r:
             with pytest.raises(CapabilityNotSupported):
                 r.read_table_dictdata(box=Box(0, 0, 1, 1))
@@ -709,8 +658,7 @@ def test_csv_read_multiple_tables_sequentially(
     check_capsys(capsys)
 
 
-def test_csv_heading_levels_roundtrip(
-        capsys: CaptureFixture[str]) -> None:
+def test_csv_heading_roundtrip(capsys: CaptureFixture[str]) -> None:
     """Test that heading text is preserved across write and read."""
     with TemporaryDirectory() as td:
         path = Path(td) / 'lvl'
@@ -825,10 +773,8 @@ def test_csv_two_simultaneous_objects_different_delimiters(
                             csv_delimiter='\t') as tab_w:
                 semi_w.write_table_listdata(semi_data)
                 tab_w.write_table_listdata(tab_data)
-        semi_content = (Path(td) / 'semi.csv').read_text(
-            encoding='utf-8')
-        tab_content = (Path(td) / 'tab.csv').read_text(
-            encoding='utf-8')
+        semi_content = (Path(td) / 'semi.csv').read_text(encoding='utf-8')
+        tab_content = (Path(td) / 'tab.csv').read_text(encoding='utf-8')
         assert 'alpha;beta' in semi_content
         assert 'one;two' in semi_content
         assert '\t' not in semi_content
@@ -857,15 +803,12 @@ def test_csv_write_and_read_with_quoting_override(
     with TemporaryDirectory() as td:
         path = Path(td) / 'q'
         data: list[list[Value]] = [['a', 'b'], ['c', 'd']]
-        with TableIOCsv(path, FileAccess.CREATE,
-                        csv_dialect=CsvDialect.EXCEL,
+        with TableIOCsv(path, FileAccess.CREATE, csv_dialect=CsvDialect.EXCEL,
                         csv_quoting='all') as w:
             w.write_table_listdata(data)
-        content = (Path(td) / 'q.csv').read_text(
-            encoding='utf-8')
+        content = (Path(td) / 'q.csv').read_text(encoding='utf-8')
         assert '"a","b"' in content
-        with TableIOCsv(path, FileAccess.READ,
-                        csv_dialect=CsvDialect.EXCEL,
+        with TableIOCsv(path, FileAccess.READ, csv_dialect=CsvDialect.EXCEL,
                         csv_quoting='all') as r:
             result = r.read_table_listdata()
         assert result.data == data
@@ -880,11 +823,8 @@ def test_csv_read_skips_leading_empty_lines(
     """Test that leading empty lines before data are skipped."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'lead.csv'
-        csv_path.write_text(
-            '\n\n\n"a","b"\n"c","d"\n',
-            encoding='utf-8')
-        with TableIOCsv(Path(td) / 'lead',
-                        FileAccess.READ) as r:
+        csv_path.write_text('\n\n\n"a","b"\n"c","d"\n', encoding='utf-8')
+        with TableIOCsv(Path(td) / 'lead', FileAccess.READ) as r:
             result = r.read_table_listdata()
         assert result.data == [['a', 'b'], ['c', 'd']]
     check_capsys(capsys)
@@ -895,10 +835,8 @@ def test_csv_read_after_all_tables_returns_empty(
     """Test that reading past the last table returns empty data."""
     with TemporaryDirectory() as td:
         csv_path = Path(td) / 'one.csv'
-        csv_path.write_text('"a","b"\n',
-                            encoding='utf-8')
-        with TableIOCsv(Path(td) / 'one',
-                        FileAccess.READ) as r:
+        csv_path.write_text('"a","b"\n', encoding='utf-8')
+        with TableIOCsv(Path(td) / 'one', FileAccess.READ) as r:
             r1 = r.read_table_listdata()
             r2 = r.read_table_listdata()
         assert r1.data == [['a', 'b']]
@@ -910,8 +848,7 @@ def test_csv_write_heading_rejects_invalid_level(
         capsys: CaptureFixture[str]) -> None:
     """Test that heading levels outside 1-3 are rejected."""
     with TemporaryDirectory() as td:
-        with TableIOCsv(Path(td) / 'bad',
-                        FileAccess.CREATE) as w:
+        with TableIOCsv(Path(td) / 'bad', FileAccess.CREATE) as w:
             with pytest.raises(ValueError, match='range 1 to 3'):
                 w.write_heading('Bad', level=0)
             with pytest.raises(ValueError, match='range 1 to 3'):
@@ -923,8 +860,7 @@ def test_csv_write_heading_rejects_newline_in_text(
         capsys: CaptureFixture[str]) -> None:
     """Test that headings containing newlines are rejected."""
     with TemporaryDirectory() as td:
-        with TableIOCsv(Path(td) / 'nl',
-                        FileAccess.CREATE) as w:
+        with TableIOCsv(Path(td) / 'nl', FileAccess.CREATE) as w:
             with pytest.raises(ValueError, match='newline'):
                 w.write_heading('line1\nline2')
     check_capsys(capsys)

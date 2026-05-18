@@ -68,10 +68,8 @@ def test_rewrite_zip_archive_adds_extra_entries() -> None:
             """Keep every existing entry unchanged."""
             return data
 
-        rewrite_zip_archive(
-            file_path,
-            rewrite_entry,
-            {'keep.txt': b'new-value', 'extra.txt': b'extra'})
+        rewrite_zip_archive(file_path, rewrite_entry,
+                            {'keep.txt': b'new-value', 'extra.txt': b'extra'})
         with ZipFile(file_path, 'r') as archive:
             assert set(archive.namelist()) == {'keep.txt', 'extra.txt'}
             assert archive.read('keep.txt') == b'keep'

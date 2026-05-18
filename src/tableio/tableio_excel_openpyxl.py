@@ -83,8 +83,7 @@ def _styles_xml_with_sorted_fonts(data: bytes) -> bytes:
     root = ET.fromstring(data)
     for font in root.findall('main:fonts/main:font', _XML_NS):
         font[:] = sorted(list(font), key=_font_child_sort_key)
-    return bytes(ET.tostring(root, encoding='utf-8',
-                             xml_declaration=True))
+    return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
 
 def _new_shared_strings_root() -> ET.Element:
@@ -116,9 +115,8 @@ def _shared_strings_xml(shared_strings_root: ET.Element) -> bytes:
                              xml_declaration=True))
 
 
-def _inline_string_to_shared_string(
-        cell: ET.Element,
-        shared_strings_root: ET.Element) -> None:
+def _inline_string_to_shared_string(cell: ET.Element,
+                                    shared_strings_root: ET.Element) -> None:
     """Move one inline string cell value to the shared string table."""
     inline_string = cell.find('main:is', _XML_NS)
     if inline_string is None:
@@ -136,15 +134,13 @@ def _inline_string_to_shared_string(
     cell.append(value)
 
 
-def _sheet_xml_with_shared_strings(
-        data: bytes,
-        shared_strings_root: ET.Element) -> bytes:
+def _sheet_xml_with_shared_strings(data: bytes,
+                                   shared_strings_root: ET.Element) -> bytes:
     """Return sheet XML with inline strings converted to shared strings."""
     root = ET.fromstring(data)
     for cell in root.findall('.//main:c[@t="inlineStr"]', _XML_NS):
         _inline_string_to_shared_string(cell, shared_strings_root)
-    return bytes(ET.tostring(root, encoding='utf-8',
-                             xml_declaration=True))
+    return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
 
 def _content_types_with_shared_strings(data: bytes) -> bytes:
@@ -157,8 +153,7 @@ def _content_types_with_shared_strings(data: bytes) -> bytes:
     override.set('PartName', '/' + _SHARED_STRINGS_PATH)
     override.set('ContentType', _SHARED_STRINGS_CONTENT_TYPE)
     root.append(override)
-    return bytes(ET.tostring(root, encoding='utf-8',
-                             xml_declaration=True))
+    return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
 
 def _next_relationship_id(root: ET.Element) -> str:
@@ -186,8 +181,7 @@ def _workbook_rels_with_shared_strings(data: bytes) -> bytes:
     relationship.set('Type', _SHARED_STRINGS_REL_TYPE)
     relationship.set('Target', 'sharedStrings.xml')
     root.append(relationship)
-    return bytes(ET.tostring(root, encoding='utf-8',
-                             xml_declaration=True))
+    return bytes(ET.tostring(root, encoding='utf-8', xml_declaration=True))
 
 
 def _is_worksheet_xml(filename: str) -> bool:
@@ -196,8 +190,7 @@ def _is_worksheet_xml(filename: str) -> bool:
 
 
 def _worksheet_rewrites_with_shared_strings(
-        file_name: Path,
-        shared_strings_root: ET.Element) -> dict[str, bytes]:
+        file_name: Path, shared_strings_root: ET.Element) -> dict[str, bytes]:
     """Return worksheet XML rewrites and update the shared string table."""
     rewrites: dict[str, bytes] = {}
     with ZipFile(file_name, 'r') as archive:
@@ -238,8 +231,7 @@ def _rewrite_saved_workbook(file_name: Path) -> None:
         extra_entries = {
             _SHARED_STRINGS_PATH: _shared_strings_xml(shared_strings_root)
         }
-    rewrite_zip_archive(file_name, rewrite_entry,
-                        extra_entries=extra_entries)
+    rewrite_zip_archive(file_name, rewrite_entry, extra_entries=extra_entries)
 
 
 class TableIOExcelOpenPyXL(TableIOExcelBased):
@@ -250,13 +242,11 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
     the selected worksheet.
     """
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None):
         """Initialize the TableIOExcelOpenPyXL class."""
-        super().__init__(file_name=file_name,
-                         file_access=file_access,
+        super().__init__(file_name=file_name, file_access=file_access,
                          file_exists_callback=file_exists_callback)
         self.workbook: Optional[Workbook] = None
         self.read_workbook: Optional[Workbook] = None
@@ -291,8 +281,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
             self.read_workbook = workbook
         else:
             self.workbook = load_workbook(self.file_name)
-            self.read_workbook = load_workbook(self.file_name,
-                                               data_only=True)
+            self.read_workbook = load_workbook(self.file_name, data_only=True)
         assert self.workbook is not None
         assert self.read_workbook is not None
         worksheet = self.workbook.active
@@ -336,8 +325,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         self.read_worksheet = None
 
     @staticmethod
-    def _worksheet_name_map(
-            workbook: Workbook) -> dict[str, Worksheet]:
+    def _worksheet_name_map(workbook: Workbook) -> dict[str, Worksheet]:
         """Return the workbook worksheets indexed case-insensitively."""
         ret: dict[str, Worksheet] = {}
         for worksheet in workbook.worksheets:
@@ -410,8 +398,8 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         return PatternFill(fill_type='solid',
                            fgColor=_HIGHLIGHT_RGB[highlight])
 
-    def _write_value_to_sheet(self, sheet: object, row: int,
-                              column: int, value: object) -> None:
+    def _write_value_to_sheet(self, sheet: object, row: int, column: int,
+                              value: object) -> None:
         """Write one value to one worksheet cell."""
         worksheet = get_checked_type(sheet, Worksheet)
         cell = worksheet.cell(row=row + 1, column=column + 1)
@@ -442,11 +430,10 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         cached = self._border_cache.get(borders)
         if cached is not None:
             return cached
-        border = Border(
-            left=self._border_side(borders.left),
-            right=self._border_side(borders.right),
-            top=self._border_side(borders.top),
-            bottom=self._border_side(borders.bottom))
+        border = Border(left=self._border_side(borders.left),
+                        right=self._border_side(borders.right),
+                        top=self._border_side(borders.top),
+                        bottom=self._border_side(borders.bottom))
         self._border_cache[borders] = border
         return border
 
@@ -531,8 +518,8 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         self._normalize_filtered_table_header(bounds[0], bounds[1], bounds[3])
         self.worksheet.add_table(
             Table(displayName=name,
-                  ref=self._excel_range_ref(bounds[0], bounds[1],
-                                            bounds[2], bounds[3])))
+                  ref=self._excel_range_ref(bounds[0], bounds[1], bounds[2],
+                                            bounds[3])))
 
     def _set_column_width_if_wider(self, column: int, width: float) -> None:
         """Widen one worksheet column if the target width is larger."""

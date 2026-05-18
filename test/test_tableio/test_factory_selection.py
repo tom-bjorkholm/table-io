@@ -22,11 +22,9 @@ class _AlphaFmtStrict(_StubBase):
 
     _desc = Descriptor(
         format_name='Alpha', implementation='fmt_strict',
-        capabilities=Capabilities(
-            can_write=_SUP, can_read=_SUP,
-            can_fmt_row=_SUP),
-        mandatory_args=[], optional_args=['opt_c'],
-        priority=1)
+        capabilities=Capabilities(can_write=_SUP, can_read=_SUP,
+                                  can_fmt_row=_SUP),
+        mandatory_args=[], optional_args=['opt_c'], priority=1)
 
 
 def _shared_descriptor(format_name: str, implementation: str,
@@ -34,8 +32,7 @@ def _shared_descriptor(format_name: str, implementation: str,
     """Return a descriptor for one shared-name test implementation."""
     return Descriptor(format_name=format_name, implementation=implementation,
                       capabilities=Capabilities(can_write=_SUP),
-                      mandatory_args=[], optional_args=[],
-                      priority=priority)
+                      mandatory_args=[], optional_args=[], priority=priority)
 
 
 class _SharedHigh(_StubBase):
@@ -98,8 +95,7 @@ def test_filter_args_none_implementation_prefers_strict_match() -> None:
         'opt_c': 'c'
     })
     caps = Capabilities(can_fmt_row=_SUP)
-    result = factory.i_filter_args(args, 'alpha', None,
-                                   capabilities=caps)
+    result = factory.i_filter_args(args, 'alpha', None, capabilities=caps)
     assert result == {'opt_c': 'c'}
 
 
@@ -107,9 +103,7 @@ def test_filter_args_explicit_implementation_validates_caps() -> None:
     """Explicit implementation filtering validates capabilities."""
     factory = _make_selection_factory()
     args = cast(OptionalArgsDict, {'opt_b': 'b'})
-    caps = Capabilities(
-        can_read=SingleCapability(
-            True, Strictness.STRICT))
+    caps = Capabilities(can_read=SingleCapability(True, Strictness.STRICT))
     with pytest.raises(TableIOFactoryNoCapabilityMatch):
         factory.i_filter_args(args, 'Alpha', 'low', capabilities=caps)
 
@@ -119,8 +113,7 @@ def test_filter_args_none_implementation_no_match_raises() -> None:
     factory = _make_selection_factory()
     args = cast(OptionalArgsDict, {'opt_a': 'a'})
     caps = Capabilities(
-        can_write_box=SingleCapability(
-            True, Strictness.STRICT))
+        can_write_box=SingleCapability(True, Strictness.STRICT))
     with pytest.raises(TableIOFactoryNoCapabilityMatch):
         factory.i_filter_args(args, 'Alpha', None, capabilities=caps)
 
@@ -128,8 +121,7 @@ def test_filter_args_none_implementation_no_match_raises() -> None:
 def test_implementation_listing_not_alphabetical_orders_by_priority() -> None:
     """alphabetical=False returns factory selection order."""
     factory = _make_selection_factory()
-    names = factory.i_get_registered_implementations(
-        alphabetical=False)
+    names = factory.i_get_reg_impls(alphabetical=False)
     assert names == ['high', 'beta_impl', 'low']
 
 
@@ -137,8 +129,7 @@ def test_implementation_listing_keeps_strict_before_nonstrict() -> None:
     """Strict capability matches are listed before tolerant matches."""
     factory = _make_selection_factory()
     caps = Capabilities(can_fmt_row=_SUP)
-    names = factory.i_get_registered_implementations(
-        capabilities=caps, alphabetical=False)
+    names = factory.i_get_reg_impls(capabilities=caps, alphabetical=False)
     assert names == ['beta_impl', 'high', 'low']
 
 
@@ -148,15 +139,14 @@ def test_implementation_listing_deduplicates_by_first_match() -> None:
     factory.i_register(_SharedLow)
     factory.i_register(_OtherSharedGroup)
     factory.i_register(_SharedHigh)
-    names = factory.i_get_registered_implementations(
-        alphabetical=False)
+    names = factory.i_get_reg_impls(alphabetical=False)
     assert names == ['shared', 'other']
 
 
 def test_implementation_listing_format_name_is_case_insensitive() -> None:
     """Implementation listing accepts case-insensitive format names."""
     factory = _make_selection_factory()
-    names = factory.i_get_registered_implementations(format_name='alpha')
+    names = factory.i_get_reg_impls(format_name='alpha')
     assert names == ['high', 'low']
 
 

@@ -37,14 +37,11 @@ def make_capabilities(
         can_find_value_position: SingleCapability = SingleCapability()) \
         -> Capabilities:
     """Build a Capabilities value for tests."""
-    return Capabilities(
-        can_write=make_capability(True, Strictness.STRICT),
-        can_read=make_capability(True, Strictness.STRICT),
-        filtered_data_range=filtered_data_range,
-        can_write_box=can_write_box,
-        can_read_box=can_read_box,
-        can_find_value_position=can_find_value_position
-    )
+    return Capabilities(can_write=make_capability(True, Strictness.STRICT),
+                        can_read=make_capability(True, Strictness.STRICT),
+                        filtered_data_range=filtered_data_range,
+                        can_write_box=can_write_box, can_read_box=can_read_box,
+                        can_find_value_position=can_find_value_position)
 
 
 # pylint: disable-next=too-many-instance-attributes
@@ -54,8 +51,7 @@ class RecordingTableIO(TableIO):
     capabilities = make_capabilities(
         can_write_box=make_capability(True, Strictness.STRICT),
         can_read_box=make_capability(True, Strictness.STRICT),
-        can_find_value_position=make_capability(True, Strictness.STRICT)
-    )
+        can_find_value_position=make_capability(True, Strictness.STRICT))
 
     def __init__(self, file_name: str | Path,
                  file_access: FileAccess = FileAccess.CREATE,
@@ -105,27 +101,18 @@ class RecordingTableIO(TableIO):
         self.fail_write_file_suffix: bool = False
         self.fail_close: bool = False
         self.list_read_result: ReadResult[list[list[Value]]] = ReadResult(
-            data=[['list', 1]],
-            headings=['before-list'],
-            last_read_row=5
-        )
+            data=[['list', 1]], headings=['before-list'], last_read_row=5)
         self.dict_read_result: ReadResult[list[dict[str, Value]]] = \
-            ReadResult(
-                data=[{'alpha': 'dict', 'beta': 2}],
-                headings=['before-dict'],
-                last_read_row=5
-            )
+            ReadResult(data=[{'alpha': 'dict', 'beta': 2}],
+                       headings=['before-dict'], last_read_row=5)
 
     @classmethod
     def get_description(cls) -> Descriptor:
         """Return the descriptor for the recording implementation."""
-        return Descriptor(
-            format_name='recording',
-            implementation='test',
-            capabilities=cls.capabilities,
-            mandatory_args=['file_access'],
-            optional_args=['file_exists_callback']
-        )
+        return Descriptor(format_name='recording', implementation='test',
+                          capabilities=cls.capabilities,
+                          mandatory_args=['file_access'],
+                          optional_args=['file_exists_callback'])
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -276,13 +263,10 @@ class MinimalTableIO(TableIO):
     @classmethod
     def get_description(cls) -> Descriptor:
         """Return a descriptor that allows instantiation in tests."""
-        return Descriptor(
-            format_name='minimal',
-            implementation='test',
-            capabilities=Capabilities(),
-            mandatory_args=['file_access'],
-            optional_args=[]
-        )
+        caps = Capabilities()
+        return Descriptor(format_name='minimal', implementation='test',
+                          capabilities=caps, mandatory_args=['file_access'],
+                          optional_args=[])
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -330,23 +314,20 @@ class MinimalTableIO(TableIO):
         common_impl = TableIO.ImplMetaForWrite(filtered_data_range=False,
                                                box=None,
                                                borders=make_no_border_helper())
-        impl_meta = TableIO.ImplMetaForDictWrite(
-            common_impl=common_impl,
-            column_order=column_order,
-            first_row_format=None)
+        impl_meta = TableIO.ImplMetaForDictWrite(common_impl=common_impl,
+                                                 column_order=column_order,
+                                                 first_row_format=None)
         return self._write_table_dictdata(data, impl_meta)
 
-    def run_write_table_fmtdictdata(
-            self, data: FmtDictData,
-            column_order: list[str]) -> Position:
+    def run_write_table_fmtdictdata(self, data: FmtDictData,
+                                    column_order: list[str]) -> Position:
         """Expose the inherited _write_table_fmtdictdata method."""
         common_impl = TableIO.ImplMetaForWrite(filtered_data_range=False,
                                                box=None,
                                                borders=make_no_border_helper())
-        impl_meta = TableIO.ImplMetaForDictWrite(
-            common_impl=common_impl,
-            column_order=column_order,
-            first_row_format=None)
+        impl_meta = TableIO.ImplMetaForDictWrite(common_impl=common_impl,
+                                                 column_order=column_order,
+                                                 first_row_format=None)
         return self._write_table_fmtdictdata(data, impl_meta)
 
     def run_read_table_listdata(self) -> ReadResult[list[list[Value]]]:
@@ -375,8 +356,7 @@ class WriteIgnoreBoxTableIO(RecordingTableIO):
 
     capabilities = make_capabilities(
         can_write_box=make_capability(False, Strictness.IGNORE),
-        can_read_box=make_capability(True, Strictness.STRICT)
-    )
+        can_read_box=make_capability(True, Strictness.STRICT))
 
 
 class WriteStrictBoxTableIO(RecordingTableIO):
@@ -384,8 +364,7 @@ class WriteStrictBoxTableIO(RecordingTableIO):
 
     capabilities = make_capabilities(
         can_write_box=make_capability(False, Strictness.STRICT),
-        can_read_box=make_capability(True, Strictness.STRICT)
-    )
+        can_read_box=make_capability(True, Strictness.STRICT))
 
 
 class ReadIgnoreBoxTableIO(RecordingTableIO):
@@ -393,8 +372,7 @@ class ReadIgnoreBoxTableIO(RecordingTableIO):
 
     capabilities = make_capabilities(
         can_write_box=make_capability(True, Strictness.STRICT),
-        can_read_box=make_capability(False, Strictness.IGNORE)
-    )
+        can_read_box=make_capability(False, Strictness.IGNORE))
 
 
 class ReadStrictBoxTableIO(RecordingTableIO):
@@ -402,8 +380,7 @@ class ReadStrictBoxTableIO(RecordingTableIO):
 
     capabilities = make_capabilities(
         can_write_box=make_capability(True, Strictness.STRICT),
-        can_read_box=make_capability(False, Strictness.STRICT)
-    )
+        can_read_box=make_capability(False, Strictness.STRICT))
 
 
 class WriteSupportedFilteredDataRangeTableIO(RecordingTableIO):
@@ -412,8 +389,7 @@ class WriteSupportedFilteredDataRangeTableIO(RecordingTableIO):
     capabilities = make_capabilities(
         filtered_data_range=make_capability(True, Strictness.STRICT),
         can_write_box=make_capability(True, Strictness.STRICT),
-        can_read_box=make_capability(True, Strictness.STRICT)
-    )
+        can_read_box=make_capability(True, Strictness.STRICT))
 
 
 class WriteIgnoreFilteredDataRangeTableIO(RecordingTableIO):
@@ -422,8 +398,7 @@ class WriteIgnoreFilteredDataRangeTableIO(RecordingTableIO):
     capabilities = make_capabilities(
         filtered_data_range=make_capability(False, Strictness.IGNORE),
         can_write_box=make_capability(True, Strictness.STRICT),
-        can_read_box=make_capability(True, Strictness.STRICT)
-    )
+        can_read_box=make_capability(True, Strictness.STRICT))
 
 
 class WriteStrictFilteredDataRangeTableIO(RecordingTableIO):
@@ -432,29 +407,22 @@ class WriteStrictFilteredDataRangeTableIO(RecordingTableIO):
     capabilities = make_capabilities(
         filtered_data_range=make_capability(False, Strictness.STRICT),
         can_write_box=make_capability(True, Strictness.STRICT),
-        can_read_box=make_capability(True, Strictness.STRICT)
-    )
+        can_read_box=make_capability(True, Strictness.STRICT))
 
 
 def test_tableio_named_tuples_store_values_and_defaults(
         capsys: CaptureFixture[str]) -> None:
     """Test the public NamedTuple values in the tableio module."""
-    descriptor = Descriptor(
-        format_name='csv',
-        implementation='default',
-        capabilities=Capabilities(),
-        mandatory_args=['path'],
-        optional_args=['mode']
-    )
+    caps = Capabilities()
+    descriptor = Descriptor(format_name='csv', implementation='default',
+                            capabilities=caps, mandatory_args=['path'],
+                            optional_args=['mode'])
     box = Box(top=1, left=2, bottom=None, right=5)
     position = Position(row=3, column=4)
-    impl_meta = TableIO.ImplMetaForWrite(
-        filtered_data_range=True,
-        box=box,
-        borders=make_no_border_helper())
+    impl_meta = TableIO.ImplMetaForWrite(filtered_data_range=True, box=box,
+                                         borders=make_no_border_helper())
     dict_impl_meta = TableIO.ImplMetaForDictWrite(
-        common_impl=impl_meta,
-        column_order=['alpha', 'beta'],
+        common_impl=impl_meta, column_order=['alpha', 'beta'],
         first_row_format=Fmt(bold=True))
     assert descriptor.priority == 10
     assert descriptor.format_name == 'csv'
@@ -479,11 +447,8 @@ def test_tableio_init_adds_extension_and_stores_callback(
         _ = file_name
 
     with TemporaryDirectory() as temp_dir:
-        table_io = RecordingTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.CREATE,
-            file_exists_callback
-        )
+        table_io = RecordingTableIO(Path(temp_dir) / 'sample',
+                                    FileAccess.CREATE, file_exists_callback)
         assert table_io.file_name == str(Path(temp_dir) / 'sample.tio')
         assert table_io.file_access is FileAccess.CREATE
         assert table_io.file_exists_callback is file_exists_callback
@@ -515,11 +480,8 @@ def test_tableio_init_create_calls_callback_for_existing_file(
         file_name = Path(temp_dir) / 'sample'
         expected_name = str(Path(temp_dir) / 'sample.tio')
         Path(expected_name).touch()
-        table_io = RecordingTableIO(
-            file_name,
-            FileAccess.CREATE,
-            file_exists_callback
-        )
+        table_io = RecordingTableIO(file_name, FileAccess.CREATE,
+                                    file_exists_callback)
         assert table_io.file_name == expected_name
     assert calls == [expected_name]
     check_capsys(capsys)
@@ -536,19 +498,15 @@ def test_tableio_init_create_propagates_callback_exception(
             """Reject the overwrite request with a custom error."""
             raise RuntimeError(f'blocked: {callback_file_name}')
         with pytest.raises(RuntimeError, match='blocked: .*sample.tio'):
-            RecordingTableIO(
-                file_name,
-                FileAccess.CREATE,
-                file_exists_callback
-            )
+            RecordingTableIO(file_name, FileAccess.CREATE,
+                             file_exists_callback)
     check_capsys(capsys)
 
 
 @pytest.mark.parametrize(
     'file_access',
     [pytest.param(FileAccess.READ, id='read'),
-     pytest.param(FileAccess.UPDATE, id='update')]
-)
+     pytest.param(FileAccess.UPDATE, id='update')])
 def test_tableio_init_read_and_update_require_existing_file(
         file_access: FileAccess, capsys: CaptureFixture[str]) -> None:
     """Test READ and UPDATE modes when the target file is missing."""
@@ -562,8 +520,7 @@ def test_tableio_init_read_and_update_require_existing_file(
 @pytest.mark.parametrize(
     'file_access',
     [pytest.param(FileAccess.READ, id='read'),
-     pytest.param(FileAccess.UPDATE, id='update')]
-)
+     pytest.param(FileAccess.UPDATE, id='update')])
 def test_tableio_init_read_and_update_ignore_callback(
         file_access: FileAccess, capsys: CaptureFixture[str]) -> None:
     """Test READ and UPDATE modes with an existing file and a callback."""
@@ -577,11 +534,8 @@ def test_tableio_init_read_and_update_ignore_callback(
         file_name = Path(temp_dir) / 'sample'
         expected_name = str(Path(temp_dir) / 'sample.tio')
         Path(expected_name).touch()
-        table_io = RecordingTableIO(
-            file_name,
-            file_access,
-            file_exists_callback
-        )
+        table_io = RecordingTableIO(file_name, file_access,
+                                    file_exists_callback)
         assert table_io.file_name == expected_name
         assert table_io.file_access is file_access
     assert not calls
@@ -639,20 +593,12 @@ def test_close_calls_close_once_after_success(
 @pytest.mark.parametrize(
     ('fail_attr', 'expected_events', 'expected_error'),
     [
-        pytest.param(
-            'fail_end_state',
-            ['end_state', 'close'],
-            'end_state failed',
-            id='end-state'
-        ),
-        pytest.param(
-            'fail_write_file_suffix',
-            ['end_state', 'write_file_suffix', 'close'],
-            'write_file_suffix failed',
-            id='write-file-suffix'
-        )
-    ]
-)
+        pytest.param('fail_end_state', ['end_state', 'close'],
+                     'end_state failed', id='end-state'),
+        pytest.param('fail_write_file_suffix',
+                     ['end_state', 'write_file_suffix', 'close'],
+                     'write_file_suffix failed', id='write-file-suffix')
+    ])
 def test_close_calls_close_once_when_finalize_fails(
         fail_attr: str, expected_events: list[str], expected_error: str,
         capsys: CaptureFixture[str]) -> None:
@@ -724,10 +670,8 @@ def test_write_table_listdata_delegates_valid_data_and_box(
     """Test list-data writes through the public base-class method."""
     table_io = RecordingTableIO('sample')
     box = Box(top=3, left=4, bottom=5, right=6)
-    position = table_io.write_table_listdata(
-        [['alpha', 1], [None, 2.5]],
-        box=box
-    )
+    position = table_io.write_table_listdata([['alpha', 1], [None, 2.5]],
+                                             box=box)
     assert position == Position(1, 1)
     assert table_io.last_list_write_data == [['alpha', 1], [None, 2.5]]
     assert table_io.last_list_filtered_data_range is False
@@ -741,32 +685,16 @@ def test_write_table_listdata_delegates_valid_data_and_box(
     [
         pytest.param([], None, 'Data is empty', id='empty-data'),
         pytest.param([[]], None, 'First row is empty', id='empty-first-row'),
-        pytest.param(
-            [['only']],
-            None,
-            'Data is not at least 2 cells in size',
-            id='one-cell'
-        ),
-        pytest.param(
-            [['left', 1], ['right']],
-            None,
-            'All rows must have the same number of columns',
-            id='ragged'
-        ),
-        pytest.param(
-            [['left', 1], ['right', 2]],
-            Box(0, 0, 1, None),
-            'Wrong number of rows',
-            id='too-many-rows'
-        ),
-        pytest.param(
-            [['left', 1], ['right', 2]],
-            Box(0, 0, None, 1),
-            'Wrong number of columns',
-            id='too-many-columns'
-        )
-    ]
-)
+        pytest.param([['only']], None, 'Data is not at least 2 cells in size',
+                     id='one-cell'),
+        pytest.param([['left', 1], ['right']], None,
+                     'All rows must have the same number of columns',
+                     id='ragged'),
+        pytest.param([['left', 1], ['right', 2]], Box(0, 0, 1, None),
+                     'Wrong number of rows', id='too-many-rows'),
+        pytest.param([['left', 1], ['right', 2]], Box(0, 0, None, 1),
+                     'Wrong number of columns', id='too-many-columns')
+    ])
 def test_check_listdimensions_rejects_invalid_shapes(
         data: list[list[Value]], box: Box | None, expected_error: str,
         capsys: CaptureFixture[str]) -> None:
@@ -782,8 +710,7 @@ def test_check_listdimensions_rejects_invalid_shapes(
     [
         pytest.param([['left', 1]], id='single-row-two-columns'),
         pytest.param([['left'], [1]], id='two-rows-single-column')
-    ]
-)
+    ])
 def test_check_listdimensions_accepts_minimum_table_size(
         data: list[list[Value]], capsys: CaptureFixture[str]) -> None:
     """Test the minimum valid list-table shapes."""
@@ -799,14 +726,9 @@ def test_write_table_dictdata_normalizes_and_delegates(
     box = Box(top=5, left=2, bottom=8, right=4)
     first_row_format = Fmt(bold=True)
     position = table_io.write_table_dictdata(
-        [{'alpha': 'left', 'extra': 1}, {'beta': 2.5}],
-        ['alpha', 'beta'],
-        first_row_format=first_row_format,
-        missing_ok=True,
-        extra_ok=True,
-        filtered_data_range=False,
-        box=box
-    )
+        [{'alpha': 'left', 'extra': 1}, {'beta': 2.5}], ['alpha', 'beta'],
+        first_row_format=first_row_format, missing_ok=True, extra_ok=True,
+        filtered_data_range=False, box=box)
     assert position == Position(2, 1)
     assert table_io.last_dict_write_data == [
         {'alpha': 'left', 'beta': None},
@@ -825,26 +747,13 @@ def test_write_table_dictdata_normalizes_and_delegates(
     [
         pytest.param([], None, 'Data is empty', id='empty-data'),
         pytest.param([{}], None, 'First row is empty', id='empty-first-row'),
-        pytest.param(
-            [{'alpha': 'only'}],
-            None,
-            'Data is not at least 2 cells in size',
-            id='one-cell'
-        ),
-        pytest.param(
-            [{'alpha': 'left', 'beta': 1}],
-            Box(0, 0, 1, None),
-            'Wrong number of rows',
-            id='too-many-rows'
-        ),
-        pytest.param(
-            [{'alpha': 'left', 'beta': 1}],
-            Box(0, 0, None, 1),
-            'Wrong number of columns',
-            id='too-many-columns'
-        )
-    ]
-)
+        pytest.param([{'alpha': 'only'}], None,
+                     'Data is not at least 2 cells in size', id='one-cell'),
+        pytest.param([{'alpha': 'left', 'beta': 1}], Box(0, 0, 1, None),
+                     'Wrong number of rows', id='too-many-rows'),
+        pytest.param([{'alpha': 'left', 'beta': 1}], Box(0, 0, None, 1),
+                     'Wrong number of columns', id='too-many-columns')
+    ])
 def test_check_dictdimensions_rejects_invalid_shapes(
         data: list[dict[str, Value]], box: Box | None, expected_error: str,
         capsys: CaptureFixture[str]) -> None:
@@ -859,12 +768,9 @@ def test_check_dictdimensions_rejects_invalid_shapes(
     'data',
     [
         pytest.param([{'alpha': 'left', 'beta': 1}], id='single-row'),
-        pytest.param(
-            [{'alpha': 'left'}, {'alpha': 'right'}],
-            id='two-rows-single-column'
-        )
-    ]
-)
+        pytest.param([{'alpha': 'left'}, {'alpha': 'right'}],
+                     id='two-rows-single-column')
+    ])
 def test_check_dictdimensions_accepts_minimum_table_size(
         data: list[dict[str, Value]], capsys: CaptureFixture[str]) -> None:
     """Test the minimum valid dict-table shapes."""
@@ -891,11 +797,8 @@ def test_write_table_dictdata_passes_filtered_data_range_when_supported(
     """Test dict-data writes with filtered data range enabled."""
     table_io = WriteSupportedFilteredDataRangeTableIO('sample')
     data: list[dict[str, Value]] = [{'alpha': 'left', 'beta': 1}]
-    position = table_io.write_table_dictdata(
-        data,
-        ['alpha', 'beta'],
-        filtered_data_range=True
-    )
+    position = table_io.write_table_dictdata(data, ['alpha', 'beta'],
+                                             filtered_data_range=True)
     assert position == Position(1, 1)
     assert table_io.last_dict_write_data == data
     assert table_io.last_dict_filtered_data_range is True
@@ -1105,10 +1008,7 @@ def test_base_class_not_implemented_instance_methods_raise(
     fmt_list_data = [FmtListRow(values=('alpha', 1), fmt=Fmt(bold=True))]
     dict_data: list[dict[str, Value]] = [{'alpha': 'left', 'beta': 1}]
     fmt_dict_data = [
-        FmtDictRow(
-            values={'alpha': 'left', 'beta': 1},
-            fmt=Fmt(italic=True)
-        )
+        FmtDictRow(values={'alpha': 'left', 'beta': 1}, fmt=Fmt(italic=True))
     ]
     with pytest.raises(NotImplementedError, match='open method'):
         table_io.open()
@@ -1131,10 +1031,7 @@ def test_base_class_not_implemented_instance_methods_raise(
         table_io.run_write_table_dictdata(dict_data, ['alpha', 'beta'])
     with pytest.raises(NotImplementedError,
                        match='_write_table_fmtdictdata method'):
-        table_io.run_write_table_fmtdictdata(
-            fmt_dict_data,
-            ['alpha', 'beta']
-        )
+        table_io.run_write_table_fmtdictdata(fmt_dict_data, ['alpha', 'beta'])
     with pytest.raises(NotImplementedError,
                        match='_read_table_listdata method'):
         table_io.run_read_table_listdata()

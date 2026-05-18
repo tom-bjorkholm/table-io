@@ -25,8 +25,7 @@ class TableIOTextBased(TableIO):
     in a single place.
     """
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]] = None,
                  character_encoding: str = 'utf-8'):
         """Initialize the TableIOTextBased reader/writer class."""

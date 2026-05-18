@@ -25,16 +25,11 @@ from .cmd_for_examples import cmd_parse_and_run_example
 
 # pylint: disable=duplicate-code
 
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NOT_USED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NEEDED,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_NOT_USED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NOT_USED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NOT_USED,
+                    filtered_data_range=CAP_NEEDED, can_write_box=CAP_NOT_USED,
+                    can_read_box=CAP_NOT_USED,
+                    can_write_highlight=CAP_NOT_USED)
 
 
 # pylint: disable=duplicate-code
@@ -46,11 +41,9 @@ def e03_rrs_input_format(format_name: str, output_file_name: str,
     # We pass the capabilities needed for this example so the factory can
     # filter out readers and writers that do not support them.
     # Use the TableIO object as a context manager for writing data.
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         # Define the column order for the data to match what
         # https://www.racingrulesofsailing.org expects.

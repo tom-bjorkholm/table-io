@@ -67,13 +67,11 @@ class TableIOSpreadsheetBased(TableIO):
     rectangular grid stored in the document.
     """
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None):
         """Initialize the spreadsheet-based TableIO class."""
-        super().__init__(file_name=file_name,
-                         file_access=file_access,
+        super().__init__(file_name=file_name, file_access=file_access,
                          file_exists_callback=file_exists_callback)
         self.read_row: int = 0
         self.write_row: int = 0
@@ -112,9 +110,8 @@ class TableIOSpreadsheetBased(TableIO):
         return sheet_name.casefold()
 
     @classmethod
-    def _find_matching_sheet_name(
-            cls, existing_sheet_names: list[str],
-            sheet_name: str) -> Optional[str]:
+    def _find_matching_sheet_name(cls, existing_sheet_names: list[str],
+                                  sheet_name: str) -> Optional[str]:
         """Return the existing sheet name matching the requested name."""
         wanted_key = cls._sheet_key(sheet_name)
         for existing_name in existing_sheet_names:
@@ -148,8 +145,7 @@ class TableIOSpreadsheetBased(TableIO):
     def _save_current_sheet_state(self) -> None:
         """Persist the public cursor fields for the current sheet."""
         self._sheet_states[self._current_sheet_key()] = _SheetState(
-            read_row=self.read_row,
-            write_row=self.write_row,
+            read_row=self.read_row, write_row=self.write_row,
             heading_written=self.heading_written)
 
     def _initialize_positions(self) -> None:
@@ -171,8 +167,8 @@ class TableIOSpreadsheetBased(TableIO):
         # pylint: disable=unreachable
         return object()
 
-    def _write_value_to_sheet(self, sheet: object, row: int,
-                              column: int, value: object) -> None:
+    def _write_value_to_sheet(self, sheet: object, row: int, column: int,
+                              value: object) -> None:
         """Write one plain value to one backend cell."""
         _ = sheet
         _ = row
@@ -288,8 +284,8 @@ class TableIOSpreadsheetBased(TableIO):
             return
         self._write_value_to_sheet(read_sheet, row, column, value)
 
-    def _clear_range(self, top: int, left: int,
-                     bottom: int, right: int) -> None:
+    def _clear_range(self, top: int, left: int, bottom: int,
+                     right: int) -> None:
         """Clear values and simple formatting in a rectangle."""
         write_sheet = self._write_sheet()
         read_sheet = self._read_sheet()
@@ -338,8 +334,8 @@ class TableIOSpreadsheetBased(TableIO):
                 ret.append(column)
         return ret
 
-    def _row_is_empty(self, sheet: object, row: int,
-                      left: int, right: Optional[int]) -> bool:
+    def _row_is_empty(self, sheet: object, row: int, left: int,
+                      right: Optional[int]) -> bool:
         """Return whether the selected row region contains no values."""
         return not self._row_nonempty_columns(sheet, row, left, right)
 
@@ -364,14 +360,13 @@ class TableIOSpreadsheetBased(TableIO):
             last_read_row = row
             row += 1
         headings: list[str] = []
-        while row < bottom and self._row_is_heading(sheet, row, left,
-                                                    right, bottom):
+        while row < bottom and self._row_is_heading(sheet, row, left, right,
+                                                    bottom):
             heading = self._cell_value(sheet, row, left)
             headings.append(value_to_str(heading, none_is_empty=True))
             last_read_row = row
             row += 1
-            while row < bottom and self._row_is_empty(sheet, row, left,
-                                                      right):
+            while row < bottom and self._row_is_empty(sheet, row, left, right):
                 last_read_row = row
                 row += 1
         table_top = row
@@ -394,8 +389,7 @@ class TableIOSpreadsheetBased(TableIO):
         return _ScanResult(headings=headings, table_top=table_top,
                            table_bottom=table_bottom, table_left=left,
                            table_right=table_right,
-                           last_read_row=last_read_row,
-                           next_read_row=row)
+                           last_read_row=last_read_row, next_read_row=row)
 
     def _read_grid(self, scan: _ScanResult) -> ListData[Value]:
         """Read a rectangular grid from the scanned section."""
@@ -586,20 +580,18 @@ class TableIOSpreadsheetBased(TableIO):
             return ''
         return str(value)
 
-    def _table_column_width(self, top: int, bottom: int,
-                            column: int) -> float:
+    def _table_column_width(self, top: int, bottom: int, column: int) -> float:
         """Return a width target for one table column."""
         max_length = 0
         write_sheet = self._write_sheet()
         for row in range(top, bottom):
             value = self._cell_value(write_sheet, row, column)
-            max_length = max(max_length,
-                             len(self._column_width_text(value)))
+            max_length = max(max_length, len(self._column_width_text(value)))
         return float(min(_MAX_COLUMN_WIDTH,
                          max_length + _COLUMN_WIDTH_PADDING))
 
-    def _update_table_column_widths(self, top: int, left: int,
-                                    bottom: int, right: int) -> None:
+    def _update_table_column_widths(self, top: int, left: int, bottom: int,
+                                    right: int) -> None:
         """Widen backend columns to fit the written table content."""
         for column in range(left, right):
             self._set_column_width_if_wider(
@@ -658,8 +650,8 @@ class TableIOSpreadsheetBased(TableIO):
         if impl_meta.borders.has_borders():
             self._write_grid_borders(start_row, start_column, values,
                                      impl_meta.borders)
-        self._update_table_column_widths(start_row, start_column,
-                                         write_bottom, write_right)
+        self._update_table_column_widths(start_row, start_column, write_bottom,
+                                         write_right)
         next_row = max(self.write_row, clear_bottom + 1)
         self._update_write_position(next_row)
         return Position(row=start_row + row_count - 1,
@@ -773,10 +765,9 @@ class TableIOSpreadsheetBased(TableIO):
             return None
         for row in range(top, last_row + 1):
             for column in range(left, last_column + 1):
-                if self._grid_matches(read_sheet, row, column,
-                                      find_value, type_conversion):
-                    return Box(top=row, left=column,
-                               bottom=row + row_count,
+                if self._grid_matches(read_sheet, row, column, find_value,
+                                      type_conversion):
+                    return Box(top=row, left=column, bottom=row + row_count,
                                right=column + column_count)
         return None
 

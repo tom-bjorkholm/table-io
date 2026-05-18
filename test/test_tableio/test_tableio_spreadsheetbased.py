@@ -60,10 +60,8 @@ class _MinimalSpreadsheetTableIO(TableIOSpreadsheetBased):
     def get_description(cls) -> Descriptor:
         """Return a descriptor that allows test instantiation."""
         return Descriptor(format_name='minimal-spreadsheet',
-                          implementation='test',
-                          capabilities=Capabilities(),
-                          mandatory_args=[],
-                          optional_args=[])
+                          implementation='test', capabilities=Capabilities(),
+                          mandatory_args=[], optional_args=[])
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -110,13 +108,13 @@ class _MinimalSpreadsheetTableIO(TableIOSpreadsheetBased):
         """Expose the inherited _write_sheet method for tests."""
         return self._write_sheet()
 
-    def run_write_value_to_sheet(self, sheet: object, row: int,
-                                 column: int, value: object) -> None:
+    def run_write_value_to_sheet(self, sheet: object, row: int, column: int,
+                                 value: object) -> None:
         """Expose the inherited _write_value_to_sheet method for tests."""
         self._write_value_to_sheet(sheet, row, column, value)
 
-    def run_set_cell_format(self, sheet: object, row: int,
-                            column: int, fmt: Optional[Fmt]) -> None:
+    def run_set_cell_format(self, sheet: object, row: int, column: int,
+                            fmt: Optional[Fmt]) -> None:
         """Expose the inherited _set_cell_format method for tests."""
         self._set_cell_format(sheet, row, column, fmt)
 
@@ -189,8 +187,7 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         return Descriptor(format_name='recording-spreadsheet',
                           implementation='test',
                           capabilities=cls.get_capabilities(),
-                          mandatory_args=[],
-                          optional_args=[])
+                          mandatory_args=[], optional_args=[])
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -254,8 +251,8 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         """Return the writable in-memory sheet."""
         return self._write_sheets[self._selected_sheet_name]
 
-    def _write_value_to_sheet(self, sheet: object, row: int,
-                              column: int, value: object) -> None:
+    def _write_value_to_sheet(self, sheet: object, row: int, column: int,
+                              value: object) -> None:
         """Write one value to the in-memory sheet."""
         memory_sheet = sheet
         assert isinstance(memory_sheet, _MemorySheet)
@@ -376,8 +373,8 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         """Expose the value-writing helper for tests."""
         self._write_value(row, column, value, fmt)
 
-    def run_clear_range(self, top: int, left: int,
-                        bottom: int, right: int) -> None:
+    def run_clear_range(self, top: int, left: int, bottom: int,
+                        right: int) -> None:
         """Expose the range-clearing helper for tests."""
         self._clear_range(top, left, bottom, right)
 
@@ -386,9 +383,9 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         """Expose the scan-right helper for tests."""
         return self._scan_limit_right(sheet, left, right)
 
-    def run_row_is_heading(  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-            self, sheet: object, row: int, left: int,
-            right: Optional[int], bottom: int) -> bool:
+    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
+    def run_row_is_heading(self, sheet: object, row: int, left: int,
+                           right: Optional[int], bottom: int) -> bool:
         """Expose the row-heading helper for tests."""
         return self._row_is_heading(sheet, row, left, right, bottom)
 
@@ -428,8 +425,8 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         """Expose the table-column-width helper for tests."""
         return self._table_column_width(top, bottom, column)
 
-    def run_update_table_column_widths(self, top: int, left: int,
-                                       bottom: int, right: int) -> None:
+    def run_update_table_column_widths(self, top: int, left: int, bottom: int,
+                                       right: int) -> None:
         """Expose the width-update helper for tests."""
         self._update_table_column_widths(top, left, bottom, right)
 
@@ -459,8 +456,7 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         """Expose exact cell reads for tests."""
         return self._read_cells(box)
 
-    def run_write_cells(self, data: ListDataSeq[CellT],
-                        box: Box) -> None:
+    def run_write_cells(self, data: ListDataSeq[CellT], box: Box) -> None:
         """Expose exact cell writes for tests."""
         self._write_cells(data, box)
 
@@ -470,10 +466,8 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
     [
         pytest.param(None, None, id='none'),
         pytest.param(datetime(2026, 3, 27, 8, 9, 10),
-                     datetime(2026, 3, 27, 8, 9, 10),
-                     id='datetime'),
-        pytest.param(date(2026, 3, 27),
-                     datetime(2026, 3, 27, 0, 0, 0),
+                     datetime(2026, 3, 27, 8, 9, 10), id='datetime'),
+        pytest.param(date(2026, 3, 27), datetime(2026, 3, 27, 0, 0, 0),
                      id='date'),
         pytest.param(Decimal('4'), 4, id='decimal-int'),
         pytest.param(Decimal('4.5'), 4.5, id='decimal-float'),
@@ -482,11 +476,9 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         pytest.param(7, 7, id='int'),
         pytest.param(2.5, 2.5, id='float'),
         pytest.param(complex(1, 2), '(1+2j)', id='other-object')
-    ]
-)
+    ])
 def test_python_value_from_spreadsheet_converts_supported_types(
-        value: object, expected: Value,
-        capsys: CaptureFixture[str]) -> None:
+        value: object, expected: Value, capsys: CaptureFixture[str]) -> None:
     """Spreadsheet helper converts backend values to the public value type."""
     assert _RecordingSpreadsheetTableIO.convert_from_spreadsheet(value) == \
         expected
@@ -511,8 +503,8 @@ def test_spreadsheet_base_abstract_hooks_raise_not_implemented(
     with pytest.raises(NotImplementedError, match='_set_cell_borders method'):
         table_io.run_set_cell_borders(
             object(), 0, 0,
-            CellBorder(BorderWeight.NONE, BorderWeight.NONE,
-                       BorderWeight.NONE, BorderWeight.NONE))
+            CellBorder(BorderWeight.NONE, BorderWeight.NONE, BorderWeight.NONE,
+                       BorderWeight.NONE))
     with pytest.raises(NotImplementedError,
                        match='_apply_heading_style method'):
         table_io.run_apply_heading_style(0, 0, 1)
@@ -541,10 +533,9 @@ def test_spreadsheet_write_value_updates_separate_read_snapshot(
         capsys: CaptureFixture[str]) -> None:
     """Writing one value mirrors data to the read snapshot, not the format."""
     with TemporaryDirectory() as temp_dir:
-        table_io = _RecordingSpreadsheetTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.CREATE,
-            separate_read_sheet=True)
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample',
+                                                FileAccess.CREATE,
+                                                separate_read_sheet=True)
         with table_io:
             table_io.run_write_value(1, 2, 'alpha', Fmt(bold=True))
             assert table_io.write_sheet_data().values[(1, 2)] == 'alpha'
@@ -559,10 +550,9 @@ def test_spreadsheet_clear_range_clears_write_and_read_snapshots(
         capsys: CaptureFixture[str]) -> None:
     """Clearing a rectangle removes the values from both sheet snapshots."""
     with TemporaryDirectory() as temp_dir:
-        table_io = _RecordingSpreadsheetTableIO(
-            Path(temp_dir) / 'sample',
-            FileAccess.CREATE,
-            separate_read_sheet=True)
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample',
+                                                FileAccess.CREATE,
+                                                separate_read_sheet=True)
         with table_io:
             table_io.seed_value(0, 0, 'left')
             table_io.seed_value(0, 1, 'right')
@@ -597,14 +587,13 @@ def test_spreadsheet_scan_helpers_cover_edge_cases(
             assert scan.table_right == 2
             assert scan.last_read_row == 4
             assert scan.next_read_row == 5
-            empty_grid = table_io.run_read_grid(_ScanResult(
-                headings=[],
-                table_top=2,
-                table_bottom=2,
-                table_left=1,
-                table_right=3,
-                last_read_row=1,
-                next_read_row=2))
+            empty_grid = table_io.run_read_grid(_ScanResult(headings=[],
+                                                            table_top=2,
+                                                            table_bottom=2,
+                                                            table_left=1,
+                                                            table_right=3,
+                                                            last_read_row=1,
+                                                            next_read_row=2))
             assert not empty_grid
     check_capsys(capsys)
 
@@ -709,36 +698,30 @@ def test_spreadsheet_write_table_listdata_applies_borders(
                 [['name', 'value'], ['Alice', 1], ['Bob', 2]],
                 border_style=TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN)
             assert table_io.write_sheet_data().borders == {
-                (0, 0): CellBorder(
-                    top=BorderWeight.THICK,
-                    right=BorderWeight.THIN,
-                    bottom=BorderWeight.THICK,
-                    left=BorderWeight.THICK),
-                (0, 1): CellBorder(
-                    top=BorderWeight.THICK,
-                    right=BorderWeight.THICK,
-                    bottom=BorderWeight.THICK,
-                    left=BorderWeight.THIN),
-                (1, 0): CellBorder(
-                    top=BorderWeight.THICK,
-                    right=BorderWeight.THIN,
-                    bottom=BorderWeight.THIN,
-                    left=BorderWeight.THICK),
-                (1, 1): CellBorder(
-                    top=BorderWeight.THICK,
-                    right=BorderWeight.THICK,
-                    bottom=BorderWeight.THIN,
-                    left=BorderWeight.THIN),
-                (2, 0): CellBorder(
-                    top=BorderWeight.THIN,
-                    right=BorderWeight.THIN,
-                    bottom=BorderWeight.THICK,
-                    left=BorderWeight.THICK),
-                (2, 1): CellBorder(
-                    top=BorderWeight.THIN,
-                    right=BorderWeight.THICK,
-                    bottom=BorderWeight.THICK,
-                    left=BorderWeight.THIN)
+                (0, 0): CellBorder(top=BorderWeight.THICK,
+                                   right=BorderWeight.THIN,
+                                   bottom=BorderWeight.THICK,
+                                   left=BorderWeight.THICK),
+                (0, 1): CellBorder(top=BorderWeight.THICK,
+                                   right=BorderWeight.THICK,
+                                   bottom=BorderWeight.THICK,
+                                   left=BorderWeight.THIN),
+                (1, 0): CellBorder(top=BorderWeight.THICK,
+                                   right=BorderWeight.THIN,
+                                   bottom=BorderWeight.THIN,
+                                   left=BorderWeight.THICK),
+                (1, 1): CellBorder(top=BorderWeight.THICK,
+                                   right=BorderWeight.THICK,
+                                   bottom=BorderWeight.THIN,
+                                   left=BorderWeight.THIN),
+                (2, 0): CellBorder(top=BorderWeight.THIN,
+                                   right=BorderWeight.THIN,
+                                   bottom=BorderWeight.THICK,
+                                   left=BorderWeight.THICK),
+                (2, 1): CellBorder(top=BorderWeight.THIN,
+                                   right=BorderWeight.THICK,
+                                   bottom=BorderWeight.THICK,
+                                   left=BorderWeight.THIN)
             }
     check_capsys(capsys)
 
@@ -751,13 +734,11 @@ def test_spreadsheet_box_rewrite_clears_old_borders(
         with table_io:
             box = Box(top=1, left=2, bottom=3, right=4)
             table_io.write_table_listdata(
-                [['left', 'right'], ['down', 'here']],
-                box=box,
+                [['left', 'right'], ['down', 'here']], box=box,
                 border_style=TableBorderStyle.ALL_THICK)
             assert table_io.write_sheet_data().borders
             table_io.write_table_listdata(
-                [['new', 'values'], ['stay', 'plain']],
-                box=box,
+                [['new', 'values'], ['stay', 'plain']], box=box,
                 border_style=TableBorderStyle.NONE)
             assert table_io.write_sheet_data().borders == {}
     check_capsys(capsys)
@@ -771,8 +752,7 @@ def test_spreadsheet_find_value_matches_per_cell_with_type_conversion(
         with table_io:
             table_io.seed_value(1, 2, '1')
             table_io.seed_value(1, 3, 'true')
-            exact = table_io.run_find_value([[1, True]],
-                                            type_conversion=False)
+            exact = table_io.run_find_value([[1, True]], type_conversion=False)
             converted = table_io.run_find_value([[1, True]])
             restricted = table_io.run_find_value(
                 [[1, True]], box=Box(top=0, left=0, bottom=1, right=4))

@@ -30,6 +30,5 @@ def make_boxed_dict_write_impl_meta(
         TableIO.ImplMetaForDictWrite:
     """Build dict-write metadata for a boxed write used in tests."""
     return TableIO.ImplMetaForDictWrite(
-        common_impl=make_boxed_write_impl_meta(box),
-        column_order=column_order,
+        common_impl=make_boxed_write_impl_meta(box), column_order=column_order,
         first_row_format=first_row_format)

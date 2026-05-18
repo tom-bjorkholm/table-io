@@ -41,9 +41,8 @@ _KNOWN_CLASSES: list[type[TableIO]] = [
     TableIOOdsOdfdo]
 
 
-@pytest.mark.parametrize(
-    'cls', _KNOWN_CLASSES,
-    ids=[c.__name__ for c in _KNOWN_CLASSES])
+@pytest.mark.parametrize('cls', _KNOWN_CLASSES,
+                         ids=[c.__name__ for c in _KNOWN_CLASSES])
 def test_known_format_present(cls: type[TableIO]) -> None:
     """Each known format class is in the returned list."""
     assert cls in register_formats_in_pkg()

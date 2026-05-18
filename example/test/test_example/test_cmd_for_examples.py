@@ -65,9 +65,8 @@ class TestBuildOptionalArgs:
 
     def test_multiple_args(self) -> None:
         """Multiple arguments of mixed types are all included."""
-        ns = argparse.Namespace(
-            lang=['en'], line_length=[80],
-            csv_dialect=['EXCEL'])
+        ns = argparse.Namespace(lang=['en'], line_length=[80],
+                                csv_dialect=['EXCEL'])
         result = _build_optional_args(ns)
         assert isinstance(result, dict)
         assert result['lang'] == 'en'
@@ -80,35 +79,27 @@ class TestUnpackAndRunExample:
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_single_format_no_impl(
-            self, _mock_reg: MagicMock,
-            _mock_impl: MagicMock) -> None:
+    def test_single_format_no_impl(self, _mock_reg: MagicMock,
+                                   _mock_impl: MagicMock) -> None:
         """Single format, no implementation specified."""
         func: Any = MagicMock(return_value=0)
-        ns = argparse.Namespace(
-            format=['CSV'], output=['out'],
-            implementation=None)
-        ret = _unpack_and_run_example(
-            'test', func, None, ns)
+        ns = argparse.Namespace(format=['CSV'], output=['out'],
+                                implementation=None)
+        ret = _unpack_and_run_example('test', func, None, ns)
         assert ret == 0
-        func.assert_called_once_with(
-            'CSV', 'out', None, None)
+        func.assert_called_once_with('CSV', 'out', None, None)
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_single_format_specific_impl(
-            self, _mock_reg: MagicMock,
-            _mock_impl: MagicMock) -> None:
+    def test_single_format_specific_impl(self, _mock_reg: MagicMock,
+                                         _mock_impl: MagicMock) -> None:
         """Single format with a specific implementation."""
         func: Any = MagicMock(return_value=0)
-        ns = argparse.Namespace(
-            format=['CSV'], output=['out'],
-            implementation=['PyCsv'])
-        ret = _unpack_and_run_example(
-            'test', func, None, ns)
+        ns = argparse.Namespace(format=['CSV'], output=['out'],
+                                implementation=['PyCsv'])
+        ret = _unpack_and_run_example('test', func, None, ns)
         assert ret == 0
-        func.assert_called_once_with(
-            'CSV', 'out', 'PyCsv', None)
+        func.assert_called_once_with('CSV', 'out', 'PyCsv', None)
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
@@ -117,81 +108,63 @@ class TestUnpackAndRunExample:
         """Format 'all' iterates over all registered formats."""
         mock_reg.return_value = ['CSV', 'HTML']
         func: Any = MagicMock(return_value=0)
-        ns = argparse.Namespace(
-            format=['all'], output=['out'],
-            implementation=None)
-        ret = _unpack_and_run_example(
-            'test', func, None, ns)
+        ns = argparse.Namespace(format=['all'], output=['out'],
+                                implementation=None)
+        ret = _unpack_and_run_example('test', func, None, ns)
         assert ret == 0
         assert func.call_count == 2
         func.assert_any_call('CSV', 'out_CSV', None, None)
-        func.assert_any_call(
-            'HTML', 'out_HTML', None, None)
+        func.assert_any_call('HTML', 'out_HTML', None, None)
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_all_implementations(
-            self, _mock_reg: MagicMock,
-            mock_impl: MagicMock) -> None:
+    def test_all_implementations(self, _mock_reg: MagicMock,
+                                 mock_impl: MagicMock) -> None:
         """Implementation 'all' iterates per-format."""
         mock_impl.return_value = ['PyCsv', 'AltCsv']
         func: Any = MagicMock(return_value=0)
-        ns = argparse.Namespace(
-            format=['CSV'], output=['out'],
-            implementation=['all'])
-        ret = _unpack_and_run_example(
-            'test', func, None, ns)
+        ns = argparse.Namespace(format=['CSV'], output=['out'],
+                                implementation=['all'])
+        ret = _unpack_and_run_example('test', func, None, ns)
         assert ret == 0
         assert func.call_count == 2
-        func.assert_any_call(
-            'CSV', 'out_PyCsv', 'PyCsv', None)
-        func.assert_any_call(
-            'CSV', 'out_AltCsv', 'AltCsv', None)
+        func.assert_any_call('CSV', 'out_PyCsv', 'PyCsv', None)
+        func.assert_any_call('CSV', 'out_AltCsv', 'AltCsv', None)
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_all_formats_all_impls(
-            self, mock_reg: MagicMock,
-            mock_impl: MagicMock) -> None:
+    def test_all_formats_all_impls(self, mock_reg: MagicMock,
+                                   mock_impl: MagicMock) -> None:
         """Both format and impl 'all': sparse matrix."""
         mock_reg.return_value = ['CSV', 'HTML']
 
-        def impl_side_effect(
-                format_name: str | None = None,
-                **_kwargs: object) -> list[str]:
+        def impl_side_effect(format_name: str | None = None,
+                             **_kwargs: object) -> list[str]:
             """Return per-format implementations."""
             impls = {'CSV': ['PyCsv'],
                      'HTML': ['MfHtml', 'Alt']}
             return impls.get(format_name or '', [])
         mock_impl.side_effect = impl_side_effect
         func: Any = MagicMock(return_value=0)
-        ns = argparse.Namespace(
-            format=['all'], output=['out'],
-            implementation=['all'])
-        ret = _unpack_and_run_example(
-            'test', func, None, ns)
+        ns = argparse.Namespace(format=['all'], output=['out'],
+                                implementation=['all'])
+        ret = _unpack_and_run_example('test', func, None, ns)
         assert ret == 0
         assert func.call_count == 3
-        func.assert_any_call(
-            'CSV', 'out_CSV_PyCsv', 'PyCsv', None)
-        func.assert_any_call(
-            'HTML', 'out_HTML_MfHtml', 'MfHtml', None)
-        func.assert_any_call(
-            'HTML', 'out_HTML_Alt', 'Alt', None)
+        func.assert_any_call('CSV', 'out_CSV_PyCsv', 'PyCsv', None)
+        func.assert_any_call('HTML', 'out_HTML_MfHtml', 'MfHtml', None)
+        func.assert_any_call('HTML', 'out_HTML_Alt', 'Alt', None)
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_all_impls_empty_skips(
-            self, _mock_reg: MagicMock,
-            mock_impl: MagicMock) -> None:
+    def test_all_impls_empty_skips(self, _mock_reg: MagicMock,
+                                   mock_impl: MagicMock) -> None:
         """No implementations for a format: func not called."""
         mock_impl.return_value = []
         func: Any = MagicMock(return_value=0)
-        ns = argparse.Namespace(
-            format=['CSV'], output=['out'],
-            implementation=['all'])
-        ret = _unpack_and_run_example(
-            'test', func, None, ns)
+        ns = argparse.Namespace(format=['CSV'], output=['out'],
+                                implementation=['all'])
+        ret = _unpack_and_run_example('test', func, None, ns)
         assert ret == 0
         func.assert_not_called()
 
@@ -202,19 +175,15 @@ class TestUnpackAndRunExample:
         ([3, 5], 3)])
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_error_propagation(
-            self, mock_reg: MagicMock,
-            _mock_impl: MagicMock,
-            returns: list[int],
-            expected: int) -> None:
+    def test_error_propagation(self, mock_reg: MagicMock,
+                               _mock_impl: MagicMock, returns: list[int],
+                               expected: int) -> None:
         """First non-zero return code is propagated."""
         mock_reg.return_value = ['CSV', 'HTML']
         func: Any = MagicMock(side_effect=returns)
-        ns = argparse.Namespace(
-            format=['all'], output=['out'],
-            implementation=None)
-        ret = _unpack_and_run_example(
-            'test', func, None, ns)
+        ns = argparse.Namespace(format=['all'], output=['out'],
+                                implementation=None)
+        ret = _unpack_and_run_example('test', func, None, ns)
         assert ret == expected
 
 
@@ -223,40 +192,35 @@ class TestCmdParseAndRunExample:
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_exit_code_zero(self, mock_reg: MagicMock,
-                            mock_impl: MagicMock
+    def test_exit_code_zero(self, mock_reg: MagicMock, mock_impl: MagicMock
                             ) -> None:
         """Successful run produces exit code 0."""
         mock_reg.side_effect = lambda **kw: ['CSV']
         mock_impl.side_effect = lambda **kw: []
         func: Any = MagicMock(return_value=0)
         with pytest.raises(SystemExit) as exc_info:
-            cmd_parse_and_run_example(
-                'test', func,
-                args=['-f', 'CSV', '-o', 'out'])
+            cmd_parse_and_run_example('test', func,
+                                      args=['-f', 'CSV', '-o', 'out'])
         assert exc_info.value.code == 0
         func.assert_called_once()
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_exit_code_nonzero(
-            self, mock_reg: MagicMock,
-            mock_impl: MagicMock) -> None:
+    def test_exit_code_nonzero(self, mock_reg: MagicMock,
+                               mock_impl: MagicMock) -> None:
         """Failed run produces non-zero exit code."""
         mock_reg.side_effect = lambda **kw: ['CSV']
         mock_impl.side_effect = lambda **kw: []
         func: Any = MagicMock(return_value=1)
         with pytest.raises(SystemExit) as exc_info:
-            cmd_parse_and_run_example(
-                'test', func,
-                args=['-f', 'CSV', '-o', 'out'])
+            cmd_parse_and_run_example('test', func,
+                                      args=['-f', 'CSV', '-o', 'out'])
         assert exc_info.value.code == 1
 
     @patch(_PATCH_IMPL)
     @patch(_PATCH_REG)
-    def test_optional_args_passed(
-            self, mock_reg: MagicMock,
-            mock_impl: MagicMock) -> None:
+    def test_optional_args_passed(self, mock_reg: MagicMock,
+                                  mock_impl: MagicMock) -> None:
         """Optional arguments reach the example function."""
         mock_reg.side_effect = lambda **kw: ['CSV']
         mock_impl.side_effect = lambda **kw: []

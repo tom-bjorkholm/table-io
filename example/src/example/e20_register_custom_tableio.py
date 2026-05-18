@@ -26,18 +26,12 @@ from .write_writer_info import write_writer_info
 CUSTOM_FORMAT_NAME = 'LineNumberedCSV'
 CUSTOM_IMPLEMENTATION_NAME = 'user_line_numbered_csv'
 
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NEEDED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_NOT_USED,
-    multi_sheet=CAP_NOT_USED,
-    can_find_value_position=CAP_NOT_USED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NEEDED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NOT_USED,
+                    filtered_data_range=CAP_NOT_USED,
+                    can_write_box=CAP_NOT_USED, can_read_box=CAP_NOT_USED,
+                    can_write_highlight=CAP_NOT_USED, multi_sheet=CAP_NOT_USED,
+                    can_find_value_position=CAP_NOT_USED)
 
 
 def _is_heading_payload(payload: str) -> bool:
@@ -48,8 +42,7 @@ def _is_heading_payload(payload: str) -> bool:
     return bool(rest) and rest[0] == ' '
 
 
-def _csv_quoting_value(
-        csv_quoting: str) -> Literal[0, 1, 2, 3, 4, 5]:
+def _csv_quoting_value(csv_quoting: str) -> Literal[0, 1, 2, 3, 4, 5]:
     """Convert a string like 'minimal' to the matching csv constant."""
     quoting_name = csv_quoting.lower()
     if quoting_name == 'all':
@@ -89,8 +82,7 @@ class LineNumberedCsvTableIO(TableIOTextBased):
     """
 
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                 file_name: PathLike,
-                 file_access: FileAccess,
+                 file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  character_encoding: str = 'utf-8',
@@ -153,8 +145,7 @@ class LineNumberedCsvTableIO(TableIOTextBased):
         return Descriptor(format_name=CUSTOM_FORMAT_NAME,
                           implementation=CUSTOM_IMPLEMENTATION_NAME,
                           capabilities=cls.get_capabilities(),
-                          mandatory_args=[],
-                          optional_args=optional_args)
+                          mandatory_args=[], optional_args=optional_args)
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -164,17 +155,15 @@ class LineNumberedCsvTableIO(TableIOTextBased):
         are how the factory knows whether the backend fits a caller's
         request.
         """
-        return Capabilities(
-            can_write=CAP_IMPLEMENTED,
-            can_read=CAP_IMPLEMENTED,
-            can_fmt_row=CAP_IGNORED,
-            can_fmt_value=CAP_IGNORED,
-            filtered_data_range=CAP_IGNORED,
-            can_write_box=CAP_UNSUPPORTED,
-            can_read_box=CAP_UNSUPPORTED,
-            can_write_highlight=CAP_IGNORED,
-            multi_sheet=CAP_UNSUPPORTED,
-            can_find_value_position=CAP_UNSUPPORTED)
+        return Capabilities(can_write=CAP_IMPLEMENTED,
+                            can_read=CAP_IMPLEMENTED, can_fmt_row=CAP_IGNORED,
+                            can_fmt_value=CAP_IGNORED,
+                            filtered_data_range=CAP_IGNORED,
+                            can_write_box=CAP_UNSUPPORTED,
+                            can_read_box=CAP_UNSUPPORTED,
+                            can_write_highlight=CAP_IGNORED,
+                            multi_sheet=CAP_UNSUPPORTED,
+                            can_find_value_position=CAP_UNSUPPORTED)
 
     def _end_state(self) -> None:
         """Finish any buffered state before closing the file."""
@@ -362,8 +351,7 @@ class LineNumberedCsvTableIO(TableIOTextBased):
                           last_read_row=self.position_row)
 
 
-def e20_register_custom_tableio(format_name: str,
-                                output_file_name: str,
+def e20_register_custom_tableio(format_name: str, output_file_name: str,
                                 implementation_name: Optional[str],
                                 optional_args: OptionalArgs) -> int:
     """Write and read a file using a custom TableIO class.
@@ -384,8 +372,7 @@ def e20_register_custom_tableio(format_name: str,
                             file_name=output_file_name,
                             file_access=FileAccess.CREATE,
                             implementation=implementation_name,
-                            capabilities=CAPS,
-                            args=optional_args)
+                            capabilities=CAPS, args=optional_args)
     with writer as tableio:
         #
         # The important point here is that this code uses the same factory
@@ -402,15 +389,13 @@ def e20_register_custom_tableio(format_name: str,
         # factory selected for this run.
         #
         tableio.write_heading('Writer information:')
-        write_writer_info(tableio,
-                          requested_format_name=format_name,
+        write_writer_info(tableio, requested_format_name=format_name,
                           requested_implementation=implementation_name)
     reader = create_tableio(format_name=format_name,
                             file_name=output_file_name,
                             file_access=FileAccess.READ,
                             implementation=implementation_name,
-                            capabilities=CAPS,
-                            args=optional_args)
+                            capabilities=CAPS, args=optional_args)
     with reader as tableio:
         read_back = tableio.read_table_listdata()
     assert read_back.headings == [heading1, heading2]

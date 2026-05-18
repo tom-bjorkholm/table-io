@@ -14,29 +14,24 @@ from .cmd_for_examples import cmd_parse_and_run_example
 from .write_writer_info import write_writer_info
 
 
-PREFERRED_CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NOT_USED,
-    can_fmt_row=CAP_IGNORABLE,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_IGNORABLE,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_IGNORABLE,
-    multi_sheet=CAP_NOT_USED
-)
+PREFERRED_CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NOT_USED,
+                              can_fmt_row=CAP_IGNORABLE,
+                              can_fmt_value=CAP_NOT_USED,
+                              filtered_data_range=CAP_IGNORABLE,
+                              can_write_box=CAP_NOT_USED,
+                              can_read_box=CAP_NOT_USED,
+                              can_write_highlight=CAP_IGNORABLE,
+                              multi_sheet=CAP_NOT_USED)
 
-STRICT_COMPARISON_CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NOT_USED,
-    can_fmt_row=CAP_NEEDED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NEEDED,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_NEEDED,
-    multi_sheet=CAP_NOT_USED
-)
+STRICT_COMPARISON_CAPS = Capabilities(can_write=CAP_NEEDED,
+                                      can_read=CAP_NOT_USED,
+                                      can_fmt_row=CAP_NEEDED,
+                                      can_fmt_value=CAP_NOT_USED,
+                                      filtered_data_range=CAP_NEEDED,
+                                      can_write_box=CAP_NOT_USED,
+                                      can_read_box=CAP_NOT_USED,
+                                      can_write_highlight=CAP_NEEDED,
+                                      multi_sheet=CAP_NOT_USED)
 
 
 def capability_request_text(capability: SingleCapability) -> str:
@@ -84,10 +79,9 @@ def build_demo_table() -> FmtListData:
 
 
 # pylint: disable=duplicate-code
-def e10_capability_driven_selection(
-        format_name: str, output_file_name: str,
-        implementation_name: Optional[str],
-        optional_args: OptionalArgs) -> int:
+def e10_capability_driven_selection(format_name: str, output_file_name: str,
+                                    implementation_name: Optional[str],
+                                    optional_args: OptionalArgs) -> int:
     """Show how capability requests affect factory matching.
 
     This example uses two related capability sets:
@@ -108,8 +102,7 @@ def e10_capability_driven_selection(
         capabilities=STRICT_COMPARISON_CAPS, empty_is_ok=True)
     strict_impls = list_implementations_tableio(
         capabilities=STRICT_COMPARISON_CAPS, empty_is_ok=True)
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
                         implementation=implementation_name,
                         capabilities=PREFERRED_CAPS,
@@ -141,17 +134,14 @@ def e10_capability_driven_selection(
         tableio.write_heading('Formats matching the stricter request.')
         tableio.write_table_listdata(
             build_name_table('Strict matching formats', strict_formats))
-        tableio.write_heading(
-            'Implementations matching the stricter request.')
+        tableio.write_heading('Implementations matching the stricter request.')
         tableio.write_table_listdata(
-            build_name_table('Strict matching implementations',
-                             strict_impls))
+            build_name_table('Strict matching implementations', strict_impls))
         #
         # Also show which writer the factory actually created for this run.
         #
         tableio.write_heading('Information about the writer used in this run.')
-        write_writer_info(tableio,
-                          requested_format_name=format_name,
+        write_writer_info(tableio, requested_format_name=format_name,
                           requested_implementation=implementation_name)
         #
         # Finally write a small table using the same preferred capabilities.

@@ -21,8 +21,7 @@ from tableio.value_type import CellT, DictDataMap, Fmt, FmtDictData, \
 from .check_capsys import check_capsys
 
 
-_SUPPORTED = SingleCapability(supported=True,
-                              strictness=Strictness.STRICT)
+_SUPPORTED = SingleCapability(supported=True, strictness=Strictness.STRICT)
 
 
 class _RecordingTableIO(TableIO):
@@ -41,8 +40,7 @@ class _RecordingTableIO(TableIO):
         """Return the descriptor for the recording implementation."""
         return Descriptor(format_name='recording', implementation='test',
                           capabilities=cls.capabilities,
-                          mandatory_args=['file_access'],
-                          optional_args=[])
+                          mandatory_args=['file_access'], optional_args=[])
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -175,8 +173,7 @@ class _MinimalSheetTableIO(TableIO):
         """Return a descriptor that allows instantiation in tests."""
         return Descriptor(format_name='minimal', implementation='test',
                           capabilities=Capabilities(),
-                          mandatory_args=['file_access'],
-                          optional_args=[])
+                          mandatory_args=['file_access'], optional_args=[])
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -216,16 +213,14 @@ class _MinimalSheetTableIO(TableIO):
             id='write-fmtlist'),
         pytest.param(
             lambda table_io: table_io.write_table_dictdata(
-                [{'alpha': 'a', 'beta': 'b'}],
-                ['alpha', 'beta']),
+                [{'alpha': 'a', 'beta': 'b'}], ['alpha', 'beta']),
             id='write-dict'),
         pytest.param(
             lambda table_io: table_io.write_table_fmtdictdata([
                 FmtDictRow(values={'alpha': 'a', 'beta': 'b'}, fmt=Fmt())
             ], ['alpha', 'beta']),
             id='write-fmtdict'),
-    ]
-)
+    ])
 def test_write_methods_reject_read_only_access(
         action: Callable[[_RecordingTableIO], object],
         capsys: CaptureFixture[str]) -> None:

@@ -11,17 +11,11 @@ from .cmd_for_examples import cmd_parse_and_run_example
 
 
 # pylint: disable=duplicate-code
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NEEDED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_NOT_USED,
-    multi_sheet=CAP_NEEDED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NEEDED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NOT_USED,
+                    filtered_data_range=CAP_NOT_USED,
+                    can_write_box=CAP_NOT_USED, can_read_box=CAP_NOT_USED,
+                    can_write_highlight=CAP_NOT_USED, multi_sheet=CAP_NEEDED)
 # pylint: enable=duplicate-code
 
 
@@ -34,8 +28,7 @@ def build_main_sheet_table() -> ListData[Value]:
         ['Carla', 'Project manager', 40]]
 
 
-def build_sheet_info_table(first_sheet_name: str,
-                           current_sheet_name: str,
+def build_sheet_info_table(first_sheet_name: str, current_sheet_name: str,
                            all_sheet_names: list[str]) -> ListData[Value]:
     """Build a small summary table about the workbook sheets."""
     return [
@@ -63,11 +56,9 @@ def e09_multi_sheet(format_name: str, output_file_name: str,
     happen.
     """
     main_table = build_main_sheet_table()
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # Every workbook starts with one current sheet already selected.

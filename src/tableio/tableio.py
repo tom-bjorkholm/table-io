@@ -26,8 +26,7 @@ __all__ = ['Box', 'Descriptor', 'FileAccess', 'Position', 'TableIO']
 class TableIO:
     """File format reader/writer base class for table data."""
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None):
         """Initialize the TableIO reader/writer class.
@@ -82,8 +81,7 @@ class TableIO:
         return Capabilities()
 
     @staticmethod
-    def file_name_with_extension(file_name: PathLike,
-                                 extension: str) -> str:
+    def file_name_with_extension(file_name: PathLike, extension: str) -> str:
         """Return the file name with the extension."""
         if not extension.startswith('.'):
             extension = f'.{extension}'
@@ -127,8 +125,7 @@ class TableIO:
         # pylint: disable-next=broad-exception-caught
         except Exception as close_exc:
             assert exc_value is not None
-            exc_value.add_note(
-                f'Additionally, close() raised: {close_exc}')
+            exc_value.add_note(f'Additionally, close() raised: {close_exc}')
         return False
 
     def write_heading(self, heading: str,
@@ -190,8 +187,7 @@ class TableIO:
         """The format specification for the first row."""
 
     def write_table_listdata(
-            self, data: ListDataSeq[CellT],
-            filtered_data_range: bool = False,
+            self, data: ListDataSeq[CellT], filtered_data_range: bool = False,
             box: Optional[Box] = None,
             border_style: TableBorderStyle = TableBorderStyle.NONE) -> \
             Position:
@@ -225,13 +221,11 @@ class TableIO:
         c_borders = self._check_border_style(border_style)
         impl_meta: TableIO.ImplMetaForWrite = \
             TableIO.ImplMetaForWrite(filtered_data_range=c_filt_range,
-                                     box=c_box,
-                                     borders=c_borders)
+                                     box=c_box, borders=c_borders)
         return self._write_table_listdata(data=data, impl_meta=impl_meta)
 
     def write_table_fmtlistdata(
-            self, data: FmtListData,
-            filtered_data_range: bool = False,
+            self, data: FmtListData, filtered_data_range: bool = False,
             box: Optional[Box] = None,
             border_style: TableBorderStyle = TableBorderStyle.NONE) -> \
             Position:
@@ -269,12 +263,9 @@ class TableIO:
         return self._write_table_fmtlistdata(data=data, impl_meta=impl_meta)
 
     def write_table_dictdata(  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-            self, data: DictDataMap[CellT],
-            column_order: list[str],
-            first_row_format: Optional[Fmt] = None,
-            missing_ok: bool = False,
-            extra_ok: bool = False,
-            filtered_data_range: bool = False,
+            self, data: DictDataMap[CellT], column_order: list[str],
+            first_row_format: Optional[Fmt] = None, missing_ok: bool = False,
+            extra_ok: bool = False, filtered_data_range: bool = False,
             box: Optional[Box] = None,
             border_style: TableBorderStyle = TableBorderStyle.NONE) -> \
             Position:
@@ -332,12 +323,9 @@ class TableIO:
         return self._write_table_dictdata(data=ndata, impl_meta=impl_meta)
 
     def write_table_fmtdictdata(  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-            self, data: FmtDictData,
-            column_order: list[str],
-            first_row_format: Optional[Fmt] = None,
-            missing_ok: bool = False,
-            extra_ok: bool = False,
-            filtered_data_range: bool = False,
+            self, data: FmtDictData, column_order: list[str],
+            first_row_format: Optional[Fmt] = None, missing_ok: bool = False,
+            extra_ok: bool = False, filtered_data_range: bool = False,
             box: Optional[Box] = None,
             border_style: TableBorderStyle = TableBorderStyle.NONE) -> \
             Position:
@@ -396,8 +384,7 @@ class TableIO:
             TableIO.ImplMetaForWrite(
                 filtered_data_range=self._check_filtered_data_range(
                     filtered_data_range),
-                box=c_box,
-                borders=self._check_border_style(border_style))
+                box=c_box, borders=self._check_border_style(border_style))
         impl_meta: TableIO.ImplMetaForDictWrite = \
             TableIO.ImplMetaForDictWrite(common_impl=common_impl,
                                          column_order=column_order,
@@ -604,8 +591,7 @@ class TableIO:
                 self._close()
             # pylint: disable-next=broad-exception-caught
             except Exception as close_err:
-                err.add_note(
-                    f'Additionally, _close() raised: {close_err}')
+                err.add_note(f'Additionally, _close() raised: {close_err}')
             raise
         self._close()
 
@@ -729,8 +715,7 @@ class TableIO:
         return self._check_box_impl(box, cap_box, 'read from a box')
 
     @staticmethod
-    def _check_box_impl(box: Optional[Box],
-                        cap: SingleCapability,
+    def _check_box_impl(box: Optional[Box], cap: SingleCapability,
                         action: str) -> Optional[Box]:
         """Check if the box is OK to use for the given capability.
 

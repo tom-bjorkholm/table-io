@@ -17,15 +17,11 @@ from .cmd_for_examples import cmd_parse_and_run_example
 # Here we only need to read and write.
 #
 # pylint: disable=duplicate-code
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NEEDED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_NOT_USED)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NEEDED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NOT_USED,
+                    filtered_data_range=CAP_NOT_USED,
+                    can_write_box=CAP_NOT_USED, can_read_box=CAP_NOT_USED,
+                    can_write_highlight=CAP_NOT_USED)
 
 
 def compare_written_to_read1(written: ListData[Value],
@@ -121,8 +117,8 @@ def e05_read_write_valueconversion(format_name: str, output_file_name: str,
     # Here is some example data that we will read and write:
     #
     start_time: datetime = datetime.now().replace(microsecond=0)
-    end_time: datetime = datetime(year=2036, month=3, day=26,
-                                  hour=12, minute=5, second=49)
+    end_time: datetime = datetime(year=2036, month=3, day=26, hour=12,
+                                  minute=5, second=49)
     data1: ListData[Value] = [
         ['name', 'value', 'rounded', 'valid', 'when'],
         ['real', 3.14159, 3, True, start_time],
@@ -132,8 +128,8 @@ def e05_read_write_valueconversion(format_name: str, output_file_name: str,
         {'name': 'magic', 'answer': 42, 'part': 0.5, 'valid': True,
          'when': start_time - timedelta(seconds=1)},
         {'name': 'show', 'answer': 100, 'part': 0.25, 'valid': False,
-         'when': datetime(year=2026, month=12, day=25,
-                          hour=8, minute=5, second=49)},
+         'when': datetime(year=2026, month=12, day=25, hour=8, minute=5,
+                          second=49)},
     ]
     column_order: list[str] = ['name', 'answer', 'part', 'valid', 'when']
     #
@@ -142,11 +138,9 @@ def e05_read_write_valueconversion(format_name: str, output_file_name: str,
     # created if it does not exist. If it exists, an exception is raised.
     # In this first context manager we only write the data to the file.
     #
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # We write the data to the file.
@@ -158,11 +152,9 @@ def e05_read_write_valueconversion(format_name: str, output_file_name: str,
     # file. As usual we do this by creating a new tableio object with the
     # factory and using it as a context manager.
     #
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.READ,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # We read the data back from the file.
@@ -180,5 +172,4 @@ def e05_read_write_valueconversion(format_name: str, output_file_name: str,
 
 if __name__ == '__main__':
     cmd_parse_and_run_example(example_name='e05_read_write_valueconversion',
-                              func=e05_read_write_valueconversion,
-                              caps=CAPS)
+                              func=e05_read_write_valueconversion, caps=CAPS)

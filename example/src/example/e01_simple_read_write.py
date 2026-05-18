@@ -17,16 +17,11 @@ from .write_writer_info import write_writer_info
 # The formatting and box related capabilities are marked as not used
 # because this example is intentionally kept simple.
 #
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NEEDED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_NOT_USED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NEEDED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NOT_USED,
+                    filtered_data_range=CAP_NOT_USED,
+                    can_write_box=CAP_NOT_USED, can_read_box=CAP_NOT_USED,
+                    can_write_highlight=CAP_NOT_USED)
 
 
 # pylint: disable=duplicate-code
@@ -66,11 +61,9 @@ def e01_simple_read_write(format_name: str, output_file_name: str,
     # Using the tableio object as a context manager means the file is
     # closed automatically when we leave the with block.
     #
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # Headings are written before the table.
@@ -90,17 +83,14 @@ def e01_simple_read_write(format_name: str, output_file_name: str,
         # produced example file more informative when a programmer opens it.
         #
         tableio.write_heading('Writer information:')
-        write_writer_info(tableio,
-                          requested_format_name=format_name,
+        write_writer_info(tableio, requested_format_name=format_name,
                           requested_implementation=implementation_name)
     #
     # Reopen the same file in READ mode to show the matching read API.
     #
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.READ,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # read_table_listdata() returns an object that contains both the

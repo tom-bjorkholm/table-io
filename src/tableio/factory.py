@@ -7,6 +7,7 @@
 
 from typing import Optional, NamedTuple
 from functools import total_ordering
+import warnings
 from mformat.mformat import PathLike
 from tableio.tableio import TableIO, Descriptor, FileAccess
 from tableio.capability import Capabilities, capability_match
@@ -62,8 +63,7 @@ class InsufficientCapabilities(ValueError):
 
 
 def _check_capabilities_for_file_access(
-        file_access: FileAccess,
-        capabilities: Optional[Capabilities]) -> None:
+        file_access: FileAccess, capabilities: Optional[Capabilities]) -> None:
     """Raise if explicit capabilities not enough for requested access mode."""
     if capabilities is None:
         return
@@ -361,10 +361,9 @@ class TableIOFactory:
         self._lower2correct[desc.format_name.lower()] = desc.format_name
 
     @staticmethod
-    def create(format_name: str,  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: E501
-               file_name: PathLike,
-               file_access: FileAccess, args: OptionalArgs = None,
-               implementation: Optional[str] = None,
+    # pylint: disable-next=too-many-arguments,too-many-positional-arguments
+    def create(format_name: str, file_name: PathLike, file_access: FileAccess,
+               args: OptionalArgs = None, implementation: Optional[str] = None,
                capabilities: Optional[Capabilities] = None) -> TableIO:
         """Create an instance of a registered TableIO subclass.
 
@@ -394,10 +393,9 @@ class TableIOFactory:
                                               matched to any implementation.
         """
         factory = TableIOFactory.i_get_factory()
-        return factory.i_create(format_name=format_name,
-                                file_name=file_name,
-                                file_access=file_access,
-                                args=args, implementation=implementation,
+        return factory.i_create(format_name=format_name, file_name=file_name,
+                                file_access=file_access, args=args,
+                                implementation=implementation,
                                 capabilities=capabilities)
 
     def i_create(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
@@ -445,8 +443,7 @@ class TableIOFactory:
 
     @staticmethod
     def _select_implementation_name(
-            format_info: FactoryFormatInfo,
-            implementation: Optional[str],
+            format_info: FactoryFormatInfo, implementation: Optional[str],
             capabilities: Optional[Capabilities]) -> str:
         """Select the implementation name matching the request."""
         best_matches = format_info.best_match_names(
@@ -526,8 +523,7 @@ class TableIOFactory:
         return ret
 
     @staticmethod
-    def get_registered_formats(lower: bool = False,
-                               upper: bool = False,
+    def get_registered_formats(lower: bool = False, upper: bool = False,
                                capabilities: Optional[Capabilities] = None,
                                empty_is_ok: bool = False) -> list[str]:
         """Get a list of all registered format names.
@@ -591,12 +587,9 @@ class TableIOFactory:
 
     @staticmethod
     def get_registered_implementations(  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-            format_name: Optional[str] = None,
-            lower: bool = False,
-            upper: bool = False,
-            capabilities: Optional[Capabilities] = None,
-            empty_is_ok: bool = False,
-            alphabetical: bool = True) -> list[str]:
+            format_name: Optional[str] = None, lower: bool = False,
+            upper: bool = False, capabilities: Optional[Capabilities] = None,
+            empty_is_ok: bool = False, alphabetical: bool = True) -> list[str]:
         """Get a list of all registered implementation names.
 
         The list includes all registered implementation names optionally
@@ -640,18 +633,37 @@ class TableIOFactory:
                                              capabilities.
         """
         factory = TableIOFactory.i_get_factory()
-        return factory.i_get_registered_implementations(
-            format_name=format_name, lower=lower, upper=upper,
-            capabilities=capabilities, empty_is_ok=empty_is_ok,
-            alphabetical=alphabetical)
+        return factory.i_get_reg_impls(format_name=format_name, lower=lower,
+                                       upper=upper, capabilities=capabilities,
+                                       empty_is_ok=empty_is_ok,
+                                       alphabetical=alphabetical)
+
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    # python-layout: disable-next=empty-open
+    def i_get_registered_implementations(
+            self, format_name: Optional[str] = None, lower: bool = False,
+            upper: bool = False, capabilities: Optional[Capabilities] = None,
+            empty_is_ok: bool = False, alphabetical: bool = True) -> list[str]:
+        """Internally get a list of registered implementations (deprecated).
+
+        .. deprecated:: 0.7.1
+            Use :meth:`i_get_reg_impls` instead.
+        """
+        warnings.warn("i_get_registered_implementations is deprecated. "
+                      "Use i_get_reg_impls instead.", DeprecationWarning,
+                      stacklevel=3)
+        return self.i_get_reg_impls(format_name=format_name, lower=lower,
+                                    upper=upper, capabilities=capabilities,
+                                    empty_is_ok=empty_is_ok,
+                                    alphabetical=alphabetical)
+        # pylint: enable=too-many-arguments,too-many-positional-arguments
 
     # pylint: disable-next=too-many-arguments,too-many-positional-arguments
-    def i_get_registered_implementations(
-            self, format_name: Optional[str] = None,
-            lower: bool = False, upper: bool = False,
-            capabilities: Optional[Capabilities] = None,
-            empty_is_ok: bool = False,
-            alphabetical: bool = True) -> list[str]:
+    def i_get_reg_impls(self, format_name: Optional[str] = None,
+                        lower: bool = False, upper: bool = False,
+                        capabilities: Optional[Capabilities] = None,
+                        empty_is_ok: bool = False,
+                        alphabetical: bool = True) -> list[str]:
         """Internally get a list of registered implementation names."""
         fmtkeys: list[str] = list(self._formats.keys())
         if format_name is not None:
@@ -669,10 +681,9 @@ class TableIOFactory:
                 ret.append(implkey.upper())
         return ret
 
-    def _implementation_matches(
-            self, format_names: list[str],
-            capabilities: Optional[Capabilities],
-            empty_is_ok: bool) -> BestMatch:
+    def _implementation_matches(self, format_names: list[str],
+                                capabilities: Optional[Capabilities],
+                                empty_is_ok: bool) -> BestMatch:
         """Get matching implementations for the requested format names."""
         implmatches = [
             self._formats[format_name].best_match_names(
@@ -725,8 +736,7 @@ class TableIOFactory:
 
 
 def create_tableio(format_name: str,  # pylint: disable=too-many-arguments, too-many-positional-arguments # noqa: E501
-                   file_name: PathLike,
-                   file_access: FileAccess,
+                   file_name: PathLike, file_access: FileAccess,
                    args: OptionalArgs = None,
                    implementation: Optional[str] = None,
                    capabilities: Optional[Capabilities] = None) -> TableIO:
@@ -756,10 +766,8 @@ def create_tableio(format_name: str,  # pylint: disable=too-many-arguments, too-
         TableIOFactoryNoCapabilityMatch: If the capabilities cannot be
                                           matched to any implementation.
     """
-    return TableIOFactory.create(format_name=format_name,
-                                 file_name=file_name,
-                                 file_access=file_access,
-                                 args=args,
+    return TableIOFactory.create(format_name=format_name, file_name=file_name,
+                                 file_access=file_access, args=args,
                                  implementation=implementation,
                                  capabilities=capabilities)
 
@@ -801,8 +809,7 @@ def filter_args_tableio(args: OptionalArgs, format_name: str,
                                       capabilities=capabilities)
 
 
-def list_registered_tableio(lower: bool = False,
-                            upper: bool = False,
+def list_registered_tableio(lower: bool = False, upper: bool = False,
                             capabilities: Optional[Capabilities] = None,
                             empty_is_ok: bool = False) -> list[str]:
     """Get a list of all registered format names.
@@ -828,8 +835,7 @@ def list_registered_tableio(lower: bool = False,
     Returns:
         A list of registered format name strings.
     """
-    return TableIOFactory.get_registered_formats(lower=lower,
-                                                 upper=upper,
+    return TableIOFactory.get_registered_formats(lower=lower, upper=upper,
                                                  capabilities=capabilities,
                                                  empty_is_ok=empty_is_ok)
 

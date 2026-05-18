@@ -13,8 +13,7 @@ from .write_writer_info import write_writer_info
 
 
 # pylint: disable=duplicate-code
-def e00_really_simple_write_table(format_name: str,
-                                  output_file_name: str,
+def e00_really_simple_write_table(format_name: str, output_file_name: str,
                                   implementation_name: Optional[str],
                                   optional_args: OptionalArgs) -> int:
     """Write one small table with the recommended public API."""
@@ -47,8 +46,7 @@ def e00_really_simple_write_table(format_name: str,
     # If we do more complicated things it is safest to specify the
     # capabilities explicitly, as you will see in the later examples.
     #
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE) as tableio:
         #
         # Write the table to the file.
@@ -63,8 +61,7 @@ def e00_really_simple_write_table(format_name: str,
         # use the command line arguments, we will write out what
         # we actually did.
         #
-        write_writer_info(tableio,
-                          requested_format_name=format_name,
+        write_writer_info(tableio, requested_format_name=format_name,
                           requested_implementation=implementation_name)
     #
     # When we exit the context manager, the file is closed and the

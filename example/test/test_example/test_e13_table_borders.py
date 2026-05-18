@@ -43,12 +43,10 @@ SHEET_ROWS: list[list[Value]] = [
 
 EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['Table border API examples'],
+        sheet_name='Sheet', anchor_row_fragment=['Table border API examples'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=BOLD_STYLE)
-        ]
-    ),
+        ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
         anchor_row_fragment=[
@@ -56,79 +54,60 @@ EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
         ],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=BOLD_STYLE),
-            RelativeStyleExpectation(expected_style=BOLD_STYLE,
-                                     row_offset=2,
+            RelativeStyleExpectation(expected_style=BOLD_STYLE, row_offset=2,
                                      number_of_columns=3),
             RelativeStyleExpectation(expected_style=ITALIC_STYLE,
                                      row_offset=3),
-            RelativeStyleExpectation(expected_style=YELLOW_PLAIN,
-                                     row_offset=3,
+            RelativeStyleExpectation(expected_style=YELLOW_PLAIN, row_offset=3,
                                      col_offset=2),
-            RelativeStyleExpectation(expected_style=BOLD_STYLE,
-                                     row_offset=4),
-            RelativeStyleExpectation(expected_style=RED_PLAIN,
-                                     row_offset=4,
+            RelativeStyleExpectation(expected_style=BOLD_STYLE, row_offset=4),
+            RelativeStyleExpectation(expected_style=RED_PLAIN, row_offset=4,
                                      col_offset=2)
-        ]
-    ),
+        ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
         anchor_row_fragment=['write_table_dictdata() with '
                              'OUTER_THICK_INNER_THIN'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=BOLD_STYLE),
-            RelativeStyleExpectation(expected_style=BOLD_STYLE,
-                                     row_offset=2,
+            RelativeStyleExpectation(expected_style=BOLD_STYLE, row_offset=2,
                                      number_of_columns=3),
             RelativeStyleExpectation(expected_style=ITALIC_STYLE,
                                      row_offset=3),
-            RelativeStyleExpectation(expected_style=GREEN_PLAIN,
-                                     row_offset=3,
+            RelativeStyleExpectation(expected_style=GREEN_PLAIN, row_offset=3,
                                      col_offset=2),
             RelativeStyleExpectation(expected_style=ITALIC_STYLE,
                                      row_offset=4),
-            RelativeStyleExpectation(expected_style=YELLOW_PLAIN,
-                                     row_offset=4,
+            RelativeStyleExpectation(expected_style=YELLOW_PLAIN, row_offset=4,
                                      col_offset=2),
-            RelativeStyleExpectation(expected_style=BOLD_STYLE,
-                                     row_offset=5),
-            RelativeStyleExpectation(expected_style=RED_PLAIN,
-                                     row_offset=5,
+            RelativeStyleExpectation(expected_style=BOLD_STYLE, row_offset=5),
+            RelativeStyleExpectation(expected_style=RED_PLAIN, row_offset=5,
                                      col_offset=2)
-        ]
-    ),
+        ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
         anchor_row_fragment=['write_table_fmtlistdata() with ALL_THIN'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=BOLD_STYLE),
-            RelativeStyleExpectation(expected_style=BOLD_STYLE,
-                                     row_offset=2,
+            RelativeStyleExpectation(expected_style=BOLD_STYLE, row_offset=2,
                                      number_of_columns=3),
-            RelativeStyleExpectation(expected_style=ITALIC_STYLE,
-                                     row_offset=3,
+            RelativeStyleExpectation(expected_style=ITALIC_STYLE, row_offset=3,
                                      number_of_columns=3),
-            RelativeStyleExpectation(expected_style=RED_PLAIN,
-                                     row_offset=4,
+            RelativeStyleExpectation(expected_style=RED_PLAIN, row_offset=4,
                                      number_of_columns=3)
-        ]
-    ),
+        ]),
     AnchoredStyleExpectation(
         sheet_name='Sheet',
         anchor_row_fragment=['write_table_fmtdictdata() with OUTER_THICK'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=BOLD_STYLE),
-            RelativeStyleExpectation(expected_style=BOLD_STYLE,
-                                     row_offset=2,
+            RelativeStyleExpectation(expected_style=BOLD_STYLE, row_offset=2,
                                      number_of_columns=3),
-            RelativeStyleExpectation(expected_style=ITALIC_STYLE,
-                                     row_offset=3,
+            RelativeStyleExpectation(expected_style=ITALIC_STYLE, row_offset=3,
                                      number_of_columns=3),
-            RelativeStyleExpectation(expected_style=RED_PLAIN,
-                                     row_offset=5,
+            RelativeStyleExpectation(expected_style=RED_PLAIN, row_offset=5,
                                      number_of_columns=3)
-        ]
-    )
+        ])
 ]
 
 
@@ -141,12 +120,8 @@ EXPECTED_BORDERS: list[AnchoredBorderExpectation] = [
         relative_expectations=[
             RelativeBorderExpectation(
                 border_style=TableBorderStyle.OUTER_FIRST_ROW_THICK_INNER_THIN,
-                row_offset=2,
-                number_of_rows=3,
-                number_of_columns=3
-            )
-        ]
-    ),
+                row_offset=2, number_of_rows=3, number_of_columns=3)
+        ]),
     AnchoredBorderExpectation(
         sheet_name='Sheet',
         anchor_row_fragment=['write_table_dictdata() with '
@@ -154,36 +129,24 @@ EXPECTED_BORDERS: list[AnchoredBorderExpectation] = [
         relative_expectations=[
             RelativeBorderExpectation(
                 border_style=TableBorderStyle.OUTER_THICK_INNER_THIN,
-                row_offset=2,
-                number_of_rows=4,
-                number_of_columns=3
-            )
-        ]
-    ),
+                row_offset=2, number_of_rows=4, number_of_columns=3)
+        ]),
     AnchoredBorderExpectation(
         sheet_name='Sheet',
         anchor_row_fragment=['write_table_fmtlistdata() with ALL_THIN'],
         relative_expectations=[
-            RelativeBorderExpectation(
-                border_style=TableBorderStyle.ALL_THIN,
-                row_offset=2,
-                number_of_rows=3,
-                number_of_columns=3
-            )
-        ]
-    ),
+            RelativeBorderExpectation(border_style=TableBorderStyle.ALL_THIN,
+                                      row_offset=2, number_of_rows=3,
+                                      number_of_columns=3)
+        ]),
     AnchoredBorderExpectation(
         sheet_name='Sheet',
         anchor_row_fragment=['write_table_fmtdictdata() with OUTER_THICK'],
         relative_expectations=[
             RelativeBorderExpectation(
-                border_style=TableBorderStyle.OUTER_THICK,
-                row_offset=2,
-                number_of_rows=4,
-                number_of_columns=3
-            )
-        ]
-    )
+                border_style=TableBorderStyle.OUTER_THICK, row_offset=2,
+                number_of_rows=4, number_of_columns=3)
+        ])
 ]
 
 # pylint: disable=duplicate-code
@@ -218,8 +181,7 @@ SHEET_REST = SheetContentExpectation(sheet_name='Sheet1',
                            SHEET_REST, EXPECTED_STYLES1,
                            EXPECTED_BORDERS1)])
 def test_e13_table_borders_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected: SheetContentExpectation,
         expected_styles: list[AnchoredStyleExpectation],
         expected_borders: list[AnchoredBorderExpectation]) -> None:

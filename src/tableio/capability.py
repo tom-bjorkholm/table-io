@@ -125,8 +125,7 @@ def single_capability_match(offered: SingleCapability,
     return False
 
 
-def capability_match(offered: Capabilities,
-                     will_use: Capabilities,
+def capability_match(offered: Capabilities, will_use: Capabilities,
                      ignore_allowed: bool = False) -> bool:
     """Check if the offered capabilities match the required capabilities.
 

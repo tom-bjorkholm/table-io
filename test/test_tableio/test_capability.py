@@ -31,13 +31,10 @@ def make_capabilities(
         can_write_borders: SingleCapability = SingleCapability()) -> \
         Capabilities:
     """Build a Capabilities value for tests."""
-    return Capabilities(
-        can_write=can_write,
-        can_read=can_read,
-        can_fmt_row=can_fmt_row,
-        can_fmt_value=can_fmt_value,
-        filtered_data_range=filtered_data_range,
-        can_write_borders=can_write_borders)
+    return Capabilities(can_write=can_write, can_read=can_read,
+                        can_fmt_row=can_fmt_row, can_fmt_value=can_fmt_value,
+                        filtered_data_range=filtered_data_range,
+                        can_write_borders=can_write_borders)
 
 
 def expected_single_capability_match(
@@ -63,27 +60,22 @@ SINGLE_CAPABILITY_CASES = tuple(
         expected_single_capability_match(
             make_capability(offered_supported, offered_strictness),
             make_capability(will_use_supported, will_use_strictness),
-            ignore_allowed,
-        ),
+            ignore_allowed,),
         id=(
             f'offered-{offered_supported}-{offered_strictness.name.lower()}_'
             f'will-use-{will_use_supported}_'
             f'{will_use_strictness.name.lower()}_'
             f'ignore-{ignore_allowed}'
-        ),
-    )
+        ),)
     for offered_supported in (False, True)
     for offered_strictness in Strictness
     for will_use_supported in (False, True)
     for will_use_strictness in Strictness
-    for ignore_allowed in (False, True)
-)
+    for ignore_allowed in (False, True))
 
 
-@pytest.mark.parametrize(
-    ('offered', 'will_use', 'ignore_allowed', 'expected'),
-    SINGLE_CAPABILITY_CASES,
-)
+@pytest.mark.parametrize(('offered', 'will_use', 'ignore_allowed', 'expected'),
+                         SINGLE_CAPABILITY_CASES,)
 def test_single_capability_match_covers_all_supported_and_strictness_cases(
         offered: SingleCapability, will_use: SingleCapability,
         ignore_allowed: bool, expected: bool,
@@ -100,10 +92,8 @@ def test_single_capability_runtime_defaults(
     default_capability = SingleCapability()
     assert default_capability.supported is False
     assert default_capability.strictness is Strictness.IGNORE
-    assert default_capability == SingleCapability(
-        supported=False,
-        strictness=Strictness.IGNORE,
-    )
+    assert default_capability == SingleCapability(supported=False,
+                                                  strictness=Strictness.IGNORE)
     check_capsys(capsys)
 
 
@@ -111,18 +101,17 @@ def test_capabilities_runtime_defaults(capsys: CaptureFixture[str]) -> None:
     """Test the runtime defaults of Capabilities."""
     default_single = SingleCapability()
     capabilities = Capabilities()
-    assert capabilities == Capabilities(
-        can_write=default_single,
-        can_read=default_single,
-        can_fmt_row=default_single,
-        can_fmt_value=default_single,
-        filtered_data_range=default_single,
-        can_write_box=default_single,
-        can_read_box=default_single,
-        can_write_highlight=default_single,
-        multi_sheet=default_single,
-        can_find_value_position=default_single,
-        can_write_borders=default_single)
+    assert capabilities == Capabilities(can_write=default_single,
+                                        can_read=default_single,
+                                        can_fmt_row=default_single,
+                                        can_fmt_value=default_single,
+                                        filtered_data_range=default_single,
+                                        can_write_box=default_single,
+                                        can_read_box=default_single,
+                                        can_write_highlight=default_single,
+                                        multi_sheet=default_single,
+                                        can_find_value_position=default_single,
+                                        can_write_borders=default_single)
     check_capsys(capsys)
 
 
@@ -141,26 +130,17 @@ def test_capability_not_supported_stores_action(
     [
         pytest.param(
             SingleCapability(supported=True, strictness=Strictness.STRICT),
-            'supported (strict)',
-            id='supported-strict'
-        ),
+            'supported (strict)', id='supported-strict'),
         pytest.param(
             SingleCapability(supported=True, strictness=Strictness.IGNORE),
-            'supported (ignore)',
-            id='supported-ignore'
-        ),
+            'supported (ignore)', id='supported-ignore'),
         pytest.param(
             SingleCapability(supported=False, strictness=Strictness.STRICT),
-            'not supported (strict)',
-            id='unsupported-strict'
-        ),
+            'not supported (strict)', id='unsupported-strict'),
         pytest.param(
             SingleCapability(supported=False, strictness=Strictness.IGNORE),
-            'not supported (ignore)',
-            id='unsupported-ignore'
-        )
-    ]
-)
+            'not supported (ignore)', id='unsupported-ignore')
+    ])
 def test_capability_to_str_covers_supported_and_strictness_variants(
         capability: SingleCapability, expected: str,
         capsys: CaptureFixture[str]) -> None:
@@ -174,73 +154,39 @@ def test_capability_to_str_covers_supported_and_strictness_variants(
     [
         pytest.param(
             Capabilities(
-                can_write=SingleCapability(
-                    supported=True,
-                    strictness=Strictness.IGNORE,
-                ),
-                can_read=SingleCapability(
-                    supported=True,
-                    strictness=Strictness.IGNORE,
-                ),
-            ),
+                can_write=SingleCapability(supported=True,
+                                           strictness=Strictness.IGNORE,),
+                can_read=SingleCapability(supported=True,
+                                          strictness=Strictness.IGNORE,),),
             Capabilities(
-                can_write=SingleCapability(
-                    supported=True,
-                    strictness=Strictness.STRICT,
-                ),
-            ),
-            False,
-            True,
-            id='writer-supports-requested-write',
-        ),
+                can_write=SingleCapability(supported=True,
+                                           strictness=Strictness.STRICT,),),
+            False, True, id='writer-supports-requested-write',),
         pytest.param(
             Capabilities(
-                can_write=SingleCapability(
-                    supported=True,
-                    strictness=Strictness.IGNORE,
-                ),
-                can_fmt_row=SingleCapability(
-                    supported=False,
-                    strictness=Strictness.STRICT,
-                ),
-            ),
+                can_write=SingleCapability(supported=True,
+                                           strictness=Strictness.IGNORE,),
+                can_fmt_row=SingleCapability(supported=False,
+                                             strictness=Strictness.STRICT,),),
             Capabilities(
-                can_write=SingleCapability(
-                    supported=True,
-                    strictness=Strictness.IGNORE,
-                ),
-                can_fmt_row=SingleCapability(
-                    supported=True,
-                    strictness=Strictness.IGNORE,
-                ),
-            ),
-            False,
-            False,
-            id='strict-row-format-mismatch',
-        ),
+                can_write=SingleCapability(supported=True,
+                                           strictness=Strictness.IGNORE,),
+                can_fmt_row=SingleCapability(supported=True,
+                                             strictness=Strictness.IGNORE,),),
+            False, False, id='strict-row-format-mismatch',),
         pytest.param(
             Capabilities(
                 can_fmt_value=SingleCapability(
-                    supported=False,
-                    strictness=Strictness.IGNORE,
-                ),
-            ),
+                    supported=False, strictness=Strictness.IGNORE)),
             Capabilities(
                 can_fmt_value=SingleCapability(
-                    supported=True,
-                    strictness=Strictness.IGNORE,
-                ),
-            ),
-            True,
-            True,
-            id='ignored-value-format-is-allowed',
-        ),
-    ],
-)
-def test_capability_match_has_readable_examples(
-        offered: Capabilities, will_use: Capabilities,
-        ignore_allowed: bool, expected: bool,
-        capsys: CaptureFixture[str]) -> None:
+                    supported=True, strictness=Strictness.IGNORE)),
+            True, True, id='ignored-value-format-is-allowed',),
+    ],)
+def test_capability_match_examples(offered: Capabilities,
+                                   will_use: Capabilities,
+                                   ignore_allowed: bool, expected: bool,
+                                   capsys: CaptureFixture[str]) -> None:
     """Test capability_match with a few explicit easy-to-read examples."""
     assert capability_match(offered, will_use, ignore_allowed) is expected
     check_capsys(capsys)
@@ -249,98 +195,54 @@ def test_capability_match_has_readable_examples(
 @pytest.mark.parametrize(
     ('offered', 'will_use', 'ignore_allowed', 'expected'),
     [
-        pytest.param(
-            make_capabilities(),
-            make_capabilities(),
-            False,
-            True,
-            id='all-defaults',
-        ),
+        pytest.param(make_capabilities(), make_capabilities(), False, True,
+                     id='all-defaults',),
         pytest.param(
             make_capabilities(
-                can_write=make_capability(False, Strictness.STRICT),
-            ),
+                can_write=make_capability(False, Strictness.STRICT),),
             make_capabilities(
-                can_write=make_capability(True, Strictness.IGNORE),
-            ),
-            False,
-            False,
-            id='strict-write-mismatch',
-        ),
+                can_write=make_capability(True, Strictness.IGNORE),),
+            False, False, id='strict-write-mismatch',),
         pytest.param(
             make_capabilities(
-                can_read=make_capability(True, Strictness.IGNORE),
-            ),
+                can_read=make_capability(True, Strictness.IGNORE),),
             make_capabilities(
-                can_read=make_capability(True, Strictness.STRICT),
-            ),
-            False,
-            True,
-            id='supported-read',
-        ),
+                can_read=make_capability(True, Strictness.STRICT),),
+            False, True, id='supported-read',),
         pytest.param(
             make_capabilities(
-                can_fmt_row=make_capability(False, Strictness.IGNORE),
-            ),
+                can_fmt_row=make_capability(False, Strictness.IGNORE),),
             make_capabilities(
-                can_fmt_row=make_capability(True, Strictness.IGNORE),
-            ),
-            False,
-            False,
-            id='ignore-row-mismatch-disallowed',
-        ),
+                can_fmt_row=make_capability(True, Strictness.IGNORE),),
+            False, False, id='ignore-row-mismatch-disallowed',),
         pytest.param(
             make_capabilities(
-                can_fmt_value=make_capability(False, Strictness.IGNORE),
-            ),
+                can_fmt_value=make_capability(False, Strictness.IGNORE),),
             make_capabilities(
-                can_fmt_value=make_capability(True, Strictness.IGNORE),
-            ),
-            True,
-            True,
-            id='ignore-value-mismatch-allowed',
-        ),
+                can_fmt_value=make_capability(True, Strictness.IGNORE),),
+            True, True, id='ignore-value-mismatch-allowed',),
         pytest.param(
             make_capabilities(),
             make_capabilities(
-                filtered_data_range=make_capability(
-                    False, Strictness.STRICT,
-                ),
-            ),
-            False,
-            True,
-            id='unused-filter-capability',
-        ),
+                filtered_data_range=make_capability(False,
+                                                    Strictness.STRICT,),),
+            False, True, id='unused-filter-capability',),
         pytest.param(
-            Capabilities(
-                multi_sheet=make_capability(False, Strictness.STRICT),
-            ),
-            Capabilities(
-                multi_sheet=make_capability(True, Strictness.STRICT),
-            ),
-            False,
-            False,
-            id='strict-multi-sheet-mismatch',
-        ),
+            Capabilities(multi_sheet=make_capability(False,
+                                                     Strictness.STRICT)),
+            Capabilities(multi_sheet=make_capability(True, Strictness.STRICT)),
+            False, False, id='strict-multi-sheet-mismatch',),
         pytest.param(
             make_capabilities(
-                can_write_borders=make_capability(
-                    False, Strictness.IGNORE),
-            ),
+                can_write_borders=make_capability(False, Strictness.IGNORE),),
             make_capabilities(
-                can_write_borders=make_capability(
-                    True, Strictness.IGNORE),
-            ),
-            True,
-            True,
-            id='ignored-border-mismatch-allowed',
-        ),
-    ],
-)
-def test_capability_match_handles_defaults_and_each_public_field(
-        offered: Capabilities, will_use: Capabilities,
-        ignore_allowed: bool, expected: bool,
-        capsys: CaptureFixture[str]) -> None:
+                can_write_borders=make_capability(True, Strictness.IGNORE),),
+            True, True, id='ignored-border-mismatch-allowed',),
+    ],)
+def test_capability_match_defaults(offered: Capabilities,
+                                   will_use: Capabilities,
+                                   ignore_allowed: bool, expected: bool,
+                                   capsys: CaptureFixture[str]) -> None:
     """Test capability_match across defaults and field-specific cases."""
     assert capability_match(offered, will_use, ignore_allowed) is expected
     check_capsys(capsys)

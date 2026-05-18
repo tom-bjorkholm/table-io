@@ -31,16 +31,11 @@ from .check_capsys import check_capsys
     ('row', 'expected'),
     [
         pytest.param([], [], id='empty'),
-        pytest.param(('text', True, 2.5),
-                     ['text', 'True', '2.5'],
+        pytest.param(('text', True, 2.5), ['text', 'True', '2.5'],
                      id='scalars'),
-        pytest.param(
-            ('row', datetime(2026, 3, 16, 7, 8, 9)),
-            ['row', '2026-03-16T07:08:09'],
-            id='datetime',
-        ),
-    ],
-)
+        pytest.param(('row', datetime(2026, 3, 16, 7, 8, 9)),
+                     ['row', '2026-03-16T07:08:09'], id='datetime',),
+    ],)
 def test_list_row_to_str_list_converts_values(
         row: tuple[str | bool | int | float | datetime, ...] |
         list[str | bool | int | float | datetime], expected: list[str],
@@ -121,11 +116,9 @@ def test_str_list_to_list_row_returns_same_list_object(
         pytest.param('text', str, id='matching-str'),
         pytest.param(True, bool, id='matching-bool'),
         pytest.param(1, int, id='matching-int'),
-    ]
-)
-def test_get_checked_type_ok(
-        value: object | None, expected_type: type[object],
-        capsys: CaptureFixture[str]) -> None:
+    ])
+def test_get_checked_type_ok(value: object | None, expected_type: type[object],
+                             capsys: CaptureFixture[str]) -> None:
     """Test that get_checked_type returns the original value unchanged."""
     assert get_checked_type(value, expected_type) == value
     check_capsys(capsys)
@@ -136,8 +129,7 @@ def test_get_checked_type_ok(
     [
         pytest.param(None, str, id='none'),
         pytest.param(datetime(2026, 3, 16, 7, 8, 9), str, id='mismatch'),
-    ]
-)
+    ])
 def test_get_checked_type_nok(
         value: object | None, expected_type: type[object],
         capsys: CaptureFixture[str]) -> None:
@@ -329,10 +321,8 @@ def test_row_strip_format_dict_preserves_inner_mapping_objects(
                 ],
                 [ValueFmt(value=None, fmt=Fmt(italic=True))]
             ],
-            id='rows'
-        )
-    ]
-)
+            id='rows')
+    ])
 def test_row_format_each_cell_list(
         data: list[FmtListRow], expected: list[list[ValueFmt]],
         capsys: CaptureFixture[str]) -> None:
@@ -347,10 +337,8 @@ def test_row_format_each_cell_list(
         pytest.param([], [], id='empty'),
         pytest.param(
             [
-                FmtDictRow(
-                    values={'beta': 2, 'alpha': 'cell'},
-                    fmt=Fmt(bold=True)
-                ),
+                FmtDictRow(values={'beta': 2, 'alpha': 'cell'},
+                           fmt=Fmt(bold=True)),
                 FmtDictRow(values={'only': None}, fmt=Fmt(italic=True))
             ],
             [
@@ -360,10 +348,8 @@ def test_row_format_each_cell_list(
                 },
                 {'only': ValueFmt(value=None, fmt=Fmt(italic=True))}
             ],
-            id='rows'
-        )
-    ]
-)
+            id='rows')
+    ])
 def test_row_format_each_cell_dict(
         data: list[FmtDictRow], expected: list[dict[str, ValueFmt]],
         capsys: CaptureFixture[str]) -> None:
@@ -380,8 +366,7 @@ def test_row_format_each_cell_dict(
     [
         pytest.param([], Fmt(), [], id='empty'),
         pytest.param(
-            [('left', 1), (None,)],
-            Fmt(bold=True),
+            [('left', 1), (None,)], Fmt(bold=True),
             [
                 [
                     ValueFmt(value='left', fmt=Fmt(bold=True)),
@@ -389,10 +374,8 @@ def test_row_format_each_cell_dict(
                 ],
                 [ValueFmt(value=None, fmt=Fmt(bold=True))]
             ],
-            id='values'
-        )
-    ]
-)
+            id='values')
+    ])
 def test_format_each_cell_list(
         data: list[tuple[Value, ...]], fmt: Fmt,
         expected: list[list[ValueFmt]], capsys: CaptureFixture[str]) -> None:
@@ -418,14 +401,11 @@ def test_format_each_cell_list(
                 },
                 {'only': ValueFmt(value=None, fmt=Fmt(italic=True))}
             ],
-            id='values'
-        )
-    ]
-)
-def test_format_each_cell_dict(
-        data: list[dict[str, Value]], fmt: Fmt,
-        expected: list[dict[str, ValueFmt]],
-        capsys: CaptureFixture[str]) -> None:
+            id='values')
+    ])
+def test_format_each_cell_dict(data: list[dict[str, Value]], fmt: Fmt,
+                               expected: list[dict[str, ValueFmt]],
+                               capsys: CaptureFixture[str]) -> None:
     """Test that format_each_cell_dict applies the provided format."""
     formatted = format_each_cell_dict(data, fmt)
     assert formatted == expected
@@ -490,8 +470,7 @@ def test_normalize_dict_data_rejects_extra_column(
     [
         pytest.param([{}, {'alpha': 'cell'}], 0, id='first-row'),
         pytest.param([{'alpha': 'cell'}, {}], 1, id='later-row')
-    ]
-)
+    ])
 def test_normalize_dict_data_rejects_empty_rows(
         data: list[dict[str, Value]], row_index: int,
         capsys: CaptureFixture[str]) -> None:
@@ -509,27 +488,19 @@ def test_normalize_dict_data_rejects_empty_rows(
                 {'alpha': 'cell'},
                 {'alpha': ValueFmt(value='next', fmt=Fmt(bold=True))}
             ],
-            1,
-            id='plain-then-formatted'
-        ),
+            1, id='plain-then-formatted'),
         pytest.param(
             [
                 {'alpha': ValueFmt(value='cell', fmt=Fmt(bold=True))},
                 {'alpha': 'next'}
             ],
-            1,
-            id='formatted-then-plain'
-        )
-    ]
-)
+            1, id='formatted-then-plain')
+    ])
 def test_normalize_dict_data_rejects_mixed_cell_types(
         data: list[dict[str, object]], row_index: int,
         capsys: CaptureFixture[str]) -> None:
     """Test that normalize_dict_data rejects mixed plain and formatted rows."""
-    mixed_data = cast(
-        list[dict[str, Value]] | list[dict[str, ValueFmt]],
-        data
-    )
+    mixed_data = cast(list[dict[str, Value]] | list[dict[str, ValueFmt]], data)
     with pytest.raises(TypeError, match=f'row {row_index}'):
         normalize_dict_data(cast(Any, mixed_data), ['alpha'])
     check_capsys(capsys)
@@ -542,12 +513,8 @@ def test_normalize_dict_data_normalizes_plain_rows(
         {'alpha': 'cell', 'extra': 2},
         {'beta': 3.5}
     ]
-    normalized = normalize_dict_data(
-        data,
-        ['alpha', 'beta'],
-        missing_ok=True,
-        extra_ok=True
-    )
+    normalized = normalize_dict_data(data, ['alpha', 'beta'], missing_ok=True,
+                                     extra_ok=True)
     assert normalized == [
         {'alpha': 'cell', 'beta': None},
         {'alpha': None, 'beta': 3.5}
@@ -568,12 +535,8 @@ def test_normalize_dict_data_normalizes_formatted_rows(
         },
         {'beta': ValueFmt(value=3.5, fmt=fmt)}
     ]
-    normalized = normalize_dict_data(
-        data,
-        ['alpha', 'beta'],
-        missing_ok=True,
-        extra_ok=True
-    )
+    normalized = normalize_dict_data(data, ['alpha', 'beta'], missing_ok=True,
+                                     extra_ok=True)
     assert normalized == [
         {'alpha': ValueFmt(value='cell', fmt=fmt), 'beta': missing_cell},
         {'alpha': missing_cell, 'beta': ValueFmt(value=3.5, fmt=fmt)}
@@ -583,14 +546,11 @@ def test_normalize_dict_data_normalizes_formatted_rows(
 
 
 def test_normalize_dict_data_impl_asserts_if_type_guards_disagree(
-        monkeypatch: pytest.MonkeyPatch,
-        capsys: CaptureFixture[str]) -> None:
+        monkeypatch: pytest.MonkeyPatch, capsys: CaptureFixture[str]) -> None:
     """The internal normalize helper keeps a defensive assertion."""
-    monkeypatch.setattr(value_type_module,
-                        '_first_row_is_plain_dict_data',
+    monkeypatch.setattr(value_type_module, '_first_row_is_plain_dict_data',
                         lambda data: False)
-    monkeypatch.setattr(value_type_module,
-                        '_first_row_is_formatted_dict_data',
+    monkeypatch.setattr(value_type_module, '_first_row_is_formatted_dict_data',
                         lambda data: False)
     normalize_impl = getattr(value_type_module, '_normalize_dict_data_impl')
     with pytest.raises(AssertionError, match='Unreachable code reached'):
@@ -601,23 +561,17 @@ def test_normalize_dict_data_impl_asserts_if_type_guards_disagree(
 @pytest.mark.parametrize(
     ('fmt1', 'fmt2', 'expected'),
     [
-        pytest.param(
-            Fmt(bold=True, italic=True, highlight=Color.RED),
-            Fmt(bold=True, italic=False, highlight=Color.RED),
-            Fmt(bold=True, italic=False, highlight=Color.RED),
-            id='shared-highlight'
-        ),
-        pytest.param(
-            Fmt(bold=False, italic=True, highlight=Color.GREEN),
-            Fmt(bold=True, italic=True, highlight=Color.YELLOW),
-            Fmt(bold=False, italic=True, highlight=Color.NONE),
-            id='different-highlight'
-        )
-    ]
-)
-def test_fmt_set_in_both(
-        fmt1: Fmt, fmt2: Fmt, expected: Fmt,
-        capsys: CaptureFixture[str]) -> None:
+        pytest.param(Fmt(bold=True, italic=True, highlight=Color.RED),
+                     Fmt(bold=True, italic=False, highlight=Color.RED),
+                     Fmt(bold=True, italic=False, highlight=Color.RED),
+                     id='shared-highlight'),
+        pytest.param(Fmt(bold=False, italic=True, highlight=Color.GREEN),
+                     Fmt(bold=True, italic=True, highlight=Color.YELLOW),
+                     Fmt(bold=False, italic=True, highlight=Color.NONE),
+                     id='different-highlight')
+    ])
+def test_fmt_set_in_both(fmt1: Fmt, fmt2: Fmt, expected: Fmt,
+                         capsys: CaptureFixture[str]) -> None:
     """Test that fmt_set_in_both keeps only shared formatting."""
     assert fmt_set_in_both(fmt1, fmt2) == expected
     check_capsys(capsys)
@@ -639,11 +593,8 @@ def test_fmt_set_in_all_merges_all_formats(
         Fmt(bold=True, italic=True, highlight=Color.YELLOW),
         Fmt(bold=True, italic=False, highlight=Color.GREEN)
     ]
-    assert fmt_set_in_all(fmts) == Fmt(
-        bold=True,
-        italic=False,
-        highlight=Color.NONE
-    )
+    assert fmt_set_in_all(fmts) == Fmt(bold=True, italic=False,
+                                       highlight=Color.NONE)
     check_capsys(capsys)
 
 
@@ -664,8 +615,7 @@ def test_row_fmt_from_cell_fmt_list_merges_formats(
         ],
         [
             ValueFmt(value='next', fmt=Fmt(italic=True, highlight=Color.RED)),
-            ValueFmt(value=None,
-                     fmt=Fmt(italic=True, highlight=Color.GREEN))
+            ValueFmt(value=None, fmt=Fmt(italic=True, highlight=Color.GREEN))
         ]
     ]
     assert row_fmt_from_cell_fmt_list(data) == [
@@ -725,8 +675,7 @@ def test_row_fmt_from_cell_fmt_dict_merges_formats(
             'beta': ValueFmt(value=2,
                              fmt=Fmt(bold=True, highlight=Color.YELLOW)),
             'alpha': ValueFmt(value='cell',
-                              fmt=Fmt(bold=True,
-                                      highlight=Color.YELLOW))
+                              fmt=Fmt(bold=True, highlight=Color.YELLOW))
         },
         {
             'only': ValueFmt(value=None,
@@ -737,14 +686,10 @@ def test_row_fmt_from_cell_fmt_dict_merges_formats(
     ]
     merged = row_fmt_from_cell_fmt_dict(data)
     assert merged == [
-        FmtDictRow(
-            values={'beta': 2, 'alpha': 'cell'},
-            fmt=Fmt(bold=True, highlight=Color.YELLOW)
-        ),
-        FmtDictRow(
-            values={'only': None, 'other': 'text'},
-            fmt=Fmt(italic=True, highlight=Color.NONE)
-        )
+        FmtDictRow(values={'beta': 2, 'alpha': 'cell'},
+                   fmt=Fmt(bold=True, highlight=Color.YELLOW)),
+        FmtDictRow(values={'only': None, 'other': 'text'},
+                   fmt=Fmt(italic=True, highlight=Color.NONE))
     ]
     assert list(cast(dict[str, Value], merged[0].values).keys()) == [
         'beta',
@@ -770,16 +715,10 @@ def test_row_fmt_from_cell_fmt_dict_plain_values(
     ]
     merged = row_fmt_from_cell_fmt_dict(data)
     assert merged == [
-        FmtDictRow(
-            values={'name': 'Alice', 'age': 30},
-            fmt=Fmt()),
-        FmtDictRow(
-            values={'name': None, 'age': 0},
-            fmt=Fmt())
+        FmtDictRow(values={'name': 'Alice', 'age': 30}, fmt=Fmt()),
+        FmtDictRow(values={'name': None, 'age': 0}, fmt=Fmt())
     ]
-    assert list(
-        cast(dict[str, Value],
-             merged[0].values).keys()) == [
+    assert list(cast(dict[str, Value], merged[0].values).keys()) == [
         'name', 'age']
     check_capsys(capsys)
 

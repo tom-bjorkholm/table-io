@@ -30,8 +30,7 @@ SHEET_ROW_FRAGMENTS: list[list[Value]] = [
 
 EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['Class', 'Division'],
+        sheet_name='Sheet', anchor_row_fragment=['Class', 'Division'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=PLAIN_STYLE,
                                      number_of_rows=3, number_of_columns=12),
@@ -45,28 +44,24 @@ EXPECTED_STYLES1: list[AnchoredStyleExpectation] = \
 
 
 SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet',
-    row_fragments=SHEET_ROW_FRAGMENTS)
+    sheet_name='Sheet', row_fragments=SHEET_ROW_FRAGMENTS)
 
 SHEET_REST: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet1',
-    row_fragments=SHEET_ROW_FRAGMENTS)
+    sheet_name='Sheet1', row_fragments=SHEET_ROW_FRAGMENTS)
 # pylint: enable=duplicate-code
 
 
-@pytest.mark.parametrize('fmt, impl, expected, expected_styles',
+@pytest.mark.parametrize('fmt, impl, expected, styles',
                          [('ods', 'odfdo', SHEET_REST, EXPECTED_STYLES1),
                           ('excel', 'openpyxl', SHEET_OPX, EXPECTED_STYLES),
                           ('excel', 'xlsxwriter', SHEET_REST,
                            EXPECTED_STYLES1)])
-def test_e03_rrs_input_format_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        fmt: str,
-        impl: str, expected: SheetContentExpectation,
-        expected_styles: list[AnchoredStyleExpectation]) -> None:
+def test_e03_spreadsheet(capsys: pytest.CaptureFixture[str], fmt: str,
+                         impl: str, expected: SheetContentExpectation,
+                         styles: list[AnchoredStyleExpectation]) -> None:
     """Test e03 for spreadsheet formats and implementations."""
-    example3 = Example(example_function=e03_rrs_input_format,
-                       format_name=fmt, implementation_name=impl)
+    example3 = Example(example_function=e03_rrs_input_format, format_name=fmt,
+                       implementation_name=impl)
     check_example_spreadsheet(example3, capture=capsys,
                               expected_fragments=[expected],
-                              style_expectations=expected_styles)
+                              style_expectations=styles)

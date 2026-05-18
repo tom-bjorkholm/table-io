@@ -11,18 +11,12 @@ from .cmd_for_examples import cmd_parse_and_run_example
 
 
 # pylint: disable=duplicate-code
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NEEDED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NEEDED,
-    can_read_box=CAP_NEEDED,
-    can_write_highlight=CAP_NOT_USED,
-    multi_sheet=CAP_NOT_USED,
-    can_find_value_position=CAP_NEEDED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NEEDED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NOT_USED,
+                    filtered_data_range=CAP_NOT_USED, can_write_box=CAP_NEEDED,
+                    can_read_box=CAP_NEEDED, can_write_highlight=CAP_NOT_USED,
+                    multi_sheet=CAP_NOT_USED,
+                    can_find_value_position=CAP_NEEDED)
 # pylint: enable=duplicate-code
 
 
@@ -57,11 +51,9 @@ def next_search_box(match_box: Box) -> Box:
 
 
 # pylint: disable=duplicate-code
-def e12_find_value_multiple_matches(
-        format_name: str,
-        output_file_name: str,
-        implementation_name: Optional[str],
-        optional_args: OptionalArgs) -> int:
+def e12_find_value_multiple_matches(format_name: str, output_file_name: str,
+                                    implementation_name: Optional[str],
+                                    optional_args: OptionalArgs) -> int:
     """Find each ABBA 1974 row and mark it in the remark column."""
     #
     # This example uses a larger table than e11 on purpose.
@@ -76,11 +68,9 @@ def e12_find_value_multiple_matches(
     # be much more precise.
     #
     singles_table = build_singles_table()
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # First write the full table with an empty Remark column.
@@ -154,6 +144,5 @@ def e12_find_value_multiple_matches(
 
 
 if __name__ == '__main__':
-    cmd_parse_and_run_example(
-        example_name='e12_find_value_multiple_matches',
-        func=e12_find_value_multiple_matches, caps=CAPS)
+    cmd_parse_and_run_example(example_name='e12_find_value_multiple_matches',
+                              func=e12_find_value_multiple_matches, caps=CAPS)

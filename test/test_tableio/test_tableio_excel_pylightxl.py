@@ -47,13 +47,12 @@ from .spreadsheet_test_helper import \
     run_read_formula_uses_cached_value, \
     run_read_formula_without_cached_value, \
     run_round_trip_dictdata_in_box, \
-    run_round_trip_sequential_list_reads, \
+    run_sequential_list_reads, \
     run_select_missing_sheet_without_create_raises_key_error, \
     run_update_default_write_starts_after_last_used_row
 
 
-def _write_zip_members(file_name: Path,
-                       members: dict[str, bytes]) -> None:
+def _write_zip_members(file_name: Path, members: dict[str, bytes]) -> None:
     """Write one ZIP file from named byte members."""
     with ZipFile(file_name, 'w') as zip_file:
         for member_name, data in members.items():
@@ -180,8 +179,7 @@ class _InspectableTableIOExcelPylightxl(TableIOExcelPylightxl):
         self._rewrite_workbook_xml(file_name)
 
 
-def test_excel_pylightxl_get_capabilities(
-        capsys: CaptureFixture[str]) -> None:
+def test_pylightxl_capabilities(capsys: CaptureFixture[str]) -> None:
     """The backend reports the honest pylightxl feature set."""
     capabilities = TableIOExcelPylightxl.get_capabilities()
     assert capabilities.can_read == CAP_IMPLEMENTED
@@ -224,7 +222,7 @@ def test_excel_factory_can_create_pylightxl_explicitly(
 def test_excel_pylightxl_round_trip_sequential_list_reads(
         capsys: CaptureFixture[str]) -> None:
     """Two list sections can be written and then read back sequentially."""
-    run_round_trip_sequential_list_reads(TableIOExcelPylightxl, capsys)
+    run_sequential_list_reads(TableIOExcelPylightxl, capsys)
 
 
 def test_excel_pylightxl_round_trip_dictdata_in_box(
@@ -253,22 +251,19 @@ def test_excel_pylightxl_written_workbook_is_validator_clean() -> None:
 def test_excel_pylightxl_multi_sheet_read_positions_are_per_sheet(
         capsys: CaptureFixture[str]) -> None:
     """Sequential reads resume independently when switching sheets."""
-    run_multi_sheet_read_positions_are_per_sheet(
-        TableIOExcelPylightxl, capsys)
+    run_multi_sheet_read_positions_are_per_sheet(TableIOExcelPylightxl, capsys)
 
 
 def test_excel_pylightxl_multi_sheet_heading_state_is_per_sheet(
         capsys: CaptureFixture[str]) -> None:
     """Each sheet tracks whether a default heading level was used before."""
-    run_multi_sheet_heading_state_is_per_sheet(
-        TableIOExcelPylightxl, capsys)
+    run_multi_sheet_heading_state_is_per_sheet(TableIOExcelPylightxl, capsys)
 
 
 def test_excel_pylightxl_multi_sheet_read_only_create_raises(
         capsys: CaptureFixture[str]) -> None:
     """READ mode can select an existing sheet but cannot create one."""
-    run_multi_sheet_read_only_create_raises(
-        TableIOExcelPylightxl, capsys)
+    run_multi_sheet_read_only_create_raises(TableIOExcelPylightxl, capsys)
 
 
 def test_excel_pylightxl_update_default_write_starts_after_last_used_row(
@@ -289,32 +284,29 @@ def test_excel_pylightxl_multi_sheet_update_uses_selected_sheet_write_position(
 def test_excel_pylightxl_find_value_and_write_cells(
         capsys: CaptureFixture[str]) -> None:
     """Found cell ranges can be read and updated without moving cursors."""
-    run_find_value_and_write_cells(
-        TableIOExcelPylightxl, '.xlsx',
-        inspect_find_and_write_cells_workbook, capsys)
+    run_find_value_and_write_cells(TableIOExcelPylightxl, '.xlsx',
+                                   inspect_find_and_write_cells_workbook,
+                                   capsys)
 
 
 def test_excel_pylightxl_boxed_table_partial_overwrite_raises(
         capsys: CaptureFixture[str]) -> None:
     """Boxed table writes reject overlaps that leave part of a table behind."""
-    run_boxed_table_partial_overwrite_raises(
-        TableIOExcelPylightxl, capsys)
+    run_boxed_table_partial_overwrite_raises(TableIOExcelPylightxl, capsys)
 
 
 def test_excel_pylightxl_read_formula_uses_cached_value(
         capsys: CaptureFixture[str]) -> None:
     """A formula cell is read as its cached value."""
     run_read_formula_uses_cached_value(
-        TableIOExcelPylightxl, '.xlsx', create_formula_workbook, 3,
-        capsys)
+        TableIOExcelPylightxl, '.xlsx', create_formula_workbook, 3, capsys)
 
 
 def test_excel_pylightxl_read_formula_without_cached_value_returns_none(
         capsys: CaptureFixture[str]) -> None:
     """A formula without a cached result is read as None."""
     run_read_formula_without_cached_value(
-        TableIOExcelPylightxl, '.xlsx', create_formula_workbook,
-        capsys)
+        TableIOExcelPylightxl, '.xlsx', create_formula_workbook, capsys)
 
 
 def test_excel_pylightxl_open_rejects_second_open(
@@ -338,8 +330,7 @@ def test_excel_pylightxl_ignored_format_and_filter_requests_keep_data(
         with TableIOExcelPylightxl(file_name, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([
                 [ValueFmt(value='name', fmt=Fmt(bold=True)),
-                 ValueFmt(value='active',
-                          fmt=Fmt(highlight=Color.YELLOW))],
+                 ValueFmt(value='active', fmt=Fmt(highlight=Color.YELLOW))],
                 [ValueFmt(value='Alice',
                           fmt=Fmt(italic=True, highlight=Color.GREEN)),
                  ValueFmt(value=True,
@@ -349,8 +340,7 @@ def test_excel_pylightxl_ignored_format_and_filter_requests_keep_data(
                 data=[FmtDictRow(values={'name': 'Bob', 'active': False},
                                  fmt=Fmt(bold=True))],
                 column_order=['name', 'active'],
-                first_row_format=Fmt(bold=True),
-                filtered_data_range=True,
+                first_row_format=Fmt(bold=True), filtered_data_range=True,
                 box=Box(top=4, left=0, bottom=6, right=2))
         workbook = load_workbook(Path(temp_dir) / 'ignored_features.xlsx')
         worksheet = workbook.active
@@ -379,9 +369,8 @@ def test_excel_pylightxl_reads_openpyxl_datetime_cells(
         worksheet['B1'] = 'x'
         workbook.save(file_name)
         workbook.close()
-        with TableIOExcelPylightxl(
-                Path(temp_dir) / 'openpyxl_datetime',
-                FileAccess.READ) as table_io:
+        with TableIOExcelPylightxl(Path(temp_dir) / 'openpyxl_datetime',
+                                   FileAccess.READ) as table_io:
             result = table_io.read_table_listdata()
         assert result.data == [[when, 'x']]
     check_capsys(capsys)
@@ -401,9 +390,8 @@ def test_excel_pylightxl_writes_datetime_readably_and_reads_it_back(
         assert worksheet['A2'].value == when
         assert worksheet['A2'].number_format == 'yyyy-mm-dd hh:mm:ss'
         workbook.close()
-        with TableIOExcelPylightxl(
-                Path(temp_dir) / 'datetime_roundtrip',
-                FileAccess.READ) as table_io:
+        with TableIOExcelPylightxl(Path(temp_dir) / 'datetime_roundtrip',
+                                   FileAccess.READ) as table_io:
             result = table_io.read_table_listdata()
         assert result.data == [['when'], [when]]
     check_capsys(capsys)
@@ -422,9 +410,8 @@ def test_excel_pylightxl_update_keeps_datetime_cells_readable(
         worksheet['B1'] = 'start'
         workbook.save(file_name)
         workbook.close()
-        with TableIOExcelPylightxl(
-                Path(temp_dir) / 'update_datetime',
-                FileAccess.UPDATE) as table_io:
+        with TableIOExcelPylightxl(Path(temp_dir) / 'update_datetime',
+                                   FileAccess.UPDATE) as table_io:
             table_io.write_table_listdata([['new', 'row']])
         workbook = load_workbook(file_name)
         worksheet = workbook.active
@@ -433,9 +420,8 @@ def test_excel_pylightxl_update_keeps_datetime_cells_readable(
         assert worksheet['B1'].value == 'start'
         assert worksheet['A3'].value == 'new'
         workbook.close()
-        with TableIOExcelPylightxl(
-                Path(temp_dir) / 'update_datetime',
-                FileAccess.READ) as table_io:
+        with TableIOExcelPylightxl(Path(temp_dir) / 'update_datetime',
+                                   FileAccess.READ) as table_io:
             first_result = table_io.read_table_listdata()
             second_result = table_io.read_table_listdata()
         assert first_result.data == [[when, 'start']]
@@ -544,8 +530,7 @@ def test_excel_pylightxl_named_ranges_and_typed_values_cover_style_paths(
         '<definedName name="NoSheet">A1:B2</definedName>'
         '<definedName name="Totals">\'Sheet One\'!$A$1:$B$2</definedName>'
         '</definedNames>'
-        '</workbook>'
-    )
+        '</workbook>')
     database = Database()
     database.add_ws('Sheet One', data={})
     load_named_ranges(workbook_root, database)
@@ -568,8 +553,7 @@ def test_excel_pylightxl_named_ranges_and_typed_values_cover_style_paths(
 
 
 def test_excel_pylightxl_open_adds_default_sheet_for_empty_reader_result(
-        monkeypatch: pytest.MonkeyPatch,
-        capsys: CaptureFixture[str]) -> None:
+        monkeypatch: pytest.MonkeyPatch, capsys: CaptureFixture[str]) -> None:
     """READ open creates a default sheet when parsing yields no sheets."""
     with TemporaryDirectory() as temp_dir:
         Path(temp_dir, 'empty.xlsx').touch()
@@ -578,11 +562,10 @@ def test_excel_pylightxl_open_adds_default_sheet_for_empty_reader_result(
             """Return an empty database for the open fallback test."""
             return Database()
 
-        monkeypatch.setattr(tableio_excel_pylightxl_module,
-                            '_read_database', empty_database)
-        table_io = _InspectableTableIOExcelPylightxl(
-            Path(temp_dir) / 'empty',
-            FileAccess.READ)
+        monkeypatch.setattr(tableio_excel_pylightxl_module, '_read_database',
+                            empty_database)
+        table_io = _InspectableTableIOExcelPylightxl(Path(temp_dir) / 'empty',
+                                                     FileAccess.READ)
         table_io.open()
         assert table_io.list_sheets() == ['Sheet1']
         assert table_io.run_last_used_column() == -1
@@ -595,13 +578,11 @@ def test_excel_pylightxl_open_adds_default_sheet_for_empty_reader_result(
 
 
 def test_excel_pylightxl_write_file_suffix_cleans_temp_file_on_error(
-        monkeypatch: pytest.MonkeyPatch,
-        capsys: CaptureFixture[str]) -> None:
+        monkeypatch: pytest.MonkeyPatch, capsys: CaptureFixture[str]) -> None:
     """Temporary workbook files are removed when rewrite cleanup fails."""
     with TemporaryDirectory() as temp_dir:
         table_io = _InspectableTableIOExcelPylightxl(
-            Path(temp_dir) / 'write_error',
-            FileAccess.CREATE)
+            Path(temp_dir) / 'write_error', FileAccess.CREATE)
         table_io.open()
         temp_path = Path(temp_dir) / 'temporary.xlsx'
 
@@ -634,8 +615,7 @@ def test_excel_pylightxl_xml_rewrite_helpers_cover_existing_metadata(
         file_name = Path(temp_dir) / 'rewrite_helpers.xlsx'
         _write_zip_members(file_name, _rewrite_workbook_members())
         table_io = _InspectableTableIOExcelPylightxl(
-            Path(temp_dir) / 'rewrite_helper_object',
-            FileAccess.CREATE)
+            Path(temp_dir) / 'rewrite_helper_object', FileAccess.CREATE)
         table_io.set_sheet_style_codes({'sheet1': {'A3': '999'}})
         assert table_io.run_entry_style_codes(
             'xl/worksheets/missing.xml',

@@ -46,14 +46,12 @@ def run_examples() -> None:
             '--implementation', 'all',
             '-o',
             str(output_base)]
-        process = subprocess.run(
-            command, check=False, cwd=project_root,
-            env=env)
+        process = subprocess.run(command, check=False, cwd=project_root,
+                                 env=env)
         if process.returncode == 0:
             continue
         raise RuntimeError(
-            f'Example failed: {source_file} exit code {process.returncode}'
-        )
+            f'Example failed: {source_file} exit code {process.returncode}')
 
 
 if __name__ == '__main__':

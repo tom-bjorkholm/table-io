@@ -19,16 +19,11 @@ from .cmd_for_examples import cmd_parse_and_run_example
 # example can still run on backends that support writing but cannot show
 # every formatting detail.
 #
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NOT_USED,
-    can_fmt_row=CAP_IGNORABLE,
-    can_fmt_value=CAP_IGNORABLE,
-    filtered_data_range=CAP_IGNORABLE,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_IGNORABLE
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NOT_USED,
+                    can_fmt_row=CAP_IGNORABLE, can_fmt_value=CAP_IGNORABLE,
+                    filtered_data_range=CAP_IGNORABLE,
+                    can_write_box=CAP_NOT_USED, can_read_box=CAP_NOT_USED,
+                    can_write_highlight=CAP_IGNORABLE)
 
 
 # pylint: disable=duplicate-code
@@ -42,11 +37,9 @@ def e02_more_write(format_name: str, output_file_name: str,
     # Its purpose is to show several ways to represent formatted data
     # before passing that data to tableio.
     #
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # The headings divide the output file into sections so it is easier
@@ -79,8 +72,7 @@ def e02_more_write(format_name: str, output_file_name: str,
                                                highlight=Color.RED))],
             [ValueFmt(value='TIO-101', fmt=Fmt()),
              ValueFmt(value='Epic', fmt=Fmt()),
-             ValueFmt(value='Done', fmt=Fmt(italic=True,
-                                            bold=True,
+             ValueFmt(value='Done', fmt=Fmt(italic=True, bold=True,
                                             highlight=Color.GREEN))]]
         #
         # filtered_data_range=True asks backends that support it to mark the
@@ -104,14 +96,12 @@ def e02_more_write(format_name: str, output_file_name: str,
             {'Jira key': ValueFmt(value='TIO-456', fmt=Fmt()),
              'Reporter': ValueFmt(value='Jane Doe', fmt=Fmt()),
              'Assignee': ValueFmt(value='John Doe',
-                                  fmt=Fmt(italic=True,
-                                          bold=True,
+                                  fmt=Fmt(italic=True, bold=True,
                                           highlight=Color.GREEN))},
             {'Jira key': ValueFmt(value='TIO-789', fmt=Fmt()),
              'Reporter': ValueFmt(value='John Doe', fmt=Fmt()),
              'Assignee': ValueFmt(value='Unassigned',
-                                  fmt=Fmt(italic=True,
-                                          bold=True,
+                                  fmt=Fmt(italic=True, bold=True,
                                           highlight=Color.RED))}]
         #
         # When writing dict rows, column_order decides both which columns
@@ -122,8 +112,7 @@ def e02_more_write(format_name: str, output_file_name: str,
         # first_row_format styles the generated header row that tableio
         # creates from the dictionary keys.
         #
-        tableio.write_table_dictdata(data=data2,
-                                     column_order=column_order2,
+        tableio.write_table_dictdata(data=data2, column_order=column_order2,
                                      filtered_data_range=True,
                                      first_row_format=Fmt(bold=True))
         tableio.write_heading('Formatted List data with FmtListRow.')
@@ -176,8 +165,7 @@ def e02_more_write(format_name: str, output_file_name: str,
         # order used when the rows were created.
         #
         column_order4: list[str] = ['Jira key', 'report date', 'Story Points']
-        tableio.write_table_fmtdictdata(data=data4,
-                                        column_order=column_order4,
+        tableio.write_table_fmtdictdata(data=data4, column_order=column_order4,
                                         first_row_format=Fmt(bold=True),
                                         filtered_data_range=True)
     return 0

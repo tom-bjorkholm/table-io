@@ -155,15 +155,12 @@ def _raise_syntax_error(file_path: Path,
                         validation_result: ValidationResult) -> None:
     """Raise one assertion with collected syntax-validation errors."""
     formatted_errors = '\n'.join(
-        str(error) for error in validation_result.errors[:20]
-    )
+        str(error) for error in validation_result.errors[:20])
     raise AssertionError(
-        f'Syntax validation failed for {file_path}:\n{formatted_errors}'
-    )
+        f'Syntax validation failed for {file_path}:\n{formatted_errors}')
 
 
-def _match_expected_error(actual_errors: list[str],
-                          used_indexes: set[int],
+def _match_expected_error(actual_errors: list[str], used_indexes: set[int],
                           expected_error: str) -> Optional[int]:
     """Return the index of the first unmatched actual error containing text."""
     for index, actual_error in enumerate(actual_errors):
@@ -175,8 +172,7 @@ def _match_expected_error(actual_errors: list[str],
 
 
 def _check_expected_syntax_errors(
-        file_path: Path,
-        validation_result: ValidationResult,
+        file_path: Path, validation_result: ValidationResult,
         expected_errors: Optional[list[str]]) -> None:
     """Check actual syntax errors against optional expected substrings."""
     actual_errors = [
@@ -206,8 +202,7 @@ def _check_expected_syntax_errors(
     raise AssertionError(
         f'Syntax validation mismatch for {file_path}:\n'
         f'Missing expected errors:\n{formatted_expected}\n'
-        f'Unexpected errors:\n{formatted_unexpected}'
-    )
+        f'Unexpected errors:\n{formatted_unexpected}')
 
 
 def _normalize_cell_value(value: object) -> Value:
@@ -225,8 +220,7 @@ def _normalize_cell_value(value: object) -> Value:
 
 def _sheet_rows(sheet: CalamineSheet) -> list[list[Value]]:
     """Return one sheet as normalized rows of Value cells."""
-    rows = cast(list[list[object]],
-                sheet.to_python(skip_empty_area=False))
+    rows = cast(list[list[object]], sheet.to_python(skip_empty_area=False))
     return [
         [_normalize_cell_value(value) for value in row]
         for row in rows
@@ -264,8 +258,7 @@ def _match_row_fragment(row_values: list[Value],
     return None
 
 
-def _find_matching_row(rows: list[list[Value]],
-                       row_fragment: list[Value],
+def _find_matching_row(rows: list[list[Value]], row_fragment: list[Value],
                        start_row: int = 0) -> Optional[tuple[int, int]]:
     """Return the first row and column matching one row fragment."""
     for row_index in range(start_row, len(rows)):
@@ -285,8 +278,7 @@ def _check_sheet_names(actual_sheet_names: list[str],
     if actual_sheet_names != expected_sheet_names:
         raise AssertionError(
             'Unexpected sheet names. '
-            f'Expected {expected_sheet_names}, got {actual_sheet_names}.'
-        )
+            f'Expected {expected_sheet_names}, got {actual_sheet_names}.')
 
 
 def _ods_table(document: Document, sheet_name: str) -> Table:
@@ -331,8 +323,7 @@ def _excel_border_weight(style_name: Optional[str]) -> BorderWeight:
     raise ValueError(f'Unsupported Excel border style: {style_name}')
 
 
-def _excel_fill_color(worksheet: Worksheet,
-                      row_index: int,
+def _excel_fill_color(worksheet: Worksheet, row_index: int,
                       col_index: int) -> Color:
     """Return one Excel cell background color."""
     cell = worksheet.cell(row=row_index + 1, column=col_index + 1)
@@ -344,29 +335,23 @@ def _excel_fill_color(worksheet: Worksheet,
     return _color_from_rgb_text(rgb_value)
 
 
-def _excel_actual_borders(worksheet: Worksheet,
-                          row_index: int,
+def _excel_actual_borders(worksheet: Worksheet, row_index: int,
                           col_index: int) -> CellBorder:
     """Return actual border weights for one Excel cell."""
     cell = worksheet.cell(row=row_index + 1, column=col_index + 1)
-    return CellBorder(
-        top=_excel_border_weight(cell.border.top.style),
-        right=_excel_border_weight(cell.border.right.style),
-        bottom=_excel_border_weight(cell.border.bottom.style),
-        left=_excel_border_weight(cell.border.left.style)
-    )
+    return CellBorder(top=_excel_border_weight(cell.border.top.style),
+                      right=_excel_border_weight(cell.border.right.style),
+                      bottom=_excel_border_weight(cell.border.bottom.style),
+                      left=_excel_border_weight(cell.border.left.style))
 
 
-def _excel_actual_style(worksheet: Worksheet,
-                        row_index: int,
+def _excel_actual_style(worksheet: Worksheet, row_index: int,
                         col_index: int) -> ExpectedCellStyle:
     """Return actual style values for one Excel cell."""
     cell = worksheet.cell(row=row_index + 1, column=col_index + 1)
     return ExpectedCellStyle(
-        bold=bool(cell.font.bold),
-        italic=bool(cell.font.italic),
-        background_color=_excel_fill_color(worksheet, row_index, col_index)
-    )
+        bold=bool(cell.font.bold), italic=bool(cell.font.italic),
+        background_color=_excel_fill_color(worksheet, row_index, col_index))
 
 
 def _ods_border_weight(border_text: Optional[str]) -> BorderWeight:
@@ -379,17 +364,14 @@ def _ods_border_weight(border_text: Optional[str]) -> BorderWeight:
     try:
         width = float(size_text[:-2])
     except ValueError as exc:
-        raise ValueError(
-            f'Unsupported ODS border width: {border_text}'
-        ) from exc
+        message = f'Unsupported ODS border width: {border_text}'
+        raise ValueError(message) from exc
     if width < 1.0:
         return BorderWeight.THIN
     return BorderWeight.THICK
 
 
-def _ods_actual_borders(document: Document,
-                        table: Table,
-                        row_index: int,
+def _ods_actual_borders(document: Document, table: Table, row_index: int,
                         col_index: int) -> CellBorder:
     """Return actual border weights for one ODS cell."""
     cell = table.get_cell((col_index, row_index), clone=False)
@@ -400,49 +382,35 @@ def _ods_actual_borders(document: Document,
         return NO_BORDERS
     checked_style = get_checked_type(style, Style)
     table_props = cast(
-        dict[str, str], checked_style.get_properties('table-cell') or {}
-    )
+        dict[str, str], checked_style.get_properties('table-cell') or {})
     return CellBorder(
         top=_ods_border_weight(table_props.get('fo:border-top')),
         right=_ods_border_weight(table_props.get('fo:border-right')),
         bottom=_ods_border_weight(table_props.get('fo:border-bottom')),
-        left=_ods_border_weight(table_props.get('fo:border-left'))
-    )
+        left=_ods_border_weight(table_props.get('fo:border-left')))
 
 
-def _ods_actual_style(document: Document,
-                      table: Table,
-                      row_index: int,
+def _ods_actual_style(document: Document, table: Table, row_index: int,
                       col_index: int) -> ExpectedCellStyle:
     """Return actual style values for one ODS cell."""
     cell = table.get_cell((col_index, row_index), clone=False)
     if cell.style is None:
-        return ExpectedCellStyle(
-            bold=False,
-            italic=False,
-            background_color=Color.NONE
-        )
+        return ExpectedCellStyle(bold=False, italic=False,
+                                 background_color=Color.NONE)
     style = document.get_style('table-cell', cell.style)
     if style is None:
-        return ExpectedCellStyle(
-            bold=False,
-            italic=False,
-            background_color=Color.NONE
-        )
+        return ExpectedCellStyle(bold=False, italic=False,
+                                 background_color=Color.NONE)
     checked_style = get_checked_type(style, Style)
     table_props = cast(
-        dict[str, str], checked_style.get_properties('table-cell') or {}
-    )
+        dict[str, str], checked_style.get_properties('table-cell') or {})
     text_props = cast(
-        dict[str, str], checked_style.get_properties('text') or {}
-    )
+        dict[str, str], checked_style.get_properties('text') or {})
     return ExpectedCellStyle(
         bold=text_props.get('fo:font-weight') == 'bold',
         italic=text_props.get('fo:font-style') == 'italic',
         background_color=_color_from_rgb_text(
-            table_props.get('fo:background-color')
-        )
-    )
+            table_props.get('fo:background-color')))
 
 
 def _cell_position_text(row_index: int, col_index: int) -> str:
@@ -450,9 +418,7 @@ def _cell_position_text(row_index: int, col_index: int) -> str:
     return f'row {row_index + 1}, column {col_index + 1}'
 
 
-def _cell_location_text(file_path: Path,
-                        sheet_name: str,
-                        row_index: int,
+def _cell_location_text(file_path: Path, sheet_name: str, row_index: int,
                         col_index: int) -> str:
     """Return a readable file, sheet and cell location string."""
     return (
@@ -461,10 +427,8 @@ def _cell_location_text(file_path: Path,
     )
 
 
-def _area_location_text(file_path: Path,
-                        sheet_name: str,
-                        top_left: tuple[int, int],
-                        number_of_rows: int,
+def _area_location_text(file_path: Path, sheet_name: str,
+                        top_left: tuple[int, int], number_of_rows: int,
                         number_of_columns: int) -> str:
     """Return a readable checked-area location string."""
     row_index, col_index = top_left
@@ -475,38 +439,32 @@ def _area_location_text(file_path: Path,
     )
 
 
-def _style_mismatch_messages(
-        location_text: str,
-        expected_style: ExpectedCellStyle,
-        actual_style: ExpectedCellStyle) -> list[str]:
+def _style_mismatch_messages(location_text: str,
+                             expected_style: ExpectedCellStyle,
+                             actual_style: ExpectedCellStyle) -> list[str]:
     """Return mismatch messages for one actual style."""
     mismatches: list[str] = []
     if (expected_style.bold is not None and
             actual_style.bold != expected_style.bold):
         mismatches.append(
             f'Unexpected bold value at {location_text}. '
-            f'Expected {expected_style.bold}, got {actual_style.bold}.'
-        )
+            f'Expected {expected_style.bold}, got {actual_style.bold}.')
     if (expected_style.italic is not None and
             actual_style.italic != expected_style.italic):
         mismatches.append(
             f'Unexpected italic value at {location_text}. '
-            f'Expected {expected_style.italic}, got {actual_style.italic}.'
-        )
+            f'Expected {expected_style.italic}, got {actual_style.italic}.')
     if (expected_style.background_color is not None and
             actual_style.background_color != expected_style.background_color):
         mismatches.append(
             f'Unexpected background color at {location_text}. '
             f'Expected {expected_style.background_color}, '
-            f'got {actual_style.background_color}.'
-        )
+            f'got {actual_style.background_color}.')
     return mismatches
 
 
-def _border_mismatch_messages(
-        location_text: str,
-        expected_borders: CellBorder,
-        actual_borders: CellBorder) -> list[str]:
+def _border_mismatch_messages(location_text: str, expected_borders: CellBorder,
+                              actual_borders: CellBorder) -> list[str]:
     """Return mismatch messages for one actual cell border."""
     mismatches: list[str] = []
     for side_name, expected_weight, actual_weight in [
@@ -519,15 +477,12 @@ def _border_mismatch_messages(
         mismatches.append(
             f'Unexpected {side_name} border at {location_text}. '
             f'Expected {_border_weight_text(expected_weight)}, '
-            f'got {_border_weight_text(actual_weight)}.'
-        )
+            f'got {_border_weight_text(actual_weight)}.')
     return mismatches
 
 
-def _checked_area_top_left(anchor_cell: tuple[int, int],
-                           row_offset: int,
-                           col_offset: int,
-                           number_of_rows: int,
+def _checked_area_top_left(anchor_cell: tuple[int, int], row_offset: int,
+                           col_offset: int, number_of_rows: int,
                            number_of_columns: int) -> tuple[int, int]:
     """Return the checked area's top-left cell after validation."""
     anchor_row_index, anchor_col_index = anchor_cell
@@ -538,31 +493,23 @@ def _checked_area_top_left(anchor_cell: tuple[int, int],
     target_row_index = anchor_row_index + row_offset
     target_col_index = anchor_col_index + col_offset
     if target_row_index < 0:
-        raise ValueError(
-            'row_offset points before the first spreadsheet row.'
-        )
+        raise ValueError('row_offset points before the first spreadsheet row.')
     if target_col_index < 0:
         raise ValueError(
-            'col_offset points before the first spreadsheet column.'
-        )
+            'col_offset points before the first spreadsheet column.')
     return target_row_index, target_col_index
 
 
 def _check_relative_style_expectation(
-        file_path: Path,
-        sheet_name: str,
-        anchor_cell: tuple[int, int],
+        file_path: Path, sheet_name: str, anchor_cell: tuple[int, int],
         relative_expectation: RelativeStyleExpectation,
         actual_style_at:
         Callable[[int, int], ExpectedCellStyle]) -> None:
     """Check one relative style expectation against actual cell styles."""
     target_row_index, target_col_index = _checked_area_top_left(
-        anchor_cell,
-        relative_expectation.row_offset,
-        relative_expectation.col_offset,
-        relative_expectation.number_of_rows,
-        relative_expectation.number_of_columns
-    )
+        anchor_cell, relative_expectation.row_offset,
+        relative_expectation.col_offset, relative_expectation.number_of_rows,
+        relative_expectation.number_of_columns)
     mismatch_messages: list[str] = []
     for row_index in range(
             target_row_index,
@@ -574,42 +521,29 @@ def _check_relative_style_expectation(
             mismatch_messages.extend(
                 _style_mismatch_messages(
                     _cell_location_text(
-                        file_path, sheet_name, row_index, col_index
-                    ),
-                    relative_expectation.expected_style,
-                    actual_style
-                )
-            )
+                        file_path, sheet_name, row_index, col_index),
+                    relative_expectation.expected_style, actual_style))
     if mismatch_messages:
-        area_text = _area_location_text(
-            file_path,
-            sheet_name,
-            (target_row_index, target_col_index),
-            relative_expectation.number_of_rows,
-            relative_expectation.number_of_columns
-        )
+        area_text = _area_location_text(file_path, sheet_name,
+                                        (target_row_index, target_col_index),
+                                        relative_expectation.number_of_rows,
+                                        relative_expectation.number_of_columns)
         formatted_mismatches = '\n'.join(mismatch_messages)
         raise AssertionError(
             f'Style mismatches in {area_text}:\n'
-            f'{formatted_mismatches}'
-        )
+            f'{formatted_mismatches}')
 
 
 def _check_relative_border_expectation(  # pylint: disable=too-many-locals
-        file_path: Path,
-        sheet_name: str,
-        anchor_cell: tuple[int, int],
+        file_path: Path, sheet_name: str, anchor_cell: tuple[int, int],
         relative_expectation: RelativeBorderExpectation,
         actual_borders_at:
         Callable[[int, int], CellBorder]) -> None:
     """Check one relative border expectation against actual cell borders."""
     target_row_index, target_col_index = _checked_area_top_left(
-        anchor_cell,
-        relative_expectation.row_offset,
-        relative_expectation.col_offset,
-        relative_expectation.number_of_rows,
-        relative_expectation.number_of_columns
-    )
+        anchor_cell, relative_expectation.row_offset,
+        relative_expectation.col_offset, relative_expectation.number_of_rows,
+        relative_expectation.number_of_columns)
     border_helper = BorderHelper(relative_expectation.border_style,
                                  _BORDER_CHECK_CAPABILITIES)
     mismatch_messages: list[str] = []
@@ -618,47 +552,33 @@ def _check_relative_border_expectation(  # pylint: disable=too-many-locals
             row_index = target_row_index + row_offset
             col_index = target_col_index + col_offset
             expected_borders = border_helper.cell_border(
-                row_offset,
-                col_offset,
-                relative_expectation.number_of_rows,
-                relative_expectation.number_of_columns
-            )
+                row_offset, col_offset, relative_expectation.number_of_rows,
+                relative_expectation.number_of_columns)
             actual_borders = actual_borders_at(row_index, col_index)
             mismatch_messages.extend(
                 _border_mismatch_messages(
                     _cell_location_text(
-                        file_path, sheet_name, row_index, col_index
-                    ),
-                    expected_borders,
-                    actual_borders
-                )
-            )
+                        file_path, sheet_name, row_index, col_index),
+                    expected_borders, actual_borders))
     if mismatch_messages:
-        area_text = _area_location_text(
-            file_path,
-            sheet_name,
-            (target_row_index, target_col_index),
-            relative_expectation.number_of_rows,
-            relative_expectation.number_of_columns
-        )
+        area_text = _area_location_text(file_path, sheet_name,
+                                        (target_row_index, target_col_index),
+                                        relative_expectation.number_of_rows,
+                                        relative_expectation.number_of_columns)
         formatted_mismatches = '\n'.join(mismatch_messages)
         raise AssertionError(
             f'Border mismatches in {area_text}:\n'
-            f'{formatted_mismatches}'
-        )
+            f'{formatted_mismatches}')
 
 
-def _anchor_match(rows: list[list[Value]],
-                  row_fragment: list[Value],
-                  sheet_name: str,
-                  file_path: Path) -> tuple[int, int]:
+def _anchor_match(rows: list[list[Value]], row_fragment: list[Value],
+                  sheet_name: str, file_path: Path) -> tuple[int, int]:
     """Return one anchor match or raise a clear assertion."""
     anchor_match = _find_matching_row(rows, row_fragment)
     if anchor_match is None:
         raise AssertionError(
             f'Could not find anchor {row_fragment!r} '
-            f'in sheet {sheet_name!r} of {file_path}.'
-        )
+            f'in sheet {sheet_name!r} of {file_path}.')
     return anchor_match
 
 
@@ -672,23 +592,16 @@ def _check_excel_styles(file_path: Path,
         for style_expectation in style_expectations:
             rows = workbook_data[style_expectation.sheet_name]
             anchor_row_index, anchor_col_index = _anchor_match(
-                rows,
-                style_expectation.anchor_row_fragment,
-                style_expectation.sheet_name,
-                file_path
-            )
+                rows, style_expectation.anchor_row_fragment,
+                style_expectation.sheet_name, file_path)
             worksheet = get_checked_type(
-                workbook[style_expectation.sheet_name], Worksheet
-            )
+                workbook[style_expectation.sheet_name], Worksheet)
             for relative_expectation in (
                     style_expectation.relative_expectations):
                 _check_relative_style_expectation(
-                    file_path,
-                    style_expectation.sheet_name,
-                    (anchor_row_index, anchor_col_index),
-                    relative_expectation,
-                    partial(_excel_actual_style, worksheet)
-                )
+                    file_path, style_expectation.sheet_name,
+                    (anchor_row_index, anchor_col_index), relative_expectation,
+                    partial(_excel_actual_style, worksheet))
     finally:
         workbook.close()
 
@@ -703,23 +616,16 @@ def _check_excel_borders(file_path: Path,
         for border_expectation in border_expectations:
             rows = workbook_data[border_expectation.sheet_name]
             anchor_row_index, anchor_col_index = _anchor_match(
-                rows,
-                border_expectation.anchor_row_fragment,
-                border_expectation.sheet_name,
-                file_path
-            )
+                rows, border_expectation.anchor_row_fragment,
+                border_expectation.sheet_name, file_path)
             worksheet = get_checked_type(
-                workbook[border_expectation.sheet_name], Worksheet
-            )
+                workbook[border_expectation.sheet_name], Worksheet)
             for relative_expectation in (
                     border_expectation.relative_expectations):
                 _check_relative_border_expectation(
-                    file_path,
-                    border_expectation.sheet_name,
-                    (anchor_row_index, anchor_col_index),
-                    relative_expectation,
-                    partial(_excel_actual_borders, worksheet)
-                )
+                    file_path, border_expectation.sheet_name,
+                    (anchor_row_index, anchor_col_index), relative_expectation,
+                    partial(_excel_actual_borders, worksheet))
     finally:
         workbook.close()
 
@@ -733,20 +639,14 @@ def _check_ods_styles(file_path: Path,
     for style_expectation in style_expectations:
         rows = workbook_data[style_expectation.sheet_name]
         anchor_row_index, anchor_col_index = _anchor_match(
-            rows,
-            style_expectation.anchor_row_fragment,
-            style_expectation.sheet_name,
-            file_path
-        )
+            rows, style_expectation.anchor_row_fragment,
+            style_expectation.sheet_name, file_path)
         table = _ods_table(document, style_expectation.sheet_name)
         for relative_expectation in style_expectation.relative_expectations:
             _check_relative_style_expectation(
-                file_path,
-                style_expectation.sheet_name,
-                (anchor_row_index, anchor_col_index),
-                relative_expectation,
-                partial(_ods_actual_style, document, table)
-            )
+                file_path, style_expectation.sheet_name,
+                (anchor_row_index, anchor_col_index), relative_expectation,
+                partial(_ods_actual_style, document, table))
 
 
 def _check_ods_borders(file_path: Path,
@@ -758,20 +658,14 @@ def _check_ods_borders(file_path: Path,
     for border_expectation in border_expectations:
         rows = workbook_data[border_expectation.sheet_name]
         anchor_row_index, anchor_col_index = _anchor_match(
-            rows,
-            border_expectation.anchor_row_fragment,
-            border_expectation.sheet_name,
-            file_path
-        )
+            rows, border_expectation.anchor_row_fragment,
+            border_expectation.sheet_name, file_path)
         table = _ods_table(document, border_expectation.sheet_name)
         for relative_expectation in border_expectation.relative_expectations:
             _check_relative_border_expectation(
-                file_path,
-                border_expectation.sheet_name,
-                (anchor_row_index, anchor_col_index),
-                relative_expectation,
-                partial(_ods_actual_borders, document, table)
-            )
+                file_path, border_expectation.sheet_name,
+                (anchor_row_index, anchor_col_index), relative_expectation,
+                partial(_ods_actual_borders, document, table))
 
 
 def check_spreadsheet_syntax(
@@ -813,8 +707,7 @@ def check_spreadsheet_content(
                 raise AssertionError(
                     f'Could not find row fragment {row_fragment!r} '
                     f'in sheet {sheet_expectation.sheet_name!r} '
-                    f'of {file_path}.'
-                )
+                    f'of {file_path}.')
             next_row_index = match[0] + 1
 
 
@@ -883,19 +776,15 @@ ITALIC_STYLE: ExpectedCellStyle = \
 BOLD_ITALIC_STYLE: ExpectedCellStyle = ExpectedCellStyle(bold=True,
                                                          italic=True)
 YELLOW_PLAIN: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.YELLOW, italic=False,
-                      bold=False)
+    ExpectedCellStyle(background_color=Color.YELLOW, italic=False, bold=False)
 YELLOW_ITALIC: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.YELLOW, italic=True,
-                      bold=False)
+    ExpectedCellStyle(background_color=Color.YELLOW, italic=True, bold=False)
 YELLOW_BOLD: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.YELLOW, italic=False,
-                      bold=True)
+    ExpectedCellStyle(background_color=Color.YELLOW, italic=False, bold=True)
 YELLOW_BOLD_ITALIC: ExpectedCellStyle = \
     ExpectedCellStyle(background_color=Color.YELLOW, bold=True, italic=True)
 RED_PLAIN: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.RED, italic=False,
-                      bold=False)
+    ExpectedCellStyle(background_color=Color.RED, italic=False, bold=False)
 RED_BOLD: ExpectedCellStyle = ExpectedCellStyle(background_color=Color.RED,
                                                 bold=True, italic=False)
 RED_BOLD_ITALIC: ExpectedCellStyle = \
@@ -903,8 +792,7 @@ RED_BOLD_ITALIC: ExpectedCellStyle = \
 RED_ITALIC: ExpectedCellStyle = \
     ExpectedCellStyle(background_color=Color.RED, italic=True, bold=False)
 GREEN_PLAIN: ExpectedCellStyle = \
-    ExpectedCellStyle(background_color=Color.GREEN, italic=False,
-                      bold=False)
+    ExpectedCellStyle(background_color=Color.GREEN, italic=False, bold=False)
 GREEN_BOLD_ITALIC: ExpectedCellStyle = \
     ExpectedCellStyle(background_color=Color.GREEN, bold=True, italic=True)
 GREEN_BOLD: ExpectedCellStyle = ExpectedCellStyle(background_color=Color.GREEN,

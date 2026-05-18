@@ -45,8 +45,7 @@ def expected_lines() -> list[str]:
     ]
     capabilities = LineNumberedCsvTableIO.get_description().capabilities
     for key, value in zip(capabilities._fields, capabilities):
-        payloads.append(
-            f'"Capability {key}","{capability_to_str(value)}",""')
+        payloads.append(f'"Capability {key}","{capability_to_str(value)}",""')
     payloads.append('')
     return [
         f'{line_number:05d}:{payload}'
@@ -69,10 +68,8 @@ def test_e20_register_custom_tableio_text(
     with TemporaryDirectory() as tmp_dir:
         output_path = Path(tmp_dir) / 'output'
         result = e20_register_custom_tableio(
-            format_name=CUSTOM_FORMAT_NAME,
-            output_file_name=str(output_path),
-            implementation_name=CUSTOM_IMPLEMENTATION_NAME,
-            optional_args=None)
+            format_name=CUSTOM_FORMAT_NAME, output_file_name=str(output_path),
+            implementation_name=CUSTOM_IMPLEMENTATION_NAME, optional_args=None)
         text = Path(f'{output_path}.lncsv').read_text(encoding='utf-8')
         assert text == '\n'.join(expected_lines()) + '\n'
         assert result == 0

@@ -27,8 +27,7 @@ from tableio.capability import SingleCapability
 class TableIOMformatMd(TableIOMformatBased):
     """TableIO writer class for Markdown, based on MultiFormat."""
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]] = None,
                  character_encoding: str = 'utf-8'):
         """Initialize the TableIOMformatMd writer class.
@@ -77,14 +76,11 @@ class TableIOMformatHtml(TableIOMformatBased):
     """TableIO writer class for HTML, based on MultiFormat."""
 
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                 file_name: PathLike,
-                 file_access: FileAccess,
+                 file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
-                 character_encoding: str = 'utf-8',
-                 title: str = 'HTML file',
-                 css_file: Optional[str] = None,
-                 lang: str = 'en'):
+                 character_encoding: str = 'utf-8', title: str = 'HTML file',
+                 css_file: Optional[str] = None, lang: str = 'en'):
         """Initialize the TableIOMformatHtml writer class.
 
         Args:
@@ -105,13 +101,12 @@ class TableIOMformatHtml(TableIOMformatBased):
             css_file: The CSS file to use.
             lang: The language of the HTML file.
         """
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
-        self.mformat = MultiFormatHtml(
-            file_name,
-            file_exists_callback=_allow_overwrite,
-            character_encoding=character_encoding,
-            title=title, css_file=css_file, lang=lang)
+        super().__init__(file_name, file_access, file_exists_callback)
+        self.mformat = MultiFormatHtml(file_name,
+                                       file_exists_callback=_allow_overwrite,
+                                       character_encoding=character_encoding,
+                                       title=title, css_file=css_file,
+                                       lang=lang)
 
     @classmethod
     def get_row_format_capability(cls) -> SingleCapability:
@@ -138,12 +133,10 @@ class TableIOMformatTxt(TableIOMformatBased):
     """TableIO writer class for plain text, based on MultiFormat."""
 
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                 file_name: PathLike,
-                 file_access: FileAccess,
+                 file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
-                 character_encoding: str = 'utf-8',
-                 line_length: int = 79,
+                 character_encoding: str = 'utf-8', line_length: int = 79,
                  table_max_line_length: Optional[int] = None,
                  table_alignment: TableAlignmentSpec =
                  TableAlignment.CENTER_BUT_DIGITS_RIGHT):
@@ -169,13 +162,10 @@ class TableIOMformatTxt(TableIOMformatBased):
                                    line_length is used.
             table_alignment: The alignment of cell values in tables.
         """
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback)
         self.mformat = MultiFormatTxt(
-            file_name,
-            file_exists_callback=_allow_overwrite,
-            character_encoding=character_encoding,
-            line_length=line_length,
+            file_name, file_exists_callback=_allow_overwrite,
+            character_encoding=character_encoding, line_length=line_length,
             table_max_line_length=table_max_line_length,
             table_alignment=table_alignment)
 
@@ -206,15 +196,13 @@ class TableIOMformatLatex(TableIOMformatBased):
     """TableIO writer class for LaTeX, based on MultiFormat."""
 
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                 file_name: PathLike,
-                 file_access: FileAccess,
+                 file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  character_encoding: str = 'utf-8',
                  document_class: Optional[DocumentClassInput] = None,
                  paper_size: Optional[PaperSizeInput] = None,
-                 title: Optional[str] = None,
-                 latex_preamble: str = '',
+                 title: Optional[str] = None, latex_preamble: str = '',
                  latex_heading_levels: Optional[dict[int, str]]
                  = None,
                  latex_replacements:
@@ -242,14 +230,11 @@ class TableIOMformatLatex(TableIOMformatBased):
             latex_heading_levels: Override heading level commands.
             latex_replacements: Custom text replacement stages.
         """
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback)
         self.mformat = MultiFormatLatex(
-            file_name,
-            file_exists_callback=_allow_overwrite,
+            file_name, file_exists_callback=_allow_overwrite,
             character_encoding=character_encoding,
-            document_class=document_class,
-            paper_size=paper_size, title=title,
+            document_class=document_class, paper_size=paper_size, title=title,
             latex_preamble=latex_preamble,
             latex_heading_levels=latex_heading_levels,
             latex_replacements=latex_replacements)
@@ -284,12 +269,10 @@ class TableIOMformatRst(TableIOMformatBased):
     """TableIO writer class for reStructuredText, based on MultiFormat."""
 
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                 file_name: PathLike,
-                 file_access: FileAccess,
+                 file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
-                 character_encoding: str = 'utf-8',
-                 line_length: int = 79,
+                 character_encoding: str = 'utf-8', line_length: int = 79,
                  table_max_line_length: Optional[int] = None,
                  table_alignment: TableAlignmentSpec =
                  TableAlignment.LEFT):
@@ -315,13 +298,10 @@ class TableIOMformatRst(TableIOMformatBased):
                                    line_length is used.
             table_alignment: The alignment of cell values in tables.
         """
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback)
         self.mformat = MultiFormatRst(
-            file_name,
-            file_exists_callback=_allow_overwrite,
-            character_encoding=character_encoding,
-            line_length=line_length,
+            file_name, file_exists_callback=_allow_overwrite,
+            character_encoding=character_encoding, line_length=line_length,
             table_max_line_length=table_max_line_length,
             table_alignment=table_alignment)
 
@@ -351,8 +331,7 @@ class TableIOMformatRst(TableIOMformatBased):
 class TableIOMformatDocx(TableIOMformatBased):
     """TableIO writer class for DOCX, based on MultiFormat."""
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  paper_size: PaperSize = PaperSize.A4):
@@ -373,12 +352,10 @@ class TableIOMformatDocx(TableIOMformatBased):
                                   (Default is to raise an exception.)
             paper_size: Paper size for the document.
         """
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
-        self.mformat = MultiFormatDocx(
-            file_name,
-            file_exists_callback=_allow_overwrite,
-            paper_size=paper_size)
+        super().__init__(file_name, file_access, file_exists_callback)
+        self.mformat = MultiFormatDocx(file_name,
+                                       file_exists_callback=_allow_overwrite,
+                                       paper_size=paper_size)
 
     @classmethod
     def get_row_format_capability(cls) -> SingleCapability:
@@ -404,12 +381,10 @@ class TableIOMformatOdt(TableIOMformatBased):
     """TableIO writer class for ODT, based on MultiFormat."""
 
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                 file_name: PathLike,
-                 file_access: FileAccess,
+                 file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
-                 lang: str = 'en-UK',
-                 paper_size: PaperSize = PaperSize.A4):
+                 lang: str = 'en-UK', paper_size: PaperSize = PaperSize.A4):
         """Initialize the TableIOMformatOdt writer class.
 
         Args:
@@ -428,12 +403,10 @@ class TableIOMformatOdt(TableIOMformatBased):
             lang: The language of the document.
             paper_size: Paper size for the document.
         """
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
-        self.mformat = MultiFormatOdt(
-            file_name,
-            file_exists_callback=_allow_overwrite,
-            lang=lang, paper_size=paper_size)
+        super().__init__(file_name, file_access, file_exists_callback)
+        self.mformat = MultiFormatOdt(file_name,
+                                      file_exists_callback=_allow_overwrite,
+                                      lang=lang, paper_size=paper_size)
 
     @classmethod
     def get_row_format_capability(cls) -> SingleCapability:
@@ -459,8 +432,7 @@ class TableIOMformatPdf(TableIOMformatBased):
     """TableIO writer class for PDF, based on MultiFormat."""
 
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
-                 file_name: PathLike,
-                 file_access: FileAccess,
+                 file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  paper_size: PaperSize = PaperSize.A4,
@@ -483,12 +455,10 @@ class TableIOMformatPdf(TableIOMformatBased):
             paper_size: Paper size for the document.
             title: PDF document metadata title.
         """
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
-        self.mformat = MultiFormatPdf(
-            file_name,
-            file_exists_callback=_allow_overwrite,
-            paper_size=paper_size, title=title)
+        super().__init__(file_name, file_access, file_exists_callback)
+        self.mformat = MultiFormatPdf(file_name,
+                                      file_exists_callback=_allow_overwrite,
+                                      paper_size=paper_size, title=title)
 
     @classmethod
     def get_row_format_capability(cls) -> SingleCapability:
@@ -513,8 +483,7 @@ class TableIOMformatPdf(TableIOMformatBased):
 class TableIOMformatRtf(TableIOMformatBased):
     """TableIO writer class for RTF, based on MultiFormat."""
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  paper_size: PaperSize = PaperSize.A4):
@@ -535,12 +504,10 @@ class TableIOMformatRtf(TableIOMformatBased):
                                   (Default is to raise an exception.)
             paper_size: Paper size for the document.
         """
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
-        self.mformat = MultiFormatRtf(
-            file_name,
-            file_exists_callback=_allow_overwrite,
-            paper_size=paper_size)
+        super().__init__(file_name, file_access, file_exists_callback)
+        self.mformat = MultiFormatRtf(file_name,
+                                      file_exists_callback=_allow_overwrite,
+                                      paper_size=paper_size)
 
     @classmethod
     def get_row_format_capability(cls) -> SingleCapability:

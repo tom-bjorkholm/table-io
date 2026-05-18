@@ -49,8 +49,7 @@ def _cli_help(name: str) -> str:
 
 
 def _add_implementation_argument(parser: argparse.ArgumentParser,
-                                 caps: Optional[Capabilities] = None
-                                 ) -> None:
+                                 caps: Optional[Capabilities] = None) -> None:
     """Add the implementation argument to the parser."""
     impl_choices = list_implementations_tableio(capabilities=caps)
     impl_choices.append('all')
@@ -63,9 +62,8 @@ def _add_implementation_argument(parser: argparse.ArgumentParser,
                                                 capabilities=caps)
     impl_allowed.append('all')
     impl_allowed.append('ALL')
-    parser.add_argument('-I', '--implementation', help=impl_help,
-                        nargs=1, choices=impl_allowed,
-                        required=False)
+    parser.add_argument('-I', '--implementation', help=impl_help, nargs=1,
+                        choices=impl_allowed, required=False)
 
 
 def _add_format_argument(parser: argparse.ArgumentParser,
@@ -84,27 +82,24 @@ def _add_format_argument(parser: argparse.ArgumentParser,
                         choices=fmt_allowed, required=True)
 
 
-def _add_optional_args_argument(parser: argparse.ArgumentParser
-                                ) -> None:
+def _add_optional_args_argument(parser: argparse.ArgumentParser) -> None:
     """Add optional command line arguments for OptionalArgsDict."""
     for name in _CLI_STR_ARGS:
-        parser.add_argument(_cli_flag(name), type=str, nargs=1,
-                            required=False, help=_cli_help(name))
+        parser.add_argument(_cli_flag(name), type=str, nargs=1, required=False,
+                            help=_cli_help(name))
     for name in _CLI_INT_ARGS:
-        parser.add_argument(_cli_flag(name), type=int, nargs=1,
-                            required=False, help=_cli_help(name))
+        parser.add_argument(_cli_flag(name), type=int, nargs=1, required=False,
+                            help=_cli_help(name))
     for name, enum_type in _CLI_ENUM_ARGS:
         choices = possible_values(enum_type, include_lower=True,
                                   include_upper=True)
         vals = ', '.join(possible_values(enum_type))
         help_text = f'{_cli_help(name)}. Choices: {vals}'
-        parser.add_argument(_cli_flag(name), type=str, nargs=1,
-                            required=False, choices=choices,
-                            help=help_text)
+        parser.add_argument(_cli_flag(name), type=str, nargs=1, required=False,
+                            choices=choices, help=help_text)
 
 
-def _build_optional_args(parsed_args: argparse.Namespace
-                         ) -> OptionalArgs:
+def _build_optional_args(parsed_args: argparse.Namespace) -> OptionalArgs:
     """Build an OptionalArgsDict from parsed command line arguments."""
     result: OptionalArgsDict = {}
     enum_map: dict[str, type[IntEnum]] = dict(_CLI_ENUM_ARGS)
@@ -119,10 +114,8 @@ def _build_optional_args(parsed_args: argparse.Namespace
     return result or None
 
 
-def _output_name_for(base: str, fmt: str,
-                     impl: Optional[str],
-                     format_is_all: bool,
-                     impl_is_all: bool) -> str:
+def _output_name_for(base: str, fmt: str, impl: Optional[str],
+                     format_is_all: bool, impl_is_all: bool) -> str:
     """Build output file name for one format/impl combination."""
     name = base
     if format_is_all:
@@ -134,8 +127,7 @@ def _output_name_for(base: str, fmt: str,
 
 def _unpack_and_run_example(example_name: str, func: ExampleFunc,
                             caps: Optional[Capabilities],
-                            parsed_args: argparse.Namespace
-                            ) -> int:
+                            parsed_args: argparse.Namespace) -> int:
     """Unpack the command line arguments and run the example function.
 
     Args:
@@ -169,15 +161,13 @@ def _unpack_and_run_example(example_name: str, func: ExampleFunc,
         impls: list[Optional[str]] = []
         if impl_is_all:
             impls.extend(list_implementations_tableio(
-                format_name=fmt, capabilities=caps,
-                empty_is_ok=True))
+                format_name=fmt, capabilities=caps, empty_is_ok=True))
         else:
             impls.append(impl_arg)
         for impl in impls:
             ret = func(
                 fmt,
-                _output_name_for(output_base, fmt, impl,
-                                 format_is_all,
+                _output_name_for(output_base, fmt, impl, format_is_all,
                                  impl_is_all),
                 impl, optional_args)
             if ret != 0 and first_error == 0:
@@ -191,19 +181,16 @@ def _unpack_and_run_example(example_name: str, func: ExampleFunc,
 
 def cmd_parse_and_run_example(example_name: str, func: ExampleFunc,
                               caps: Optional[Capabilities] = None,
-                              args: Optional[list[str]] = None
-                              ) -> None:
+                              args: Optional[list[str]] = None) -> None:
     """Parse the command line arguments for the example function."""
     if args is None:
         args = sys.argv[1:]
-    parser = argparse.ArgumentParser(
-        description=f'Example: {example_name}')
+    parser = argparse.ArgumentParser(description=f'Example: {example_name}')
     parser.add_argument('-o', '--output', help='The output file name',
                         type=str, nargs=1, required=True)
     _add_format_argument(parser, caps)
     _add_implementation_argument(parser, caps)
     _add_optional_args_argument(parser)
     parsed_args = parser.parse_args(args)
-    ret = _unpack_and_run_example(
-        example_name, func, caps, parsed_args)
+    ret = _unpack_and_run_example(example_name, func, caps, parsed_args)
     sys.exit(ret)

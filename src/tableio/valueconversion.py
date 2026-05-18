@@ -224,8 +224,7 @@ def value2datetime(value: Value,
     raise UnreasonableTypeConversion(value, datetime)
 
 
-def value2date(value: Value,
-               format_string: Optional[str] = None) -> date:
+def value2date(value: Value, format_string: Optional[str] = None) -> date:
     """Convert a value to a date.
 
     Datetime values are reduced to their calendar date. Without
@@ -261,8 +260,7 @@ def value2date(value: Value,
     raise UnreasonableTypeConversion(value, date)
 
 
-def value2time(value: Value,
-               format_string: Optional[str] = None) -> time:
+def value2time(value: Value, format_string: Optional[str] = None) -> time:
     """Convert a value to a time.
 
     Datetime values are reduced to their time-of-day. Without
@@ -326,8 +324,7 @@ def value2none(value: Value) -> None:
 
 
 def value2type[T](value: Value,  # noqa: D103
-                  to_type: type[T],
-                  accept_none: bool = False,
+                  to_type: type[T], accept_none: bool = False,
                   datetime_format_string: Optional[str] = None,
                   int_format_string: Optional[str] = None) -> T:
     """Convert a value to a type.
@@ -373,8 +370,7 @@ def value2type[T](value: Value,  # noqa: D103
 
 
 def value2type_of[T](value: Value,  # noqa: D103
-                     to_type_of: T,
-                     accept_none: bool = False,
+                     to_type_of: T, accept_none: bool = False,
                      datetime_format_string: Optional[str] = None,
                      int_format_string: Optional[str] = None) -> T:
     """Convert a value to a type of the given variable.

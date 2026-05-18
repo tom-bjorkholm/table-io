@@ -15,8 +15,8 @@ from .example_checkers import check_example_md_csv, \
     check_example_spreadsheet, Example, change_sheet
 
 
-FIXED_NOW: datetime = datetime(year=2026, month=4, day=6,
-                               hour=13, minute=14, second=15)
+FIXED_NOW: datetime = datetime(year=2026, month=4, day=6, hour=13, minute=14,
+                               second=15)
 example_function = example_module.e05_read_write_valueconversion
 
 
@@ -42,15 +42,13 @@ SHEET_ROW_FRAGMENTS: list[list[Value]] = [
 # pylint: disable=duplicate-code
 EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['name', 'value'],
+        sheet_name='Sheet', anchor_row_fragment=['name', 'value'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=PLAIN_STYLE,
                                      number_of_rows=3, number_of_columns=5),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['name', 'answer'],
+        sheet_name='Sheet', anchor_row_fragment=['name', 'answer'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=PLAIN_STYLE,
                                      number_of_rows=3, number_of_columns=5),
@@ -62,14 +60,10 @@ EXPECTED_STYLES1: list[AnchoredStyleExpectation] = \
                  sheet_name='Sheet1')
 
 SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet',
-    row_fragments=SHEET_ROW_FRAGMENTS
-)
+    sheet_name='Sheet', row_fragments=SHEET_ROW_FRAGMENTS)
 
 SHEET_REST: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet1',
-    row_fragments=SHEET_ROW_FRAGMENTS
-)
+    sheet_name='Sheet1', row_fragments=SHEET_ROW_FRAGMENTS)
 # pylint: enable=duplicate-code
 
 
@@ -84,24 +78,20 @@ CSV_FRAGMENTS: list[str] = [
 
 
 @pytest.mark.parametrize('example, expected, expected_styles',
-                         [(Example(
-                             example_function=example_function,
-                             format_name='ods',
-                             implementation_name='odfdo'),
+                         [(Example(example_function=example_function,
+                                   format_name='ods',
+                                   implementation_name='odfdo'),
                            SHEET_REST, EXPECTED_STYLES1),
-                          (Example(
-                              example_function=example_function,
-                              format_name='excel',
-                              implementation_name='openpyxl'),
+                          (Example(example_function=example_function,
+                                   format_name='excel',
+                                   implementation_name='openpyxl'),
                            SHEET_OPX, EXPECTED_STYLES),
-                          (Example(
-                              example_function=example_function,
-                              format_name='excel',
-                              implementation_name='pylightxl'),
+                          (Example(example_function=example_function,
+                                   format_name='excel',
+                                   implementation_name='pylightxl'),
                            SHEET_REST, EXPECTED_STYLES1)])
 def test_e05_read_write_valueconversion_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected: SheetContentExpectation,
         expected_styles: list[AnchoredStyleExpectation]) -> None:
     """Test e05 for spreadsheet formats and implementations."""
@@ -111,13 +101,11 @@ def test_e05_read_write_valueconversion_spreadsheet(
 
 
 @pytest.mark.parametrize('example, expected',
-                         [(Example(
-                             example_function=example_function,
-                             format_name='csv'),
+                         [(Example(example_function=example_function,
+                                   format_name='csv'),
                            CSV_FRAGMENTS)])
-def test_e05_read_write_valueconversion_text(
-        capsys: pytest.CaptureFixture[str],
-        example: Example, expected: list[str]) -> None:
+def test_e05_text(capsys: pytest.CaptureFixture[str], example: Example,
+                  expected: list[str]) -> None:
     """Test e05 for CSV text format."""
     check_example_md_csv(example=example, capture=capsys,
                          expected_fragments=expected)

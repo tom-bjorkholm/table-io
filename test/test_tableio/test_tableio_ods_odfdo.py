@@ -23,7 +23,7 @@ from tableio.value_type import Fmt, get_checked_type
 from .check_capsys import check_capsys
 from .spreadsheet_test_helper import \
     run_bordered_workbook_is_validator_clean, \
-    run_box_rewrite_clears_old_borders, \
+    run_box_rewrite_clears_borders, \
     run_boxed_table_partial_overwrite_raises, \
     run_box_write_removes_overlapping_filtered_range, \
     run_close_removes_temp_file_on_rewrite_failure, \
@@ -37,7 +37,7 @@ from .spreadsheet_test_helper import \
     run_read_formula_uses_cached_value, \
     run_read_formula_without_cached_value, \
     run_round_trip_dictdata_in_box, \
-    run_round_trip_sequential_list_reads, \
+    run_sequential_list_reads, \
     run_select_missing_sheet_without_create_raises_key_error, \
     run_table_width_is_widen_only_with_cap, \
     run_update_default_write_starts_after_last_used_row, \
@@ -58,9 +58,7 @@ def _load_document(file_path: Path) -> tuple[Document, Table]:
 
 
 def _cell_style_properties(
-        document: Document,
-        table: Table,
-        row: int,
+        document: Document, table: Table, row: int,
         column: int) -> tuple[dict[str, Any], dict[str, Any]]:
     """Return table-cell and text properties for one styled cell."""
     cell = table.get_cell((column, row), clone=False)
@@ -74,9 +72,7 @@ def _cell_style_properties(
 
 
 def _cell_border_properties(
-        document: Document,
-        table: Table,
-        row: int,
+        document: Document, table: Table, row: int,
         column: int) -> tuple[Optional[str], Optional[str], Optional[str],
                               Optional[str]]:
     """Return one cell border tuple as top-right-bottom-left."""
@@ -150,8 +146,7 @@ def _create_formula_document(file_path: Path,
     document.body.clear()
     table = Table('Sheet1')
     document.body.append(table)
-    table.set_cell((0, 0), Cell(cached_value, formula='of:=1+2'),
-                   clone=False)
+    table.set_cell((0, 0), Cell(cached_value, formula='of:=1+2'), clone=False)
     table.set_value((1, 0), 'x')
     document.save(file_path)
 
@@ -184,8 +179,7 @@ def _inspect_formatted_document(file_path: Path) -> None:
     assert str(table.name) == 'Sheet1'
     assert _database_range_addresses(document) == ['Sheet1.A1:Sheet1.B2']
     _, text_props = _cell_style_properties(document, table, 0, 0)
-    table_props, text_props_row = _cell_style_properties(
-        document, table, 1, 0)
+    table_props, text_props_row = _cell_style_properties(document, table, 1, 0)
     assert text_props['fo:font-weight'] == 'bold'
     assert text_props_row['fo:font-style'] == 'italic'
     assert table_props['fo:background-color'] == '#ffff00'
@@ -385,11 +379,10 @@ class ExposedTableIOOdsOdfdo(TableIOOdsOdfdo):
 def test_ods_round_trip_sequential_list_reads(
         capsys: CaptureFixture[str]) -> None:
     """Two list sections can be written and then read back sequentially."""
-    run_round_trip_sequential_list_reads(TableIOOdsOdfdo, capsys)
+    run_sequential_list_reads(TableIOOdsOdfdo, capsys)
 
 
-def test_ods_round_trip_dictdata_in_box(
-        capsys: CaptureFixture[str]) -> None:
+def test_ods_dictdata_roundtrip(capsys: CaptureFixture[str]) -> None:
     """Dict data can be written into and read back from a box."""
     run_round_trip_dictdata_in_box(TableIOOdsOdfdo, capsys)
 
@@ -397,29 +390,25 @@ def test_ods_round_trip_dictdata_in_box(
 def test_ods_multi_sheet_write_positions_are_per_sheet(
         capsys: CaptureFixture[str]) -> None:
     """Sequential writes keep an independent default position per sheet."""
-    run_multi_sheet_write_positions_are_per_sheet(
-        TableIOOdsOdfdo, capsys)
+    run_multi_sheet_write_positions_are_per_sheet(TableIOOdsOdfdo, capsys)
 
 
 def test_ods_multi_sheet_read_positions_are_per_sheet(
         capsys: CaptureFixture[str]) -> None:
     """Sequential reads resume independently when switching sheets."""
-    run_multi_sheet_read_positions_are_per_sheet(
-        TableIOOdsOdfdo, capsys)
+    run_multi_sheet_read_positions_are_per_sheet(TableIOOdsOdfdo, capsys)
 
 
 def test_ods_multi_sheet_heading_state_is_per_sheet(
         capsys: CaptureFixture[str]) -> None:
     """Each sheet tracks whether a default heading level was used before."""
-    run_multi_sheet_heading_state_is_per_sheet(
-        TableIOOdsOdfdo, capsys)
+    run_multi_sheet_heading_state_is_per_sheet(TableIOOdsOdfdo, capsys)
 
 
 def test_ods_multi_sheet_read_only_create_raises(
         capsys: CaptureFixture[str]) -> None:
     """READ mode can select an existing sheet but cannot create one."""
-    run_multi_sheet_read_only_create_raises(
-        TableIOOdsOdfdo, capsys)
+    run_multi_sheet_read_only_create_raises(TableIOOdsOdfdo, capsys)
 
 
 def test_ods_update_default_write_starts_after_last_used_row(
@@ -448,32 +437,28 @@ def test_ods_write_multiple_filtered_ranges_keeps_all_ranges(
         capsys: CaptureFixture[str]) -> None:
     """Sequential filtered writes are kept as separate named ranges."""
     run_write_multiple_filtered_ranges_keeps_all_ranges(
-        TableIOOdsOdfdo, '.ods', _inspect_multiple_filters_document,
-        capsys)
+        TableIOOdsOdfdo, '.ods', _inspect_multiple_filters_document, capsys)
 
 
 def test_ods_table_width_is_widen_only_with_cap(
         capsys: CaptureFixture[str]) -> None:
     """Box rewrites keep an already widened column width."""
     run_table_width_is_widen_only_with_cap(
-        TableIOOdsOdfdo, '.ods', _inspect_table_width_cap_document,
-        capsys)
+        TableIOOdsOdfdo, '.ods', _inspect_table_width_cap_document, capsys)
 
 
 def test_ods_box_write_removes_overlapping_filtered_range(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting a boxed area removes stale overlapping filter metadata."""
     run_box_write_removes_overlapping_filtered_range(
-        TableIOOdsOdfdo, '.ods', _inspect_rewrite_box_document,
-        capsys)
+        TableIOOdsOdfdo, '.ods', _inspect_rewrite_box_document, capsys)
 
 
-def test_ods_find_value_and_write_cells(
-        capsys: CaptureFixture[str]) -> None:
+def test_ods_find_and_write_cells(capsys: CaptureFixture[str]) -> None:
     """Found cell ranges can be read and updated without moving cursors."""
-    run_find_value_and_write_cells(
-        TableIOOdsOdfdo, '.ods',
-        _inspect_find_and_write_cells_document, capsys)
+    run_find_value_and_write_cells(TableIOOdsOdfdo, '.ods',
+                                   _inspect_find_and_write_cells_document,
+                                   capsys)
 
 
 def test_ods_boxed_table_partial_overwrite_raises(
@@ -486,24 +471,21 @@ def test_ods_write_row_formatted_dictdata_applies_formatting(
         capsys: CaptureFixture[str]) -> None:
     """Row formatting for dict rows is copied to each written cell."""
     run_write_row_formatted_dictdata_applies_formatting(
-        TableIOOdsOdfdo, '.ods', _inspect_row_formatted_document,
-        capsys)
+        TableIOOdsOdfdo, '.ods', _inspect_row_formatted_document, capsys)
 
 
 def test_ods_write_dictdata_applies_first_row_format(
         capsys: CaptureFixture[str]) -> None:
     """Dict header cells can be formatted with first_row_format."""
     run_write_dictdata_applies_first_row_format(
-        TableIOOdsOdfdo, '.ods', _inspect_dict_header_fmt_document,
-        capsys)
+        TableIOOdsOdfdo, '.ods', _inspect_dict_header_fmt_document, capsys)
 
 
 def test_ods_write_fmtdictdata_applies_first_row_format(
         capsys: CaptureFixture[str]) -> None:
     """Formatted dict writes keep header and row formatting separate."""
     run_write_fmtdictdata_applies_first_row_format(
-        TableIOOdsOdfdo, '.ods', _inspect_fmtdict_header_fmt_document,
-        capsys)
+        TableIOOdsOdfdo, '.ods', _inspect_fmtdict_header_fmt_document, capsys)
 
 
 def test_ods_write_table_listdata_applies_borders(
@@ -516,9 +498,8 @@ def test_ods_write_table_listdata_applies_borders(
 def test_ods_box_rewrite_clears_old_borders(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting the same boxed area clears any stale ODS borders."""
-    run_box_rewrite_clears_old_borders(
-        TableIOOdsOdfdo, '.ods',
-        _inspect_box_rewrite_clears_borders_document, capsys)
+    inspector = _inspect_box_rewrite_clears_borders_document
+    run_box_rewrite_clears_borders(TableIOOdsOdfdo, '.ods', inspector, capsys)
 
 
 def test_ods_read_formula_uses_cached_value(
@@ -535,8 +516,7 @@ def test_ods_read_formula_without_cached_value_returns_none(
         TableIOOdsOdfdo, '.ods', _create_formula_document, capsys)
 
 
-def test_ods_open_rejects_second_open(
-        capsys: CaptureFixture[str]) -> None:
+def test_ods_rejects_second_open(capsys: CaptureFixture[str]) -> None:
     """Opening the same ODS object twice raises RuntimeError."""
     run_open_rejects_second_open(TableIOOdsOdfdo, capsys)
 
@@ -549,9 +529,8 @@ def test_ods_open_update_creates_default_table_when_document_has_none(
         document = Document('spreadsheet')
         document.body.clear()
         document.save(file_path)
-        with TableIOOdsOdfdo(
-                Path(temp_dir) / 'empty_tables',
-                FileAccess.UPDATE) as table_io:
+        with TableIOOdsOdfdo(Path(temp_dir) / 'empty_tables',
+                             FileAccess.UPDATE) as table_io:
             assert table_io.list_sheets() == ['Sheet1']
             assert table_io.current_sheet_name() == 'Sheet1'
     check_capsys(capsys)
@@ -601,11 +580,9 @@ def test_ods_split_range_endpoint_accepts_quoted_table_name(
         pytest.param('A1B', 'Invalid cell reference', id='alpha-after-row'),
         pytest.param('A-1', 'Invalid cell reference', id='invalid-character'),
         pytest.param('A', 'Invalid cell reference', id='missing-row')
-    ]
-)
+    ])
 def test_ods_cell_ref_to_position_rejects_invalid_references(
-        cell_ref: str, match: str,
-        capsys: CaptureFixture[str]) -> None:
+        cell_ref: str, match: str, capsys: CaptureFixture[str]) -> None:
     """Malformed A1 references are rejected."""
     with pytest.raises(ValueError, match=match):
         ExposedTableIOOdsOdfdo.cell_ref_to_position(cell_ref)
@@ -636,9 +613,8 @@ def test_ods_filtered_range_infos_ignores_non_matching_range_metadata(
         capsys: CaptureFixture[str]) -> None:
     """Only filtered ranges for the active table are returned."""
     with TemporaryDirectory() as temp_dir:
-        with ExposedTableIOOdsOdfdo(
-                Path(temp_dir) / 'filter_infos',
-                FileAccess.CREATE) as opened:
+        with ExposedTableIOOdsOdfdo(Path(temp_dir) / 'filter_infos',
+                                    FileAccess.CREATE) as opened:
             table_io = cast(ExposedTableIOOdsOdfdo, opened)
             container = table_io.database_range_container()
             container.append(_make_database_range(
@@ -672,29 +648,27 @@ def test_ods_column_width_from_text_rejects_invalid_values(
 
 
 def test_ods_current_column_width_handles_missing_style_information(
-        monkeypatch: pytest.MonkeyPatch,
-        capsys: CaptureFixture[str]) -> None:
+        monkeypatch: pytest.MonkeyPatch, capsys: CaptureFixture[str]) -> None:
     """current_column_width returns None when style metadata is incomplete."""
     with TemporaryDirectory() as temp_dir:
-        with ExposedTableIOOdsOdfdo(
-                Path(temp_dir) / 'width_info',
-                FileAccess.CREATE) as opened:
+        with ExposedTableIOOdsOdfdo(Path(temp_dir) / 'width_info',
+                                    FileAccess.CREATE) as opened:
             table_io = cast(ExposedTableIOOdsOdfdo, opened)
             assert table_io.table is not None
             assert table_io.document is not None
             column = table_io.table.get_column(0)
             column.style = 'missing_style'
             table_io.table.set_column(0, column)
-            monkeypatch.setattr(table_io.document, 'get_style',
-                                lambda family, name: None)
+            monkeypatch.setattr(table_io.document, 'get_style', lambda family,
+                                name: None)
             assert table_io.current_column_width(0) is None
             no_props_style = Style('table-column', name='no_props')
             monkeypatch.setattr(no_props_style, 'get_properties',
                                 lambda area: None)
             column.style = 'no_props'
             table_io.table.set_column(0, column)
-            monkeypatch.setattr(table_io.document, 'get_style',
-                                lambda family, name: no_props_style)
+            monkeypatch.setattr(table_io.document, 'get_style', lambda family,
+                                name: no_props_style)
             assert table_io.current_column_width(0) is None
             no_width_style = Style('table-column', name='no_width')
             no_width_style.set_properties(
@@ -702,8 +676,8 @@ def test_ods_current_column_width_handles_missing_style_information(
                 area='table-column')
             column.style = 'no_width'
             table_io.table.set_column(0, column)
-            monkeypatch.setattr(table_io.document, 'get_style',
-                                lambda family, name: no_width_style)
+            monkeypatch.setattr(table_io.document, 'get_style', lambda family,
+                                name: no_width_style)
             assert table_io.current_column_width(0) is None
     check_capsys(capsys)
 
@@ -712,9 +686,8 @@ def test_ods_cell_style_name_handles_plain_default_format(
         capsys: CaptureFixture[str]) -> None:
     """The style cache also works for an unformatted default cell."""
     with TemporaryDirectory() as temp_dir:
-        with ExposedTableIOOdsOdfdo(
-                Path(temp_dir) / 'plain_style',
-                FileAccess.CREATE) as opened:
+        with ExposedTableIOOdsOdfdo(Path(temp_dir) / 'plain_style',
+                                    FileAccess.CREATE) as opened:
             table_io = cast(ExposedTableIOOdsOdfdo, opened)
             assert table_io.document is not None
             style_name = table_io.cell_style_name(Fmt())
@@ -737,8 +710,7 @@ def test_ods_default_lang_uses_mformat_convention(
     check_capsys(capsys)
 
 
-def test_ods_accepts_explicit_lang(
-        capsys: CaptureFixture[str]) -> None:
+def test_ods_accepts_explicit_lang(capsys: CaptureFixture[str]) -> None:
     """CREATE mode stores an explicit RFC3066 document language."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'explicit_lang'
@@ -751,8 +723,7 @@ def test_ods_accepts_explicit_lang(
     check_capsys(capsys)
 
 
-def test_ods_rejects_invalid_lang(
-        capsys: CaptureFixture[str]) -> None:
+def test_ods_rejects_invalid_lang(capsys: CaptureFixture[str]) -> None:
     """Invalid non-RFC3066 language strings are rejected."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'bad_lang'
@@ -818,9 +789,9 @@ def test_ods_styles_xml_with_required_defaults_accepts_missing_block(
 
 
 def test_ods_close_removes_temp_file_on_rewrite_failure(
-        monkeypatch: pytest.MonkeyPatch,
-        capsys: CaptureFixture[str]) -> None:
+        monkeypatch: pytest.MonkeyPatch, capsys: CaptureFixture[str]) -> None:
     """ODS close cleans up the temporary `.ods` on rewrite failure."""
-    run_close_removes_temp_file_on_rewrite_failure(
-        TableIOOdsOdfdo, tableio_ods_odfdo,
-        '_rewrite_saved_document', monkeypatch, capsys)
+    run_close_removes_temp_file_on_rewrite_failure(TableIOOdsOdfdo,
+                                                   tableio_ods_odfdo,
+                                                   '_rewrite_saved_document',
+                                                   monkeypatch, capsys)

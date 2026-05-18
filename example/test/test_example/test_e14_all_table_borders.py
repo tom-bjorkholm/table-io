@@ -40,8 +40,7 @@ def build_expected_styles() -> list[AnchoredStyleExpectation]:
             anchor_row_fragment=['Showing all table border styles'],
             relative_expectations=[
                 RelativeStyleExpectation(expected_style=BOLD_STYLE)
-            ]
-        )
+            ])
     ]
     for border_style in TableBorderStyle:
         expectations.append(AnchoredStyleExpectation(
@@ -52,20 +51,15 @@ def build_expected_styles() -> list[AnchoredStyleExpectation]:
             relative_expectations=[
                 RelativeStyleExpectation(expected_style=BOLD_STYLE),
                 RelativeStyleExpectation(expected_style=BOLD_STYLE,
-                                         row_offset=2,
-                                         col_offset=1,
+                                         row_offset=2, col_offset=1,
                                          number_of_columns=3),
                 RelativeStyleExpectation(expected_style=YELLOW_BOLD,
-                                         row_offset=3,
-                                         col_offset=3),
-                RelativeStyleExpectation(expected_style=RED_BOLD,
-                                         row_offset=4,
+                                         row_offset=3, col_offset=3),
+                RelativeStyleExpectation(expected_style=RED_BOLD, row_offset=4,
                                          col_offset=3),
                 RelativeStyleExpectation(expected_style=GREEN_PLAIN,
-                                         row_offset=5,
-                                         col_offset=3)
-            ]
-        ))
+                                         row_offset=5, col_offset=3)
+            ]))
     return expectations
 
 
@@ -80,12 +74,10 @@ def build_expected_borders() -> list[AnchoredBorderExpectation]:
             ],
             relative_expectations=[
                 RelativeBorderExpectation(border_style=border_style,
-                                          row_offset=2,
-                                          col_offset=1,
+                                          row_offset=2, col_offset=1,
                                           number_of_rows=4,
                                           number_of_columns=3)
-            ]
-        ))
+            ]))
     return expectations
 
 
@@ -124,8 +116,7 @@ SHEET_REST = SheetContentExpectation(sheet_name='Sheet1',
                            SHEET_REST, EXPECTED_STYLES1,
                            EXPECTED_BORDERS1)])
 def test_e14_all_table_borders_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected: SheetContentExpectation,
         expected_styles: list[AnchoredStyleExpectation],
         expected_borders: list[AnchoredBorderExpectation]) -> None:

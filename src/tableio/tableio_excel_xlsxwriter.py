@@ -65,8 +65,7 @@ class _WorksheetLike(Protocol):
 class _WorkbookLike(Protocol):
     """Protocol for the subset of Workbook methods used here."""
 
-    def add_worksheet(self,
-                      name: Optional[str] = None) -> _WorksheetLike:
+    def add_worksheet(self, name: Optional[str] = None) -> _WorksheetLike:
         """Add one worksheet to the workbook."""
 
     def add_format(self,
@@ -101,13 +100,11 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
     during one open CREATE session.
     """
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None) -> None:
         """Initialize the XlsxWriter-backed Excel writer."""
-        super().__init__(file_name=file_name,
-                         file_access=file_access,
+        super().__init__(file_name=file_name, file_access=file_access,
                          file_exists_callback=file_exists_callback)
         self.workbook: Optional[_WorkbookLike] = None
         self._sheet_order: list[str] = []
@@ -120,19 +117,15 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
     def get_capabilities(cls) -> Capabilities:
         """Return the capabilities for the XlsxWriter Excel backend."""
         return CAP_ALL_IMPLEMENTED._replace(
-            can_read=CAP_UNSUPPORTED,
-            can_read_box=CAP_UNSUPPORTED,
+            can_read=CAP_UNSUPPORTED, can_read_box=CAP_UNSUPPORTED,
             can_find_value_position=CAP_UNSUPPORTED)
 
     @classmethod
     def get_description(cls) -> Descriptor:
         """Return the descriptor for the XlsxWriter Excel backend."""
-        return Descriptor(format_name='Excel',
-                          implementation='XlsxWriter',
+        return Descriptor(format_name='Excel', implementation='XlsxWriter',
                           capabilities=cls.get_capabilities(),
-                          mandatory_args=[],
-                          optional_args=[],
-                          priority=20)
+                          mandatory_args=[], optional_args=[], priority=20)
 
     def open(self) -> None:
         """Open one workbook for CREATE access."""
@@ -212,8 +205,8 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         """Return the in-memory writable worksheet state."""
         return self._current_sheet_state()
 
-    def _write_value_to_sheet(self, sheet: object, row: int,
-                              column: int, value: object) -> None:
+    def _write_value_to_sheet(self, sheet: object, row: int, column: int,
+                              value: object) -> None:
         """Write one value to one worksheet cell."""
         assert isinstance(sheet, _SheetState)
         key = (row, column)
@@ -235,8 +228,7 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         current = sheet.styles.get(key, DEFAULT_CELL_STYLE)
         self._set_stored_cell_style(
             sheet, key,
-            CellStyleState(fmt=fmt,
-                           font_size=current.font_size,
+            CellStyleState(fmt=fmt, font_size=current.font_size,
                            borders=current.borders))
         self._write_actual_cell(sheet, row, column)
 
@@ -349,8 +341,8 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
                                name: str) -> None:
         """Remove one pending XlsxWriter table from worksheet internals."""
         worksheet = sheet.worksheet
-        cell_range = cls._excel_range_ref(bounds[0], bounds[1],
-                                          bounds[2], bounds[3])
+        cell_range = cls._excel_range_ref(bounds[0], bounds[1], bounds[2],
+                                          bounds[3])
         worksheet.tables = [
             table for table in worksheet.tables
             if table.get('name') != name
@@ -402,14 +394,11 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         if style is None and not datetime_value:
             return None
         if style is None:
-            key = _FormatKey(bold=False, italic=False,
-                             highlight=Color.NONE,
-                             font_size=None,
-                             datetime_value=True,
+            key = _FormatKey(bold=False, italic=False, highlight=Color.NONE,
+                             font_size=None, datetime_value=True,
                              borders=NO_BORDERS)
         else:
-            key = _FormatKey(bold=style.fmt.bold,
-                             italic=style.fmt.italic,
+            key = _FormatKey(bold=style.fmt.bold, italic=style.fmt.italic,
                              highlight=style.fmt.highlight,
                              font_size=style.font_size,
                              datetime_value=datetime_value,
@@ -450,7 +439,6 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         current = sheet.styles.get(key, DEFAULT_CELL_STYLE)
         self._set_stored_cell_style(
             sheet, key,
-            CellStyleState(fmt=current.fmt,
-                           font_size=current.font_size,
+            CellStyleState(fmt=current.fmt, font_size=current.font_size,
                            borders=borders))
         self._write_actual_cell(sheet, row, column)

@@ -401,8 +401,7 @@ class TableIOCsv(TableIOTextBased):
         if not data_lines:
             return ReadResult(data=[], headings=headings,
                               last_read_row=self.position_row)
-        reader = csv.DictReader(data_lines,
-                                dialect=self.csv_dialect)
+        reader = csv.DictReader(data_lines, dialect=self.csv_dialect)
         data: DictData[Value] = [dict(row) for row in reader]
         if reader.fieldnames is not None:
             self.position_column = len(reader.fieldnames)

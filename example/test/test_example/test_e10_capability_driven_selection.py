@@ -150,8 +150,7 @@ SHEET_XW = SheetContentExpectation(
 # pylint: disable=duplicate-code
 EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['Task', 'Status'],
+        sheet_name='Sheet', anchor_row_fragment=['Task', 'Status'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=BOLD_STYLE,
                                      number_of_columns=3),
@@ -258,29 +257,24 @@ MD_FRAGMENTS: list[str] = [
 
 
 @pytest.mark.parametrize('example, expected_fragments, expected_styles',
-                         [(Example(
-                             example_function=example_function,
-                             format_name='ods',
-                             implementation_name='odfdo'),
+                         [(Example(example_function=example_function,
+                                   format_name='ods',
+                                   implementation_name='odfdo'),
                            [SHEET_ODS], EXPECTED_STYLES1),
-                          (Example(
-                              example_function=example_function,
-                              format_name='excel',
-                              implementation_name='openpyxl'),
+                          (Example(example_function=example_function,
+                                   format_name='excel',
+                                   implementation_name='openpyxl'),
                            [SHEET_OPX], EXPECTED_STYLES),
-                          (Example(
-                              example_function=example_function,
-                              format_name='excel',
-                              implementation_name='pylightxl'),
+                          (Example(example_function=example_function,
+                                   format_name='excel',
+                                   implementation_name='pylightxl'),
                            [SHEET_PYXL], None),
-                          (Example(
-                              example_function=example_function,
-                              format_name='excel',
-                              implementation_name='xlsxwriter'),
+                          (Example(example_function=example_function,
+                                   format_name='excel',
+                                   implementation_name='xlsxwriter'),
                            [SHEET_XW], EXPECTED_STYLES1)])
 def test_e10_capability_driven_selection_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected_fragments: list[SheetContentExpectation],
         expected_styles: Optional[list[AnchoredStyleExpectation]]) -> None:
     """Test e10 for spreadsheet formats and implementations."""
@@ -290,19 +284,16 @@ def test_e10_capability_driven_selection_spreadsheet(
 
 
 @pytest.mark.parametrize('example, expected_fragments',
-                         [(Example(
-                             example_function=example_function,
-                             format_name='csv',
-                             implementation_name='csv'),
+                         [(Example(example_function=example_function,
+                                   format_name='csv',
+                                   implementation_name='csv'),
                            CSV_FRAGMENTS),
-                          (Example(
-                              example_function=example_function,
-                              format_name='md',
-                              implementation_name='mformat'),
+                          (Example(example_function=example_function,
+                                   format_name='md',
+                                   implementation_name='mformat'),
                            MD_FRAGMENTS)])
 def test_e10_capability_driven_selection_text(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected_fragments: list[str]) -> None:
     """Test e10 for text formats and implementations."""
     check_example_md_csv(example=example, capture=capsys,

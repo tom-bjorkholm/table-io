@@ -29,24 +29,18 @@ SHEET_ROW_FRAGMENTS: list[list[Value]] = build_sheet_row_fragments()
 
 EXPECTED_STYLES: list[AnchoredStyleExpectation] = [
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['r0c0', 'r0c1'],
+        sheet_name='Sheet', anchor_row_fragment=['r0c0', 'r0c1'],
         relative_expectations=[
             RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     number_of_rows=8,
-                                     number_of_columns=10),
+                                     number_of_rows=8, number_of_columns=10),
         ]),
     AnchoredStyleExpectation(
-        sheet_name='Sheet',
-        anchor_row_fragment=['r8c0', 'r8c1'],
+        sheet_name='Sheet', anchor_row_fragment=['r8c0', 'r8c1'],
         relative_expectations=[
-            RelativeStyleExpectation(expected_style=RED_BOLD,
-                                     number_of_rows=2,
+            RelativeStyleExpectation(expected_style=RED_BOLD, number_of_rows=2,
                                      number_of_columns=2),
-            RelativeStyleExpectation(expected_style=PLAIN_STYLE,
-                                     col_offset=2,
-                                     number_of_rows=2,
-                                     number_of_columns=8),
+            RelativeStyleExpectation(expected_style=PLAIN_STYLE, col_offset=2,
+                                     number_of_rows=2, number_of_columns=8),
         ])
 ]
 
@@ -55,21 +49,16 @@ EXPECTED_STYLES1: list[AnchoredStyleExpectation] = \
                  sheet_name='Sheet1')
 
 SHEET_OPX: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet',
-    row_fragments=SHEET_ROW_FRAGMENTS
-)
+    sheet_name='Sheet', row_fragments=SHEET_ROW_FRAGMENTS)
 
 SHEET_ODS: SheetContentExpectation = SheetContentExpectation(
-    sheet_name='Sheet1',
-    row_fragments=SHEET_ROW_FRAGMENTS
-)
+    sheet_name='Sheet1', row_fragments=SHEET_ROW_FRAGMENTS)
 
 
 @pytest.mark.parametrize('example, expected, expected_styles',
                          [(Example(
                              example_function=e07_box_rewrite_with_format,
-                             format_name='ods',
-                             implementation_name='odfdo'),
+                             format_name='ods', implementation_name='odfdo'),
                            SHEET_ODS, EXPECTED_STYLES1),
                           (Example(
                               example_function=e07_box_rewrite_with_format,
@@ -77,8 +66,7 @@ SHEET_ODS: SheetContentExpectation = SheetContentExpectation(
                               implementation_name='openpyxl'),
                            SHEET_OPX, EXPECTED_STYLES)])
 def test_e07_box_rewrite_with_format_spreadsheet(
-        capsys: pytest.CaptureFixture[str],
-        example: Example,
+        capsys: pytest.CaptureFixture[str], example: Example,
         expected: SheetContentExpectation,
         expected_styles: list[AnchoredStyleExpectation]) -> None:
     """Test e07 for spreadsheet formats and implementations."""

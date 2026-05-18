@@ -18,10 +18,8 @@ from tableio.factory import (
 from tableio.optional_args import OptionalArgsDict
 
 _SUP = SingleCapability(supported=True)
-_STRICT_NO = SingleCapability(supported=False,
-                              strictness=Strictness.STRICT)
-_IGNORE_NO = SingleCapability(supported=False,
-                              strictness=Strictness.IGNORE)
+_STRICT_NO = SingleCapability(supported=False, strictness=Strictness.STRICT)
+_IGNORE_NO = SingleCapability(supported=False, strictness=Strictness.IGNORE)
 
 
 # -- Test doubles --------------------------------------------------------
@@ -29,10 +27,9 @@ _IGNORE_NO = SingleCapability(supported=False,
 class _StubBase(TableIO):
     """Minimal TableIO stub for factory testing."""
 
-    _desc = Descriptor(
-        format_name='_base', implementation='_base',
-        capabilities=Capabilities(),
-        mandatory_args=[], optional_args=[])
+    _desc = Descriptor(format_name='_base', implementation='_base',
+                       capabilities=Capabilities(), mandatory_args=[],
+                       optional_args=[])
 
     @classmethod
     def get_description(cls) -> Descriptor:
@@ -55,11 +52,9 @@ class StubAlphaHigh(_StubBase):
 
     _desc = Descriptor(
         format_name='Alpha', implementation='high',
-        capabilities=Capabilities(
-            can_write=_SUP, can_read=_SUP,
-            can_fmt_row=_IGNORE_NO),
-        mandatory_args=[], optional_args=['opt_a'],
-        priority=20)
+        capabilities=Capabilities(can_write=_SUP, can_read=_SUP,
+                                  can_fmt_row=_IGNORE_NO),
+        mandatory_args=[], optional_args=['opt_a'], priority=20)
 
     def __init__(self, file_name: str | Path,
                  file_access: FileAccess = FileAccess.CREATE,
@@ -67,8 +62,7 @@ class StubAlphaHigh(_StubBase):
                  Callable[[str], None] | None = None,
                  opt_a: str | None = None):
         """Initialize with optional opt_a."""
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback)
         self.opt_a = opt_a
 
 
@@ -77,11 +71,9 @@ class StubAlphaLow(_StubBase):
 
     _desc = Descriptor(
         format_name='Alpha', implementation='low',
-        capabilities=Capabilities(
-            can_write=_SUP, can_read=_STRICT_NO,
-            can_fmt_row=_IGNORE_NO),
-        mandatory_args=[], optional_args=['opt_b'],
-        priority=5)
+        capabilities=Capabilities(can_write=_SUP, can_read=_STRICT_NO,
+                                  can_fmt_row=_IGNORE_NO),
+        mandatory_args=[], optional_args=['opt_b'], priority=5)
 
     def __init__(self, file_name: str | Path,
                  file_access: FileAccess = FileAccess.CREATE,
@@ -89,8 +81,7 @@ class StubAlphaLow(_StubBase):
                  Callable[[str], None] | None = None,
                  opt_b: str | None = None):
         """Initialize with optional opt_b."""
-        super().__init__(file_name, file_access,
-                         file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback)
         self.opt_b = opt_b
 
 
@@ -99,20 +90,17 @@ class StubBeta(_StubBase):
 
     _desc = Descriptor(
         format_name='Beta', implementation='beta_impl',
-        capabilities=Capabilities(
-            can_write=_SUP, can_read=_SUP,
-            can_fmt_row=_SUP),
-        mandatory_args=[], optional_args=[],
-        priority=10)
+        capabilities=Capabilities(can_write=_SUP, can_read=_SUP,
+                                  can_fmt_row=_SUP),
+        mandatory_args=[], optional_args=[], priority=10)
 
 
 class StubGammaMandatory(_StubBase):
     """Gamma format used to exercise mandatory and mixed-case args."""
 
-    _desc = Descriptor(
-        format_name='Gamma', implementation='CamelCase',
-        capabilities=Capabilities(can_write=_SUP),
-        mandatory_args=['required_arg'], optional_args=[])
+    _desc = Descriptor(format_name='Gamma', implementation='CamelCase',
+                       capabilities=Capabilities(can_write=_SUP),
+                       mandatory_args=['required_arg'], optional_args=[])
 
     def __init__(self, file_name: str | Path,
                  file_access: FileAccess = FileAccess.CREATE,
@@ -157,8 +145,7 @@ class TestErrorClasses:
 
     def test_no_capability_is_value_error(self) -> None:
         """Verify capability-match error subclasses ValueError."""
-        assert issubclass(
-            TableIOFactoryNoCapabilityMatch, ValueError)
+        assert issubclass(TableIOFactoryNoCapabilityMatch, ValueError)
 
     def test_insufficient_capabilities_is_value_error(self) -> None:
         """Verify insufficient-capabilities error subclasses ValueError."""
@@ -181,8 +168,7 @@ class TestImplPrio:
     ], ids=['lower-prio', 'higher-prio',
             'lower-fmt', 'higher-fmt',
             'lower-impl', 'higher-impl', 'equal'])
-    def test_lt(self, left: ImplPrio, right: ImplPrio,
-                expected: bool) -> None:
+    def test_lt(self, left: ImplPrio, right: ImplPrio, expected: bool) -> None:
         """Test __lt__ for various orderings."""
         assert (left < right) == expected
 
@@ -191,8 +177,7 @@ class TestImplPrio:
         (ImplPrio('A', 'x', 10), ImplPrio('A', 'x', 20), False),
         (ImplPrio('A', 'x', 10), ImplPrio('B', 'x', 10), False),
     ], ids=['equal', 'diff-prio', 'diff-fmt'])
-    def test_eq(self, left: ImplPrio, right: ImplPrio,
-                expected: bool) -> None:
+    def test_eq(self, left: ImplPrio, right: ImplPrio, expected: bool) -> None:
         """Test __eq__ for equal and unequal pairs."""
         assert (left == right) == expected
 
@@ -260,20 +245,17 @@ class TestBestMatch:
 
     def test_combined_strict_first(self) -> None:
         """combined() returns strict matches before nonstrict."""
-        bm = BestMatch.from_lists(
-            [ImplPrio('A', 'x', 10)],
-            [ImplPrio('B', 'y', 5)])
+        bm = BestMatch.from_lists([ImplPrio('A', 'x', 10)],
+                                  [ImplPrio('B', 'y', 5)])
         c = bm.combined()
         assert c[0] == ImplPrio('A', 'x', 10)
         assert c[1] == ImplPrio('B', 'y', 5)
 
     def test_add_merges(self) -> None:
         """Merge two BestMatch objects via add."""
-        bm1 = BestMatch.from_lists(
-            [ImplPrio('A', 'x', 20)],
-            [ImplPrio('B', 'y', 5)])
-        bm2 = BestMatch.from_lists(
-            [ImplPrio('C', 'z', 10)], [])
+        bm1 = BestMatch.from_lists([ImplPrio('A', 'x', 20)],
+                                   [ImplPrio('B', 'y', 5)])
+        bm2 = BestMatch.from_lists([ImplPrio('C', 'z', 10)], [])
         result = BestMatch.add(bm1, bm2)
         assert len(result.strict_matches) == 2
         assert result.strict_matches[0].priority == 20
@@ -287,20 +269,16 @@ class TestBestMatch:
 
     def test_add_list_single(self) -> None:
         """add_list with one element returns that element."""
-        bm = BestMatch.from_lists(
-            [ImplPrio('A', 'x', 10)], [])
+        bm = BestMatch.from_lists([ImplPrio('A', 'x', 10)], [])
         result = BestMatch.add_list([bm])
         assert len(result) == 1
 
     def test_add_list_multiple(self) -> None:
         """add_list merges several BestMatch objects."""
         bms = [
-            BestMatch.from_lists(
-                [ImplPrio('A', 'x', 20)], []),
-            BestMatch.from_lists(
-                [], [ImplPrio('B', 'y', 5)]),
-            BestMatch.from_lists(
-                [ImplPrio('C', 'z', 10)], [])]
+            BestMatch.from_lists([ImplPrio('A', 'x', 20)], []),
+            BestMatch.from_lists([], [ImplPrio('B', 'y', 5)]),
+            BestMatch.from_lists([ImplPrio('C', 'z', 10)], [])]
         result = BestMatch.add_list(bms)
         assert len(result.strict_matches) == 2
         assert len(result.nonstrict_matches) == 1
@@ -330,10 +308,9 @@ class TestTableIOFactoryRegister:
         class StubConflict(_StubBase):
             """Stub with case-conflicting format name."""
 
-            _desc = Descriptor(
-                format_name='alpha', implementation='conflict',
-                capabilities=Capabilities(can_write=_SUP),
-                mandatory_args=[], optional_args=[])
+            _desc = Descriptor(format_name='alpha', implementation='conflict',
+                               capabilities=Capabilities(can_write=_SUP),
+                               mandatory_args=[], optional_args=[])
         factory = TableIOFactory()
         factory.i_register(StubAlphaHigh)
         with pytest.raises(TableIOFactoryConflictError):
@@ -364,80 +341,63 @@ class TestTableIOFactoryCreate:
     def test_by_name(self, tmp_path: Path) -> None:
         """Create picks highest-priority implementation."""
         f = _make_factory_stubs()
-        result = f.i_create(
-            'Alpha', tmp_path / 'f', FileAccess.CREATE)
+        result = f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE)
         assert isinstance(result, StubAlphaHigh)
 
     def test_case_insensitive(self, tmp_path: Path) -> None:
         """Format name lookup is case insensitive."""
         f = _make_factory_stubs()
-        result = f.i_create(
-            'alpha', tmp_path / 'f', FileAccess.CREATE)
+        result = f.i_create('alpha', tmp_path / 'f', FileAccess.CREATE)
         assert isinstance(result, StubAlphaHigh)
 
     def test_unknown_format(self, tmp_path: Path) -> None:
         """Unknown format name raises."""
         f = _make_factory_stubs()
         with pytest.raises(TableIOFactoryNoSuchError):
-            f.i_create(
-                'NoSuch', tmp_path / 'f', FileAccess.CREATE)
+            f.i_create('NoSuch', tmp_path / 'f', FileAccess.CREATE)
 
     def test_with_implementation(self, tmp_path: Path) -> None:
         """Specific implementation is used when requested."""
         f = _make_factory_stubs()
-        result = f.i_create(
-            'Alpha', tmp_path / 'f', FileAccess.CREATE,
-            implementation='low')
+        result = f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
+                            implementation='low')
         assert isinstance(result, StubAlphaLow)
 
-    def test_unknown_implementation(
-            self, tmp_path: Path) -> None:
+    def test_unknown_implementation(self, tmp_path: Path) -> None:
         """Unknown implementation name raises."""
         f = _make_factory_stubs()
         with pytest.raises(TableIOFactoryNoSuchError):
-            f.i_create(
-                'Alpha', tmp_path / 'f', FileAccess.CREATE,
-                implementation='no_such')
+            f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
+                       implementation='no_such')
 
-    def test_impl_capability_mismatch(
-            self, tmp_path: Path) -> None:
+    def test_impl_capability_mismatch(self, tmp_path: Path) -> None:
         """Implementation not matching capabilities raises."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write=SingleCapability(
-                True, Strictness.STRICT),
-            can_read=SingleCapability(
-                True, Strictness.STRICT))
+            can_write=SingleCapability(True, Strictness.STRICT),
+            can_read=SingleCapability(True, Strictness.STRICT))
         with pytest.raises(TableIOFactoryNoCapabilityMatch):
-            f.i_create(
-                'Alpha', tmp_path / 'f', FileAccess.CREATE,
-                implementation='low', capabilities=caps)
+            f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
+                       implementation='low', capabilities=caps)
 
     def test_picks_best_strict(self, tmp_path: Path) -> None:
         """Without implementation picks highest-priority strict."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write=SingleCapability(
-                True, Strictness.STRICT),
-            can_read=SingleCapability(
-                True, Strictness.STRICT))
-        result = f.i_create(
-            'Alpha', tmp_path / 'f', FileAccess.CREATE,
-            capabilities=caps)
+            can_write=SingleCapability(True, Strictness.STRICT),
+            can_read=SingleCapability(True, Strictness.STRICT))
+        result = f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
+                            capabilities=caps)
         assert isinstance(result, StubAlphaHigh)
 
-    def test_falls_back_to_nonstrict(
-            self, tmp_path: Path) -> None:
+    def test_falls_back_to_nonstrict(self, tmp_path: Path) -> None:
         """Falls back to nonstrict when no strict match."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write=SingleCapability(
-                True, Strictness.STRICT),
-            can_fmt_row=SingleCapability(
-                True, Strictness.IGNORE))
-        result = f.i_create(
-            'Alpha', tmp_path / 'f', FileAccess.CREATE,
-            capabilities=caps)
+            can_write=SingleCapability(True, Strictness.STRICT),
+            can_fmt_row=SingleCapability(True, Strictness.IGNORE))
+        result = f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
+                            capabilities=caps)
         assert isinstance(result, StubAlphaHigh)
 
     def test_with_args(self, tmp_path: Path) -> None:
@@ -445,18 +405,16 @@ class TestTableIOFactoryCreate:
         f = _make_factory_stubs()
         args: OptionalArgsDict = {}
         args['opt_a'] = 'hello'  # type: ignore[typeddict-unknown-key]
-        result = f.i_create(
-            'Alpha', tmp_path / 'f', FileAccess.CREATE,
-            args=args, implementation='high')
+        result = f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
+                            args=args, implementation='high')
         assert isinstance(result, StubAlphaHigh)
         assert result.opt_a == 'hello'
 
     def test_none_args(self, tmp_path: Path) -> None:
         """None args creates instance without extra arguments."""
         f = _make_factory_stubs()
-        result = f.i_create(
-            'Alpha', tmp_path / 'f', FileAccess.CREATE,
-            args=None)
+        result = f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
+                            args=None)
         assert isinstance(result, StubAlphaHigh)
 
     def test_create_rejects_capabilities_without_write(
@@ -474,8 +432,7 @@ class TestTableIOFactoryCreate:
         """READ rejects explicit capabilities that omit read support."""
         f = _make_factory_stubs()
         caps = Capabilities(can_write=_SUP)
-        with pytest.raises(InsufficientCapabilities,
-                           match='FileAccess.READ'):
+        with pytest.raises(InsufficientCapabilities, match='FileAccess.READ'):
             f.i_create('Alpha', tmp_path / 'f', FileAccess.READ,
                        capabilities=caps)
 
@@ -498,8 +455,7 @@ class TestTableIOFactoryCreate:
         """Capability-vs-access errors are raised before format lookup."""
         f = _make_factory_stubs()
         caps = Capabilities(can_write=_SUP)
-        with pytest.raises(InsufficientCapabilities,
-                           match='FileAccess.READ'):
+        with pytest.raises(InsufficientCapabilities, match='FileAccess.READ'):
             f.i_create('NoSuch', tmp_path / 'f', FileAccess.READ,
                        capabilities=caps)
 
@@ -537,8 +493,7 @@ class TestTableIOFactoryFilterArgs:
         """Unknown args are filtered out."""
         f = _make_factory_stubs()
         args = {'csv_delimiter': ';', 'bogus': 'val'}
-        result = f.i_filter_args(
-            args, 'CSV', 'csv')  # type: ignore[arg-type]
+        result = f.i_filter_args(args, 'CSV', 'csv')  # type: ignore[arg-type]
         assert result is not None
         assert 'csv_delimiter' in result
         assert 'bogus' not in result
@@ -595,10 +550,8 @@ class TestTableIOFactoryFormats:
         """Strict capability filters out tolerant-only formats."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_fmt_row=SingleCapability(
-                True, Strictness.STRICT))
-        names = f.i_get_registered_formats(
-            capabilities=caps, empty_is_ok=True)
+            can_fmt_row=SingleCapability(True, Strictness.STRICT))
+        names = f.i_get_registered_formats(capabilities=caps, empty_is_ok=True)
         assert 'Beta' in names
         assert 'Alpha' not in names
 
@@ -606,10 +559,8 @@ class TestTableIOFactoryFormats:
         """Tolerant capability includes strict and nonstrict."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_fmt_row=SingleCapability(
-                True, Strictness.IGNORE))
-        names = f.i_get_registered_formats(
-            capabilities=caps, empty_is_ok=True)
+            can_fmt_row=SingleCapability(True, Strictness.IGNORE))
+        names = f.i_get_registered_formats(capabilities=caps, empty_is_ok=True)
         assert 'Beta' in names
         assert 'Alpha' in names
 
@@ -617,18 +568,15 @@ class TestTableIOFactoryFormats:
         """Capability-filtered names are still sorted."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write=SingleCapability(
-                True, Strictness.STRICT))
-        names = f.i_get_registered_formats(
-            capabilities=caps)
+            can_write=SingleCapability(True, Strictness.STRICT))
+        names = f.i_get_registered_formats(capabilities=caps)
         assert names == sorted(names)
 
     def test_box_capability_matches_spreadsheet_formats(self) -> None:
         """Requesting box support includes the spreadsheet formats."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write_box=SingleCapability(
-                True, Strictness.STRICT))
+            can_write_box=SingleCapability(True, Strictness.STRICT))
         names = f.i_get_registered_formats(capabilities=caps)
         assert 'Excel' in names
         assert 'ODS' in names
@@ -637,10 +585,8 @@ class TestTableIOFactoryFormats:
         """empty_is_ok keeps returning matching formats when they exist."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write_box=SingleCapability(
-                True, Strictness.STRICT))
-        names = f.i_get_registered_formats(
-            capabilities=caps, empty_is_ok=True)
+            can_write_box=SingleCapability(True, Strictness.STRICT))
+        names = f.i_get_registered_formats(capabilities=caps, empty_is_ok=True)
         assert 'Excel' in names
         assert 'ODS' in names
 
@@ -648,8 +594,7 @@ class TestTableIOFactoryFormats:
         """Requesting multi-sheet support includes spreadsheet formats."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            multi_sheet=SingleCapability(
-                True, Strictness.STRICT))
+            multi_sheet=SingleCapability(True, Strictness.STRICT))
         names = f.i_get_registered_formats(capabilities=caps)
         assert 'Excel' in names
         assert 'ODS' in names
@@ -660,10 +605,8 @@ class TestTableIOFactoryFormats:
         """empty_is_ok keeps returning multi-sheet-capable formats."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            multi_sheet=SingleCapability(
-                True, Strictness.STRICT))
-        names = f.i_get_registered_formats(
-            capabilities=caps, empty_is_ok=True)
+            multi_sheet=SingleCapability(True, Strictness.STRICT))
+        names = f.i_get_registered_formats(capabilities=caps, empty_is_ok=True)
         assert 'Excel' in names
         assert 'ODS' in names
 
@@ -671,8 +614,7 @@ class TestTableIOFactoryFormats:
         """Requesting border support matches the capable sheet formats."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write_borders=SingleCapability(
-                True, Strictness.STRICT))
+            can_write_borders=SingleCapability(True, Strictness.STRICT))
         names = f.i_get_registered_formats(capabilities=caps)
         assert 'Excel' in names
         assert 'ODS' in names
@@ -691,8 +633,7 @@ class TestTableIOFactoryFormats:
             'beta': 'Beta'
         }
         caps = Capabilities(
-            can_write_box=SingleCapability(
-                True, Strictness.STRICT))
+            can_write_box=SingleCapability(True, Strictness.STRICT))
         with pytest.raises(TableIOFactoryNoCapabilityMatch,
                            match='No formats match the capabilities'):
             f.i_get_registered_formats(capabilities=caps)
@@ -701,12 +642,12 @@ class TestTableIOFactoryFormats:
 # -- TableIOFactory: listing implementations -----------------------------
 
 class TestTableIOFactoryImplementations:
-    """Tests for TableIOFactory.i_get_registered_implementations."""
+    """Tests for TableIOFactory.i_get_reg_impls."""
 
     def test_basic(self) -> None:
         """All stub implementations are returned."""
         f = _make_factory_stubs()
-        names = f.i_get_registered_implementations()
+        names = f.i_get_reg_impls()
         assert 'high' in names
         assert 'low' in names
         assert 'beta_impl' in names
@@ -714,14 +655,13 @@ class TestTableIOFactoryImplementations:
     def test_sorted(self) -> None:
         """Implementation names are sorted."""
         f = _make_factory_stubs()
-        names = f.i_get_registered_implementations()
+        names = f.i_get_reg_impls()
         assert names == sorted(names)
 
     def test_by_format(self) -> None:
         """Filter by format name returns only that format."""
         f = _make_factory_stubs()
-        names = f.i_get_registered_implementations(
-            format_name='Alpha')
+        names = f.i_get_reg_impls(format_name='Alpha')
         assert 'high' in names
         assert 'low' in names
         assert 'beta_impl' not in names
@@ -729,8 +669,7 @@ class TestTableIOFactoryImplementations:
     def test_with_lower(self) -> None:
         """lower=True adds lowercase variant."""
         f = _make_factory_stubs()
-        names = f.i_get_registered_implementations(
-            format_name='Alpha', lower=True)
+        names = f.i_get_reg_impls(format_name='Alpha', lower=True)
         assert 'high' in names
 
     def test_with_lower_adds_variant_for_mixed_case_implementation(self) -> \
@@ -738,26 +677,21 @@ class TestTableIOFactoryImplementations:
         """lower=True adds a lowercase alias for mixed-case names."""
         f = _make_factory_stubs()
         f.i_register(StubGammaMandatory)
-        names = f.i_get_registered_implementations(
-            format_name='Gamma', lower=True)
+        names = f.i_get_reg_impls(format_name='Gamma', lower=True)
         assert 'CamelCase' in names
         assert 'camelcase' in names
 
     def test_with_upper(self) -> None:
         """upper=True adds uppercase variant."""
         f = _make_factory_stubs()
-        names = f.i_get_registered_implementations(
-            format_name='Alpha', upper=True)
+        names = f.i_get_reg_impls(format_name='Alpha', upper=True)
         assert 'HIGH' in names
 
     def test_with_caps(self) -> None:
         """Capability filter limits implementations."""
         f = _make_factory_stubs()
-        caps = Capabilities(
-            can_read=SingleCapability(
-                True, Strictness.STRICT))
-        names = f.i_get_registered_implementations(
-            capabilities=caps, empty_is_ok=True)
+        caps = Capabilities(can_read=SingleCapability(True, Strictness.STRICT))
+        names = f.i_get_reg_impls(capabilities=caps, empty_is_ok=True)
         assert 'high' in names
         assert 'beta_impl' in names
         assert 'low' not in names
@@ -766,31 +700,25 @@ class TestTableIOFactoryImplementations:
         """No match with empty_is_ok=False raises."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write_box=SingleCapability(
-                True, Strictness.STRICT))
+            can_write_box=SingleCapability(True, Strictness.STRICT))
         with pytest.raises(TableIOFactoryNoCapabilityMatch):
-            f.i_get_registered_implementations(
-                format_name='Alpha', capabilities=caps)
+            f.i_get_reg_impls(format_name='Alpha', capabilities=caps)
 
     def test_no_match_empty_ok(self) -> None:
         """No match with empty_is_ok=True returns []."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            can_write_box=SingleCapability(
-                True, Strictness.STRICT))
-        names = f.i_get_registered_implementations(
-            format_name='Alpha', capabilities=caps,
-            empty_is_ok=True)
+            can_write_box=SingleCapability(True, Strictness.STRICT))
+        names = f.i_get_reg_impls(format_name='Alpha', capabilities=caps,
+                                  empty_is_ok=True)
         assert not names
 
     def test_multi_sheet_with_caps(self) -> None:
         """Capability filtering finds only multi-sheet implementations."""
         f = _make_factory_stubs()
         caps = Capabilities(
-            multi_sheet=SingleCapability(
-                True, Strictness.STRICT))
-        names = f.i_get_registered_implementations(
-            capabilities=caps, empty_is_ok=True)
+            multi_sheet=SingleCapability(True, Strictness.STRICT))
+        names = f.i_get_reg_impls(capabilities=caps, empty_is_ok=True)
         assert 'OpenPyXL' in names
         assert 'odfdo' in names
         assert 'high' not in names
@@ -859,8 +787,7 @@ class TestShortcutFunctions:
 
     def test_create_tableio(self, tmp_path: Path) -> None:
         """create_tableio creates a TableIO instance."""
-        result = create_tableio(
-            'CSV', tmp_path / 'test', FileAccess.CREATE)
+        result = create_tableio('CSV', tmp_path / 'test', FileAccess.CREATE)
         assert isinstance(result, TableIO)
 
     def test_filter_args_tableio(self) -> None:

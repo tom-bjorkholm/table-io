@@ -22,9 +22,8 @@ from tableio.value_type import Fmt, FmtDictRow, Value, ValueFmt
 from .check_capsys import check_capsys
 
 
-def run_round_trip_sequential_list_reads(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+def run_sequential_list_reads(tableio_class: type[TableIO],
+                              capsys: CaptureFixture[str]) -> None:
     """Run the shared sequential list read/write round-trip case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'sample'
@@ -48,9 +47,8 @@ def run_round_trip_sequential_list_reads(
     check_capsys(capsys)
 
 
-def run_round_trip_dictdata_in_box(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+def run_round_trip_dictdata_in_box(tableio_class: type[TableIO],
+                                   capsys: CaptureFixture[str]) -> None:
     """Run the shared boxed dict-data round-trip case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'boxed'
@@ -71,8 +69,7 @@ def run_round_trip_dictdata_in_box(
 
 
 def run_update_default_write_starts_after_last_used_row(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         create_file: Callable[[Path], None],
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
@@ -88,8 +85,7 @@ def run_update_default_write_starts_after_last_used_row(
 
 
 def run_write_formatted_listdata_applies_formatting_and_filter(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared formatted-list write case."""
@@ -110,8 +106,7 @@ def run_write_formatted_listdata_applies_formatting_and_filter(
 
 
 def run_write_multiple_filtered_ranges_keeps_all_ranges(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared multiple filtered-ranges write case."""
@@ -131,8 +126,7 @@ def run_write_multiple_filtered_ranges_keeps_all_ranges(
 
 
 def run_table_width_is_widen_only_with_cap(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared table-width widening cap case."""
@@ -153,8 +147,7 @@ def run_table_width_is_widen_only_with_cap(
 
 
 def run_table_width_uses_table_content_not_heading(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared table-width case with one heading and one table."""
@@ -172,8 +165,7 @@ def run_table_width_uses_table_content_not_heading(
 
 
 def run_box_write_removes_overlapping_filtered_range(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared overlapping filtered-range rewrite case."""
@@ -183,8 +175,7 @@ def run_box_write_removes_overlapping_filtered_range(
         with tableio_class(file_name, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata(
                 [['Name', 'Active'], ['Alice', True]],
-                filtered_data_range=True,
-                box=box)
+                filtered_data_range=True, box=box)
             table_io.write_table_listdata(
                 [['updated', 'value'], ['new', 'row']], box=box)
         inspect_file(Path(temp_dir) / f'rewrite_box{extension}')
@@ -192,8 +183,7 @@ def run_box_write_removes_overlapping_filtered_range(
 
 
 def run_write_table_listdata_applies_borders(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared bordered table write case."""
@@ -207,31 +197,27 @@ def run_write_table_listdata_applies_borders(
     check_capsys(capsys)
 
 
-def run_box_rewrite_clears_old_borders(
-        tableio_class: type[TableIO],
-        extension: str,
-        inspect_file: Callable[[Path], None],
-        capsys: CaptureFixture[str]) -> None:
+def run_box_rewrite_clears_borders(tableio_class: type[TableIO],
+                                   extension: str,
+                                   inspect_file: Callable[[Path], None],
+                                   capsys: CaptureFixture[str]) -> None:
     """Run the shared border-clearing boxed rewrite case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'rewrite_borders'
         box = Box(top=0, left=0, bottom=2, right=2)
         with tableio_class(file_name, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata(
-                [['left', 'right'], ['down', 'here']],
-                box=box,
+                [['left', 'right'], ['down', 'here']], box=box,
                 border_style=TableBorderStyle.ALL_THICK)
             table_io.write_table_listdata(
-                [['new', 'values'], ['stay', 'plain']],
-                box=box,
+                [['new', 'values'], ['stay', 'plain']], box=box,
                 border_style=TableBorderStyle.NONE)
         inspect_file(Path(temp_dir) / f'rewrite_borders{extension}')
     check_capsys(capsys)
 
 
 def run_bordered_workbook_is_validator_clean(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         validate_file: Callable[[Path], bool]) -> None:
     """Run the shared bordered-workbook validator case."""
     with TemporaryDirectory() as temp_dir:
@@ -244,10 +230,8 @@ def run_bordered_workbook_is_validator_clean(
 
 
 def run_close_removes_temp_file_on_rewrite_failure(
-        tableio_class: type[TableIO],
-        rewrite_module: object,
-        rewrite_name: str,
-        monkeypatch: pytest.MonkeyPatch,
+        tableio_class: type[TableIO], rewrite_module: object,
+        rewrite_name: str, monkeypatch: pytest.MonkeyPatch,
         capsys: CaptureFixture[str]) -> None:
     """Run the shared failing-close cleanup case for temp output files."""
     with TemporaryDirectory() as temp_dir:
@@ -269,8 +253,7 @@ def run_close_removes_temp_file_on_rewrite_failure(
 
 
 def run_find_value_and_write_cells(
-        tableio_class: type[TableIOSpreadsheetBased],
-        extension: str,
+        tableio_class: type[TableIOSpreadsheetBased], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared find-value and exact-cell-write case."""
@@ -295,10 +278,8 @@ def run_find_value_and_write_cells(
             assert table_io.read_row == read_row
             assert table_io.write_row == write_row
             table_io.write_cells([
-                [ValueFmt(value='Bob',
-                          fmt=Fmt(highlight=Color.YELLOW)),
-                 ValueFmt(value=True,
-                          fmt=Fmt(highlight=Color.YELLOW))]
+                [ValueFmt(value='Bob', fmt=Fmt(highlight=Color.YELLOW)),
+                 ValueFmt(value=True, fmt=Fmt(highlight=Color.YELLOW))]
             ], found_box)
             assert table_io.read_cells(found_box) == [['Bob', True]]
             assert table_io.read_row == read_row
@@ -308,8 +289,7 @@ def run_find_value_and_write_cells(
 
 
 def run_boxed_table_partial_overwrite_raises(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+        tableio_class: type[TableIO], capsys: CaptureFixture[str]) -> None:
     """Run the shared partial boxed-table overwrite rejection case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'partial_overwrite'
@@ -329,8 +309,7 @@ def run_boxed_table_partial_overwrite_raises(
 
 
 def run_write_row_formatted_dictdata_applies_formatting(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared row-formatted dict-data write case."""
@@ -343,17 +322,17 @@ def run_write_row_formatted_dictdata_applies_formatting(
                        fmt=Fmt(italic=True, highlight=Color.RED))
         ]
         with tableio_class(file_name, FileAccess.CREATE) as table_io:
-            table_io.write_table_fmtdictdata(
-                data=data,
-                column_order=['name', 'active'],
-                filtered_data_range=True)
+            table_io.write_table_fmtdictdata(data=data,
+                                             column_order=['name',
+                                                           'active'
+                                                           ],
+                                             filtered_data_range=True)
         inspect_file(Path(temp_dir) / f'row_formatted{extension}')
     check_capsys(capsys)
 
 
 def run_write_dictdata_applies_first_row_format(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared dict-data header formatting case."""
@@ -364,17 +343,14 @@ def run_write_dictdata_applies_first_row_format(
         ]
         with tableio_class(file_name, FileAccess.CREATE) as table_io:
             table_io.write_table_dictdata(
-                data=data,
-                column_order=['name', 'active'],
-                first_row_format=Fmt(bold=True,
-                                     highlight=Color.YELLOW))
+                data=data, column_order=['name', 'active'],
+                first_row_format=Fmt(bold=True, highlight=Color.YELLOW))
         inspect_file(Path(temp_dir) / f'dict_header_fmt{extension}')
     check_capsys(capsys)
 
 
 def run_write_fmtdictdata_applies_first_row_format(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         inspect_file: Callable[[Path], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared formatted dict-data header formatting case."""
@@ -385,20 +361,17 @@ def run_write_fmtdictdata_applies_first_row_format(
                        fmt=Fmt(italic=True, highlight=Color.GREEN))
         ]
         with tableio_class(file_name, FileAccess.CREATE) as table_io:
-            table_io.write_table_fmtdictdata(
-                data=data,
-                column_order=['name', 'active'],
-                first_row_format=Fmt(bold=True))
+            table_io.write_table_fmtdictdata(data=data,
+                                             column_order=['name', 'active'],
+                                             first_row_format=Fmt(bold=True))
         inspect_file(Path(temp_dir) / f'fmtdict_header_fmt{extension}')
     check_capsys(capsys)
 
 
 def run_read_formula_uses_cached_value(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         create_formula_file: Callable[[Path, Optional[int]], None],
-        cached_value: int,
-        capsys: CaptureFixture[str]) -> None:
+        cached_value: int, capsys: CaptureFixture[str]) -> None:
     """Run the shared formula-read case with a cached value."""
     with TemporaryDirectory() as temp_dir:
         saved_path = Path(temp_dir) / f'formula{extension}'
@@ -411,8 +384,7 @@ def run_read_formula_uses_cached_value(
 
 
 def run_read_formula_without_cached_value(
-        tableio_class: type[TableIO],
-        extension: str,
+        tableio_class: type[TableIO], extension: str,
         create_formula_file: Callable[[Path, Optional[int]], None],
         capsys: CaptureFixture[str]) -> None:
     """Run the shared formula-read case without a cached value."""
@@ -427,8 +399,7 @@ def run_read_formula_without_cached_value(
 
 
 def run_multi_sheet_write_positions_are_per_sheet(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+        tableio_class: type[TableIO], capsys: CaptureFixture[str]) -> None:
     """Run the shared per-sheet write-position case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'multi_write'
@@ -453,8 +424,7 @@ def run_multi_sheet_write_positions_are_per_sheet(
 
 
 def run_multi_sheet_read_positions_are_per_sheet(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+        tableio_class: type[TableIO], capsys: CaptureFixture[str]) -> None:
     """Run the shared per-sheet read-position case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'multi_read'
@@ -479,8 +449,7 @@ def run_multi_sheet_read_positions_are_per_sheet(
 
 
 def run_multi_sheet_heading_state_is_per_sheet(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+        tableio_class: type[TableIO], capsys: CaptureFixture[str]) -> None:
     """Run the shared per-sheet heading state case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'multi_heading'
@@ -502,8 +471,7 @@ def run_multi_sheet_heading_state_is_per_sheet(
 
 
 def run_multi_sheet_read_only_create_raises(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+        tableio_class: type[TableIO], capsys: CaptureFixture[str]) -> None:
     """Run the shared READ-mode sheet-creation error case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'multi_read_only'
@@ -522,8 +490,7 @@ def run_multi_sheet_read_only_create_raises(
 
 
 def run_multi_sheet_update_uses_selected_sheet_write_position(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+        tableio_class: type[TableIO], capsys: CaptureFixture[str]) -> None:
     """Run the shared UPDATE selected-sheet append case."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'multi_update'
@@ -562,13 +529,11 @@ def run_open_rejects_second_open(tableio_class: type[TableIO],
 
 
 def run_select_missing_sheet_without_create_raises_key_error(
-        tableio_class: type[TableIO],
-        capsys: CaptureFixture[str]) -> None:
+        tableio_class: type[TableIO], capsys: CaptureFixture[str]) -> None:
     """Run the shared missing-sheet selection error case."""
     with TemporaryDirectory() as temp_dir:
-        with tableio_class(
-                Path(temp_dir) / 'missing_sheet',
-                FileAccess.CREATE) as table_io:
+        with tableio_class(Path(temp_dir) / 'missing_sheet',
+                           FileAccess.CREATE) as table_io:
             with pytest.raises(KeyError, match='Missing'):
                 table_io.select_sheet('Missing')
     check_capsys(capsys)

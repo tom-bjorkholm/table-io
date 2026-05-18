@@ -11,17 +11,11 @@ from .cmd_for_examples import cmd_parse_and_run_example
 
 
 # pylint: disable=duplicate-code
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NEEDED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NEEDED,
-    can_read_box=CAP_NEEDED,
-    can_write_highlight=CAP_NOT_USED,
-    multi_sheet=CAP_NOT_USED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NEEDED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NOT_USED,
+                    filtered_data_range=CAP_NOT_USED, can_write_box=CAP_NEEDED,
+                    can_read_box=CAP_NEEDED, can_write_highlight=CAP_NOT_USED,
+                    multi_sheet=CAP_NOT_USED)
 # pylint: enable=duplicate-code
 
 
@@ -61,11 +55,9 @@ def e06_box_read_write_update(format_name: str, output_file_name: str,
     # the later box coordinates easy to understand for a beginner.
     #
     large_table = build_large_table()
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # write_table_listdata() returns the position of the last cell
@@ -79,11 +71,9 @@ def e06_box_read_write_update(format_name: str, output_file_name: str,
     # UPDATE is the right access mode when we want to both read existing
     # content and write new content into the same file.
     #
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.UPDATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=optional_args) as tableio:
         #
         # Boxes use 0-based coordinates, and bottom/right are exclusive.
@@ -116,9 +106,7 @@ def e06_box_read_write_update(format_name: str, output_file_name: str,
         # data we pass in. Because boxed_result.data is 2x2, the written
         # box will also become 2x2.
         #
-        target_box = Box(top=source_box.top,
-                         left=target_left,
-                         bottom=None,
+        target_box = Box(top=source_box.top, left=target_left, bottom=None,
                          right=None)
         #
         # Because we pass box=target_box, the write starts exactly at that

@@ -16,17 +16,11 @@ from .write_writer_info import write_writer_info
 
 
 # pylint: disable=duplicate-code
-CAPS = Capabilities(
-    can_write=CAP_NEEDED,
-    can_read=CAP_NOT_USED,
-    can_fmt_row=CAP_NOT_USED,
-    can_fmt_value=CAP_NOT_USED,
-    filtered_data_range=CAP_NOT_USED,
-    can_write_box=CAP_NOT_USED,
-    can_read_box=CAP_NOT_USED,
-    can_write_highlight=CAP_NOT_USED,
-    multi_sheet=CAP_NOT_USED
-)
+CAPS = Capabilities(can_write=CAP_NEEDED, can_read=CAP_NOT_USED,
+                    can_fmt_row=CAP_NOT_USED, can_fmt_value=CAP_NOT_USED,
+                    filtered_data_range=CAP_NOT_USED,
+                    can_write_box=CAP_NOT_USED, can_read_box=CAP_NOT_USED,
+                    can_write_highlight=CAP_NOT_USED, multi_sheet=CAP_NOT_USED)
 # pylint: enable=duplicate-code
 
 
@@ -38,16 +32,12 @@ def build_mixed_optional_args(optional_args: OptionalArgs) -> OptionalArgsDict:
     filter_args_tableio() will keep only the arguments that make sense for
     the concrete backend we are about to create.
     """
-    result = OptionalArgsDict(
-        character_encoding='utf-8',
-        title='Filter args demo',
-        lang='en',
-        paper_size=PaperSize.A4,
-        document_class=DocumentClass.ARTICLE,
-        line_length=72,
-        table_max_line_length=72,
-        csv_delimiter=';',
-        csv_quoting='minimal')
+    result = OptionalArgsDict(character_encoding='utf-8',
+                              title='Filter args demo', lang='en',
+                              paper_size=PaperSize.A4,
+                              document_class=DocumentClass.ARTICLE,
+                              line_length=72, table_max_line_length=72,
+                              csv_delimiter=';', csv_quoting='minimal')
     if optional_args is not None:
         result.update(optional_args)
     return result
@@ -112,16 +102,13 @@ def e08_filter_args_tableio(format_name: str, output_file_name: str,
     3. Create the final writer with only the valid arguments.
     """
     mixed_args = build_mixed_optional_args(optional_args)
-    filtered_args = filter_args_tableio(
-        args=mixed_args,
-        format_name=format_name,
-        implementation=implementation_name,
-        capabilities=CAPS)
-    with create_tableio(format_name=format_name,
-                        file_name=output_file_name,
+    filtered_args = filter_args_tableio(args=mixed_args,
+                                        format_name=format_name,
+                                        implementation=implementation_name,
+                                        capabilities=CAPS)
+    with create_tableio(format_name=format_name, file_name=output_file_name,
                         file_access=FileAccess.CREATE,
-                        implementation=implementation_name,
-                        capabilities=CAPS,
+                        implementation=implementation_name, capabilities=CAPS,
                         args=filtered_args) as tableio:
         actual_implementation = tableio.get_description().implementation
         #
@@ -135,8 +122,7 @@ def e08_filter_args_tableio(format_name: str, output_file_name: str,
         # Then show the arguments that were kept.
         #
         tableio.write_heading('Arguments kept for this backend.')
-        tableio.write_table_listdata(
-            build_filtered_args_table(filtered_args))
+        tableio.write_table_listdata(build_filtered_args_table(filtered_args))
         #
         # And separately show the arguments that were removed.
         #
@@ -147,8 +133,7 @@ def e08_filter_args_tableio(format_name: str, output_file_name: str,
         # The next table shows the actual writer that was created.
         #
         tableio.write_heading('Information about the writer we created.')
-        write_writer_info(tableio,
-                          requested_format_name=format_name,
+        write_writer_info(tableio, requested_format_name=format_name,
                           requested_implementation=implementation_name)
         #
         # Finally we write a tiny normal data table to show that the

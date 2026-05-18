@@ -47,8 +47,7 @@ def _create_styled_xlsx(file_path: Path) -> None:
     workbook = Workbook(file_path)
     worksheet = workbook.add_worksheet('Sheet1')
     yellow_bold_italic = workbook.add_format(
-        {'bold': True, 'italic': True, 'bg_color': '#FFFF00'}
-    )
+        {'bold': True, 'italic': True, 'bg_color': '#FFFF00'})
     worksheet.write_string(0, 0, 'hello', yellow_bold_italic)
     worksheet.write_string(0, 1, 'wonderful', yellow_bold_italic)
     worksheet.write_string(0, 2, 'world', yellow_bold_italic)
@@ -60,10 +59,9 @@ def _create_styled_xlsx(file_path: Path) -> None:
 
 def _yellow_ods_style(document: Document) -> str:
     """Insert and return one ODS style with bold italic yellow fill."""
-    style = Style('table-cell', name='ce_test_style', area='text',
-                  bold=True, italic=True)
-    style.set_properties({'fo:background-color': '#ffff00'},
-                         area='table-cell')
+    style = Style('table-cell', name='ce_test_style', area='text', bold=True,
+                  italic=True)
+    style.set_properties({'fo:background-color': '#ffff00'}, area='table-cell')
     document.insert_style(style, automatic=True)
     return 'ce_test_style'
 
@@ -150,8 +148,7 @@ def _ods_border_text(weight: BorderWeight) -> Optional[str]:
     return '1.75pt solid #000000'
 
 
-def _ods_style_name(document: Document,
-                    borders: CellBorder,
+def _ods_style_name(document: Document, borders: CellBorder,
                     style_names: dict[CellBorder, str]) -> str:
     """Return one cached ODS cell style name for one cell border."""
     cached = style_names.get(borders)
@@ -189,8 +186,7 @@ def _create_bordered_ods(file_path: Path) -> None:
             cell.style = _ods_style_name(
                 document,
                 border_helper.cell_border(row_index, col_index, 2, 2),
-                style_names
-            )
+                style_names)
             table.set_cell((col_index, row_index), cell, clone=False)
     document.save(file_path)
 
@@ -235,16 +231,10 @@ def test_check_spreadsheet_content_matches_subsequence_in_xlsx(
     check_spreadsheet_content(
         file_path,
         [
-            SheetContentExpectation(
-                sheet_name='Sheet1',
-                row_fragments=[['hello', 'world']]
-            ),
-            SheetContentExpectation(
-                sheet_name='Second',
-                row_fragments=[]
-            )
-        ]
-    )
+            SheetContentExpectation(sheet_name='Sheet1',
+                                    row_fragments=[['hello', 'world']]),
+            SheetContentExpectation(sheet_name='Second', row_fragments=[])
+        ])
 
 
 def test_check_spreadsheet_content_matches_typed_values_in_xlsx(
@@ -263,14 +253,9 @@ def test_check_spreadsheet_content_matches_typed_values_in_xlsx(
         [
             SheetContentExpectation(
                 sheet_name='Sheet1',
-                row_fragments=[['hello', 'world'], [3.14159, True]]
-            ),
-            SheetContentExpectation(
-                sheet_name='Second',
-                row_fragments=[]
-            )
-        ]
-    )
+                row_fragments=[['hello', 'world'], [3.14159, True]]),
+            SheetContentExpectation(sheet_name='Second', row_fragments=[])
+        ])
 
 
 def test_check_spreadsheet_content_matches_subsequence_in_ods(
@@ -281,16 +266,10 @@ def test_check_spreadsheet_content_matches_subsequence_in_ods(
     check_spreadsheet_content(
         file_path,
         [
-            SheetContentExpectation(
-                sheet_name='Sheet1',
-                row_fragments=[['hello', 'world']]
-            ),
-            SheetContentExpectation(
-                sheet_name='Second',
-                row_fragments=[]
-            )
-        ]
-    )
+            SheetContentExpectation(sheet_name='Sheet1',
+                                    row_fragments=[['hello', 'world']]),
+            SheetContentExpectation(sheet_name='Second', row_fragments=[])
+        ])
 
 
 def test_check_spreadsheet_syntax_accepts_expected_error_fragments(
@@ -298,8 +277,7 @@ def test_check_spreadsheet_syntax_accepts_expected_error_fragments(
     """Expected validator errors can be allowed explicitly."""
     file_path = tmp_path / 'invalid.xlsx'
     _create_invalid_xlsx_with_custom_font(file_path)
-    check_spreadsheet_syntax(file_path,
-                             expected_errors=['Unexpected element'])
+    check_spreadsheet_syntax(file_path, expected_errors=['Unexpected element'])
 
 
 def test_check_spreadsheet_syntax_rejects_missing_expected_errors(
@@ -308,12 +286,10 @@ def test_check_spreadsheet_syntax_rejects_missing_expected_errors(
     file_path = tmp_path / 'invalid.xlsx'
     _create_invalid_xlsx_with_custom_font(file_path)
     with pytest.raises(AssertionError, match='Missing expected errors'):
-        check_spreadsheet_syntax(file_path,
-                                 expected_errors=['not reported'])
+        check_spreadsheet_syntax(file_path, expected_errors=['not reported'])
 
 
-def test_check_spreadsheet_content_checks_sheet_order(
-        tmp_path: Path) -> None:
+def test_content_checks_sheet_order(tmp_path: Path) -> None:
     """Content checks fail when sheet names are in the wrong order."""
     file_path = tmp_path / 'example.xlsx'
     _create_basic_xlsx(file_path)
@@ -321,16 +297,10 @@ def test_check_spreadsheet_content_checks_sheet_order(
         check_spreadsheet_content(
             file_path,
             [
-                SheetContentExpectation(
-                    sheet_name='Second',
-                    row_fragments=[]
-                ),
-                SheetContentExpectation(
-                    sheet_name='Sheet1',
-                    row_fragments=[['hello', 'world']]
-                )
-            ]
-        )
+                SheetContentExpectation(sheet_name='Second', row_fragments=[]),
+                SheetContentExpectation(sheet_name='Sheet1',
+                                        row_fragments=[['hello', 'world']])
+            ])
 
 
 def test_check_spreadsheet_styles_uses_default_anchor_offset_in_xlsx(
@@ -342,20 +312,14 @@ def test_check_spreadsheet_styles_uses_default_anchor_offset_in_xlsx(
         file_path,
         [
             AnchoredStyleExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
                         expected_style=ExpectedCellStyle(
-                            bold=True,
-                            italic=True,
-                            background_color=Color.YELLOW
-                        )
-                    )
-                ]
-            )
-        ]
-    )
+                            bold=True, italic=True,
+                            background_color=Color.YELLOW))
+                ])
+        ])
 
 
 def test_check_spreadsheet_styles_checks_rectangular_area_in_xlsx(
@@ -367,21 +331,15 @@ def test_check_spreadsheet_styles_checks_rectangular_area_in_xlsx(
         file_path,
         [
             AnchoredStyleExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
                         expected_style=ExpectedCellStyle(
-                            bold=True,
-                            italic=True,
-                            background_color=Color.YELLOW
-                        ),
-                        number_of_columns=3
-                    )
-                ]
-            )
-        ]
-    )
+                            bold=True, italic=True,
+                            background_color=Color.YELLOW),
+                        number_of_columns=3)
+                ])
+        ])
 
 
 def test_check_spreadsheet_styles_uses_default_anchor_offset_in_ods(
@@ -393,20 +351,14 @@ def test_check_spreadsheet_styles_uses_default_anchor_offset_in_ods(
         file_path,
         [
             AnchoredStyleExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
                         expected_style=ExpectedCellStyle(
-                            bold=True,
-                            italic=True,
-                            background_color=Color.YELLOW
-                        )
-                    )
-                ]
-            )
-        ]
-    )
+                            bold=True, italic=True,
+                            background_color=Color.YELLOW))
+                ])
+        ])
 
 
 def test_check_spreadsheet_styles_checks_rectangular_area_in_ods(
@@ -418,21 +370,15 @@ def test_check_spreadsheet_styles_checks_rectangular_area_in_ods(
         file_path,
         [
             AnchoredStyleExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
                         expected_style=ExpectedCellStyle(
-                            bold=True,
-                            italic=True,
-                            background_color=Color.YELLOW
-                        ),
-                        number_of_columns=3
-                    )
-                ]
-            )
-        ]
-    )
+                            bold=True, italic=True,
+                            background_color=Color.YELLOW),
+                        number_of_columns=3)
+                ])
+        ])
 
 
 def test_check_spreadsheet_borders_checks_table_style_in_xlsx(
@@ -444,18 +390,13 @@ def test_check_spreadsheet_borders_checks_table_style_in_xlsx(
         file_path,
         [
             AnchoredBorderExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeBorderExpectation(
                         border_style=TableBorderStyle.OUTER_THICK_INNER_THIN,
-                        number_of_rows=2,
-                        number_of_columns=2
-                    )
-                ]
-            )
-        ]
-    )
+                        number_of_rows=2, number_of_columns=2)
+                ])
+        ])
 
 
 def test_check_spreadsheet_borders_checks_table_style_in_ods(
@@ -467,18 +408,13 @@ def test_check_spreadsheet_borders_checks_table_style_in_ods(
         file_path,
         [
             AnchoredBorderExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeBorderExpectation(
                         border_style=TableBorderStyle.OUTER_THICK_INNER_THIN,
-                        number_of_rows=2,
-                        number_of_columns=2
-                    )
-                ]
-            )
-        ]
-    )
+                        number_of_rows=2, number_of_columns=2)
+                ])
+        ])
 
 
 @pytest.mark.parametrize(
@@ -488,12 +424,9 @@ def test_check_spreadsheet_borders_checks_table_style_in_ods(
         (-1, 1, 'number_of_rows'),
         (1, 0, 'number_of_columns'),
         (1, -1, 'number_of_columns')
-    ]
-)
+    ])
 def test_check_spreadsheet_styles_rejects_non_positive_area_sizes(
-        tmp_path: Path,
-        number_of_rows: int,
-        number_of_columns: int,
+        tmp_path: Path, number_of_rows: int, number_of_columns: int,
         expected_message: str) -> None:
     """Style checks reject non-positive rectangular area sizes."""
     file_path = tmp_path / 'example.xlsx'
@@ -509,12 +442,9 @@ def test_check_spreadsheet_styles_rejects_non_positive_area_sizes(
                         RelativeStyleExpectation(
                             expected_style=ExpectedCellStyle(bold=True),
                             number_of_rows=number_of_rows,
-                            number_of_columns=number_of_columns
-                        )
-                    ]
-                )
-            ]
-        )
+                            number_of_columns=number_of_columns)
+                    ])
+            ])
 
 
 def test_check_spreadsheet_styles_reports_all_area_mismatches(
@@ -532,12 +462,9 @@ def test_check_spreadsheet_styles_reports_all_area_mismatches(
                     relative_expectations=[
                         RelativeStyleExpectation(
                             expected_style=ExpectedCellStyle(bold=True),
-                            number_of_columns=2
-                        )
-                    ]
-                )
-            ]
-        )
+                            number_of_columns=2)
+                    ])
+            ])
     assert 'Style mismatches in area' in str(error_info.value)
     assert 'row 1, column 1' in str(error_info.value)
     assert 'row 1, column 2' in str(error_info.value)
@@ -559,13 +486,9 @@ def test_check_spreadsheet_borders_reports_all_edge_mismatches(
                     relative_expectations=[
                         RelativeBorderExpectation(
                             border_style=TableBorderStyle.OUTER_THICK,
-                            number_of_rows=1,
-                            number_of_columns=2
-                        )
-                    ]
-                )
-            ]
-        )
+                            number_of_rows=1, number_of_columns=2)
+                    ])
+            ])
     assert 'Border mismatches in area' in str(error_info.value)
     assert 'Unexpected top border' in str(error_info.value)
     assert 'row 1, column 1' in str(error_info.value)
@@ -580,21 +503,15 @@ def test_check_spreadsheet_styles_treats_missing_cells_as_unformatted(
         file_path,
         [
             AnchoredStyleExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
                         expected_style=ExpectedCellStyle(
-                            bold=False,
-                            italic=False,
-                            background_color=Color.NONE
-                        ),
-                        number_of_columns=5
-                    )
-                ]
-            )
-        ]
-    )
+                            bold=False, italic=False,
+                            background_color=Color.NONE),
+                        number_of_columns=5)
+                ])
+        ])
 
 
 def test_check_spreadsheet_file_runs_full_xlsx_validation(
@@ -605,32 +522,21 @@ def test_check_spreadsheet_file_runs_full_xlsx_validation(
     check_spreadsheet_file(
         file_path,
         [
-            SheetContentExpectation(
-                sheet_name='Sheet1',
-                row_fragments=[['hello', 'world']]
-            ),
-            SheetContentExpectation(
-                sheet_name='Second',
-                row_fragments=[]
-            )
+            SheetContentExpectation(sheet_name='Sheet1',
+                                    row_fragments=[['hello', 'world']]),
+            SheetContentExpectation(sheet_name='Second', row_fragments=[])
         ],
         [
             AnchoredStyleExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeStyleExpectation(
                         expected_style=ExpectedCellStyle(
-                            bold=True,
-                            italic=True,
-                            background_color=Color.YELLOW
-                        ),
-                        number_of_columns=3
-                    )
-                ]
-            )
-        ]
-    )
+                            bold=True, italic=True,
+                            background_color=Color.YELLOW),
+                        number_of_columns=3)
+                ])
+        ])
 
 
 def test_check_spreadsheet_file_runs_full_xlsx_validation_with_borders(
@@ -643,20 +549,14 @@ def test_check_spreadsheet_file_runs_full_xlsx_validation_with_borders(
         [
             SheetContentExpectation(
                 sheet_name='Sheet1',
-                row_fragments=[['hello', 'world'], ['later', 'done']]
-            )
+                row_fragments=[['hello', 'world'], ['later', 'done']])
         ],
         border_expectations=[
             AnchoredBorderExpectation(
-                sheet_name='Sheet1',
-                anchor_row_fragment=['hello', 'world'],
+                sheet_name='Sheet1', anchor_row_fragment=['hello', 'world'],
                 relative_expectations=[
                     RelativeBorderExpectation(
                         border_style=TableBorderStyle.OUTER_THICK_INNER_THIN,
-                        number_of_rows=2,
-                        number_of_columns=2
-                    )
-                ]
-            )
-        ]
-    )
+                        number_of_rows=2, number_of_columns=2)
+                ])
+        ])

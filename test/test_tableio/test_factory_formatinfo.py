@@ -54,10 +54,9 @@ class TestFactoryFormatInfo:
         class StubConflict(StubAlphaHigh):
             """Stub with case-conflicting implementation name."""
 
-            _desc = Descriptor(
-                format_name='Alpha', implementation='High',
-                capabilities=Capabilities(can_write=_SUP),
-                mandatory_args=[], optional_args=[])
+            _desc = Descriptor(format_name='Alpha', implementation='High',
+                               capabilities=Capabilities(can_write=_SUP),
+                               mandatory_args=[], optional_args=[])
         info = FactoryFormatInfo(format_class=StubAlphaHigh)
         with pytest.raises(TableIOFactoryConflictError):
             info.add_implementation(StubConflict)
@@ -75,8 +74,7 @@ class TestFactoryFormatInfo:
         caps = Capabilities(
             can_write=SingleCapability(True, Strictness.STRICT),
             can_read=SingleCapability(True, Strictness.STRICT))
-        bm = info.best_match_names(
-            capabilities=caps, empty_is_ok=True)
+        bm = info.best_match_names(capabilities=caps, empty_is_ok=True)
         strict = [m.implementation
                   for m in bm.strict_matches]
         assert 'high' in strict
@@ -87,10 +85,8 @@ class TestFactoryFormatInfo:
         info = _make_format_info_alpha()
         caps = Capabilities(
             can_write=SingleCapability(True, Strictness.STRICT),
-            can_fmt_row=SingleCapability(
-                True, Strictness.IGNORE))
-        bm = info.best_match_names(
-            capabilities=caps, empty_is_ok=True)
+            can_fmt_row=SingleCapability(True, Strictness.IGNORE))
+        bm = info.best_match_names(capabilities=caps, empty_is_ok=True)
         assert len(bm.strict_matches) == 0
         assert len(bm.nonstrict_matches) == 2
 
@@ -98,8 +94,7 @@ class TestFactoryFormatInfo:
         """No match with empty_is_ok=False raises."""
         info = FactoryFormatInfo(format_class=StubAlphaHigh)
         caps = Capabilities(
-            can_fmt_row=SingleCapability(
-                True, Strictness.STRICT))
+            can_fmt_row=SingleCapability(True, Strictness.STRICT))
         with pytest.raises(TableIOFactoryNoCapabilityMatch):
             info.best_match_names(capabilities=caps)
 
@@ -107,10 +102,8 @@ class TestFactoryFormatInfo:
         """No match with empty_is_ok=True returns empty."""
         info = FactoryFormatInfo(format_class=StubAlphaHigh)
         caps = Capabilities(
-            can_fmt_row=SingleCapability(
-                True, Strictness.STRICT))
-        bm = info.best_match_names(
-            capabilities=caps, empty_is_ok=True)
+            can_fmt_row=SingleCapability(True, Strictness.STRICT))
+        bm = info.best_match_names(capabilities=caps, empty_is_ok=True)
         assert len(bm) == 0
 
 
@@ -120,12 +113,9 @@ class TestFactoryFormatInfo:
 class FormatInfoMock(TableIO):
     """Mock TableIO for FactoryFormatInfo testing."""
 
-    _desc = Descriptor(
-        format_name='Mock',
-        implementation='mock',
-        capabilities=Capabilities(),
-        mandatory_args=[],
-        optional_args=[])
+    _desc = Descriptor(format_name='Mock', implementation='mock',
+                       capabilities=Capabilities(), mandatory_args=[],
+                       optional_args=[])
 
     @classmethod
     def get_description(cls) -> Descriptor:

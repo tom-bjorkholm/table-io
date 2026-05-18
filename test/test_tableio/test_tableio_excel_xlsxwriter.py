@@ -37,7 +37,7 @@ from .excel_inspect_helper import inspect_bordered_workbook, \
     inspect_table_width_heading_workbook
 from .spreadsheet_test_helper import \
     run_bordered_workbook_is_validator_clean, \
-    run_box_rewrite_clears_old_borders, \
+    run_box_rewrite_clears_borders, \
     run_box_write_removes_overlapping_filtered_range, \
     run_boxed_table_partial_overwrite_raises, \
     run_multi_sheet_heading_state_is_per_sheet, \
@@ -111,10 +111,8 @@ class _InspectableTableIOExcelXlsxWriter(TableIOExcelXlsxWriter):
         """Expose filtered-range creation for tests."""
         self._add_filtered_range(bounds, name)
 
-    def run_xlsx_format(
-            self,
-            style: Optional[CellStyleState],
-            datetime_value: bool) -> Optional[object]:
+    def run_xlsx_format(self, style: Optional[CellStyleState],
+                        datetime_value: bool) -> Optional[object]:
         """Expose the XlsxWriter format-cache helper for tests."""
         return self._xlsx_format(style, datetime_value)
 
@@ -165,13 +163,11 @@ def test_excel_factory_prefers_openpyxl_for_read_and_update(
         workbook = Workbook()
         workbook.save(Path(temp_dir) / 'existing.xlsx')
         workbook.close()
-        read_table_io = create_tableio('Excel',
-                                       Path(temp_dir) / 'existing',
+        read_table_io = create_tableio('Excel', Path(temp_dir) / 'existing',
                                        FileAccess.READ,
                                        capabilities=Capabilities(
                                            can_read=CAP_IMPLEMENTED))
-        update_table_io = create_tableio('Excel',
-                                         Path(temp_dir) / 'existing',
+        update_table_io = create_tableio('Excel', Path(temp_dir) / 'existing',
                                          FileAccess.UPDATE,
                                          capabilities=Capabilities(
                                              can_read=CAP_IMPLEMENTED,
@@ -183,8 +179,7 @@ def test_excel_factory_prefers_openpyxl_for_read_and_update(
 
 @pytest.mark.parametrize('file_access', [FileAccess.READ, FileAccess.UPDATE])
 def test_excel_xlsxwriter_open_rejects_read_and_update(
-        file_access: FileAccess,
-        capsys: CaptureFixture[str]) -> None:
+        file_access: FileAccess, capsys: CaptureFixture[str]) -> None:
     """Reject access modes that need existing workbook reads."""
     with TemporaryDirectory() as temp_dir:
         workbook = Workbook()
@@ -202,9 +197,8 @@ def test_excel_xlsxwriter_read_methods_raise(
         capsys: CaptureFixture[str]) -> None:
     """Read APIs stay unavailable even during a CREATE session."""
     with TemporaryDirectory() as temp_dir:
-        with TableIOExcelXlsxWriter(
-                Path(temp_dir) / 'write_only',
-                FileAccess.CREATE) as table_io:
+        with TableIOExcelXlsxWriter(Path(temp_dir) / 'write_only',
+                                    FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([['name', 'active'],
                                            ['Alice', True]])
             with pytest.raises(CapabilityNotSupported,
@@ -220,9 +214,8 @@ def test_excel_xlsxwriter_find_value_raises(
         capsys: CaptureFixture[str]) -> None:
     """The backend rejects find_value since it cannot read worksheets."""
     with TemporaryDirectory() as temp_dir:
-        with TableIOExcelXlsxWriter(
-                Path(temp_dir) / 'find_value',
-                FileAccess.CREATE) as table_io:
+        with TableIOExcelXlsxWriter(Path(temp_dir) / 'find_value',
+                                    FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([['name', 'active'],
                                            ['Alice', True]])
             with pytest.raises(CapabilityNotSupported,
@@ -236,9 +229,8 @@ def test_excel_xlsxwriter_read_cells_raises(
         capsys: CaptureFixture[str]) -> None:
     """The backend rejects reading a boxed cell range."""
     with TemporaryDirectory() as temp_dir:
-        with TableIOExcelXlsxWriter(
-                Path(temp_dir) / 'read_cells',
-                FileAccess.CREATE) as table_io:
+        with TableIOExcelXlsxWriter(Path(temp_dir) / 'read_cells',
+                                    FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([['name', 'active'],
                                            ['Alice', True]])
             with pytest.raises(CapabilityNotSupported,
@@ -251,8 +243,7 @@ def test_excel_xlsxwriter_write_formatted_listdata_applies_filter(
         capsys: CaptureFixture[str]) -> None:
     """Per-cell formatting and one filtered table are written."""
     run_write_formatted_listdata_applies_formatting_and_filter(
-        TableIOExcelXlsxWriter, '.xlsx', inspect_formatted_workbook,
-        capsys)
+        TableIOExcelXlsxWriter, '.xlsx', inspect_formatted_workbook, capsys)
 
 
 def test_excel_xlsxwriter_table_width_uses_table_content_not_heading(
@@ -267,9 +258,10 @@ def test_excel_xlsxwriter_table_width_uses_table_content_not_heading(
 def test_excel_xlsxwriter_write_multiple_filtered_ranges_keeps_all_tables(
         capsys: CaptureFixture[str]) -> None:
     """Sequential filtered writes are kept as separate worksheet tables."""
-    run_write_multiple_filtered_ranges_keeps_all_ranges(
-        TableIOExcelXlsxWriter, '.xlsx',
-        inspect_multiple_filters_workbook, capsys)
+    inspector = inspect_multiple_filters_workbook
+    run_write_multiple_filtered_ranges_keeps_all_ranges(TableIOExcelXlsxWriter,
+                                                        '.xlsx', inspector,
+                                                        capsys)
 
 
 def test_excel_xlsxwriter_table_width_is_widen_only_with_cap(
@@ -285,15 +277,13 @@ def test_excel_xlsxwriter_box_write_removes_overlapping_filtered_table(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting a boxed area removes any stale overlapping table metadata."""
     run_box_write_removes_overlapping_filtered_range(
-        TableIOExcelXlsxWriter, '.xlsx',
-        inspect_rewrite_box_workbook, capsys)
+        TableIOExcelXlsxWriter, '.xlsx', inspect_rewrite_box_workbook, capsys)
 
 
 def test_excel_xlsxwriter_boxed_table_partial_overwrite_raises(
         capsys: CaptureFixture[str]) -> None:
     """Boxed table writes reject overlaps that leave part of a table behind."""
-    run_boxed_table_partial_overwrite_raises(
-        TableIOExcelXlsxWriter, capsys)
+    run_boxed_table_partial_overwrite_raises(TableIOExcelXlsxWriter, capsys)
 
 
 def test_excel_xlsxwriter_multi_sheet_write_positions_are_per_sheet(
@@ -306,8 +296,7 @@ def test_excel_xlsxwriter_multi_sheet_write_positions_are_per_sheet(
 def test_excel_xlsxwriter_multi_sheet_heading_state_is_per_sheet(
         capsys: CaptureFixture[str]) -> None:
     """Each sheet tracks whether a default heading level was used before."""
-    run_multi_sheet_heading_state_is_per_sheet(
-        TableIOExcelXlsxWriter, capsys)
+    run_multi_sheet_heading_state_is_per_sheet(TableIOExcelXlsxWriter, capsys)
 
 
 def test_excel_xlsxwriter_open_rejects_second_open(
@@ -326,39 +315,39 @@ def test_excel_xlsxwriter_select_missing_sheet_without_create_raises(
 def test_excel_xlsxwriter_write_row_formatted_dictdata_applies_formatting(
         capsys: CaptureFixture[str]) -> None:
     """Row formatting for dict rows is copied to each written cell."""
-    run_write_row_formatted_dictdata_applies_formatting(
-        TableIOExcelXlsxWriter, '.xlsx',
-        inspect_row_formatted_workbook, capsys)
+    inspector = inspect_row_formatted_workbook
+    run_write_row_formatted_dictdata_applies_formatting(TableIOExcelXlsxWriter,
+                                                        '.xlsx', inspector,
+                                                        capsys)
 
 
 def test_excel_xlsxwriter_write_dictdata_applies_first_row_format(
         capsys: CaptureFixture[str]) -> None:
     """Dict header cells can be formatted with first_row_format."""
-    run_write_dictdata_applies_first_row_format(
-        TableIOExcelXlsxWriter, '.xlsx',
-        inspect_dict_header_fmt_workbook, capsys)
+    inspector = inspect_dict_header_fmt_workbook
+    run_write_dictdata_applies_first_row_format(TableIOExcelXlsxWriter,
+                                                '.xlsx', inspector, capsys)
 
 
 def test_excel_xlsxwriter_write_fmtdictdata_applies_first_row_format(
         capsys: CaptureFixture[str]) -> None:
     """Formatted dict writes keep header and data-row formatting separate."""
-    run_write_fmtdictdata_applies_first_row_format(
-        TableIOExcelXlsxWriter, '.xlsx',
-        inspect_fmtdict_header_fmt_workbook, capsys)
+    inspector = inspect_fmtdict_header_fmt_workbook
+    run_write_fmtdictdata_applies_first_row_format(TableIOExcelXlsxWriter,
+                                                   '.xlsx', inspector, capsys)
 
 
 def test_excel_xlsxwriter_write_table_listdata_applies_borders(
         capsys: CaptureFixture[str]) -> None:
     """Writes the requested table borders to saved XlsxWriter cells."""
-    run_write_table_listdata_applies_borders(
-        TableIOExcelXlsxWriter, '.xlsx',
-        inspect_bordered_workbook, capsys)
+    run_write_table_listdata_applies_borders(TableIOExcelXlsxWriter, '.xlsx',
+                                             inspect_bordered_workbook, capsys)
 
 
 def test_excel_xlsxwriter_box_rewrite_clears_old_borders(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting the same boxed area clears any stale cell borders."""
-    run_box_rewrite_clears_old_borders(
+    run_box_rewrite_clears_borders(
         TableIOExcelXlsxWriter, '.xlsx',
         inspect_box_rewrite_clears_borders_workbook, capsys)
 
@@ -368,8 +357,7 @@ def test_excel_xlsxwriter_filtered_table_headers_are_normalized(
     """Filtered table headers are normalized to valid Excel strings."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'normalized_headers'
-        with TableIOExcelXlsxWriter(
-                file_name, FileAccess.CREATE) as table_io:
+        with TableIOExcelXlsxWriter(file_name, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([[1, None], [2, 3]],
                                           filtered_data_range=True)
         inspect_normalized_header_workbook(
@@ -382,14 +370,12 @@ def test_excel_xlsxwriter_datetime_cells_round_trip_as_datetimes(
     """Written datetime cells are stored with an Excel datetime format."""
     with TemporaryDirectory() as temp_dir:
         file_name = Path(temp_dir) / 'datetime_cells'
-        with TableIOExcelXlsxWriter(
-                file_name, FileAccess.CREATE) as table_io:
+        with TableIOExcelXlsxWriter(file_name, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([
                 ['flag', 'when'],
                 [True, datetime(2026, 3, 24, 14, 30, 0)]
             ])
-        inspect_datetime_cells_workbook(
-            Path(temp_dir) / 'datetime_cells.xlsx')
+        inspect_datetime_cells_workbook(Path(temp_dir) / 'datetime_cells.xlsx')
     check_capsys(capsys)
 
 
@@ -405,10 +391,8 @@ def test_excel_xlsxwriter_write_cells_writes_exact_box_and_formatting(
             read_row = table_io.read_row
             write_row = table_io.write_row
             table_io.write_cells([
-                [ValueFmt(value='Bob',
-                          fmt=Fmt(highlight=Color.YELLOW)),
-                 ValueFmt(value=False,
-                          fmt=Fmt(bold=True))]
+                [ValueFmt(value='Bob', fmt=Fmt(highlight=Color.YELLOW)),
+                 ValueFmt(value=False, fmt=Fmt(bold=True))]
             ], Box(top=3, left=1, bottom=4, right=3))
             assert table_io.read_row == read_row
             assert table_io.write_row == write_row
@@ -428,8 +412,7 @@ def test_excel_xlsxwriter_write_file_suffix_is_noop_without_workbook(
     """Closing an unopened writer leaves the target file untouched."""
     with TemporaryDirectory() as temp_dir:
         table_io = _InspectableTableIOExcelXlsxWriter(
-            Path(temp_dir) / 'no_workbook',
-            FileAccess.CREATE)
+            Path(temp_dir) / 'no_workbook', FileAccess.CREATE)
         table_io.run_write_file_suffix()
         assert not Path(temp_dir, 'no_workbook.xlsx').exists()
     check_capsys(capsys)
@@ -438,9 +421,8 @@ def test_excel_xlsxwriter_write_file_suffix_is_noop_without_workbook(
 def test_excel_xlsxwriter_default_cell_style_needs_no_format(
         capsys: CaptureFixture[str]) -> None:
     """The default style object is treated the same as no style."""
-    table_io = _InspectableTableIOExcelXlsxWriter(
-        Path('default_style'),
-        FileAccess.CREATE)
+    table_io = _InspectableTableIOExcelXlsxWriter(Path('default_style'),
+                                                  FileAccess.CREATE)
     assert table_io.run_xlsx_format(DEFAULT_CELL_STYLE, False) is None
     check_capsys(capsys)
 
@@ -450,8 +432,7 @@ def test_excel_xlsxwriter_last_used_column_is_minus_one_on_empty_sheet(
     """Empty worksheets report no used column."""
     with TemporaryDirectory() as temp_dir:
         table_io = _InspectableTableIOExcelXlsxWriter(
-            Path(temp_dir) / 'empty_sheet',
-            FileAccess.CREATE)
+            Path(temp_dir) / 'empty_sheet', FileAccess.CREATE)
         with table_io:
             assert table_io.run_last_used_column() == -1
     check_capsys(capsys)
@@ -462,8 +443,7 @@ def test_excel_xlsxwriter_filtered_range_raises_on_table_failure(
     """Filtered range creation raises when XlsxWriter rejects the table."""
     with TemporaryDirectory() as temp_dir:
         table_io = _InspectableTableIOExcelXlsxWriter(
-            Path(temp_dir) / 'table_failure',
-            FileAccess.CREATE)
+            Path(temp_dir) / 'table_failure', FileAccess.CREATE)
         with table_io:
             assert table_io.sheet_state is not None
             table_io.sheet_state.values[(0, 0)] = 'name'
@@ -471,8 +451,7 @@ def test_excel_xlsxwriter_filtered_range_raises_on_table_failure(
             table_io.sheet_state.worksheet = _FailingWorksheet()
             with pytest.raises(ValueError,
                                match='Unable to create filtered Excel table'):
-                table_io.run_add_filtered_range((0, 0, 2, 2),
-                                                'BrokenFilter')
+                table_io.run_add_filtered_range((0, 0, 2, 2), 'BrokenFilter')
     check_capsys(capsys)
 
 

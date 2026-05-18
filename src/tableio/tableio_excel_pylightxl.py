@@ -68,8 +68,7 @@ def _worksheet_names(database: Database) -> list[str]:
     return cast(list[str], database.ws_names)
 
 
-def _database_worksheet(database: Database,
-                        sheet_name: str) -> _WorksheetLike:
+def _database_worksheet(database: Database, sheet_name: str) -> _WorksheetLike:
     """Return one worksheet from the database with a concrete static type."""
     return cast(_WorksheetLike, database.ws(sheet_name))
 
@@ -214,8 +213,7 @@ def _sheet_data_from_xml(
     return ret
 
 
-def _load_named_ranges(workbook_root: ET.Element,
-                       database: Database) -> None:
+def _load_named_ranges(workbook_root: ET.Element, database: Database) -> None:
     """Load workbook defined names into the pylightxl database."""
     for defined_name in workbook_root.findall(
             'main:definedNames/main:definedName', _XML_NS):
@@ -307,13 +305,11 @@ class TableIOExcelPylightxl(TableIOExcelBased):
     operations and value search are supported.
     """
 
-    def __init__(self, file_name: PathLike,
-                 file_access: FileAccess,
+    def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None) -> None:
         """Initialize the pylightxl-backed Excel reader/writer."""
-        super().__init__(file_name=file_name,
-                         file_access=file_access,
+        super().__init__(file_name=file_name, file_access=file_access,
                          file_exists_callback=file_exists_callback)
         self.database: Optional[Database] = None
         self.worksheet: Optional[object] = None
@@ -322,19 +318,15 @@ class TableIOExcelPylightxl(TableIOExcelBased):
     @classmethod
     def get_description(cls) -> Descriptor:
         """Return the descriptor for the pylightxl Excel backend."""
-        return Descriptor(format_name='Excel',
-                          implementation='pylightxl',
+        return Descriptor(format_name='Excel', implementation='pylightxl',
                           capabilities=cls.get_capabilities(),
-                          mandatory_args=[],
-                          optional_args=[],
-                          priority=8)
+                          mandatory_args=[], optional_args=[], priority=8)
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
         """Return the honest capabilities of the pylightxl backend."""
         return Capabilities(can_read=CAP_IMPLEMENTED,
-                            can_write=CAP_IMPLEMENTED,
-                            can_fmt_row=CAP_IGNORED,
+                            can_write=CAP_IMPLEMENTED, can_fmt_row=CAP_IGNORED,
                             can_fmt_value=CAP_IGNORED,
                             filtered_data_range=CAP_IGNORED,
                             can_write_box=CAP_IMPLEMENTED,
@@ -446,16 +438,13 @@ class TableIOExcelPylightxl(TableIOExcelBased):
             if file_name_text == 'xl/_rels/workbook.xml.rels':
                 return self._workbook_rels_with_required_parts(data)
             if file_name_text.startswith('xl/worksheets/'):
-                return self._worksheet_xml_for_output(file_name_text,
-                                                      data,
+                return self._worksheet_xml_for_output(file_name_text, data,
                                                       sheet_targets)
             return data
         rewrite_zip_archive(
-            file_name,
-            rewrite_entry,
+            file_name, rewrite_entry,
             {'xl/styles.xml': _styles_xml(),
-             'xl/theme/theme1.xml': _theme_xml()}
-        )
+             'xl/theme/theme1.xml': _theme_xml()})
 
     def _content_types_with_required_parts(self, data: bytes) -> bytes:
         """Return content types XML updated with styles and theme parts."""
@@ -621,8 +610,8 @@ class TableIOExcelPylightxl(TableIOExcelBased):
         assert self.worksheet is not None
         return self.worksheet
 
-    def _write_value_to_sheet(self, sheet: object, row: int,
-                              column: int, value: object) -> None:
+    def _write_value_to_sheet(self, sheet: object, row: int, column: int,
+                              value: object) -> None:
         """Write one value to one worksheet cell."""
         worksheet = cast(_WorksheetLike, sheet)
         address = self._excel_cell_ref(row, column)
@@ -696,8 +685,7 @@ class TableIOExcelPylightxl(TableIOExcelBased):
             return datetime.strptime(value, '%Y/%m/%d')
         if style_code in _DATE_STYLE_CODES and isinstance(value, (int, float)):
             date_value = _datetime_from_excel_number(value)
-            return datetime(date_value.year, date_value.month,
-                            date_value.day)
+            return datetime(date_value.year, date_value.month, date_value.day)
         if style_code in _TIME_STYLE_CODES and isinstance(value, (int, float)):
             time_value = _datetime_from_excel_number(value)
             return time_value.strftime('%H:%M:%S')

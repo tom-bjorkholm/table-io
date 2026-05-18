@@ -45,8 +45,7 @@ def _run_script_with_venv(script_file: Path, project_root: Path) -> None:
         return
     raise RuntimeError(
         f'Custom hook script failed: {script_file} '
-        f'(exit code {process.returncode}).'
-    )
+        f'(exit code {process.returncode}).')
 
 
 def _run_custom_script(build_information: BuildInformation,

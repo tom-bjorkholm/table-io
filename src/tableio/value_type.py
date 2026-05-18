@@ -206,8 +206,7 @@ def str_list_to_list_row(row: list[str]) -> ListRow[Value]:
 T = TypeVar('T')
 
 
-def get_checked_type(value: Optional[object],
-                     expected_type: type[T]) -> T:
+def get_checked_type(value: Optional[object], expected_type: type[T]) -> T:
     """Return value unchanged while narrowing it to the expected type.
 
     This helper is a non-raising cast for code that has already established
@@ -420,8 +419,7 @@ def row_fmt_from_cell_fmt_list(data: ListDataSeq[CellT]) -> FmtListData:
             else:
                 vals.append(cell)
                 fmts.append(Fmt())
-        ret.append(FmtListRow(
-            values=vals, fmt=fmt_set_in_all(fmts)))
+        ret.append(FmtListRow(values=vals, fmt=fmt_set_in_all(fmts)))
     return ret
 
 
@@ -453,8 +451,7 @@ def row_fmt_from_cell_fmt_dict(data: DictDataMap[CellT]) -> FmtDictData:
             else:
                 vals[key] = cell
                 fmts.append(Fmt())
-        ret.append(FmtDictRow(
-            values=vals, fmt=fmt_set_in_all(fmts)))
+        ret.append(FmtDictRow(values=vals, fmt=fmt_set_in_all(fmts)))
     return ret
 
 
@@ -514,8 +511,7 @@ def _first_row_is_formatted_dict_data(
 
 def _normalize_dict_data_with_missing_cell(data: DictDataMap[CellT],
                                            column_order: list[str],
-                                           missing_ok: bool,
-                                           extra_ok: bool,
+                                           missing_ok: bool, extra_ok: bool,
                                            missing_cell: CellT) -> \
         DictDataMap[CellT]:
     """Normalize dict data using the provided missing-cell value."""
@@ -571,8 +567,7 @@ def _normalize_dict_data_impl(data: DictDataMap[Value] | DictDataMap[ValueFmt],
     raise AssertionError('Unreachable code reached in normalize_dict_data.')
 
 
-def normalize_dict_data(data: DictDataMap[CellT],
-                        column_order: list[str],
+def normalize_dict_data(data: DictDataMap[CellT], column_order: list[str],
                         missing_ok: bool = False,
                         extra_ok: bool = False) -> DictDataMap[CellT]:
     """Check and normalize a dict data to have specified columns.
@@ -619,5 +614,4 @@ def normalize_dict_data(data: DictDataMap[CellT],
     """
     return cast(
         DictDataMap[CellT],
-        _normalize_dict_data_impl(data, column_order, missing_ok, extra_ok)
-    )
+        _normalize_dict_data_impl(data, column_order, missing_ok, extra_ok))

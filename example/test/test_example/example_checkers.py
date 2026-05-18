@@ -74,8 +74,7 @@ def check_text_in_order(text: str, expected_txts: list[str]) -> None:
 
 # pylint: disable-next=too-many-arguments,too-many-positional-arguments
 def check_example_spreadsheet(
-        example: Example,
-        capture: CaptureFixture[str],
+        example: Example, capture: CaptureFixture[str],
         expected_fragments: SheetContentExpectations,
         style_expectations: AnchoredStyleExpectations = None,
         border_expectations:
@@ -104,13 +103,10 @@ def check_example_spreadsheet(
                                           str(output_path),
                                           example.implementation_name,
                                           example.optional_args)
-        check_spreadsheet_file(
-            output_path,
-            expected_fragments,
-            style_expectations=style_expectations,
-            border_expectations=border_expectations,
-            expected_errors=expected_errors
-        )
+        check_spreadsheet_file(output_path, expected_fragments,
+                               style_expectations=style_expectations,
+                               border_expectations=border_expectations,
+                               expected_errors=expected_errors)
         assert result == 0
     out, err = capture.readouterr()
     assert out == ''
