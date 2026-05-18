@@ -1,5 +1,5 @@
 #! /usr/local/bin/python3
-"""Configuration data sketch for the tableio package."""
+"""Configuration data and helper signatures for the tableio package."""
 
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
@@ -13,22 +13,6 @@ from tableio.optional_args import CsvDialect, OptionalArgs
 from tableio.tableio import TableIO
 from tableio.tableio_types import FileAccess
 
-__all__ = [
-    'ConfigData',
-    'ConfigSpec',
-    'CsvConfigData',
-    'HtmlConfigData',
-    'LatexConfigData',
-    'create',
-    'defaults',
-    'describe',
-    'descriptions',
-    'ignored',
-    'specs',
-    'to_args',
-    'trim',
-    'validate']
-
 
 @dataclass
 class CsvConfigData:
@@ -37,7 +21,8 @@ class CsvConfigData:
     This class holds durable user choices that only have meaning for CSV
     output. The values are allowed to be present even when another format is
     selected; helper functions decide whether they are relevant for the
-    current TableIO backend.
+    current TableIO backend. The class has no configuration-framework base
+    class, so adapter libraries may combine it with their own base classes.
     """
 
     dialect: Optional[CsvDialect] = None
@@ -61,7 +46,11 @@ class CsvConfigData:
 
 @dataclass
 class HtmlConfigData:
-    """HTML-specific configuration values."""
+    """HTML-specific configuration values.
+
+    The class has no configuration-framework base class, so adapter
+    libraries may combine it with their own base classes.
+    """
 
     css_file: Optional[str] = None
     """The CSS file path or URL to reference, or ``None`` for no CSS file."""
@@ -69,7 +58,11 @@ class HtmlConfigData:
 
 @dataclass
 class LatexConfigData:
-    """LaTeX-specific configuration values."""
+    """LaTeX-specific configuration values.
+
+    The class has no configuration-framework base class, so adapter
+    libraries may combine it with their own base classes.
+    """
 
     document_class: Optional[str] = None
     """The LaTeX document class to use, or ``None`` for backend default."""
@@ -84,11 +77,16 @@ class ConfigData:  # pylint: disable=too-many-instance-attributes
 
     This class intentionally excludes runtime intent. File names, file access,
     capabilities and callbacks are supplied to helper functions instead of
-    being stored as configuration values.
+    being stored as configuration values. The default format is Excel, and
+    format-specific nested sections default to ``None`` until a user or
+    application deliberately configures them.
+
+    The class has no configuration-framework base class, so adapter libraries
+    may combine it with their own base classes.
     """
 
-    format_name: str
-    """The user-facing TableIO format name, for example ``'CSV'``."""
+    format_name: str = 'excel'
+    """The TableIO format name. Matching is case-insensitive."""
 
     implementation: Optional[str] = None
     """The optional implementation pin, or ``None`` to choose best match."""
@@ -157,9 +155,9 @@ class ConfigSpec:  # pylint: disable=too-many-instance-attributes
     """The TableIO optional argument name this parameter maps to."""
 
 
-def defaults(capabilities: Capabilities, file_access: FileAccess,
-             format_name: Optional[str] = None,
-             implementation: Optional[str] = None) -> ConfigData:
+def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
+                       format_name: Optional[str] = None,
+                       implementation: Optional[str] = None) -> ConfigData:
     """Return recommended default configuration data.
 
     Args:
@@ -173,9 +171,9 @@ def defaults(capabilities: Capabilities, file_access: FileAccess,
     raise NotImplementedError
 
 
-def validate(config: ConfigData,
-             capabilities: Optional[Capabilities] = None,
-             file_access: Optional[FileAccess] = None) -> None:
+def tio_config_validate(config: ConfigData,
+                        capabilities: Optional[Capabilities] = None,
+                        file_access: Optional[FileAccess] = None) -> None:
     """Validate configuration values and selected combinations.
 
     Irrelevant but well-formed parameters are valid. For example, CSV values
@@ -189,8 +187,9 @@ def validate(config: ConfigData,
     raise NotImplementedError
 
 
-def to_args(config: ConfigData,
-            capabilities: Optional[Capabilities] = None) -> OptionalArgs:
+def tio_config_optional_args(config: ConfigData,
+                             capabilities: Optional[Capabilities] = None) -> \
+        OptionalArgs:
     """Build TableIO optional arguments from configuration data.
 
     The returned arguments contain only values relevant to the selected
@@ -206,11 +205,11 @@ def to_args(config: ConfigData,
     raise NotImplementedError
 
 
-def create(config: ConfigData, file_name: PathLike,
-           file_access: FileAccess,
-           capabilities: Optional[Capabilities] = None,
-           file_exists_callback: Optional[Callable[[str], None]] = None
-           ) -> TableIO:
+def tio_config_create(
+        config: ConfigData, file_name: PathLike, file_access: FileAccess,
+        capabilities: Optional[Capabilities] = None,
+        file_exists_callback: Optional[Callable[[str], None]] = None) -> \
+        TableIO:
     """Create a TableIO object from configuration and runtime values.
 
     Args:
@@ -225,8 +224,9 @@ def create(config: ConfigData, file_name: PathLike,
     raise NotImplementedError
 
 
-def ignored(config: ConfigData,
-            capabilities: Optional[Capabilities] = None) -> list[str]:
+def tio_config_ignored_names(config: ConfigData,
+                             capabilities: Optional[Capabilities] = None) -> \
+        list[str]:
     """Return configured parameters ignored by the selected backend.
 
     Args:
@@ -238,8 +238,8 @@ def ignored(config: ConfigData,
     raise NotImplementedError
 
 
-def trim(config: ConfigData,
-         capabilities: Optional[Capabilities] = None) -> ConfigData:
+def tio_config_trim(config: ConfigData,
+                    capabilities: Optional[Capabilities] = None) -> ConfigData:
     """Return a copy without parameters irrelevant to the selected backend.
 
     The original configuration object is not mutated. This helper is intended
@@ -256,7 +256,7 @@ def trim(config: ConfigData,
     raise NotImplementedError
 
 
-def specs() -> dict[str, ConfigSpec]:
+def tio_config_specs() -> dict[str, ConfigSpec]:
     """Return documentation metadata for configuration parameters.
 
     Returns:
@@ -265,7 +265,7 @@ def specs() -> dict[str, ConfigSpec]:
     raise NotImplementedError
 
 
-def descriptions() -> dict[str, str]:
+def tio_config_descriptions() -> dict[str, str]:
     """Return descriptions for configuration parameters.
 
     Returns:
@@ -274,7 +274,7 @@ def descriptions() -> dict[str, str]:
     raise NotImplementedError
 
 
-def describe(name: str) -> str:
+def tio_config_describe(name: str) -> str:
     """Return the description for one configuration parameter.
 
     Args:

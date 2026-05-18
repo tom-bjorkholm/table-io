@@ -8,6 +8,11 @@
 from tableio.capability import CAP_IGNORABLE, CAP_NEEDED, CAP_NOT_USED, \
     Capabilities
 from tableio.color import Color
+from tableio.config_data import ConfigData, ConfigSpec, CsvConfigData, \
+    HtmlConfigData, LatexConfigData, tio_config_create, tio_config_default, \
+    tio_config_describe, tio_config_descriptions, tio_config_ignored_names, \
+    tio_config_optional_args, tio_config_specs, tio_config_trim, \
+    tio_config_validate
 from tableio.factory import create_tableio, filter_args_tableio, \
     list_implementations_tableio, list_registered_tableio
 from tableio.optional_args import CsvDialect, OptionalArgs, OptionalArgsDict
@@ -46,4 +51,10 @@ __all__ = ['create_tableio',
            'filter_args_tableio',
            'list_registered_tableio',
            'list_implementations_tableio',
-           'CsvDialect']
+           'CsvDialect',
+           'ConfigData', 'ConfigSpec', 'CsvConfigData',
+           'HtmlConfigData', 'LatexConfigData',
+           'tio_config_create', 'tio_config_default',
+           'tio_config_describe', 'tio_config_descriptions',
+           'tio_config_ignored_names', 'tio_config_optional_args',
+           'tio_config_specs', 'tio_config_trim', 'tio_config_validate']
