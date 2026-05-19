@@ -1,5 +1,13 @@
 # Table of Contents
 
+* [tableio.config\_data\_validate](#tableio.config_data_validate)
+  * [ConfigIssue](#tableio.config_data_validate.ConfigIssue)
+    * [name](#tableio.config_data_validate.ConfigIssue.name)
+    * [message](#tableio.config_data_validate.ConfigIssue.message)
+  * [ConfigError](#tableio.config_data_validate.ConfigError)
+    * [issues](#tableio.config_data_validate.ConfigError.issues)
+    * [\_\_init\_\_](#tableio.config_data_validate.ConfigError.__init__)
+  * [tio\_config\_validate](#tableio.config_data_validate.tio_config_validate)
 * [tableio.tableio](#tableio.tableio)
   * [TableIO](#tableio.tableio.TableIO)
     * [\_\_init\_\_](#tableio.tableio.TableIO.__init__)
@@ -135,30 +143,11 @@
     * [csv](#tableio.config_data.ConfigData.csv)
     * [html](#tableio.config_data.ConfigData.html)
     * [latex](#tableio.config_data.ConfigData.latex)
-  * [ConfigSpec](#tableio.config_data.ConfigSpec)
-    * [name](#tableio.config_data.ConfigSpec.name)
-    * [description](#tableio.config_data.ConfigSpec.description)
-    * [value\_type](#tableio.config_data.ConfigSpec.value_type)
-    * [default\_text](#tableio.config_data.ConfigSpec.default_text)
-    * [choices](#tableio.config_data.ConfigSpec.choices)
-    * [relevant\_formats](#tableio.config_data.ConfigSpec.relevant_formats)
-    * [relevant\_impls](#tableio.config_data.ConfigSpec.relevant_impls)
-    * [optional\_arg](#tableio.config_data.ConfigSpec.optional_arg)
-  * [ConfigIssue](#tableio.config_data.ConfigIssue)
-    * [name](#tableio.config_data.ConfigIssue.name)
-    * [message](#tableio.config_data.ConfigIssue.message)
-  * [ConfigError](#tableio.config_data.ConfigError)
-    * [issues](#tableio.config_data.ConfigError.issues)
-    * [\_\_init\_\_](#tableio.config_data.ConfigError.__init__)
   * [tio\_config\_default](#tableio.config_data.tio_config_default)
-  * [tio\_config\_validate](#tableio.config_data.tio_config_validate)
   * [tio\_config\_optional\_args](#tableio.config_data.tio_config_optional_args)
   * [tio\_config\_create](#tableio.config_data.tio_config_create)
   * [tio\_config\_ignored\_names](#tableio.config_data.tio_config_ignored_names)
   * [tio\_config\_trim](#tableio.config_data.tio_config_trim)
-  * [tio\_config\_specs](#tableio.config_data.tio_config_specs)
-  * [tio\_config\_descriptions](#tableio.config_data.tio_config_descriptions)
-  * [tio\_config\_describe](#tableio.config_data.tio_config_describe)
 * [tableio.factory](#tableio.factory)
   * [TableIOFactoryConflictError](#tableio.factory.TableIOFactoryConflictError)
   * [TableIOFactoryNoSuchError](#tableio.factory.TableIOFactoryNoSuchError)
@@ -305,6 +294,19 @@
     * [OUTER\_THICK\_INNER\_THIN](#tableio.tableio_types.TableBorderStyle.OUTER_THICK_INNER_THIN)
     * [ALL\_THIN](#tableio.tableio_types.TableBorderStyle.ALL_THIN)
     * [ALL\_THICK](#tableio.tableio_types.TableBorderStyle.ALL_THICK)
+* [tableio.config\_data\_describe](#tableio.config_data_describe)
+  * [ConfigSpec](#tableio.config_data_describe.ConfigSpec)
+    * [name](#tableio.config_data_describe.ConfigSpec.name)
+    * [description](#tableio.config_data_describe.ConfigSpec.description)
+    * [value\_type](#tableio.config_data_describe.ConfigSpec.value_type)
+    * [default\_text](#tableio.config_data_describe.ConfigSpec.default_text)
+    * [choices](#tableio.config_data_describe.ConfigSpec.choices)
+    * [relevant\_formats](#tableio.config_data_describe.ConfigSpec.relevant_formats)
+    * [relevant\_impls](#tableio.config_data_describe.ConfigSpec.relevant_impls)
+    * [optional\_arg](#tableio.config_data_describe.ConfigSpec.optional_arg)
+  * [tio\_config\_specs](#tableio.config_data_describe.tio_config_specs)
+  * [tio\_config\_descriptions](#tableio.config_data_describe.tio_config_descriptions)
+  * [tio\_config\_describe](#tableio.config_data_describe.tio_config_describe)
 * [tableio.capability](#tableio.capability)
   * [Strictness](#tableio.capability.Strictness)
     * [STRICT](#tableio.capability.Strictness.STRICT)
@@ -385,6 +387,107 @@
     * [get\_capabilities](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_capabilities)
     * [get\_description](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.get_description)
     * [open](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.open)
+
+<a id="tableio.config_data_validate"></a>
+
+# tableio.config\_data\_validate
+
+Validation helpers for framework-neutral TableIO configuration.
+
+<a id="tableio.config_data_validate.ConfigIssue"></a>
+
+## ConfigIssue Objects
+
+```python
+@dataclass
+class ConfigIssue()
+```
+
+One validation issue for a TableIO configuration.
+
+The issue name is the dotted user-facing configuration parameter name.
+This lets applications and adapter libraries point diagnostics at the
+same names that appear in configuration files and documentation.
+
+<a id="tableio.config_data_validate.ConfigIssue.name"></a>
+
+#### name
+
+The dotted configuration parameter name, for example ``csv.quoting``.
+
+<a id="tableio.config_data_validate.ConfigIssue.message"></a>
+
+#### message
+
+The human-readable validation message for this parameter.
+
+<a id="tableio.config_data_validate.ConfigError"></a>
+
+## ConfigError Objects
+
+```python
+class ConfigError(ValueError)
+```
+
+Raised when TableIO configuration validation fails.
+
+The ``issues`` attribute contains all validation issues that could be
+found in one pass. ``str(error)`` is intended to be suitable as a compact
+user-facing summary, while ``issues`` is intended for applications and
+adapter libraries that want to attach messages to individual
+configuration fields.
+
+<a id="tableio.config_data_validate.ConfigError.issues"></a>
+
+#### issues
+
+The validation issues that caused the exception.
+
+<a id="tableio.config_data_validate.ConfigError.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(issues: tuple[ConfigIssue, ...],
+             message: Optional[str] = None) -> None
+```
+
+Initialize the configuration validation error.
+
+**Arguments**:
+
+- `issues` - One or more structured validation issues.
+- `message` - Optional summary message for the whole configuration.
+
+<a id="tableio.config_data_validate.tio_config_validate"></a>
+
+#### tio\_config\_validate
+
+```python
+def tio_config_validate(config: ConfigData,
+                        capabilities: Optional[Capabilities] = None,
+                        file_access: Optional[FileAccess] = None) -> None
+```
+
+Validate configuration values and selected combinations.
+
+All configured values are validated, including values that would be
+ignored by the selected backend. Irrelevant but well-formed parameters
+are valid. For example, CSV values may be present while ``format_name``
+selects an Excel backend, but invalid CSV values are still validation
+errors.
+
+**Arguments**:
+
+- `config` - Configuration data to validate.
+- `capabilities` - Optional runtime capabilities used for matching.
+- `file_access` - Optional runtime file access used for consistency checks.
+
+**Raises**:
+
+- `ConfigError` - The configuration contains invalid values, unknown
+  format or implementation names, or a selected backend that cannot
+  fulfill the requested capabilities or file access.
 
 <a id="tableio.tableio"></a>
 
@@ -2310,133 +2413,6 @@ HTML-specific configuration values, or ``None`` when unset.
 
 LaTeX-specific configuration values, or ``None`` when unset.
 
-<a id="tableio.config_data.ConfigSpec"></a>
-
-## ConfigSpec Objects
-
-```python
-@dataclass
-class ConfigSpec()
-```
-
-Documentation metadata for one configuration parameter.
-
-Applications and configuration adapters can use these specifications to
-build user-facing documentation without duplicating TableIO knowledge.
-
-<a id="tableio.config_data.ConfigSpec.name"></a>
-
-#### name
-
-The dotted configuration parameter name.
-
-<a id="tableio.config_data.ConfigSpec.description"></a>
-
-#### description
-
-The user-facing description of the configuration parameter.
-
-<a id="tableio.config_data.ConfigSpec.value_type"></a>
-
-#### value\_type
-
-The user-facing value type description.
-
-<a id="tableio.config_data.ConfigSpec.default_text"></a>
-
-#### default\_text
-
-The user-facing default value description, if there is one.
-
-<a id="tableio.config_data.ConfigSpec.choices"></a>
-
-#### choices
-
-Allowed values, if the value has a finite advertised choice set.
-
-<a id="tableio.config_data.ConfigSpec.relevant_formats"></a>
-
-#### relevant\_formats
-
-Formats where this parameter can affect the created backend.
-
-<a id="tableio.config_data.ConfigSpec.relevant_impls"></a>
-
-#### relevant\_impls
-
-Implementations where this parameter can affect the backend.
-
-<a id="tableio.config_data.ConfigSpec.optional_arg"></a>
-
-#### optional\_arg
-
-The TableIO optional argument name this parameter maps to.
-
-<a id="tableio.config_data.ConfigIssue"></a>
-
-## ConfigIssue Objects
-
-```python
-@dataclass
-class ConfigIssue()
-```
-
-One validation issue for a TableIO configuration.
-
-The issue name is the dotted user-facing configuration parameter name.
-This lets applications and adapter libraries point diagnostics at the
-same names that appear in configuration files and documentation.
-
-<a id="tableio.config_data.ConfigIssue.name"></a>
-
-#### name
-
-The dotted configuration parameter name, for example ``csv.quoting``.
-
-<a id="tableio.config_data.ConfigIssue.message"></a>
-
-#### message
-
-The human-readable validation message for this parameter.
-
-<a id="tableio.config_data.ConfigError"></a>
-
-## ConfigError Objects
-
-```python
-class ConfigError(ValueError)
-```
-
-Raised when TableIO configuration validation fails.
-
-The ``issues`` attribute contains all validation issues that could be
-found in one pass. ``str(error)`` is intended to be suitable as a compact
-user-facing summary, while ``issues`` is intended for applications and
-adapter libraries that want to attach messages to individual
-configuration fields.
-
-<a id="tableio.config_data.ConfigError.issues"></a>
-
-#### issues
-
-The validation issues that caused the exception.
-
-<a id="tableio.config_data.ConfigError.__init__"></a>
-
-#### \_\_init\_\_
-
-```python
-def __init__(issues: tuple[ConfigIssue, ...],
-             message: Optional[str] = None) -> None
-```
-
-Initialize the configuration validation error.
-
-**Arguments**:
-
-- `issues` - One or more structured validation issues.
-- `message` - Optional summary message for the whole configuration.
-
 <a id="tableio.config_data.tio_config_default"></a>
 
 #### tio\_config\_default
@@ -2467,36 +2443,6 @@ their TableIO implementation priority is used.
 **Returns**:
 
   A configuration object containing durable user choices only.
-
-<a id="tableio.config_data.tio_config_validate"></a>
-
-#### tio\_config\_validate
-
-```python
-def tio_config_validate(config: ConfigData,
-                        capabilities: Optional[Capabilities] = None,
-                        file_access: Optional[FileAccess] = None) -> None
-```
-
-Validate configuration values and selected combinations.
-
-All configured values are validated, including values that would be
-ignored by the selected backend. Irrelevant but well-formed parameters
-are valid. For example, CSV values may be present while ``format_name``
-selects an Excel backend, but invalid CSV values are still validation
-errors.
-
-**Arguments**:
-
-- `config` - Configuration data to validate.
-- `capabilities` - Optional runtime capabilities used for matching.
-- `file_access` - Optional runtime file access used for consistency checks.
-
-**Raises**:
-
-- `ConfigError` - The configuration contains invalid values, unknown
-  format or implementation names, or a selected backend that cannot
-  fulfill the requested capabilities or file access.
 
 <a id="tableio.config_data.tio_config_optional_args"></a>
 
@@ -2596,56 +2542,6 @@ preferences for several formats.
 **Returns**:
 
   A copy of ``config`` containing only relevant configured values.
-
-<a id="tableio.config_data.tio_config_specs"></a>
-
-#### tio\_config\_specs
-
-```python
-def tio_config_specs() -> dict[str, ConfigSpec]
-```
-
-Return documentation metadata for configuration parameters.
-
-**Returns**:
-
-  A mapping from dotted parameter names to structured specifications.
-
-<a id="tableio.config_data.tio_config_descriptions"></a>
-
-#### tio\_config\_descriptions
-
-```python
-def tio_config_descriptions() -> dict[str, str]
-```
-
-Return descriptions for configuration parameters.
-
-**Returns**:
-
-  A mapping from dotted parameter names to description strings.
-
-<a id="tableio.config_data.tio_config_describe"></a>
-
-#### tio\_config\_describe
-
-```python
-def tio_config_describe(name: str) -> str
-```
-
-Return the description for one configuration parameter.
-
-**Arguments**:
-
-- `name` - Dotted configuration parameter name.
-
-**Returns**:
-
-  The user-facing description string.
-
-**Raises**:
-
-- `KeyError` - The configuration parameter name is unknown.
 
 <a id="tableio.factory"></a>
 
@@ -4936,6 +4832,124 @@ All cell borders in the table have thin lines.
 #### ALL\_THICK
 
 All cell borders in the table have thick lines.
+
+<a id="tableio.config_data_describe"></a>
+
+# tableio.config\_data\_describe
+
+Description metadata for framework-neutral TableIO configuration.
+
+<a id="tableio.config_data_describe.ConfigSpec"></a>
+
+## ConfigSpec Objects
+
+```python
+@dataclass
+class ConfigSpec()
+```
+
+Documentation metadata for one configuration parameter.
+
+Applications and configuration adapters can use these specifications to
+build user-facing documentation without duplicating TableIO knowledge.
+
+<a id="tableio.config_data_describe.ConfigSpec.name"></a>
+
+#### name
+
+The dotted configuration parameter name.
+
+<a id="tableio.config_data_describe.ConfigSpec.description"></a>
+
+#### description
+
+The user-facing description of the configuration parameter.
+
+<a id="tableio.config_data_describe.ConfigSpec.value_type"></a>
+
+#### value\_type
+
+The user-facing value type description.
+
+<a id="tableio.config_data_describe.ConfigSpec.default_text"></a>
+
+#### default\_text
+
+The user-facing default value description, if there is one.
+
+<a id="tableio.config_data_describe.ConfigSpec.choices"></a>
+
+#### choices
+
+Allowed values, if the value has a finite advertised choice set.
+
+<a id="tableio.config_data_describe.ConfigSpec.relevant_formats"></a>
+
+#### relevant\_formats
+
+Formats where this parameter can affect the created backend.
+
+<a id="tableio.config_data_describe.ConfigSpec.relevant_impls"></a>
+
+#### relevant\_impls
+
+Implementations where this parameter can affect the backend.
+
+<a id="tableio.config_data_describe.ConfigSpec.optional_arg"></a>
+
+#### optional\_arg
+
+The TableIO optional argument name this parameter maps to.
+
+<a id="tableio.config_data_describe.tio_config_specs"></a>
+
+#### tio\_config\_specs
+
+```python
+def tio_config_specs() -> dict[str, ConfigSpec]
+```
+
+Return documentation metadata for configuration parameters.
+
+**Returns**:
+
+  A mapping from dotted parameter names to structured specifications.
+
+<a id="tableio.config_data_describe.tio_config_descriptions"></a>
+
+#### tio\_config\_descriptions
+
+```python
+def tio_config_descriptions() -> dict[str, str]
+```
+
+Return descriptions for configuration parameters.
+
+**Returns**:
+
+  A mapping from dotted parameter names to description strings.
+
+<a id="tableio.config_data_describe.tio_config_describe"></a>
+
+#### tio\_config\_describe
+
+```python
+def tio_config_describe(name: str) -> str
+```
+
+Return the description for one configuration parameter.
+
+**Arguments**:
+
+- `name` - Dotted configuration parameter name.
+
+**Returns**:
+
+  The user-facing description string.
+
+**Raises**:
+
+- `KeyError` - The configuration parameter name is unknown.
 
 <a id="tableio.capability"></a>
 

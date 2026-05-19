@@ -122,79 +122,6 @@ class ConfigData:  # pylint: disable=too-many-instance-attributes
     """LaTeX-specific configuration values, or ``None`` when unset."""
 
 
-@dataclass
-class ConfigSpec:  # pylint: disable=too-many-instance-attributes
-    """Documentation metadata for one configuration parameter.
-
-    Applications and configuration adapters can use these specifications to
-    build user-facing documentation without duplicating TableIO knowledge.
-    """
-
-    name: str
-    """The dotted configuration parameter name."""
-
-    description: str
-    """The user-facing description of the configuration parameter."""
-
-    value_type: str
-    """The user-facing value type description."""
-
-    default_text: Optional[str] = None
-    """The user-facing default value description, if there is one."""
-
-    choices: Optional[tuple[str, ...]] = None
-    """Allowed values, if the value has a finite advertised choice set."""
-
-    relevant_formats: Optional[tuple[str, ...]] = None
-    """Formats where this parameter can affect the created backend."""
-
-    relevant_impls: Optional[tuple[str, ...]] = None
-    """Implementations where this parameter can affect the backend."""
-
-    optional_arg: Optional[str] = None
-    """The TableIO optional argument name this parameter maps to."""
-
-
-@dataclass
-class ConfigIssue:
-    """One validation issue for a TableIO configuration.
-
-    The issue name is the dotted user-facing configuration parameter name.
-    This lets applications and adapter libraries point diagnostics at the
-    same names that appear in configuration files and documentation.
-    """
-
-    name: str
-    """The dotted configuration parameter name, for example ``csv.quoting``."""
-
-    message: str
-    """The human-readable validation message for this parameter."""
-
-
-class ConfigError(ValueError):
-    """Raised when TableIO configuration validation fails.
-
-    The ``issues`` attribute contains all validation issues that could be
-    found in one pass. ``str(error)`` is intended to be suitable as a compact
-    user-facing summary, while ``issues`` is intended for applications and
-    adapter libraries that want to attach messages to individual
-    configuration fields.
-    """
-
-    issues: tuple[ConfigIssue, ...]
-    """The validation issues that caused the exception."""
-
-    def __init__(self, issues: tuple[ConfigIssue, ...],
-                 message: Optional[str] = None) -> None:
-        """Initialize the configuration validation error.
-
-        Args:
-            issues: One or more structured validation issues.
-            message: Optional summary message for the whole configuration.
-        """
-        raise NotImplementedError
-
-
 def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
                        format_name: Optional[str] = None,
                        implementation: Optional[str] = None) -> ConfigData:
@@ -214,29 +141,6 @@ def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
         implementation: Optional preferred implementation name.
     Returns:
         A configuration object containing durable user choices only.
-    """
-    raise NotImplementedError
-
-
-def tio_config_validate(config: ConfigData,
-                        capabilities: Optional[Capabilities] = None,
-                        file_access: Optional[FileAccess] = None) -> None:
-    """Validate configuration values and selected combinations.
-
-    All configured values are validated, including values that would be
-    ignored by the selected backend. Irrelevant but well-formed parameters
-    are valid. For example, CSV values may be present while ``format_name``
-    selects an Excel backend, but invalid CSV values are still validation
-    errors.
-
-    Args:
-        config: Configuration data to validate.
-        capabilities: Optional runtime capabilities used for matching.
-        file_access: Optional runtime file access used for consistency checks.
-    Raises:
-        ConfigError: The configuration contains invalid values, unknown
-            format or implementation names, or a selected backend that cannot
-            fulfill the requested capabilities or file access.
     """
     raise NotImplementedError
 
@@ -306,36 +210,5 @@ def tio_config_trim(config: ConfigData,
         capabilities: Optional runtime capabilities used for matching.
     Returns:
         A copy of ``config`` containing only relevant configured values.
-    """
-    raise NotImplementedError
-
-
-def tio_config_specs() -> dict[str, ConfigSpec]:
-    """Return documentation metadata for configuration parameters.
-
-    Returns:
-        A mapping from dotted parameter names to structured specifications.
-    """
-    raise NotImplementedError
-
-
-def tio_config_descriptions() -> dict[str, str]:
-    """Return descriptions for configuration parameters.
-
-    Returns:
-        A mapping from dotted parameter names to description strings.
-    """
-    raise NotImplementedError
-
-
-def tio_config_describe(name: str) -> str:
-    """Return the description for one configuration parameter.
-
-    Args:
-        name: Dotted configuration parameter name.
-    Returns:
-        The user-facing description string.
-    Raises:
-        KeyError: The configuration parameter name is unknown.
     """
     raise NotImplementedError
