@@ -404,7 +404,8 @@ Apply framework-neutral configuration data to TableIO backends.
 def tio_config_default(capabilities: Capabilities,
                        file_access: FileAccess,
                        format_name: Optional[str] = None,
-                       implementation: Optional[str] = None) -> ConfigData
+                       implementation: Optional[str] = None,
+                       include_all_options: bool = False) -> ConfigData
 ```
 
 Return recommended default configuration data.
@@ -422,6 +423,8 @@ their TableIO implementation priority is used.
 - `file_access` - Runtime file access requested by the application.
 - `format_name` - Optional preferred format name.
 - `implementation` - Optional preferred implementation name.
+- `include_all_options` - Include visible non-None values for all
+  configuration options, for teaching and configuration templates.
 
 **Returns**:
 

@@ -14,7 +14,7 @@ from tableio.config_data_error import ConfigError, ConfigIssue
 from tableio.config_data_validate import tio_config_validate
 from tableio.factory import create_tableio, filter_args_tableio, \
     list_implementations_tableio, list_registered_tableio, usage_tableio
-from tableio.optional_args import OptionalArgs, OptionalArgsDict
+from tableio.optional_args import CsvDialect, OptionalArgs, OptionalArgsDict
 from tableio.tableio import TableIO
 from tableio.tableio_types import FileAccess
 
@@ -30,7 +30,8 @@ def _config_error(name: str, message: str) -> None:
 
 def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
                          format_name: Optional[str],
-                         implementation: Optional[str]) -> None:
+                         implementation: Optional[str],
+                         include_all_options: bool) -> None:
     """Validate runtime values used for default selection."""
     if not isinstance(capabilities, Capabilities):
         _config_error('capabilities', 'must be a Capabilities object.')
@@ -40,6 +41,8 @@ def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
         _config_error('format_name', 'must be a string or None.')
     if implementation is not None and not isinstance(implementation, str):
         _config_error('implementation', 'must be a string or None.')
+    if not isinstance(include_all_options, bool):
+        _config_error('include_all_options', 'must be a bool.')
 
 
 def _caps_with_access(capabilities: Capabilities,
@@ -190,9 +193,24 @@ def _filtered_args(config: ConfigData, capabilities: Optional[Capabilities],
     return filtered
 
 
+def _all_option_config(format_name: str, implementation: str) -> ConfigData:
+    """Return a configuration object with all options visible."""
+    csv = CsvConfigData(dialect=CsvDialect.UNIX, delimiter=',', quoting='all',
+                        quotechar='"', lineterminator='\n', escapechar='\\')
+    html = HtmlConfigData(css_file='style.css')
+    latex = LatexConfigData(document_class='Report', preamble='')
+    return ConfigData(format_name=format_name, implementation=implementation,
+                      character_encoding='utf-8', language='en',
+                      title='HTML file', paper_size='A4', line_length=79,
+                      table_max_line_length=140,
+                      table_alignment='CENTER_BUT_DIGITS_RIGHT', csv=csv,
+                      html=html, latex=latex)
+
+
 def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
                        format_name: Optional[str] = None,
-                       implementation: Optional[str] = None) -> ConfigData:
+                       implementation: Optional[str] = None,
+                       include_all_options: bool = False) -> ConfigData:
     """Return recommended default configuration data.
 
     Default format and implementation selection first prefers implementations
@@ -207,11 +225,13 @@ def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
         file_access: Runtime file access requested by the application.
         format_name: Optional preferred format name.
         implementation: Optional preferred implementation name.
+        include_all_options: Include visible non-None values for all
+            configuration options, for teaching and configuration templates.
     Returns:
         A configuration object containing durable user choices only.
     """
     _check_default_input(capabilities, file_access, format_name,
-                         implementation)
+                         implementation, include_all_options)
     match_caps = _caps_with_access(capabilities, file_access)
     selected_format, selected_impl = _best_default_names(
         match_caps, format_name, implementation)
@@ -219,8 +239,11 @@ def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
         selected_format = format_name
     if implementation is not None:
         selected_impl = implementation
-    config = ConfigData(format_name=selected_format,
-                        implementation=selected_impl)
+    if include_all_options:
+        config = _all_option_config(selected_format, selected_impl)
+    else:
+        config = ConfigData(format_name=selected_format,
+                            implementation=selected_impl)
     tio_config_validate(config, capabilities=match_caps)
     return config
 

@@ -11,8 +11,8 @@ import pytest
 
 from tableio import CAP_IGNORABLE, CAP_NEEDED, Capabilities, ConfigData, \
     ConfigError, CsvConfigData, CsvDialect, FileAccess, HtmlConfigData, \
-    tio_config_create, tio_config_default, tio_config_ignored_names, \
-    tio_config_optional_args, tio_config_trim
+    LatexConfigData, tio_config_create, tio_config_default, \
+    tio_config_ignored_names, tio_config_optional_args, tio_config_trim
 from tableio.tableio_csv import TableIOCsv
 
 
@@ -33,6 +33,49 @@ def test_default_excel_reader() -> None:
     config = tio_config_default(Capabilities(), FileAccess.READ)
     expected = ConfigData(format_name='Excel', implementation='OpenPyXL')
     assert config == expected
+
+
+def test_default_all_options() -> None:
+    """Expanded default configuration includes every configurable leaf."""
+    config = tio_config_default(Capabilities(), FileAccess.CREATE,
+                                include_all_options=True)
+    csv = CsvConfigData(dialect=CsvDialect.UNIX, delimiter=',', quoting='all',
+                        quotechar='"', lineterminator='\n', escapechar='\\')
+    expected = ConfigData(
+        format_name='Excel', implementation='XlsxWriter',
+        character_encoding='utf-8', language='en', title='HTML file',
+        paper_size='A4', line_length=79, table_max_line_length=140,
+        table_alignment='CENTER_BUT_DIGITS_RIGHT', csv=csv,
+        html=HtmlConfigData(css_file='style.css'),
+        latex=LatexConfigData(document_class='Report', preamble=''))
+    assert config == expected
+
+
+def test_default_all_keeps_name_case() -> None:
+    """Expanded defaults preserve explicit user-supplied name casing."""
+    config = tio_config_default(
+        Capabilities(), FileAccess.READ, format_name='excel',
+        implementation='openpyxl', include_all_options=True)
+    assert config.format_name == 'excel'
+    assert config.implementation == 'openpyxl'
+    assert config.csv is not None
+    assert config.html is not None
+    assert config.latex is not None
+
+
+def test_default_all_options_filters() -> None:
+    """Expanded defaults are valid when filtered for one backend."""
+    config = tio_config_default(Capabilities(), FileAccess.CREATE,
+                                format_name='CSV', include_all_options=True)
+    assert tio_config_optional_args(config) == {
+        'character_encoding': 'utf-8',
+        'csv_dialect': CsvDialect.UNIX,
+        'csv_delimiter': ',',
+        'csv_quoting': 'all',
+        'csv_quotechar': '"',
+        'csv_lineterminator': '\n',
+        'csv_escapechar': '\\'
+    }
 
 
 def test_default_keeps_name_case() -> None:
@@ -73,6 +116,14 @@ def test_default_rejects_bad_impl() -> None:
         tio_config_default(Capabilities(), FileAccess.CREATE,
                            implementation='missing')
     assert _issue_names(exc_info.value) == {'implementation'}
+
+
+def test_default_bad_include_all() -> None:
+    """Default selection validates the include_all_options flag."""
+    with pytest.raises(ConfigError) as exc_info:
+        tio_config_default(Capabilities(), FileAccess.CREATE,
+                           include_all_options=1)  # type: ignore[arg-type]
+    assert _issue_names(exc_info.value) == {'include_all_options'}
 
 
 def test_optional_args_empty() -> None:

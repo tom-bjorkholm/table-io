@@ -16,6 +16,7 @@
   * [\_arg\_items](#tableio.config_data_apply._arg_items)
   * [\_arg\_dict](#tableio.config_data_apply._arg_dict)
   * [\_filtered\_args](#tableio.config_data_apply._filtered_args)
+  * [\_all\_option\_config](#tableio.config_data_apply._all_option_config)
   * [tio\_config\_default](#tableio.config_data_apply.tio_config_default)
   * [tio\_config\_optional\_args](#tableio.config_data_apply.tio_config_optional_args)
   * [tio\_config\_create](#tableio.config_data_apply.tio_config_create)
@@ -779,7 +780,8 @@ Raise one structured configuration error.
 ```python
 def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
                          format_name: Optional[str],
-                         implementation: Optional[str]) -> None
+                         implementation: Optional[str],
+                         include_all_options: bool) -> None
 ```
 
 Validate runtime values used for default selection.
@@ -921,6 +923,16 @@ def _filtered_args(
 
 Return filtered optional arguments, or None when empty.
 
+<a id="tableio.config_data_apply._all_option_config"></a>
+
+#### \_all\_option\_config
+
+```python
+def _all_option_config(format_name: str, implementation: str) -> ConfigData
+```
+
+Return a configuration object with all options visible.
+
 <a id="tableio.config_data_apply.tio_config_default"></a>
 
 #### tio\_config\_default
@@ -929,7 +941,8 @@ Return filtered optional arguments, or None when empty.
 def tio_config_default(capabilities: Capabilities,
                        file_access: FileAccess,
                        format_name: Optional[str] = None,
-                       implementation: Optional[str] = None) -> ConfigData
+                       implementation: Optional[str] = None,
+                       include_all_options: bool = False) -> ConfigData
 ```
 
 Return recommended default configuration data.
@@ -947,6 +960,8 @@ their TableIO implementation priority is used.
 - `file_access` - Runtime file access requested by the application.
 - `format_name` - Optional preferred format name.
 - `implementation` - Optional preferred implementation name.
+- `include_all_options` - Include visible non-None values for all
+  configuration options, for teaching and configuration templates.
 
 **Returns**:
 
