@@ -1,12 +1,31 @@
 # Table of Contents
 
+* [tableio.config\_data\_apply](#tableio.config_data_apply)
+  * [\_config\_error](#tableio.config_data_apply._config_error)
+  * [\_check\_default\_input](#tableio.config_data_apply._check_default_input)
+  * [\_caps\_with\_access](#tableio.config_data_apply._caps_with_access)
+  * [\_registered\_formats\_by\_lower](#tableio.config_data_apply._registered_formats_by_lower)
+  * [\_candidate\_formats](#tableio.config_data_apply._candidate_formats)
+  * [\_candidate\_impls](#tableio.config_data_apply._candidate_impls)
+  * [\_match\_group](#tableio.config_data_apply._match_group)
+  * [\_best\_default\_names](#tableio.config_data_apply._best_default_names)
+  * [\_base\_arg\_items](#tableio.config_data_apply._base_arg_items)
+  * [\_csv\_arg\_items](#tableio.config_data_apply._csv_arg_items)
+  * [\_html\_arg\_items](#tableio.config_data_apply._html_arg_items)
+  * [\_latex\_arg\_items](#tableio.config_data_apply._latex_arg_items)
+  * [\_arg\_items](#tableio.config_data_apply._arg_items)
+  * [\_arg\_dict](#tableio.config_data_apply._arg_dict)
+  * [\_filtered\_args](#tableio.config_data_apply._filtered_args)
+  * [tio\_config\_default](#tableio.config_data_apply.tio_config_default)
+  * [tio\_config\_optional\_args](#tableio.config_data_apply.tio_config_optional_args)
+  * [tio\_config\_create](#tableio.config_data_apply.tio_config_create)
+  * [tio\_config\_ignored\_names](#tableio.config_data_apply.tio_config_ignored_names)
+  * [tio\_config\_trim](#tableio.config_data_apply.tio_config_trim)
+  * [\_kept](#tableio.config_data_apply._kept)
+  * [\_trim\_csv](#tableio.config_data_apply._trim_csv)
+  * [\_trim\_html](#tableio.config_data_apply._trim_html)
+  * [\_trim\_latex](#tableio.config_data_apply._trim_latex)
 * [tableio.config\_data\_validate](#tableio.config_data_validate)
-  * [ConfigIssue](#tableio.config_data_validate.ConfigIssue)
-    * [name](#tableio.config_data_validate.ConfigIssue.name)
-    * [message](#tableio.config_data_validate.ConfigIssue.message)
-  * [ConfigError](#tableio.config_data_validate.ConfigError)
-    * [issues](#tableio.config_data_validate.ConfigError.issues)
-    * [\_\_init\_\_](#tableio.config_data_validate.ConfigError.__init__)
   * [\_add\_issue](#tableio.config_data_validate._add_issue)
   * [\_valid\_caps](#tableio.config_data_validate._valid_caps)
   * [\_valid\_file\_access](#tableio.config_data_validate._valid_file_access)
@@ -294,11 +313,6 @@
     * [csv](#tableio.config_data.ConfigData.csv)
     * [html](#tableio.config_data.ConfigData.html)
     * [latex](#tableio.config_data.ConfigData.latex)
-  * [tio\_config\_default](#tableio.config_data.tio_config_default)
-  * [tio\_config\_optional\_args](#tableio.config_data.tio_config_optional_args)
-  * [tio\_config\_create](#tableio.config_data.tio_config_create)
-  * [tio\_config\_ignored\_names](#tableio.config_data.tio_config_ignored_names)
-  * [tio\_config\_trim](#tableio.config_data.tio_config_trim)
 * [tableio.factory](#tableio.factory)
   * [\_the\_factory](#tableio.factory._the_factory)
   * [TableIOFactoryConflictError](#tableio.factory.TableIOFactoryConflictError)
@@ -585,6 +599,13 @@
     * [\_read\_raw\_sections](#tableio.tableio_csv.TableIOCsv._read_raw_sections)
     * [\_read\_table\_listdata](#tableio.tableio_csv.TableIOCsv._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio_csv.TableIOCsv._read_table_dictdata)
+* [tableio.config\_data\_error](#tableio.config_data_error)
+  * [ConfigIssue](#tableio.config_data_error.ConfigIssue)
+    * [name](#tableio.config_data_error.ConfigIssue.name)
+    * [message](#tableio.config_data_error.ConfigIssue.message)
+  * [ConfigError](#tableio.config_data_error.ConfigError)
+    * [issues](#tableio.config_data_error.ConfigError.issues)
+    * [\_\_init\_\_](#tableio.config_data_error.ConfigError.__init__)
 * [tableio.tableio\_spreadsheetbased](#tableio.tableio_spreadsheetbased)
   * [excel\_column\_name](#tableio.tableio_spreadsheetbased.excel_column_name)
   * [\_ScanResult](#tableio.tableio_spreadsheetbased._ScanResult)
@@ -735,76 +756,350 @@
     * [\_add\_filtered\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._add_filtered_range)
     * [\_set\_column\_width\_if\_wider](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._set_column_width_if_wider)
 
+<a id="tableio.config_data_apply"></a>
+
+# tableio.config\_data\_apply
+
+Apply framework-neutral configuration data to TableIO backends.
+
+<a id="tableio.config_data_apply._config_error"></a>
+
+#### \_config\_error
+
+```python
+def _config_error(name: str, message: str) -> None
+```
+
+Raise one structured configuration error.
+
+<a id="tableio.config_data_apply._check_default_input"></a>
+
+#### \_check\_default\_input
+
+```python
+def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
+                         format_name: Optional[str],
+                         implementation: Optional[str]) -> None
+```
+
+Validate runtime values used for default selection.
+
+<a id="tableio.config_data_apply._caps_with_access"></a>
+
+#### \_caps\_with\_access
+
+```python
+def _caps_with_access(capabilities: Capabilities,
+                      file_access: FileAccess) -> Capabilities
+```
+
+Return capabilities including requirements from file access.
+
+<a id="tableio.config_data_apply._registered_formats_by_lower"></a>
+
+#### \_registered\_formats\_by\_lower
+
+```python
+def _registered_formats_by_lower() -> dict[str, str]
+```
+
+Return registered format names keyed by lowercase name.
+
+<a id="tableio.config_data_apply._candidate_formats"></a>
+
+#### \_candidate\_formats
+
+```python
+def _candidate_formats(format_name: Optional[str]) -> list[str]
+```
+
+Return default-selection format candidates.
+
+<a id="tableio.config_data_apply._candidate_impls"></a>
+
+#### \_candidate\_impls
+
+```python
+def _candidate_impls(format_name: str,
+                     implementation: Optional[str]) -> list[str]
+```
+
+Return default-selection implementation candidates.
+
+<a id="tableio.config_data_apply._match_group"></a>
+
+#### \_match\_group
+
+```python
+def _match_group(format_name: str, implementation: str,
+                 capabilities: Capabilities) -> Optional[int]
+```
+
+Return strictness group for a candidate implementation.
+
+<a id="tableio.config_data_apply._best_default_names"></a>
+
+#### \_best\_default\_names
+
+```python
+def _best_default_names(capabilities: Capabilities, format_name: Optional[str],
+                        implementation: Optional[str]) -> tuple[str, str]
+```
+
+Return canonical default format and implementation names.
+
+<a id="tableio.config_data_apply._base_arg_items"></a>
+
+#### \_base\_arg\_items
+
+```python
+def _base_arg_items(config: ConfigData) -> list[tuple[str, str, object]]
+```
+
+Return configured top-level optional argument values.
+
+<a id="tableio.config_data_apply._csv_arg_items"></a>
+
+#### \_csv\_arg\_items
+
+```python
+def _csv_arg_items(config: ConfigData) -> list[tuple[str, str, object]]
+```
+
+Return configured CSV optional argument values.
+
+<a id="tableio.config_data_apply._html_arg_items"></a>
+
+#### \_html\_arg\_items
+
+```python
+def _html_arg_items(config: ConfigData) -> list[tuple[str, str, object]]
+```
+
+Return configured HTML optional argument values.
+
+<a id="tableio.config_data_apply._latex_arg_items"></a>
+
+#### \_latex\_arg\_items
+
+```python
+def _latex_arg_items(config: ConfigData) -> list[tuple[str, str, object]]
+```
+
+Return configured LaTeX optional argument values.
+
+<a id="tableio.config_data_apply._arg_items"></a>
+
+#### \_arg\_items
+
+```python
+def _arg_items(config: ConfigData) -> list[tuple[str, str, object]]
+```
+
+Return all configured optional argument values.
+
+<a id="tableio.config_data_apply._arg_dict"></a>
+
+#### \_arg\_dict
+
+```python
+def _arg_dict(config: ConfigData) -> OptionalArgsDict
+```
+
+Return unfiltered optional arguments from non-None config values.
+
+<a id="tableio.config_data_apply._filtered_args"></a>
+
+#### \_filtered\_args
+
+```python
+def _filtered_args(
+        config: ConfigData,
+        capabilities: Optional[Capabilities],
+        extra_args: Optional[OptionalArgsDict] = None) -> OptionalArgs
+```
+
+Return filtered optional arguments, or None when empty.
+
+<a id="tableio.config_data_apply.tio_config_default"></a>
+
+#### tio\_config\_default
+
+```python
+def tio_config_default(capabilities: Capabilities,
+                       file_access: FileAccess,
+                       format_name: Optional[str] = None,
+                       implementation: Optional[str] = None) -> ConfigData
+```
+
+Return recommended default configuration data.
+
+Default format and implementation selection first prefers implementations
+that strictly support the requested capabilities, then implementations
+that can tolerate capabilities marked as ignorable. If several formats
+match equally well, the preferred format order is Excel, ODS, then CSV.
+If several implementations of the selected format match equally well,
+their TableIO implementation priority is used.
+
+**Arguments**:
+
+- `capabilities` - Runtime capabilities the application intends to use.
+- `file_access` - Runtime file access requested by the application.
+- `format_name` - Optional preferred format name.
+- `implementation` - Optional preferred implementation name.
+
+**Returns**:
+
+  A configuration object containing durable user choices only.
+
+<a id="tableio.config_data_apply.tio_config_optional_args"></a>
+
+#### tio\_config\_optional\_args
+
+```python
+def tio_config_optional_args(
+        config: ConfigData,
+        capabilities: Optional[Capabilities] = None) -> OptionalArgs
+```
+
+Build TableIO optional arguments from configuration data.
+
+The returned arguments contain only values relevant to the selected
+format and implementation. ``None`` values and irrelevant parameters are
+omitted. Runtime-only callbacks are not included.
+
+**Arguments**:
+
+- `config` - Configuration data to convert.
+- `capabilities` - Optional runtime capabilities used for matching.
+
+**Returns**:
+
+  Optional arguments suitable for ``create_tableio``.
+
+<a id="tableio.config_data_apply.tio_config_create"></a>
+
+#### tio\_config\_create
+
+```python
+def tio_config_create(
+        config: ConfigData,
+        file_name: PathLike,
+        file_access: FileAccess,
+        capabilities: Optional[Capabilities] = None,
+        file_exists_callback: Optional[Callable[[str],
+                                                None]] = None) -> TableIO
+```
+
+Create a TableIO object from configuration and runtime values.
+
+**Arguments**:
+
+- `config` - Durable configuration data.
+- `file_name` - Runtime file name to open.
+- `file_access` - Runtime file access to request.
+- `capabilities` - Optional runtime capabilities used for matching.
+- `file_exists_callback` - Optional runtime overwrite callback.
+
+**Returns**:
+
+  A TableIO object intended for use as a context manager.
+
+<a id="tableio.config_data_apply.tio_config_ignored_names"></a>
+
+#### tio\_config\_ignored\_names
+
+```python
+def tio_config_ignored_names(
+        config: ConfigData,
+        capabilities: Optional[Capabilities] = None) -> list[str]
+```
+
+Return configured parameters ignored by the selected backend.
+
+**Arguments**:
+
+- `config` - Configuration data to inspect.
+- `capabilities` - Optional runtime capabilities used for matching.
+
+**Returns**:
+
+  Dotted parameter names whose values are well-formed but irrelevant.
+
+<a id="tableio.config_data_apply.tio_config_trim"></a>
+
+#### tio\_config\_trim
+
+```python
+def tio_config_trim(config: ConfigData,
+                    capabilities: Optional[Capabilities] = None) -> ConfigData
+```
+
+Return a copy without parameters irrelevant to the selected backend.
+
+The original configuration object is not mutated. This helper is intended
+for applications that want to write a compact, backend-specific snapshot
+while still allowing the normal configuration file to keep portable
+preferences for several formats.
+
+**Arguments**:
+
+- `config` - Configuration data to copy and trim.
+- `capabilities` - Optional runtime capabilities used for matching.
+
+**Returns**:
+
+  A copy of ``config`` containing only relevant configured values.
+
+<a id="tableio.config_data_apply._kept"></a>
+
+#### \_kept
+
+```python
+def _kept(value: Optional[_ValueT], arg_name: str,
+          filtered_names: set[str]) -> Optional[_ValueT]
+```
+
+Return value when its optional argument was kept.
+
+<a id="tableio.config_data_apply._trim_csv"></a>
+
+#### \_trim\_csv
+
+```python
+def _trim_csv(config: ConfigData,
+              filtered_names: set[str]) -> Optional[CsvConfigData]
+```
+
+Return trimmed CSV configuration data.
+
+<a id="tableio.config_data_apply._trim_html"></a>
+
+#### \_trim\_html
+
+```python
+def _trim_html(config: ConfigData,
+               filtered_names: set[str]) -> Optional[HtmlConfigData]
+```
+
+Return trimmed HTML configuration data.
+
+<a id="tableio.config_data_apply._trim_latex"></a>
+
+#### \_trim\_latex
+
+```python
+def _trim_latex(config: ConfigData,
+                filtered_names: set[str]) -> Optional[LatexConfigData]
+```
+
+Return trimmed LaTeX configuration data.
+
 <a id="tableio.config_data_validate"></a>
 
 # tableio.config\_data\_validate
 
 Validation helpers for framework-neutral TableIO configuration.
-
-<a id="tableio.config_data_validate.ConfigIssue"></a>
-
-## ConfigIssue Objects
-
-```python
-@dataclass
-class ConfigIssue()
-```
-
-One validation issue for a TableIO configuration.
-
-The issue name is the dotted user-facing configuration parameter name.
-This lets applications and adapter libraries point diagnostics at the
-same names that appear in configuration files and documentation.
-
-<a id="tableio.config_data_validate.ConfigIssue.name"></a>
-
-#### name
-
-The dotted configuration parameter name, for example ``csv.quoting``.
-
-<a id="tableio.config_data_validate.ConfigIssue.message"></a>
-
-#### message
-
-The human-readable validation message for this parameter.
-
-<a id="tableio.config_data_validate.ConfigError"></a>
-
-## ConfigError Objects
-
-```python
-class ConfigError(ValueError)
-```
-
-Raised when TableIO configuration validation fails.
-
-The ``issues`` attribute contains all validation issues that could be
-found in one pass. ``str(error)`` is intended to be suitable as a compact
-user-facing summary, while ``issues`` is intended for applications and
-adapter libraries that want to attach messages to individual
-configuration fields.
-
-<a id="tableio.config_data_validate.ConfigError.issues"></a>
-
-#### issues
-
-The validation issues that caused the exception.
-
-<a id="tableio.config_data_validate.ConfigError.__init__"></a>
-
-#### \_\_init\_\_
-
-```python
-def __init__(issues: tuple[ConfigIssue, ...],
-             message: Optional[str] = None) -> None
-```
-
-Initialize the configuration validation error.
-
-**Arguments**:
-
-- `issues` - One or more structured validation issues.
-- `message` - Optional summary message for the whole configuration.
 
 <a id="tableio.config_data_validate._add_issue"></a>
 
@@ -4382,7 +4677,7 @@ Convert the optional arguments to a dictionary of arguments for mformat.
 
 # tableio.config\_data
 
-Configuration data and helper signatures for the tableio package.
+Configuration data for the tableio package.
 
 <a id="tableio.config_data.CsvConfigData"></a>
 
@@ -4574,136 +4869,6 @@ HTML-specific configuration values, or ``None`` when unset.
 #### latex
 
 LaTeX-specific configuration values, or ``None`` when unset.
-
-<a id="tableio.config_data.tio_config_default"></a>
-
-#### tio\_config\_default
-
-```python
-def tio_config_default(capabilities: Capabilities,
-                       file_access: FileAccess,
-                       format_name: Optional[str] = None,
-                       implementation: Optional[str] = None) -> ConfigData
-```
-
-Return recommended default configuration data.
-
-Default format and implementation selection first prefers implementations
-that strictly support the requested capabilities, then implementations
-that can tolerate capabilities marked as ignorable. If several formats
-match equally well, the preferred format order is Excel, ODS, then CSV.
-If several implementations of the selected format match equally well,
-their TableIO implementation priority is used.
-
-**Arguments**:
-
-- `capabilities` - Runtime capabilities the application intends to use.
-- `file_access` - Runtime file access requested by the application.
-- `format_name` - Optional preferred format name.
-- `implementation` - Optional preferred implementation name.
-
-**Returns**:
-
-  A configuration object containing durable user choices only.
-
-<a id="tableio.config_data.tio_config_optional_args"></a>
-
-#### tio\_config\_optional\_args
-
-```python
-def tio_config_optional_args(
-        config: ConfigData,
-        capabilities: Optional[Capabilities] = None) -> OptionalArgs
-```
-
-Build TableIO optional arguments from configuration data.
-
-The returned arguments contain only values relevant to the selected
-format and implementation. ``None`` values and irrelevant parameters are
-omitted. Runtime-only callbacks are not included.
-
-**Arguments**:
-
-- `config` - Configuration data to convert.
-- `capabilities` - Optional runtime capabilities used for matching.
-
-**Returns**:
-
-  Optional arguments suitable for ``create_tableio``.
-
-<a id="tableio.config_data.tio_config_create"></a>
-
-#### tio\_config\_create
-
-```python
-def tio_config_create(
-        config: ConfigData,
-        file_name: PathLike,
-        file_access: FileAccess,
-        capabilities: Optional[Capabilities] = None,
-        file_exists_callback: Optional[Callable[[str],
-                                                None]] = None) -> TableIO
-```
-
-Create a TableIO object from configuration and runtime values.
-
-**Arguments**:
-
-- `config` - Durable configuration data.
-- `file_name` - Runtime file name to open.
-- `file_access` - Runtime file access to request.
-- `capabilities` - Optional runtime capabilities used for matching.
-- `file_exists_callback` - Optional runtime overwrite callback.
-
-**Returns**:
-
-  A TableIO object intended for use as a context manager.
-
-<a id="tableio.config_data.tio_config_ignored_names"></a>
-
-#### tio\_config\_ignored\_names
-
-```python
-def tio_config_ignored_names(
-        config: ConfigData,
-        capabilities: Optional[Capabilities] = None) -> list[str]
-```
-
-Return configured parameters ignored by the selected backend.
-
-**Arguments**:
-
-- `config` - Configuration data to inspect.
-- `capabilities` - Optional runtime capabilities used for matching.
-
-**Returns**:
-
-  Dotted parameter names whose values are well-formed but irrelevant.
-
-<a id="tableio.config_data.tio_config_trim"></a>
-
-#### tio\_config\_trim
-
-```python
-def tio_config_trim(config: ConfigData,
-                    capabilities: Optional[Capabilities] = None) -> ConfigData
-```
-
-Return a copy without parameters irrelevant to the selected backend.
-
-The original configuration object is not mutated. This helper is intended
-for applications that want to write a compact, backend-specific snapshot
-while still allowing the normal configuration file to keep portable
-preferences for several formats.
-
-**Arguments**:
-
-- `config` - Configuration data to copy and trim.
-- `capabilities` - Optional runtime capabilities used for matching.
-
-**Returns**:
-
-  A copy of ``config`` containing only relevant configured values.
 
 <a id="tableio.factory"></a>
 
@@ -8599,6 +8764,77 @@ CSV does not support reading from a box.
 
   The data as a list of dicts, and any headings found
   before the table.
+
+<a id="tableio.config_data_error"></a>
+
+# tableio.config\_data\_error
+
+Structured errors for framework-neutral TableIO configuration.
+
+<a id="tableio.config_data_error.ConfigIssue"></a>
+
+## ConfigIssue Objects
+
+```python
+@dataclass
+class ConfigIssue()
+```
+
+One validation issue for a TableIO configuration.
+
+The issue name is the dotted user-facing configuration parameter name.
+This lets applications and adapter libraries point diagnostics at the
+same names that appear in configuration files and documentation.
+
+<a id="tableio.config_data_error.ConfigIssue.name"></a>
+
+#### name
+
+The dotted configuration parameter name, for example ``csv.quoting``.
+
+<a id="tableio.config_data_error.ConfigIssue.message"></a>
+
+#### message
+
+The human-readable validation message for this parameter.
+
+<a id="tableio.config_data_error.ConfigError"></a>
+
+## ConfigError Objects
+
+```python
+class ConfigError(ValueError)
+```
+
+Raised when TableIO configuration validation fails.
+
+The ``issues`` attribute contains all validation issues that could be
+found in one pass. ``str(error)`` is intended to be suitable as a compact
+user-facing summary, while ``issues`` is intended for applications and
+adapter libraries that want to attach messages to individual
+configuration fields.
+
+<a id="tableio.config_data_error.ConfigError.issues"></a>
+
+#### issues
+
+The validation issues that caused the exception.
+
+<a id="tableio.config_data_error.ConfigError.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(issues: tuple[ConfigIssue, ...],
+             message: Optional[str] = None) -> None
+```
+
+Initialize the configuration validation error.
+
+**Arguments**:
+
+- `issues` - One or more structured validation issues.
+- `message` - Optional summary message for the whole configuration.
 
 <a id="tableio.tableio_spreadsheetbased"></a>
 
