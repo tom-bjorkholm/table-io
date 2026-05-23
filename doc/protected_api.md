@@ -3,7 +3,6 @@
 * [tableio.config\_data\_apply](#tableio.config_data_apply)
   * [\_config\_error](#tableio.config_data_apply._config_error)
   * [\_check\_default\_input](#tableio.config_data_apply._check_default_input)
-  * [\_caps\_with\_access](#tableio.config_data_apply._caps_with_access)
   * [\_registered\_formats\_by\_lower](#tableio.config_data_apply._registered_formats_by_lower)
   * [\_candidate\_formats](#tableio.config_data_apply._candidate_formats)
   * [\_candidate\_impls](#tableio.config_data_apply._candidate_impls)
@@ -44,8 +43,6 @@
   * [\_validate\_csv](#tableio.config_data_validate._validate_csv)
   * [\_validate\_html](#tableio.config_data_validate._validate_html)
   * [\_validate\_latex](#tableio.config_data_validate._validate_latex)
-  * [\_caps\_for\_access](#tableio.config_data_validate._caps_for_access)
-  * [\_check\_caps\_for\_access](#tableio.config_data_validate._check_caps_for_access)
   * [\_match\_caps](#tableio.config_data_validate._match_caps)
   * [\_backend\_can\_be\_checked](#tableio.config_data_validate._backend_can_be_checked)
   * [\_impl\_choices](#tableio.config_data_validate._impl_choices)
@@ -288,6 +285,18 @@
     * [csv\_lineterminator](#tableio.optional_args.OptionalArgsDict.csv_lineterminator)
     * [csv\_escapechar](#tableio.optional_args.OptionalArgsDict.csv_escapechar)
   * [mformat\_optargs\_from\_optionalargs](#tableio.optional_args.mformat_optargs_from_optionalargs)
+* [tableio.access\_capability](#tableio.access_capability)
+  * [NO\_ERROR\_OUTPUT](#tableio.access_capability.NO_ERROR_OUTPUT)
+  * [InsufficientCapabilities](#tableio.access_capability.InsufficientCapabilities)
+    * [\_\_init\_\_](#tableio.access_capability.InsufficientCapabilities.__init__)
+  * [\_raise\_error](#tableio.access_capability._raise_error)
+  * [\_check\_access\_value](#tableio.access_capability._check_access_value)
+  * [\_check\_capabilities\_value](#tableio.access_capability._check_capabilities_value)
+  * [access\_capabilities](#tableio.access_capability.access_capabilities)
+  * [add\_access\_capabilities](#tableio.access_capability.add_access_capabilities)
+  * [\_missing\_access\_caps](#tableio.access_capability._missing_access_caps)
+  * [\_access\_error\_message](#tableio.access_capability._access_error_message)
+  * [check\_access\_capabilities](#tableio.access_capability.check_access_capabilities)
 * [tableio.config\_data](#tableio.config_data)
   * [CsvConfigData](#tableio.config_data.CsvConfigData)
     * [dialect](#tableio.config_data.CsvConfigData.dialect)
@@ -319,8 +328,6 @@
   * [TableIOFactoryConflictError](#tableio.factory.TableIOFactoryConflictError)
   * [TableIOFactoryNoSuchError](#tableio.factory.TableIOFactoryNoSuchError)
   * [TableIOFactoryNoCapabilityMatch](#tableio.factory.TableIOFactoryNoCapabilityMatch)
-  * [InsufficientCapabilities](#tableio.factory.InsufficientCapabilities)
-  * [\_check\_capabilities\_for\_file\_access](#tableio.factory._check_capabilities_for_file_access)
   * [ImplPrio](#tableio.factory.ImplPrio)
     * [format\_name](#tableio.factory.ImplPrio.format_name)
     * [implementation](#tableio.factory.ImplPrio.implementation)
@@ -785,17 +792,6 @@ def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
 ```
 
 Validate runtime values used for default selection.
-
-<a id="tableio.config_data_apply._caps_with_access"></a>
-
-#### \_caps\_with\_access
-
-```python
-def _caps_with_access(capabilities: Capabilities,
-                      file_access: FileAccess) -> Capabilities
-```
-
-Return capabilities including requirements from file access.
 
 <a id="tableio.config_data_apply._registered_formats_by_lower"></a>
 
@@ -1295,27 +1291,6 @@ def _validate_latex(config: ConfigData, specs: dict[str, ConfigSpec],
 ```
 
 Validate LaTeX-specific configuration values.
-
-<a id="tableio.config_data_validate._caps_for_access"></a>
-
-#### \_caps\_for\_access
-
-```python
-def _caps_for_access(file_access: FileAccess) -> Capabilities
-```
-
-Return the capabilities implied by a file access mode.
-
-<a id="tableio.config_data_validate._check_caps_for_access"></a>
-
-#### \_check\_caps\_for\_access
-
-```python
-def _check_caps_for_access(capabilities: Capabilities, file_access: FileAccess,
-                           issues: list[ConfigIssue]) -> None
-```
-
-Validate that explicit capabilities cover file access.
 
 <a id="tableio.config_data_validate._match_caps"></a>
 
@@ -4688,6 +4663,174 @@ Convert the optional arguments to a dictionary of arguments for mformat.
 
   A dictionary of arguments for mformat.
 
+<a id="tableio.access_capability"></a>
+
+# tableio.access\_capability
+
+Helpers that connect file access modes to capability requests.
+
+<a id="tableio.access_capability.NO_ERROR_OUTPUT"></a>
+
+#### NO\_ERROR\_OUTPUT
+
+Text stream used when helper errors should not be printed.
+
+<a id="tableio.access_capability.InsufficientCapabilities"></a>
+
+## InsufficientCapabilities Objects
+
+```python
+class InsufficientCapabilities(ValueError)
+```
+
+Raised when requested capabilities contradict requested file access.
+
+Error raised when the caller supplies file access and explicit
+Capabilities, but the requested capabilities do not include the capability
+implied by that access mode. For example, READ requires can_read, CREATE
+requires can_write, and UPDATE requires both.
+
+<a id="tableio.access_capability.InsufficientCapabilities.__init__"></a>
+
+#### \_\_init\_\_
+
+```python
+def __init__(message: str, capability_names: tuple[str, ...] = ()) -> None
+```
+
+Initialize the exception.
+
+<a id="tableio.access_capability._raise_error"></a>
+
+#### \_raise\_error
+
+```python
+def _raise_error(error_file: TextIO, error: Exception) -> NoReturn
+```
+
+Write an error message and raise the error.
+
+<a id="tableio.access_capability._check_access_value"></a>
+
+#### \_check\_access\_value
+
+```python
+def _check_access_value(file_access: FileAccess, error_file: TextIO) -> None
+```
+
+Raise if file access is not a supported FileAccess value.
+
+<a id="tableio.access_capability._check_capabilities_value"></a>
+
+#### \_check\_capabilities\_value
+
+```python
+def _check_capabilities_value(capabilities: Capabilities,
+                              error_file: TextIO) -> None
+```
+
+Raise if capabilities is not a Capabilities object.
+
+<a id="tableio.access_capability.access_capabilities"></a>
+
+#### access\_capabilities
+
+```python
+def access_capabilities(file_access: FileAccess,
+                        error_file: TextIO = NO_ERROR_OUTPUT) -> Capabilities
+```
+
+Return the capabilities implied by a file access mode.
+
+**Arguments**:
+
+- `file_access` - File access mode to convert to capability requirements.
+- `error_file` - Text stream receiving error messages before exceptions.
+
+**Raises**:
+
+- `TypeError` - If file_access is not a FileAccess value.
+- `ValueError` - If file_access is an unsupported FileAccess value.
+
+**Returns**:
+
+  Capabilities needed for the requested file access.
+
+<a id="tableio.access_capability.add_access_capabilities"></a>
+
+#### add\_access\_capabilities
+
+```python
+def add_access_capabilities(
+        file_access: FileAccess,
+        capabilities: Capabilities,
+        error_file: TextIO = NO_ERROR_OUTPUT) -> Capabilities
+```
+
+Return capabilities with file access requirements added.
+
+The original capabilities object is not mutated.
+
+**Arguments**:
+
+- `file_access` - File access mode to add capability requirements for.
+- `capabilities` - Existing capability requirements to extend.
+- `error_file` - Text stream receiving error messages before exceptions.
+
+**Raises**:
+
+- `TypeError` - If file_access or capabilities has an invalid type.
+- `ValueError` - If file_access is an unsupported FileAccess value.
+
+**Returns**:
+
+  New Capabilities object including the file access requirements.
+
+<a id="tableio.access_capability._missing_access_caps"></a>
+
+#### \_missing\_access\_caps
+
+```python
+def _missing_access_caps(file_access: FileAccess,
+                         capabilities: Capabilities) -> tuple[str, ...]
+```
+
+Return capability names missing for the requested access mode.
+
+<a id="tableio.access_capability._access_error_message"></a>
+
+#### \_access\_error\_message
+
+```python
+def _access_error_message(file_access: FileAccess) -> str
+```
+
+Return the error message for missing access capabilities.
+
+<a id="tableio.access_capability.check_access_capabilities"></a>
+
+#### check\_access\_capabilities
+
+```python
+def check_access_capabilities(file_access: FileAccess,
+                              capabilities: Capabilities,
+                              error_file: TextIO = NO_ERROR_OUTPUT) -> None
+```
+
+Raise if capabilities are not enough for requested access mode.
+
+**Arguments**:
+
+- `file_access` - File access mode to check capability requirements for.
+- `capabilities` - Capability requirements to check.
+- `error_file` - Text stream receiving error messages before exceptions.
+
+**Raises**:
+
+- `TypeError` - If file_access or capabilities has an invalid type.
+- `ValueError` - If file_access is an unsupported FileAccess value.
+- `InsufficientCapabilities` - If capabilities do not support file_access.
+
 <a id="tableio.config_data"></a>
 
 # tableio.config\_data
@@ -4942,32 +5085,6 @@ capabilities that are not supported by any available format or
 implementation, or that the requester is requesting a specific
 format name or implementation name, and the implementation(s)
 with those name(s) do not support the requested capabilities.
-
-<a id="tableio.factory.InsufficientCapabilities"></a>
-
-## InsufficientCapabilities Objects
-
-```python
-class InsufficientCapabilities(ValueError)
-```
-
-Raised when requested capabilities contradict requested file access.
-
-Error raised when the caller supplies both file access and an explicit
-Capabilities object, but the requested capabilities do not include the
-capability implied by that access mode. For example, READ requires
-can_read, CREATE requires can_write, and UPDATE requires both.
-
-<a id="tableio.factory._check_capabilities_for_file_access"></a>
-
-#### \_check\_capabilities\_for\_file\_access
-
-```python
-def _check_capabilities_for_file_access(
-        file_access: FileAccess, capabilities: Optional[Capabilities]) -> None
-```
-
-Raise if explicit capabilities not enough for requested access mode.
 
 <a id="tableio.factory.ImplPrio"></a>
 

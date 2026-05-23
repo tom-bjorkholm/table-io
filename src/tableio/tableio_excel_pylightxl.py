@@ -236,10 +236,10 @@ def _read_database(file_name: str) -> Database:
     with ZipFile(checked_file_name, 'r') as zip_file:
         workbook_root = ET.fromstring(zip_file.read('xl/workbook.xml'))
         _load_named_ranges(workbook_root, database)
-        for sheet_name, (_, target) in sorted(
-                sheet_targets.items(), key=lambda item: item[1][0]):
-            data = _sheet_data_from_xml(
-                zip_file.read(f'xl/{target}'), shared_strings, styles)
+        for sheet_name, (_, target) in sorted(sheet_targets.items(),
+                                              key=lambda item: item[1][0]):
+            data = _sheet_data_from_xml(zip_file.read(f'xl/{target}'),
+                                        shared_strings, styles)
             database.add_ws(ws=sheet_name, data=data)
     database.set_emptycell(None)
     return database
@@ -350,8 +350,8 @@ class TableIOExcelPylightxl(TableIOExcelBased):
                 database.add_ws(_DEFAULT_SHEET_NAME, data={})
                 database.set_emptycell(None)
         self.database = database
-        self.worksheet = _database_worksheet(
-            database, _worksheet_names(database)[0])
+        self.worksheet = _database_worksheet(database,
+                                             _worksheet_names(database)[0])
         self._sheet_style_codes = {}
         self._initialize_sheet_style_codes()
         self._initialize_positions()
@@ -595,8 +595,8 @@ class TableIOExcelPylightxl(TableIOExcelBased):
         assert self.database is not None
         assert self.worksheet is not None
         for sheet_name in _worksheet_names(self.database):
-            if _database_worksheet(
-                    self.database, sheet_name) is self.worksheet:
+            if _database_worksheet(self.database,
+                                   sheet_name) is self.worksheet:
                 return sheet_name
         return _worksheet_names(self.database)[0]
 

@@ -6,6 +6,7 @@
 
 import io
 from datetime import datetime
+from functools import partial
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional
@@ -32,25 +33,25 @@ from .excel_inspect_helper import inspect_bordered_workbook, \
     inspect_datetime_cells_workbook, inspect_dict_header_fmt_workbook, \
     inspect_fmtdict_header_fmt_workbook, \
     inspect_formatted_workbook, inspect_multiple_filters_workbook, \
-    inspect_normalized_header_workbook, inspect_rewrite_box_workbook, \
+    inspect_normalized_headers, inspect_rewrite_box_workbook, \
     inspect_row_formatted_workbook, inspect_table_width_cap_workbook, \
     inspect_table_width_heading_workbook
 from .spreadsheet_test_helper import \
     run_bordered_workbook_is_validator_clean, \
     run_box_rewrite_clears_borders, \
-    run_box_write_removes_overlapping_filtered_range, \
-    run_boxed_table_partial_overwrite_raises, \
+    run_box_removes_filter, \
+    run_box_partial_overwrite, \
     run_multi_sheet_heading_state_is_per_sheet, \
     run_multi_sheet_write_positions_are_per_sheet, \
     run_open_rejects_second_open, \
     run_select_missing_sheet_without_create_raises_key_error, \
-    run_table_width_uses_table_content_not_heading, \
-    run_table_width_is_widen_only_with_cap, \
-    run_write_dictdata_applies_first_row_format, \
+    run_table_width_content, \
+    run_table_width_widen_cap, \
+    run_dictdata_header_format, \
     run_write_fmtdictdata_applies_first_row_format, \
     run_write_formatted_listdata_applies_formatting_and_filter, \
-    run_write_table_listdata_applies_borders, \
-    run_write_multiple_filtered_ranges_keeps_all_ranges, \
+    run_listdata_applies_borders, \
+    run_multi_filtered_ranges, \
     run_write_row_formatted_dictdata_applies_formatting
 
 
@@ -249,48 +250,47 @@ def test_excel_xlsxwriter_write_formatted_listdata_applies_filter(
 def test_excel_xlsxwriter_table_width_uses_table_content_not_heading(
         capsys: CaptureFixture[str]) -> None:
     """Table column widths ignore headings written outside table cells."""
-    run_table_width_uses_table_content_not_heading(
-        TableIOExcelXlsxWriter, '.xlsx',
-        lambda file_path: inspect_table_width_heading_workbook(
-            file_path, 13.0, 21.0 + _XLSXWRITER_WIDTH_OFFSET), capsys)
+    inspector = partial(inspect_table_width_heading_workbook,
+                        expected_width_a=13.0,
+                        expected_width_b=21.0 + _XLSXWRITER_WIDTH_OFFSET)
+    run_table_width_content(TableIOExcelXlsxWriter, '.xlsx', inspector, capsys)
 
 
 def test_excel_xlsxwriter_write_multiple_filtered_ranges_keeps_all_tables(
         capsys: CaptureFixture[str]) -> None:
     """Sequential filtered writes are kept as separate worksheet tables."""
     inspector = inspect_multiple_filters_workbook
-    run_write_multiple_filtered_ranges_keeps_all_ranges(TableIOExcelXlsxWriter,
-                                                        '.xlsx', inspector,
-                                                        capsys)
+    run_multi_filtered_ranges(TableIOExcelXlsxWriter, '.xlsx', inspector,
+                              capsys)
 
 
 def test_excel_xlsxwriter_table_width_is_widen_only_with_cap(
         capsys: CaptureFixture[str]) -> None:
     """Box rewrites keep an already widened column width."""
-    run_table_width_is_widen_only_with_cap(
-        TableIOExcelXlsxWriter, '.xlsx',
-        lambda file_path: inspect_table_width_cap_workbook(
-            file_path, 50.0 + _XLSXWRITER_WIDTH_OFFSET), capsys)
+    inspector = partial(inspect_table_width_cap_workbook,
+                        expected_width=50.0 + _XLSXWRITER_WIDTH_OFFSET)
+    run_table_width_widen_cap(TableIOExcelXlsxWriter, '.xlsx', inspector,
+                              capsys)
 
 
 def test_excel_xlsxwriter_box_write_removes_overlapping_filtered_table(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting a boxed area removes any stale overlapping table metadata."""
-    run_box_write_removes_overlapping_filtered_range(
-        TableIOExcelXlsxWriter, '.xlsx', inspect_rewrite_box_workbook, capsys)
+    run_box_removes_filter(TableIOExcelXlsxWriter, '.xlsx',
+                           inspect_rewrite_box_workbook, capsys)
 
 
 def test_excel_xlsxwriter_boxed_table_partial_overwrite_raises(
         capsys: CaptureFixture[str]) -> None:
     """Boxed table writes reject overlaps that leave part of a table behind."""
-    run_boxed_table_partial_overwrite_raises(TableIOExcelXlsxWriter, capsys)
+    run_box_partial_overwrite(TableIOExcelXlsxWriter, capsys)
 
 
 def test_excel_xlsxwriter_multi_sheet_write_positions_are_per_sheet(
         capsys: CaptureFixture[str]) -> None:
     """Sequential writes keep an independent default position per sheet."""
-    run_multi_sheet_write_positions_are_per_sheet(
-        TableIOExcelXlsxWriter, capsys)
+    run_multi_sheet_write_positions_are_per_sheet(TableIOExcelXlsxWriter,
+                                                  capsys)
 
 
 def test_excel_xlsxwriter_multi_sheet_heading_state_is_per_sheet(
@@ -325,8 +325,8 @@ def test_excel_xlsxwriter_write_dictdata_applies_first_row_format(
         capsys: CaptureFixture[str]) -> None:
     """Dict header cells can be formatted with first_row_format."""
     inspector = inspect_dict_header_fmt_workbook
-    run_write_dictdata_applies_first_row_format(TableIOExcelXlsxWriter,
-                                                '.xlsx', inspector, capsys)
+    run_dictdata_header_format(TableIOExcelXlsxWriter, '.xlsx', inspector,
+                               capsys)
 
 
 def test_excel_xlsxwriter_write_fmtdictdata_applies_first_row_format(
@@ -340,8 +340,8 @@ def test_excel_xlsxwriter_write_fmtdictdata_applies_first_row_format(
 def test_excel_xlsxwriter_write_table_listdata_applies_borders(
         capsys: CaptureFixture[str]) -> None:
     """Writes the requested table borders to saved XlsxWriter cells."""
-    run_write_table_listdata_applies_borders(TableIOExcelXlsxWriter, '.xlsx',
-                                             inspect_bordered_workbook, capsys)
+    run_listdata_applies_borders(TableIOExcelXlsxWriter, '.xlsx',
+                                 inspect_bordered_workbook, capsys)
 
 
 def test_excel_xlsxwriter_box_rewrite_clears_old_borders(
@@ -360,8 +360,7 @@ def test_excel_xlsxwriter_filtered_table_headers_are_normalized(
         with TableIOExcelXlsxWriter(file_name, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([[1, None], [2, 3]],
                                           filtered_data_range=True)
-        inspect_normalized_header_workbook(
-            Path(temp_dir) / 'normalized_headers.xlsx')
+        inspect_normalized_headers(Path(temp_dir) / 'normalized_headers.xlsx')
     check_capsys(capsys)
 
 

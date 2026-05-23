@@ -109,7 +109,7 @@ a better start by reading the examples.
 
 ## Test summary
 
-- Test result: 1297 passed in 20s
+- Test result: 1311 passed in 19s
 - No flake8 warnings.
 - No mypy errors found.
 - No python layout warnings.

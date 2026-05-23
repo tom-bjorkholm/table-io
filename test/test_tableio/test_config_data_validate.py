@@ -63,8 +63,8 @@ def test_accepts_ignored_valid() -> None:
 
 def test_checks_ignored() -> None:
     """Ignored values are still validated."""
-    error = _validate_error(ConfigData(
-        format_name='Excel', csv=CsvConfigData(quoting='American')))
+    error = _validate_error(ConfigData(format_name='Excel',
+                                       csv=CsvConfigData(quoting='American')))
     assert _issue_names(error) == {'csv.quoting'}
 
 
@@ -218,9 +218,9 @@ def test_rejects_impl_access() -> None:
 def test_rejects_caps_access() -> None:
     """Explicit capabilities must include file access requirements."""
     with pytest.raises(ConfigError) as exc_info:
-        tio_config_validate(
-            ConfigData(), capabilities=Capabilities(can_write=CAP_NEEDED),
-            file_access=FileAccess.READ)
+        tio_config_validate(ConfigData(),
+                            capabilities=Capabilities(can_write=CAP_NEEDED),
+                            file_access=FileAccess.READ)
     assert _issue_names(exc_info.value) == {'capabilities.can_read'}
 
 

@@ -418,8 +418,7 @@ class TestTableIOFactoryCreate:
                             args=None)
         assert isinstance(result, StubAlphaHigh)
 
-    def test_create_rejects_capabilities_without_write(
-            self, tmp_path: Path) -> None:
+    def test_create_rejects_no_write(self, tmp_path: Path) -> None:
         """CREATE rejects explicit capabilities that omit write support."""
         f = _make_factory_stubs()
         caps = Capabilities(can_read=_SUP)
@@ -428,8 +427,7 @@ class TestTableIOFactoryCreate:
             f.i_create('Alpha', tmp_path / 'f', FileAccess.CREATE,
                        capabilities=caps)
 
-    def test_read_rejects_capabilities_without_read(
-            self, tmp_path: Path) -> None:
+    def test_read_rejects_no_read(self, tmp_path: Path) -> None:
         """READ rejects explicit capabilities that omit read support."""
         f = _make_factory_stubs()
         caps = Capabilities(can_write=_SUP)
@@ -475,8 +473,8 @@ class TestTableIOFactoryFilterArgs:
             'file_exists_callback': None,
             'ignored': 'x'
         }
-        result = f.i_filter_args(
-            cast(OptionalArgsDict, args), 'Gamma', 'CamelCase')
+        args_dict = cast(OptionalArgsDict, args)
+        result = f.i_filter_args(args_dict, 'Gamma', 'CamelCase')
         assert result == {
             'required_arg': 'value',
             'file_exists_callback': None

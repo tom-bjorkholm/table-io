@@ -24,7 +24,7 @@ from tableio.value_type import CellT, Fmt, FmtListRow, ListDataSeq, Value, \
 from tableio.capability import CAP_ALL_IMPLEMENTED
 
 from .check_capsys import check_capsys
-from .spreadsheet_test_helper import run_boxed_table_partial_overwrite_raises
+from .spreadsheet_test_helper import run_box_partial_overwrite
 
 
 class _MemorySheet:
@@ -435,8 +435,8 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         return self._sheet_table_regions()
 
     @classmethod
-    def split_plain_cell_value(
-            cls, cell: Value) -> tuple[Value, Optional[Fmt]]:
+    def split_plain_cell_value(cls,
+                               cell: Value) -> tuple[Value, Optional[Fmt]]:
         """Expose plain cell splitting for tests."""
         return cls._split_cell_value(cell)
 
@@ -520,8 +520,8 @@ def test_spreadsheet_base_abstract_hooks_raise_not_implemented(
     with pytest.raises(NotImplementedError,
                        match='_delete_filtered_range method'):
         table_io.run_delete_filtered_range('TableIOFilter_1')
-    with pytest.raises(
-            NotImplementedError, match='_add_filtered_range method'):
+    with pytest.raises(NotImplementedError,
+                       match='_add_filtered_range method'):
         table_io.run_add_filtered_range((0, 0, 1, 1), 'TableIOFilter_1')
     with pytest.raises(NotImplementedError,
                        match='_set_column_width_if_wider method'):
@@ -807,8 +807,7 @@ def test_spreadsheet_read_and_write_cells_keep_cursor_positions(
 def test_spreadsheet_boxed_table_write_rejects_partial_overwrite(
         capsys: CaptureFixture[str]) -> None:
     """Boxed table writes reject overlaps that leave part behind."""
-    run_boxed_table_partial_overwrite_raises(
-        _RecordingSpreadsheetTableIO, capsys)
+    run_box_partial_overwrite(_RecordingSpreadsheetTableIO, capsys)
 
 
 def test_spreadsheet_sheet_table_regions_skip_headings_and_blank_breaks(
@@ -853,8 +852,8 @@ def test_spreadsheet_update_mode_initializes_write_row_from_last_used_row(
     with TemporaryDirectory() as temp_dir:
         file_path = Path(temp_dir) / 'sample.sheet'
         file_path.touch()
-        table_io = _RecordingSpreadsheetTableIO(
-            Path(temp_dir) / 'sample', FileAccess.UPDATE)
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample',
+                                                FileAccess.UPDATE)
         table_io.seed_value(2, 0, 'existing')
         with table_io:
             assert table_io.write_row == 3

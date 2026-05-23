@@ -37,9 +37,9 @@ def make_capabilities(
                         can_write_borders=can_write_borders)
 
 
-def expected_single_capability_match(
-        offered: SingleCapability, will_use: SingleCapability,
-        ignore_allowed: bool) -> bool:
+def expected_single_capability_match(offered: SingleCapability,
+                                     will_use: SingleCapability,
+                                     ignore_allowed: bool) -> bool:
     """Return the documented expected result for a capability pair."""
     strict_mismatch = Strictness.STRICT in (
         offered.strictness,
@@ -176,11 +176,11 @@ def test_capability_to_str_covers_supported_and_strictness_variants(
             False, False, id='strict-row-format-mismatch',),
         pytest.param(
             Capabilities(
-                can_fmt_value=SingleCapability(
-                    supported=False, strictness=Strictness.IGNORE)),
+                can_fmt_value=SingleCapability(supported=False,
+                                               strictness=Strictness.IGNORE)),
             Capabilities(
-                can_fmt_value=SingleCapability(
-                    supported=True, strictness=Strictness.IGNORE)),
+                can_fmt_value=SingleCapability(supported=True,
+                                               strictness=Strictness.IGNORE)),
             True, True, id='ignored-value-format-is-allowed',),
     ],)
 def test_capability_match_examples(offered: Capabilities,

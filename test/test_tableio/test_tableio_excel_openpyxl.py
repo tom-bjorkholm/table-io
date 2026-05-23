@@ -6,6 +6,7 @@
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from functools import partial
 from typing import Callable, cast
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
@@ -25,14 +26,14 @@ from .excel_inspect_helper import inspect_bordered_workbook, \
     inspect_box_rewrite_clears_borders_workbook, \
     inspect_dict_header_fmt_workbook, inspect_fmtdict_header_fmt_workbook, \
     inspect_formatted_workbook, inspect_multiple_filters_workbook, \
-    inspect_normalized_header_workbook, inspect_rewrite_box_workbook, \
+    inspect_normalized_headers, inspect_rewrite_box_workbook, \
     inspect_row_formatted_workbook, inspect_table_width_cap_workbook, \
     inspect_table_width_heading_workbook
 from .spreadsheet_test_helper import \
     run_bordered_workbook_is_validator_clean, \
     run_box_rewrite_clears_borders, \
-    run_boxed_table_partial_overwrite_raises, \
-    run_box_write_removes_overlapping_filtered_range, \
+    run_box_partial_overwrite, \
+    run_box_removes_filter, \
     run_close_removes_temp_file_on_rewrite_failure, \
     run_find_value_and_write_cells, \
     run_multi_sheet_heading_state_is_per_sheet, \
@@ -41,26 +42,26 @@ from .spreadsheet_test_helper import \
     run_multi_sheet_update_uses_selected_sheet_write_position, \
     run_multi_sheet_write_positions_are_per_sheet, \
     run_open_rejects_second_open, \
-    run_read_formula_uses_cached_value, \
-    run_read_formula_without_cached_value, \
+    run_read_formula_cached, \
+    run_read_formula_no_cache, \
     run_round_trip_dictdata_in_box, \
     run_sequential_list_reads, \
     run_select_missing_sheet_without_create_raises_key_error, \
-    run_table_width_uses_table_content_not_heading, \
-    run_table_width_is_widen_only_with_cap, \
+    run_table_width_content, \
+    run_table_width_widen_cap, \
     run_update_default_write_starts_after_last_used_row, \
-    run_write_dictdata_applies_first_row_format, \
+    run_dictdata_header_format, \
     run_write_fmtdictdata_applies_first_row_format, \
     run_write_formatted_listdata_applies_formatting_and_filter, \
-    run_write_table_listdata_applies_borders, \
-    run_write_multiple_filtered_ranges_keeps_all_ranges, \
+    run_listdata_applies_borders, \
+    run_multi_filtered_ranges, \
     run_write_row_formatted_dictdata_applies_formatting
 
 
 def _inspect_find_and_write_cells_workbook(file_path: Path) -> None:
     """Check exact cell writes after finding one row in the worksheet."""
-    inspect_find_and_write_cells_workbook_common(
-        file_path, expect_highlight=True)
+    inspect_find_and_write_cells_workbook_common(file_path,
+                                                 expect_highlight=True)
 
 
 def test_excel_round_trip_sequential_list_reads(
@@ -123,35 +124,30 @@ def test_excel_write_formatted_listdata_applies_formatting_and_filter(
 def test_excel_table_width_uses_table_content_not_heading(
         capsys: CaptureFixture[str]) -> None:
     """Table column widths ignore headings written outside table cells."""
-    run_table_width_uses_table_content_not_heading(
-        TableIOExcelOpenPyXL, '.xlsx',
-        lambda file_path: inspect_table_width_heading_workbook(
-            file_path, 13.0, 21.0), capsys)
+    inspector = partial(inspect_table_width_heading_workbook,
+                        expected_width_a=13.0, expected_width_b=21.0)
+    run_table_width_content(TableIOExcelOpenPyXL, '.xlsx', inspector, capsys)
 
 
 def test_excel_write_multiple_filtered_ranges_keeps_all_tables(
         capsys: CaptureFixture[str]) -> None:
     """Sequential filtered writes are kept as separate worksheet tables."""
     inspector = inspect_multiple_filters_workbook
-    run_write_multiple_filtered_ranges_keeps_all_ranges(TableIOExcelOpenPyXL,
-                                                        '.xlsx', inspector,
-                                                        capsys)
+    run_multi_filtered_ranges(TableIOExcelOpenPyXL, '.xlsx', inspector, capsys)
 
 
 def test_excel_table_width_is_widen_only_with_cap(
         capsys: CaptureFixture[str]) -> None:
     """Box rewrites keep an already widened column width."""
-    run_table_width_is_widen_only_with_cap(
-        TableIOExcelOpenPyXL, '.xlsx',
-        lambda file_path: inspect_table_width_cap_workbook(
-            file_path, 50.0), capsys)
+    inspector = partial(inspect_table_width_cap_workbook, expected_width=50.0)
+    run_table_width_widen_cap(TableIOExcelOpenPyXL, '.xlsx', inspector, capsys)
 
 
 def test_excel_box_write_removes_overlapping_filtered_table(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting a boxed area removes any stale overlapping table metadata."""
-    run_box_write_removes_overlapping_filtered_range(
-        TableIOExcelOpenPyXL, '.xlsx', inspect_rewrite_box_workbook, capsys)
+    run_box_removes_filter(TableIOExcelOpenPyXL, '.xlsx',
+                           inspect_rewrite_box_workbook, capsys)
 
 
 def test_excel_find_and_write_cells(capsys: CaptureFixture[str]) -> None:
@@ -164,7 +160,7 @@ def test_excel_find_and_write_cells(capsys: CaptureFixture[str]) -> None:
 def test_excel_boxed_table_partial_overwrite_raises(
         capsys: CaptureFixture[str]) -> None:
     """Boxed table writes reject overlaps that leave part of a table behind."""
-    run_boxed_table_partial_overwrite_raises(TableIOExcelOpenPyXL, capsys)
+    run_box_partial_overwrite(TableIOExcelOpenPyXL, capsys)
 
 
 def test_excel_write_row_formatted_dictdata_applies_formatting(
@@ -178,8 +174,8 @@ def test_excel_write_dictdata_applies_first_row_format(
         capsys: CaptureFixture[str]) -> None:
     """Dict header cells can be formatted with first_row_format."""
     inspector = inspect_dict_header_fmt_workbook
-    run_write_dictdata_applies_first_row_format(TableIOExcelOpenPyXL, '.xlsx',
-                                                inspector, capsys)
+    run_dictdata_header_format(TableIOExcelOpenPyXL, '.xlsx', inspector,
+                               capsys)
 
 
 def test_excel_write_fmtdictdata_applies_first_row_format(
@@ -193,8 +189,9 @@ def test_excel_write_fmtdictdata_applies_first_row_format(
 def test_excel_write_table_listdata_applies_borders(
         capsys: CaptureFixture[str]) -> None:
     """Writes the requested table borders to saved OpenPyXL cells."""
-    run_write_table_listdata_applies_borders(
-        TableIOExcelOpenPyXL, '.xlsx', inspect_bordered_workbook, capsys)
+    inspector = inspect_bordered_workbook
+    run_listdata_applies_borders(TableIOExcelOpenPyXL, '.xlsx', inspector,
+                                 capsys)
 
 
 def test_excel_box_rewrite_clears_old_borders(
@@ -208,15 +205,15 @@ def test_excel_box_rewrite_clears_old_borders(
 def test_excel_read_formula_uses_cached_value(
         capsys: CaptureFixture[str]) -> None:
     """A formula cell is read as its cached value."""
-    run_read_formula_uses_cached_value(
-        TableIOExcelOpenPyXL, '.xlsx', create_formula_workbook, 3, capsys)
+    run_read_formula_cached(TableIOExcelOpenPyXL, '.xlsx',
+                            create_formula_workbook, 3, capsys)
 
 
 def test_excel_read_formula_without_cached_value_returns_none(
         capsys: CaptureFixture[str]) -> None:
     """A formula without a cached result is read as None."""
-    run_read_formula_without_cached_value(
-        TableIOExcelOpenPyXL, '.xlsx', create_formula_workbook, capsys)
+    run_read_formula_no_cache(TableIOExcelOpenPyXL, '.xlsx',
+                              create_formula_workbook, capsys)
 
 
 def test_excel_rejects_second_open(capsys: CaptureFixture[str]) -> None:
@@ -275,8 +272,8 @@ def test_excel_update_creates_new_read_sheet_and_normalizes_table_headers(
             table_io.select_sheet('Numbers', create=True)
             table_io.write_table_listdata([[1, None], [2, 3]],
                                           filtered_data_range=True)
-        inspect_normalized_header_workbook(
-            Path(temp_dir) / 'update_headers.xlsx', 'Numbers')
+        inspect_normalized_headers(Path(temp_dir) / 'update_headers.xlsx',
+                                   'Numbers')
     check_capsys(capsys)
 
 

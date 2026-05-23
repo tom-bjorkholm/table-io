@@ -215,9 +215,9 @@ def test_value2datetime_preserves_datetime_identity(
         pytest.param('25/03/2026 07:08', '%d/%m/%Y %H:%M',
                      datetime(2026, 3, 25, 7, 8, 0), id='custom-format'),
     ],)
-def test_value2datetime_parses_strings(
-        value: str, format_string: str | None, expected: datetime,
-        capsys: CaptureFixture[str]) -> None:
+def test_value2datetime_strings(value: str, format_string: str | None,
+                                expected: datetime,
+                                capsys: CaptureFixture[str]) -> None:
     """Test that value2datetime parses supported string formats."""
     assert value2datetime(value, format_string=format_string) == expected
     check_capsys(capsys)

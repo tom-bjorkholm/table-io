@@ -94,10 +94,10 @@ def e10_capability_driven_selection(format_name: str, output_file_name: str,
     programmer can see how CAP_NEEDED and CAP_IGNORABLE change the factory's
     matching behavior.
     """
-    preferred_formats = list_registered_tableio(
-        capabilities=PREFERRED_CAPS, empty_is_ok=True)
-    preferred_impls = list_implementations_tableio(
-        capabilities=PREFERRED_CAPS, empty_is_ok=True)
+    preferred_formats = list_registered_tableio(capabilities=PREFERRED_CAPS,
+                                                empty_is_ok=True)
+    preferred_impls = list_implementations_tableio(capabilities=PREFERRED_CAPS,
+                                                   empty_is_ok=True)
     strict_formats = list_registered_tableio(
         capabilities=STRICT_COMPARISON_CAPS, empty_is_ok=True)
     strict_impls = list_implementations_tableio(

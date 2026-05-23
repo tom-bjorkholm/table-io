@@ -24,8 +24,8 @@ from .check_capsys import check_capsys
 from .spreadsheet_test_helper import \
     run_bordered_workbook_is_validator_clean, \
     run_box_rewrite_clears_borders, \
-    run_boxed_table_partial_overwrite_raises, \
-    run_box_write_removes_overlapping_filtered_range, \
+    run_box_partial_overwrite, \
+    run_box_removes_filter, \
     run_close_removes_temp_file_on_rewrite_failure, \
     run_find_value_and_write_cells, \
     run_multi_sheet_heading_state_is_per_sheet, \
@@ -34,18 +34,18 @@ from .spreadsheet_test_helper import \
     run_multi_sheet_update_uses_selected_sheet_write_position, \
     run_multi_sheet_write_positions_are_per_sheet, \
     run_open_rejects_second_open, \
-    run_read_formula_uses_cached_value, \
-    run_read_formula_without_cached_value, \
+    run_read_formula_cached, \
+    run_read_formula_no_cache, \
     run_round_trip_dictdata_in_box, \
     run_sequential_list_reads, \
     run_select_missing_sheet_without_create_raises_key_error, \
-    run_table_width_is_widen_only_with_cap, \
+    run_table_width_widen_cap, \
     run_update_default_write_starts_after_last_used_row, \
-    run_write_dictdata_applies_first_row_format, \
+    run_dictdata_header_format, \
     run_write_fmtdictdata_applies_first_row_format, \
     run_write_formatted_listdata_applies_formatting_and_filter, \
-    run_write_table_listdata_applies_borders, \
-    run_write_multiple_filtered_ranges_keeps_all_ranges, \
+    run_listdata_applies_borders, \
+    run_multi_filtered_ranges, \
     run_write_row_formatted_dictdata_applies_formatting
 
 
@@ -224,10 +224,10 @@ def _inspect_row_formatted_document(file_path: Path) -> None:
     document, table = _load_document(file_path)
     assert str(table.name) == 'Sheet1'
     assert _database_range_addresses(document) == ['Sheet1.A1:Sheet1.B3']
-    row2_table_props, row2_text_props = _cell_style_properties(
-        document, table, 1, 0)
-    row3_table_props, row3_text_props = _cell_style_properties(
-        document, table, 2, 0)
+    row2_table_props, row2_text_props = _cell_style_properties(document, table,
+                                                               1, 0)
+    row3_table_props, row3_text_props = _cell_style_properties(document, table,
+                                                               2, 0)
     assert row2_text_props['fo:font-weight'] == 'bold'
     assert row2_table_props['fo:background-color'] == '#c6efce'
     assert row3_text_props['fo:font-style'] == 'italic'
@@ -239,8 +239,8 @@ def _inspect_dict_header_fmt_document(file_path: Path) -> None:
     document, table = _load_document(file_path)
     assert table.get_value((0, 0)) == 'name'
     assert table.get_value((1, 0)) == 'active'
-    header_table_props, header_text_props = _cell_style_properties(
-        document, table, 0, 0)
+    header_table_props, header_text_props = _cell_style_properties(document,
+                                                                   table, 0, 0)
     assert header_text_props['fo:font-weight'] == 'bold'
     assert header_table_props['fo:background-color'] == '#ffff00'
     assert table.get_cell((0, 1), clone=False).style is None
@@ -250,8 +250,8 @@ def _inspect_fmtdict_header_fmt_document(file_path: Path) -> None:
     """Check header and row formatting separation in fmtdict writes."""
     document, table = _load_document(file_path)
     _, header_text_props = _cell_style_properties(document, table, 0, 0)
-    data_table_props, data_text_props = _cell_style_properties(
-        document, table, 1, 0)
+    data_table_props, data_text_props = _cell_style_properties(document, table,
+                                                               1, 0)
     assert header_text_props['fo:font-weight'] == 'bold'
     assert data_text_props['fo:font-style'] == 'italic'
     assert data_table_props['fo:background-color'] == '#c6efce'
@@ -277,8 +277,8 @@ def _inspect_box_rewrite_clears_borders_document(file_path: Path) -> None:
     document, table = _load_document(file_path)
     for row_index in range(2):
         for column_index in range(2):
-            assert _cell_border_properties(
-                document, table, row_index, column_index) == (
+            assert _cell_border_properties(document, table, row_index,
+                                           column_index) == (
                     None, None, None, None)
 
 
@@ -422,8 +422,8 @@ def test_ods_update_default_write_starts_after_last_used_row(
 def test_ods_multi_sheet_update_uses_selected_sheet_write_position(
         capsys: CaptureFixture[str]) -> None:
     """UPDATE mode appends using the selected sheet's used area."""
-    run_multi_sheet_update_uses_selected_sheet_write_position(
-        TableIOOdsOdfdo, capsys)
+    run_multi_sheet_update_uses_selected_sheet_write_position(TableIOOdsOdfdo,
+                                                              capsys)
 
 
 def test_ods_write_formatted_listdata_applies_formatting_and_filter(
@@ -436,22 +436,22 @@ def test_ods_write_formatted_listdata_applies_formatting_and_filter(
 def test_ods_write_multiple_filtered_ranges_keeps_all_ranges(
         capsys: CaptureFixture[str]) -> None:
     """Sequential filtered writes are kept as separate named ranges."""
-    run_write_multiple_filtered_ranges_keeps_all_ranges(
-        TableIOOdsOdfdo, '.ods', _inspect_multiple_filters_document, capsys)
+    run_multi_filtered_ranges(TableIOOdsOdfdo, '.ods',
+                              _inspect_multiple_filters_document, capsys)
 
 
 def test_ods_table_width_is_widen_only_with_cap(
         capsys: CaptureFixture[str]) -> None:
     """Box rewrites keep an already widened column width."""
-    run_table_width_is_widen_only_with_cap(
-        TableIOOdsOdfdo, '.ods', _inspect_table_width_cap_document, capsys)
+    run_table_width_widen_cap(TableIOOdsOdfdo, '.ods',
+                              _inspect_table_width_cap_document, capsys)
 
 
 def test_ods_box_write_removes_overlapping_filtered_range(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting a boxed area removes stale overlapping filter metadata."""
-    run_box_write_removes_overlapping_filtered_range(
-        TableIOOdsOdfdo, '.ods', _inspect_rewrite_box_document, capsys)
+    run_box_removes_filter(TableIOOdsOdfdo, '.ods',
+                           _inspect_rewrite_box_document, capsys)
 
 
 def test_ods_find_and_write_cells(capsys: CaptureFixture[str]) -> None:
@@ -464,7 +464,7 @@ def test_ods_find_and_write_cells(capsys: CaptureFixture[str]) -> None:
 def test_ods_boxed_table_partial_overwrite_raises(
         capsys: CaptureFixture[str]) -> None:
     """Boxed table writes reject overlaps that leave part of a table behind."""
-    run_boxed_table_partial_overwrite_raises(TableIOOdsOdfdo, capsys)
+    run_box_partial_overwrite(TableIOOdsOdfdo, capsys)
 
 
 def test_ods_write_row_formatted_dictdata_applies_formatting(
@@ -477,8 +477,8 @@ def test_ods_write_row_formatted_dictdata_applies_formatting(
 def test_ods_write_dictdata_applies_first_row_format(
         capsys: CaptureFixture[str]) -> None:
     """Dict header cells can be formatted with first_row_format."""
-    run_write_dictdata_applies_first_row_format(
-        TableIOOdsOdfdo, '.ods', _inspect_dict_header_fmt_document, capsys)
+    run_dictdata_header_format(TableIOOdsOdfdo, '.ods',
+                               _inspect_dict_header_fmt_document, capsys)
 
 
 def test_ods_write_fmtdictdata_applies_first_row_format(
@@ -491,8 +491,8 @@ def test_ods_write_fmtdictdata_applies_first_row_format(
 def test_ods_write_table_listdata_applies_borders(
         capsys: CaptureFixture[str]) -> None:
     """Writes the requested table borders to saved ODS cells."""
-    run_write_table_listdata_applies_borders(
-        TableIOOdsOdfdo, '.ods', _inspect_bordered_document, capsys)
+    run_listdata_applies_borders(TableIOOdsOdfdo, '.ods',
+                                 _inspect_bordered_document, capsys)
 
 
 def test_ods_box_rewrite_clears_old_borders(
@@ -505,15 +505,15 @@ def test_ods_box_rewrite_clears_old_borders(
 def test_ods_read_formula_uses_cached_value(
         capsys: CaptureFixture[str]) -> None:
     """A formula cell is read as its cached value."""
-    run_read_formula_uses_cached_value(
-        TableIOOdsOdfdo, '.ods', _create_formula_document, 3, capsys)
+    creator = _create_formula_document
+    run_read_formula_cached(TableIOOdsOdfdo, '.ods', creator, 3, capsys)
 
 
 def test_ods_read_formula_without_cached_value_returns_none(
         capsys: CaptureFixture[str]) -> None:
     """A formula without a cached result is read as None."""
-    run_read_formula_without_cached_value(
-        TableIOOdsOdfdo, '.ods', _create_formula_document, capsys)
+    run_read_formula_no_cache(TableIOOdsOdfdo, '.ods',
+                              _create_formula_document, capsys)
 
 
 def test_ods_rejects_second_open(capsys: CaptureFixture[str]) -> None:
@@ -546,8 +546,8 @@ def test_ods_split_rfc3066_language_without_country(
 def test_ods_select_missing_sheet_without_create_raises_key_error(
         capsys: CaptureFixture[str]) -> None:
     """Selecting a missing sheet without create=True raises KeyError."""
-    run_select_missing_sheet_without_create_raises_key_error(
-        TableIOOdsOdfdo, capsys)
+    run_select_missing_sheet_without_create_raises_key_error(TableIOOdsOdfdo,
+                                                             capsys)
 
 
 def test_ods_quoted_table_name_quotes_non_identifier_names(
@@ -617,14 +617,14 @@ def test_ods_filtered_range_infos_ignores_non_matching_range_metadata(
                                     FileAccess.CREATE) as opened:
             table_io = cast(ExposedTableIOOdsOdfdo, opened)
             container = table_io.database_range_container()
-            container.append(_make_database_range(
-                None, 'true', 'Sheet1.A1:Sheet1.B2'))
-            container.append(_make_database_range(
-                'SkipDisplay', 'false', 'Sheet1.A1:Sheet1.B2'))
-            container.append(_make_database_range(
-                'SkipTable', 'true', 'Other.A1:Other.B2'))
-            container.append(_make_database_range(
-                'DbFilter', 'true', 'Sheet1.C1:Sheet1.D2'))
+            range_name = 'Sheet1.A1:Sheet1.B2'
+            container.append(_make_database_range(None, 'true', range_name))
+            container.append(_make_database_range('SkipDisplay', 'false',
+                                                  range_name))
+            container.append(_make_database_range('SkipTable', 'true',
+                                                  'Other.A1:Other.B2'))
+            container.append(_make_database_range('DbFilter', 'true',
+                                                  'Sheet1.C1:Sheet1.D2'))
             body = table_io.spreadsheet_body()
             body.set_named_range('SkipUsage', (0, 0, 1, 1), 'Sheet1',
                                  usage='print-range')

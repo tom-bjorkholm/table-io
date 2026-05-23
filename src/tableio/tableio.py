@@ -646,8 +646,8 @@ class TableIO:
                 err = 'Data does not fit into box. Wrong number of columns.'
                 raise ValueError(err)
 
-    def _value_area(
-            self, value: Value | ListDataSeq[Value]) -> ListData[Value]:
+    def _value_area(self,
+                    value: Value | ListDataSeq[Value]) -> ListData[Value]:
         """Return one scalar or rectangular value pattern as a list grid."""
         if value is None or isinstance(value, (str, bool, int, float,
                                                datetime)):

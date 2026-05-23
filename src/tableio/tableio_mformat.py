@@ -48,9 +48,9 @@ class TableIOMformatMd(TableIOMformatBased):
             character_encoding: The character encoding to use.
         """
         super().__init__(file_name, file_access, file_exists_callback)
-        self.mformat = MultiFormatMd(
-            file_name, file_exists_callback=_allow_overwrite,
-            character_encoding=character_encoding)
+        self.mformat = MultiFormatMd(file_name,
+                                     file_exists_callback=_allow_overwrite,
+                                     character_encoding=character_encoding)
 
     @classmethod
     def get_row_format_capability(cls) -> SingleCapability:

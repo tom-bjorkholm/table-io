@@ -9,6 +9,7 @@ from typing import Optional, NamedTuple
 from functools import total_ordering
 import warnings
 from mformat.mformat import PathLike
+from tableio.access_capability import check_access_capabilities
 from tableio.tableio import TableIO, Descriptor, FileAccess
 from tableio.capability import Capabilities, capability_match
 from tableio.reg_pkg_formats import register_formats_in_pkg
@@ -50,36 +51,6 @@ class TableIOFactoryNoCapabilityMatch(ValueError):
     format name or implementation name, and the implementation(s)
     with those name(s) do not support the requested capabilities.
     """
-
-
-class InsufficientCapabilities(ValueError):
-    """Raised when requested capabilities contradict requested file access.
-
-    Error raised when the caller supplies both file access and an explicit
-    Capabilities object, but the requested capabilities do not include the
-    capability implied by that access mode. For example, READ requires
-    can_read, CREATE requires can_write, and UPDATE requires both.
-    """
-
-
-def _check_capabilities_for_file_access(
-        file_access: FileAccess, capabilities: Optional[Capabilities]) -> None:
-    """Raise if explicit capabilities not enough for requested access mode."""
-    if capabilities is None:
-        return
-    if file_access == FileAccess.READ and not capabilities.can_read.supported:
-        msg = 'FileAccess.READ requires can_read capability.'
-        raise InsufficientCapabilities(msg)
-    if file_access == FileAccess.CREATE and \
-            not capabilities.can_write.supported:
-        msg = 'FileAccess.CREATE requires can_write capability.'
-        raise InsufficientCapabilities(msg)
-    if file_access == FileAccess.UPDATE and (
-            not capabilities.can_write.supported or
-            not capabilities.can_read.supported):
-        msg = 'FileAccess.UPDATE requires both can_read and '
-        msg += 'can_write capabilities.'
-        raise InsufficientCapabilities(msg)
 
 
 @total_ordering
@@ -413,7 +384,8 @@ class TableIOFactory:
             TableIOFactoryNoCapabilityMatch: If the capabilities cannot be
                                              matched to any implementation.
         """
-        _check_capabilities_for_file_access(file_access, capabilities)
+        if capabilities is not None:
+            check_access_capabilities(file_access, capabilities)
         format_info = self._format_info(format_name)
         chosen_impl = self._select_implementation_name(
             format_info=format_info, implementation=implementation,
@@ -446,8 +418,8 @@ class TableIOFactory:
             format_info: FactoryFormatInfo, implementation: Optional[str],
             capabilities: Optional[Capabilities]) -> str:
         """Select the implementation name matching the request."""
-        best_matches = format_info.best_match_names(
-            capabilities=capabilities, empty_is_ok=False)
+        best_matches = format_info.best_match_names(capabilities=capabilities,
+                                                    empty_is_ok=False)
         if implementation is None:
             return best_matches.combined()[0].implementation
         corrected_implementation = \
@@ -668,9 +640,9 @@ class TableIOFactory:
         fmtkeys: list[str] = list(self._formats.keys())
         if format_name is not None:
             fmtkeys = [self._correct_format_name(format_name)]
-        best_match = self._implementation_matches(
-            format_names=fmtkeys, capabilities=capabilities,
-            empty_is_ok=empty_is_ok)
+        best_match = self._implementation_matches(format_names=fmtkeys,
+                                                  capabilities=capabilities,
+                                                  empty_is_ok=empty_is_ok)
         implkeys = self._implementation_names(best_match, alphabetical)
         ret: list[str] = []
         for implkey in implkeys:

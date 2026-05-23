@@ -187,10 +187,10 @@ def test_create_runtime_callback(tmp_path: Path) -> None:
 
 def test_ignored_non_none() -> None:
     """Ignored names lists configured leaves irrelevant to the backend."""
-    config = ConfigData(
-        format_name='CSV', character_encoding='utf-8', title='Ignored',
-        csv=CsvConfigData(delimiter=';', quotechar='"'),
-        html=HtmlConfigData(css_file='table.css'))
+    config = ConfigData(format_name='CSV', character_encoding='utf-8',
+                        title='Ignored',
+                        csv=CsvConfigData(delimiter=';', quotechar='"'),
+                        html=HtmlConfigData(css_file='table.css'))
     assert tio_config_ignored_names(config) == ['title', 'html.css_file']
 
 
@@ -202,10 +202,10 @@ def test_ignored_skips_none() -> None:
 
 def test_trim_keeps_relevant() -> None:
     """Trim returns a compact copy without mutating the original."""
-    config = ConfigData(
-        format_name='CSV', character_encoding='utf-8', title='Ignored',
-        csv=CsvConfigData(delimiter=';', quotechar='"'),
-        html=HtmlConfigData(css_file='table.css'))
+    config = ConfigData(format_name='CSV', character_encoding='utf-8',
+                        title='Ignored',
+                        csv=CsvConfigData(delimiter=';', quotechar='"'),
+                        html=HtmlConfigData(css_file='table.css'))
     trimmed = tio_config_trim(config)
     assert trimmed == ConfigData(
         format_name='CSV', character_encoding='utf-8',

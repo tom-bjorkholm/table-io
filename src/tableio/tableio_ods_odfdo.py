@@ -404,8 +404,8 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         table.set_cell((column, row),
                        Cell(self._spreadsheet_value_from_python(value)),
                        clone=False)
-        self._cell_style_states.pop(self._cell_style_state_key(
-            table, row, column), None)
+        self._cell_style_states.pop(
+            self._cell_style_state_key(table, row, column), None)
 
     def _set_cell_format(self, sheet: object, row: int, column: int,
                          fmt: Optional[Fmt]) -> None:

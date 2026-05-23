@@ -160,8 +160,9 @@ def _unpack_and_run_example(example_name: str, func: ExampleFunc,
     for fmt in formats:
         impls: list[Optional[str]] = []
         if impl_is_all:
-            impls.extend(list_implementations_tableio(
-                format_name=fmt, capabilities=caps, empty_is_ok=True))
+            impls.extend(list_implementations_tableio(format_name=fmt,
+                                                      capabilities=caps,
+                                                      empty_is_ok=True))
         else:
             impls.append(impl_arg)
         for impl in impls:

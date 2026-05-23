@@ -130,9 +130,9 @@ def test_get_checked_type_ok(value: object | None, expected_type: type[object],
         pytest.param(None, str, id='none'),
         pytest.param(datetime(2026, 3, 16, 7, 8, 9), str, id='mismatch'),
     ])
-def test_get_checked_type_nok(
-        value: object | None, expected_type: type[object],
-        capsys: CaptureFixture[str]) -> None:
+def test_get_checked_type_nok(value: object | None,
+                              expected_type: type[object],
+                              capsys: CaptureFixture[str]) -> None:
     """Test that get_checked_type returns the original value unchanged."""
     with pytest.raises(AssertionError):
         _ = get_checked_type(value, expected_type)
@@ -323,9 +323,9 @@ def test_row_strip_format_dict_preserves_inner_mapping_objects(
             ],
             id='rows')
     ])
-def test_row_format_each_cell_list(
-        data: list[FmtListRow], expected: list[list[ValueFmt]],
-        capsys: CaptureFixture[str]) -> None:
+def test_row_format_each_cell_list(data: list[FmtListRow],
+                                   expected: list[list[ValueFmt]],
+                                   capsys: CaptureFixture[str]) -> None:
     """Test that row_format_each_cell_list applies each row format."""
     assert row_format_each_cell_list(data) == expected
     check_capsys(capsys)
@@ -350,9 +350,9 @@ def test_row_format_each_cell_list(
             ],
             id='rows')
     ])
-def test_row_format_each_cell_dict(
-        data: list[FmtDictRow], expected: list[dict[str, ValueFmt]],
-        capsys: CaptureFixture[str]) -> None:
+def test_row_format_each_cell_dict(data: list[FmtDictRow],
+                                   expected: list[dict[str, ValueFmt]],
+                                   capsys: CaptureFixture[str]) -> None:
     """Test that row_format_each_cell_dict applies each row format."""
     formatted = row_format_each_cell_dict(data)
     assert formatted == expected

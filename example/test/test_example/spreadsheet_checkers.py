@@ -381,8 +381,8 @@ def _ods_actual_borders(document: Document, table: Table, row_index: int,
     if style is None:
         return NO_BORDERS
     checked_style = get_checked_type(style, Style)
-    table_props = cast(
-        dict[str, str], checked_style.get_properties('table-cell') or {})
+    table_props = cast(dict[str, str],
+                       checked_style.get_properties('table-cell') or {})
     return CellBorder(
         top=_ods_border_weight(table_props.get('fo:border-top')),
         right=_ods_border_weight(table_props.get('fo:border-right')),
@@ -402,10 +402,10 @@ def _ods_actual_style(document: Document, table: Table, row_index: int,
         return ExpectedCellStyle(bold=False, italic=False,
                                  background_color=Color.NONE)
     checked_style = get_checked_type(style, Style)
-    table_props = cast(
-        dict[str, str], checked_style.get_properties('table-cell') or {})
-    text_props = cast(
-        dict[str, str], checked_style.get_properties('text') or {})
+    table_props = cast(dict[str, str],
+                       checked_style.get_properties('table-cell') or {})
+    text_props = cast(dict[str, str],
+                      checked_style.get_properties('text') or {})
     return ExpectedCellStyle(
         bold=text_props.get('fo:font-weight') == 'bold',
         italic=text_props.get('fo:font-style') == 'italic',
@@ -520,8 +520,8 @@ def _check_relative_style_expectation(
             actual_style = actual_style_at(row_index, col_index)
             mismatch_messages.extend(
                 _style_mismatch_messages(
-                    _cell_location_text(
-                        file_path, sheet_name, row_index, col_index),
+                    _cell_location_text(file_path, sheet_name, row_index,
+                                        col_index),
                     relative_expectation.expected_style, actual_style))
     if mismatch_messages:
         area_text = _area_location_text(file_path, sheet_name,
@@ -557,8 +557,8 @@ def _check_relative_border_expectation(  # pylint: disable=too-many-locals
             actual_borders = actual_borders_at(row_index, col_index)
             mismatch_messages.extend(
                 _border_mismatch_messages(
-                    _cell_location_text(
-                        file_path, sheet_name, row_index, col_index),
+                    _cell_location_text(file_path, sheet_name, row_index,
+                                        col_index),
                     expected_borders, actual_borders))
     if mismatch_messages:
         area_text = _area_location_text(file_path, sheet_name,

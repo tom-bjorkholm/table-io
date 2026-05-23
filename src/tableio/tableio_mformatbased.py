@@ -239,8 +239,8 @@ class TableIOMformatBased(TableIO):
                                    for key in
                                    impl_meta.column_order]
             list_data.append(FmtListRow(values=values, fmt=row.fmt))
-        return self._write_table_fmtlistdata(
-            data=list_data, impl_meta=impl_meta.common_impl)
+        return self._write_table_fmtlistdata(data=list_data,
+                                             impl_meta=impl_meta.common_impl)
 
     def _read_table_listdata(self, box: Optional[Box] = None) \
             -> ReadResult[ListData[Value]]:

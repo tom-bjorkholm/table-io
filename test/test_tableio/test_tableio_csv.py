@@ -246,13 +246,13 @@ def test_csv_protected_list_writer_rejects_box(
         capsys: CaptureFixture[str]) -> None:
     """The CSV implementation hook rejects boxed list writes."""
     with TemporaryDirectory() as td:
-        with ExposedTableIOCsv(
-                Path(td) / 'list_box', FileAccess.CREATE) as opened:
+        with ExposedTableIOCsv(Path(td) / 'list_box',
+                               FileAccess.CREATE) as opened:
             table_io = cast(ExposedTableIOCsv, opened)
             with pytest.raises(CapabilityNotSupported,
                                match='Box is not allowed in CSV'):
-                table_io.write_table_listdata_in_box(
-                    [['a', 'b']], Box(0, 0, 1, 2))
+                table_io.write_table_listdata_in_box([['a', 'b']],
+                                                     Box(0, 0, 1, 2))
     check_capsys(capsys)
 
 
@@ -261,13 +261,13 @@ def test_csv_protected_dict_writer_rejects_box(
     """The CSV implementation hook rejects boxed dict writes."""
     with TemporaryDirectory() as td:
         data: list[dict[str, Value]] = [{'name': 'Alice', 'active': True}]
-        with ExposedTableIOCsv(
-                Path(td) / 'dict_box', FileAccess.CREATE) as opened:
+        with ExposedTableIOCsv(Path(td) / 'dict_box',
+                               FileAccess.CREATE) as opened:
             table_io = cast(ExposedTableIOCsv, opened)
             with pytest.raises(CapabilityNotSupported,
                                match='Box is not allowed in CSV'):
-                table_io.write_table_dictdata_in_box(
-                    data, ['name', 'active'], Box(0, 0, 2, 2))
+                table_io.write_table_dictdata_in_box(data, ['name', 'active'],
+                                                     Box(0, 0, 2, 2))
     check_capsys(capsys)
 
 
@@ -384,8 +384,8 @@ def test_csv_write_numeric_values(capsys: CaptureFixture[str]) -> None:
         pytest.param('read_table_listdata_in_box', id='listdata'),
         pytest.param('read_table_dictdata_in_box', id='dictdata')
     ])
-def test_csv_protected_readers_reject_box(
-        reader_name: str, capsys: CaptureFixture[str]) -> None:
+def test_csv_readers_reject_box(reader_name: str,
+                                capsys: CaptureFixture[str]) -> None:
     """The CSV implementation hooks reject boxed reads."""
     with TemporaryDirectory() as td:
         file_path = Path(td) / 'boxed.csv'

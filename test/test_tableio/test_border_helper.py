@@ -57,8 +57,8 @@ def test_border_helper_rejects_unsupported_style_when_strict() -> None:
                        match='write borders to the table'):
         BorderHelper(
             TableBorderStyle.ALL_THICK,
-            Capabilities(can_write_borders=_capability(
-                False, Strictness.STRICT)))
+            Capabilities(can_write_borders=_capability(False,
+                                                       Strictness.STRICT)))
 
 
 @pytest.mark.parametrize(

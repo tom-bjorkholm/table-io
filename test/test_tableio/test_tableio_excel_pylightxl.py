@@ -36,7 +36,7 @@ from .excel_test_file_helper import create_formula_workbook, \
     create_update_workbook, inspect_find_and_write_cells_workbook, \
     inspect_updated_workbook
 from .spreadsheet_test_helper import \
-    run_boxed_table_partial_overwrite_raises, \
+    run_box_partial_overwrite, \
     run_find_value_and_write_cells, \
     run_multi_sheet_heading_state_is_per_sheet, \
     run_multi_sheet_read_only_create_raises, \
@@ -44,8 +44,8 @@ from .spreadsheet_test_helper import \
     run_multi_sheet_update_uses_selected_sheet_write_position, \
     run_multi_sheet_write_positions_are_per_sheet, \
     run_open_rejects_second_open, \
-    run_read_formula_uses_cached_value, \
-    run_read_formula_without_cached_value, \
+    run_read_formula_cached, \
+    run_read_formula_no_cache, \
     run_round_trip_dictdata_in_box, \
     run_sequential_list_reads, \
     run_select_missing_sheet_without_create_raises_key_error, \
@@ -234,8 +234,8 @@ def test_excel_pylightxl_round_trip_dictdata_in_box(
 def test_excel_pylightxl_multi_sheet_write_positions_are_per_sheet(
         capsys: CaptureFixture[str]) -> None:
     """Sequential writes keep an independent default position per sheet."""
-    run_multi_sheet_write_positions_are_per_sheet(
-        TableIOExcelPylightxl, capsys)
+    run_multi_sheet_write_positions_are_per_sheet(TableIOExcelPylightxl,
+                                                  capsys)
 
 
 def test_excel_pylightxl_written_workbook_is_validator_clean() -> None:
@@ -292,21 +292,21 @@ def test_excel_pylightxl_find_value_and_write_cells(
 def test_excel_pylightxl_boxed_table_partial_overwrite_raises(
         capsys: CaptureFixture[str]) -> None:
     """Boxed table writes reject overlaps that leave part of a table behind."""
-    run_boxed_table_partial_overwrite_raises(TableIOExcelPylightxl, capsys)
+    run_box_partial_overwrite(TableIOExcelPylightxl, capsys)
 
 
 def test_excel_pylightxl_read_formula_uses_cached_value(
         capsys: CaptureFixture[str]) -> None:
     """A formula cell is read as its cached value."""
-    run_read_formula_uses_cached_value(
-        TableIOExcelPylightxl, '.xlsx', create_formula_workbook, 3, capsys)
+    run_read_formula_cached(TableIOExcelPylightxl, '.xlsx',
+                            create_formula_workbook, 3, capsys)
 
 
 def test_excel_pylightxl_read_formula_without_cached_value_returns_none(
         capsys: CaptureFixture[str]) -> None:
     """A formula without a cached result is read as None."""
-    run_read_formula_without_cached_value(
-        TableIOExcelPylightxl, '.xlsx', create_formula_workbook, capsys)
+    run_read_formula_no_cache(TableIOExcelPylightxl, '.xlsx',
+                              create_formula_workbook, capsys)
 
 
 def test_excel_pylightxl_open_rejects_second_open(

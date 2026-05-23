@@ -446,8 +446,8 @@ class TableIOSpreadsheetBased(TableIO):
             left: Optional[int] = None
             right = 0
             while row < bottom:
-                nonempty_columns = self._row_nonempty_columns(
-                    read_sheet, row, 0, None)
+                nonempty_columns = self._row_nonempty_columns(read_sheet, row,
+                                                              0, None)
                 if not nonempty_columns:
                     break
                 row_left = min(nonempty_columns)
@@ -507,8 +507,8 @@ class TableIOSpreadsheetBased(TableIO):
             if self._ranges_overlap(bounds, existing_bounds):
                 self._delete_filtered_range(name)
 
-    def _write_filtered_data_range(
-            self, bounds: tuple[int, int, int, int]) -> None:
+    def _write_filtered_data_range(self,
+                                   bounds: tuple[int, int, int, int]) -> None:
         """Create one backend filtered data range for the given bounds."""
         self._add_filtered_range(bounds, self._next_filter_range_name())
 

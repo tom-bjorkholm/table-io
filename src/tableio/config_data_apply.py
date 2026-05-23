@@ -176,9 +176,9 @@ def _filtered_args(config: ConfigData, capabilities: Optional[Capabilities],
     args: OptionalArgsDict = _arg_dict(config)
     if extra_args is not None:
         args.update(extra_args)
-    filtered = filter_args_tableio(
-        args, config.format_name, config.implementation,
-        capabilities=capabilities)
+    filtered = filter_args_tableio(args, config.format_name,
+                                   config.implementation,
+                                   capabilities=capabilities)
     if not filtered:
         return None
     return filtered
@@ -224,8 +224,9 @@ def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
     _check_default_input(capabilities, file_access, format_name,
                          implementation, include_all_options)
     match_caps = add_access_capabilities(file_access, capabilities)
-    selected_format, selected_impl = _best_default_names(
-        match_caps, format_name, implementation)
+    selected_format, selected_impl = _best_default_names(match_caps,
+                                                         format_name,
+                                                         implementation)
     if format_name is not None:
         selected_format = format_name
     if implementation is not None:
@@ -331,9 +332,9 @@ def tio_config_trim(config: ConfigData,
     latex = _trim_latex(config, filtered_names)
     return ConfigData(format_name=config.format_name,
                       implementation=config.implementation,
-                      character_encoding=_kept(
-                          config.character_encoding, 'character_encoding',
-                          filtered_names),
+                      character_encoding=_kept(config.character_encoding,
+                                               'character_encoding',
+                                               filtered_names),
                       language=_kept(config.language, 'lang', filtered_names),
                       title=_kept(config.title, 'title', filtered_names),
                       paper_size=_kept(config.paper_size, 'paper_size',
@@ -343,9 +344,8 @@ def tio_config_trim(config: ConfigData,
                       table_max_line_length=_kept(
                           config.table_max_line_length,
                           'table_max_line_length', filtered_names),
-                      table_alignment=_kept(
-                          config.table_alignment, 'table_alignment',
-                          filtered_names),
+                      table_alignment=_kept(config.table_alignment,
+                                            'table_alignment', filtered_names),
                       csv=csv, html=html, latex=latex)
 
 

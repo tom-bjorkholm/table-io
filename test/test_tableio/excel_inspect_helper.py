@@ -126,8 +126,8 @@ def inspect_table_width_heading_workbook(file_path: Path,
     workbook.close()
 
 
-def inspect_normalized_header_workbook(
-        file_path: Path, sheet_name: str = 'Sheet1') -> None:
+def inspect_normalized_headers(file_path: Path,
+                               sheet_name: str = 'Sheet1') -> None:
     """Check one workbook with normalized filtered table headers."""
     workbook = load_workbook(file_path)
     worksheet = workbook[sheet_name]
