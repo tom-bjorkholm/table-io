@@ -113,5 +113,5 @@ a better start by reading the examples.
 - No flake8 warnings.
 - No mypy errors found.
 - No python layout warnings.
-- Built version(s): 0.7.1
+- Built version(s): 0.8
 - Build and test using Python 3.14.4

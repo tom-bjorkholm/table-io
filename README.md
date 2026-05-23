@@ -97,5 +97,5 @@ information about the build system. This README can also be viewed at
 - No flake8 warnings.
 - No mypy errors found.
 - No python layout warnings.
-- Built version(s): 0.7.1
+- Built version(s): 0.8
 - Build and test using Python 3.14.4
