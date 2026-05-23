@@ -109,9 +109,9 @@ a better start by reading the examples.
 
 ## Test summary
 
-- Test result: 1311 passed in 19s
+- Test result: 1311 passed in 43s
 - No flake8 warnings.
 - No mypy errors found.
 - No python layout warnings.
 - Built version(s): 0.8
-- Build and test using Python 3.14.4
+- Build and test using Python 3.12.6
