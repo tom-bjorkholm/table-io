@@ -7,7 +7,9 @@
 import codecs
 from typing import Optional
 
-from tableio.capability import CAP_NEEDED, Capabilities
+from tableio.access_capability import access_capabilities, \
+    check_access_capabilities, InsufficientCapabilities
+from tableio.capability import Capabilities
 from tableio.config_data import ConfigData, CsvConfigData, HtmlConfigData, \
     LatexConfigData
 from tableio.config_data_describe import ConfigSpec, tio_config_specs
@@ -200,43 +202,24 @@ def _validate_latex(config: ConfigData, specs: dict[str, ConfigSpec],
     _validate_opt_str(issues, 'latex.preamble', config.latex.preamble)
 
 
-def _caps_for_access(file_access: FileAccess) -> Capabilities:
-    """Return the capabilities implied by a file access mode."""
-    if file_access == FileAccess.READ:
-        return Capabilities(can_read=CAP_NEEDED)
-    if file_access == FileAccess.CREATE:
-        return Capabilities(can_write=CAP_NEEDED)
-    return Capabilities(can_read=CAP_NEEDED, can_write=CAP_NEEDED)
-
-
-def _check_caps_for_access(capabilities: Capabilities, file_access: FileAccess,
-                           issues: list[ConfigIssue]) -> None:
-    """Validate that explicit capabilities cover file access."""
-    if file_access == FileAccess.READ and not capabilities.can_read.supported:
-        _add_issue(issues, 'capabilities.can_read',
-                   'FileAccess.READ requires can_read.')
-    if file_access == FileAccess.CREATE and \
-            not capabilities.can_write.supported:
-        _add_issue(issues, 'capabilities.can_write',
-                   'FileAccess.CREATE requires can_write.')
-    if file_access == FileAccess.UPDATE and \
-            not capabilities.can_read.supported:
-        _add_issue(issues, 'capabilities.can_read',
-                   'FileAccess.UPDATE requires can_read.')
-    if file_access == FileAccess.UPDATE and \
-            not capabilities.can_write.supported:
-        _add_issue(issues, 'capabilities.can_write',
-                   'FileAccess.UPDATE requires can_write.')
-
-
 def _match_caps(capabilities: Optional[Capabilities],
                 file_access: Optional[FileAccess],
                 issues: list[ConfigIssue]) -> Optional[Capabilities]:
     """Return capabilities to use when matching registered backends."""
     if capabilities is None and file_access is not None:
-        return _caps_for_access(file_access)
+        try:
+            return access_capabilities(file_access)
+        except (TypeError, ValueError) as err:
+            _add_issue(issues, 'file_access', str(err))
+            return None
     if capabilities is not None and file_access is not None:
-        _check_caps_for_access(capabilities, file_access, issues)
+        try:
+            check_access_capabilities(file_access, capabilities)
+        except InsufficientCapabilities as err:
+            for name in err.capability_names:
+                _add_issue(issues, 'capabilities.' + name, str(err))
+        except (TypeError, ValueError) as err:
+            _add_issue(issues, 'file_access', str(err))
     return capabilities
 
 

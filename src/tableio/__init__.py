@@ -7,6 +7,9 @@
 
 from tableio.capability import CAP_IGNORABLE, CAP_NEEDED, CAP_NOT_USED, \
     Capabilities
+from tableio.access_capability import NO_ERROR_OUTPUT, \
+    InsufficientCapabilities, access_capabilities, add_access_capabilities, \
+    check_access_capabilities
 from tableio.color import Color
 from tableio.config_data import ConfigData, CsvConfigData, HtmlConfigData, \
     LatexConfigData
@@ -48,9 +51,14 @@ __all__ = ['create_tableio',
            'CellT',
            'Color',
            'Capabilities',
+           'NO_ERROR_OUTPUT',
+           'InsufficientCapabilities',
            'CAP_NEEDED',
            'CAP_NOT_USED',
            'CAP_IGNORABLE',
+           'access_capabilities',
+           'add_access_capabilities',
+           'check_access_capabilities',
            'filter_args_tableio',
            'list_registered_tableio',
            'list_implementations_tableio',

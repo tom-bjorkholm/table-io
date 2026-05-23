@@ -7,13 +7,14 @@
 from pathlib import Path
 from typing import Callable, cast
 import pytest
+from tableio.access_capability import InsufficientCapabilities
 from tableio.capability import Capabilities, SingleCapability, Strictness
 from tableio.tableio import TableIO, Descriptor, FileAccess
 from tableio.factory import (
     ImplPrio, BestMatch, FactoryFormatInfo, TableIOFactory,
     TableIOFactoryConflictError, TableIOFactoryNoSuchError,
-    TableIOFactoryNoCapabilityMatch, InsufficientCapabilities,
-    create_tableio, filter_args_tableio, list_registered_tableio,
+    TableIOFactoryNoCapabilityMatch, create_tableio, filter_args_tableio,
+    list_registered_tableio,
     list_implementations_tableio, usage_tableio, register_tableio)
 from tableio.optional_args import OptionalArgsDict
 

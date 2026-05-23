@@ -7,7 +7,8 @@
 from typing import Callable, Optional, TypeVar, cast
 
 from mformat.mformat import PathLike
-from tableio.capability import CAP_NEEDED, Capabilities, capability_match
+from tableio.access_capability import add_access_capabilities
+from tableio.capability import Capabilities, capability_match
 from tableio.config_data import ConfigData, CsvConfigData, HtmlConfigData, \
     LatexConfigData
 from tableio.config_data_error import ConfigError, ConfigIssue
@@ -43,16 +44,6 @@ def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
         _config_error('implementation', 'must be a string or None.')
     if not isinstance(include_all_options, bool):
         _config_error('include_all_options', 'must be a bool.')
-
-
-def _caps_with_access(capabilities: Capabilities,
-                      file_access: FileAccess) -> Capabilities:
-    """Return capabilities including requirements from file access."""
-    if file_access == FileAccess.READ:
-        return capabilities._replace(can_read=CAP_NEEDED)
-    if file_access == FileAccess.CREATE:
-        return capabilities._replace(can_write=CAP_NEEDED)
-    return capabilities._replace(can_read=CAP_NEEDED, can_write=CAP_NEEDED)
 
 
 def _registered_formats_by_lower() -> dict[str, str]:
@@ -232,7 +223,7 @@ def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
     """
     _check_default_input(capabilities, file_access, format_name,
                          implementation, include_all_options)
-    match_caps = _caps_with_access(capabilities, file_access)
+    match_caps = add_access_capabilities(file_access, capabilities)
     selected_format, selected_impl = _best_default_names(
         match_caps, format_name, implementation)
     if format_name is not None:
