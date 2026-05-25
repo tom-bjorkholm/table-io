@@ -8,9 +8,13 @@ from typing import Optional, cast
 
 import pytest
 
+import tableio.config_data_validate as validate_module
 from tableio import CAP_NEEDED, Capabilities, ConfigData, ConfigError, \
     ConfigIssue, CsvConfigData, CsvDialect, FileAccess, HtmlConfigData, \
     LatexConfigData, tio_config_validate
+from tableio.factory import TableIOFactoryNoSuchError
+from tableio.optional_args import OptionalArgs
+from .file_access_test_helper import unsupported_file_access
 
 
 def _issue_names(error: ConfigError) -> set[str]:
@@ -136,6 +140,10 @@ def test_accepts_encoding() -> None:
 @pytest.mark.parametrize(
     ('config', 'name'),
     [
+        (ConfigData(character_encoding=cast(Optional[str], 123)),
+         'character_encoding'),
+        (ConfigData(language=cast(Optional[str], 123)), 'language'),
+        (ConfigData(title=cast(Optional[str], 123)), 'title'),
         (ConfigData(format_name=cast(str, 123)), 'format_name'),
         (ConfigData(implementation=cast(Optional[str], 123)),
          'implementation'),
@@ -144,9 +152,17 @@ def test_accepts_encoding() -> None:
         (ConfigData(csv=cast(Optional[CsvConfigData], object())), 'csv'),
         (ConfigData(csv=CsvConfigData(
             dialect=cast(Optional[CsvDialect], 'excel'))), 'csv.dialect'),
+        (ConfigData(csv=CsvConfigData(delimiter=cast(Optional[str], 1))),
+         'csv.delimiter'),
+        (ConfigData(csv=CsvConfigData(lineterminator=cast(Optional[str], 1))),
+         'csv.lineterminator'),
         (ConfigData(html=cast(Optional[HtmlConfigData], object())), 'html'),
+        (ConfigData(html=HtmlConfigData(css_file=cast(Optional[str], 1))),
+         'html.css_file'),
         (ConfigData(latex=cast(Optional[LatexConfigData], object())),
-         'latex')
+         'latex'),
+        (ConfigData(latex=LatexConfigData(
+            preamble=cast(Optional[str], 1))), 'latex.preamble')
     ])
 def test_rejects_wrong_types(config: ConfigData, name: str) -> None:
     """Runtime validation catches wrong value types."""
@@ -174,6 +190,19 @@ def test_rejects_unknown_format() -> None:
     """Validation requires the format to be registered."""
     error = _validate_error(ConfigData(format_name='Unknown'))
     assert _issue_names(error) == {'format_name'}
+
+
+def test_unknown_format_skips_impl() -> None:
+    """Implementation format checks wait until the format name is known."""
+    error = _validate_error(ConfigData(format_name='Unknown',
+                                       implementation='csv'))
+    assert _issue_names(error) == {'format_name'}
+
+
+def test_bad_format_type_skips_impl() -> None:
+    """Implementation format checks wait for a string format name."""
+    config = ConfigData(format_name=cast(str, 123), implementation='csv')
+    assert _issue_names(_validate_error(config)) == {'format_name'}
 
 
 def test_rejects_unknown_impl() -> None:
@@ -232,3 +261,31 @@ def test_rejects_runtime_types() -> None:
                                               object()),
                             file_access=cast(Optional[FileAccess], object()))
     assert _issue_names(exc_info.value) == {'capabilities', 'file_access'}
+
+
+@pytest.mark.parametrize(
+    'capabilities',
+    [pytest.param(None, id='access-only'),
+     pytest.param(Capabilities(), id='with-capabilities')])
+def test_unsupported_file_access(capabilities: Optional[Capabilities]) -> None:
+    """Unsupported future FileAccess values are validation issues."""
+    with pytest.raises(ConfigError) as exc_info:
+        tio_config_validate(ConfigData(), capabilities=capabilities,
+                            file_access=unsupported_file_access())
+    assert _issue_names(exc_info.value) == {'file_access'}
+
+
+def test_backend_no_such_reported(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Backend lookup disappearance is reported as an implementation issue."""
+    def raise_no_such(
+            args: OptionalArgs, format_name: str,
+            implementation: Optional[str],
+            capabilities: Optional[Capabilities] = None) -> OptionalArgs:
+        """Raise a no-such error from a fake backend lookup."""
+        del args, format_name, implementation, capabilities
+        raise TableIOFactoryNoSuchError('missing backend')
+
+    monkeypatch.setattr(validate_module, 'filter_args_tableio', raise_no_such)
+    error = _validate_error(ConfigData(format_name='CSV',
+                                       implementation='csv'))
+    assert _issue_names(error) == {'implementation'}

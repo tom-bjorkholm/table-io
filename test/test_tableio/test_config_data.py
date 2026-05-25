@@ -6,7 +6,7 @@
 
 import inspect
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Optional, cast
 
 import pytest
 
@@ -146,6 +146,37 @@ def test_default_rejects_bad_impl() -> None:
     assert _issue_names(exc_info.value) == {'implementation'}
 
 
+@pytest.mark.parametrize(
+    ('capabilities', 'file_access', 'format_name', 'implementation', 'name'),
+    [
+        (cast(Capabilities, object()), FileAccess.CREATE, None, None,
+         'capabilities'),
+        (Capabilities(), cast(FileAccess, object()), None, None,
+         'file_access'),
+        (Capabilities(), FileAccess.CREATE, cast(Optional[str], 1), None,
+         'format_name'),
+        (Capabilities(), FileAccess.CREATE, None, cast(Optional[str], 1),
+         'implementation')
+    ])
+def test_default_bad_runtime(capabilities: Capabilities,
+                             file_access: FileAccess,
+                             format_name: Optional[str],
+                             implementation: Optional[str], name: str) -> None:
+    """Default selection validates runtime argument types."""
+    with pytest.raises(ConfigError) as exc_info:
+        tio_config_default(capabilities, file_access, format_name=format_name,
+                           implementation=implementation)
+    assert _issue_names(exc_info.value) == {name}
+
+
+def test_default_unknown_format() -> None:
+    """Default selection reports unknown preferred formats."""
+    with pytest.raises(ConfigError) as exc_info:
+        tio_config_default(Capabilities(), FileAccess.CREATE,
+                           format_name='missing')
+    assert _issue_names(exc_info.value) == {'format_name'}
+
+
 def test_default_bad_include_all() -> None:
     """Default selection validates the include_all_options flag."""
     with pytest.raises(ConfigError) as exc_info:
@@ -260,6 +291,35 @@ def test_trim_removes_empty() -> None:
     """Trim removes nested config sections that have no kept values."""
     config = ConfigData(format_name='CSV', csv=CsvConfigData(),
                         html=HtmlConfigData())
+    assert tio_config_trim(config) == ConfigData(format_name='CSV')
+
+
+def test_trim_scalar_no_sections() -> None:
+    """Trim keeps scalar values when no nested sections are configured."""
+    config = ConfigData(format_name='CSV', character_encoding='utf-8')
+    assert tio_config_trim(config) == config
+
+
+def test_trim_keeps_html_config() -> None:
+    """Trim keeps HTML values relevant to the selected backend."""
+    config = ConfigData(format_name='HTML', title='Report',
+                        html=HtmlConfigData(css_file='table.css'))
+    assert tio_config_trim(config) == config
+
+
+def test_trim_keeps_latex_config() -> None:
+    """Trim keeps LaTeX values relevant to the selected backend."""
+    config = ConfigData(
+        format_name='LaTeX',
+        latex=LatexConfigData(document_class='article',
+                              preamble='\\usepackage{xcolor}'))
+    assert tio_config_trim(config) == config
+
+
+def test_trim_drops_latex_config() -> None:
+    """Trim removes LaTeX values irrelevant to the selected backend."""
+    config = ConfigData(format_name='CSV',
+                        latex=LatexConfigData(preamble='ignored'))
     assert tio_config_trim(config) == ConfigData(format_name='CSV')
 
 

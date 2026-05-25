@@ -4,7 +4,7 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-from typing import Callable, Optional, TypeVar, cast
+from typing import Callable, NoReturn, Optional, TypeVar, cast
 
 from mformat.mformat import PathLike
 from tableio.access_capability import add_access_capabilities
@@ -24,7 +24,7 @@ _FORMAT_PRIORITY = ('excel', 'ods', 'csv')
 _ValueT = TypeVar('_ValueT')
 
 
-def _config_error(name: str, message: str) -> None:
+def _config_error(name: str, message: str) -> NoReturn:
     """Raise one structured configuration error."""
     raise ConfigError((ConfigIssue(name, message),))
 
@@ -109,7 +109,6 @@ def _best_default_names(capabilities: Capabilities, format_name: Optional[str],
         return selected_format, selected_impl
     name = 'implementation' if implementation is not None else 'format_name'
     _config_error(name, 'does not match registered TableIO backends.')
-    raise AssertionError('Unreachable default selection failure.')
 
 
 def _base_arg_items(config: ConfigData) -> list[tuple[str, str, object]]:

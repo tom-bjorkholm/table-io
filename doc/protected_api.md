@@ -779,7 +779,7 @@ Apply framework-neutral configuration data to TableIO backends.
 #### \_config\_error
 
 ```python
-def _config_error(name: str, message: str) -> None
+def _config_error(name: str, message: str) -> NoReturn
 ```
 
 Raise one structured configuration error.

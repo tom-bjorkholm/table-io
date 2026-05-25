@@ -722,6 +722,13 @@ class TestTableIOFactoryImplementations:
         assert 'odfdo' in names
         assert 'high' not in names
 
+    def test_deprecated_impl_list_warns(self) -> None:
+        """Deprecated implementation listing wrapper still delegates."""
+        f = _make_factory_stubs()
+        with pytest.warns(DeprecationWarning, match='i_get_reg_impls'):
+            names = f.i_get_registered_implementations(format_name='Alpha')
+        assert names == f.i_get_reg_impls(format_name='Alpha')
+
 
 # -- TableIOFactory: usage -----------------------------------------------
 

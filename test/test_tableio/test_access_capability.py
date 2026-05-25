@@ -13,6 +13,8 @@ from tableio import CAP_IGNORABLE, CAP_NEEDED, Capabilities, FileAccess, \
     InsufficientCapabilities, NO_ERROR_OUTPUT, access_capabilities, \
     add_access_capabilities, check_access_capabilities
 
+from .file_access_test_helper import unsupported_file_access
+
 
 @pytest.mark.parametrize(('file_access', 'expected'), [
     pytest.param(FileAccess.READ, Capabilities(can_read=CAP_NEEDED),
@@ -36,6 +38,15 @@ def test_access_caps_bad_type() -> None:
         access_capabilities(cast(FileAccess, object()), error_file)
     assert error_file.getvalue() == \
         'file_access must be a FileAccess value.\n'
+
+
+def test_access_caps_unknown_value() -> None:
+    """Unsupported future FileAccess values are reported clearly."""
+    error_file = StringIO()
+    with pytest.raises(ValueError, match='unsupported file access'):
+        access_capabilities(unsupported_file_access(), error_file)
+    assert error_file.getvalue() == \
+        'unsupported file access: <FileAccess.UNKNOWN: 99>.\n'
 
 
 def test_add_access_caps_new() -> None:

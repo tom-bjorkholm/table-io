@@ -64,6 +64,44 @@ def _inspect_find_and_write_cells_workbook(file_path: Path) -> None:
                                                  expect_highlight=True)
 
 
+def _shared_string_count(root: ET.Element) -> int:
+    """Return the number of shared strings in a parsed XML root."""
+    namespace = (
+        '{http://schemas.openxmlformats.org/'
+        'spreadsheetml/2006/main}'
+    )
+    return len(root.findall(f'{namespace}si'))
+
+
+def _existing_content_types_xml() -> bytes:
+    """Return content types XML that already has shared strings."""
+    return (
+        b'<Types xmlns="http://schemas.openxmlformats.org/package/2006/'
+        b'content-types"><Override PartName="/xl/sharedStrings.xml" '
+        b'ContentType="application/vnd.openxmlformats-officedocument.'
+        b'spreadsheetml.sharedStrings+xml"/></Types>'
+    )
+
+
+def _existing_workbook_rels_xml() -> bytes:
+    """Return workbook relationships XML with shared strings already set."""
+    return (
+        b'<Relationships xmlns="http://schemas.openxmlformats.org/'
+        b'package/2006/relationships"><Relationship Id="rId1" '
+        b'Type="http://schemas.openxmlformats.org/officeDocument/2006/'
+        b'relationships/sharedStrings" Target="sharedStrings.xml"/>'
+        b'</Relationships>'
+    )
+
+
+def _shared_strings_xml() -> bytes:
+    """Return one shared strings XML document."""
+    return (
+        b'<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/'
+        b'2006/main"><si><t>old</t></si></sst>'
+    )
+
+
 def test_excel_round_trip_sequential_list_reads(
         capsys: CaptureFixture[str]) -> None:
     """Two list sections can be written and then read back sequentially."""
@@ -241,17 +279,66 @@ def test_excel_written_heading_workbook_is_validator_clean() -> None:
 
 def test_excel_written_strings_use_shared_string_table() -> None:
     """String cells are saved through a populated shared-string table."""
+    read_root = cast(Callable[[Path], ET.Element],
+                     getattr(tableio_excel_openpyxl,
+                             '_read_shared_strings_root'))
     with TemporaryDirectory() as temp_dir:
         file_path = Path(temp_dir) / 'shared_strings.xlsx'
         with TableIOExcelOpenPyXL(file_path, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([['left', 'right']])
+        shared_strings_root = read_root(file_path)
         with ZipFile(file_path, 'r') as archive:
             worksheet_xml = archive.read('xl/worksheets/sheet1.xml')
             shared_strings_xml = archive.read('xl/sharedStrings.xml')
+        assert _shared_string_count(shared_strings_root) == 2
         assert b'inlineStr' not in worksheet_xml
         assert b'sharedStrings.xml' not in worksheet_xml
         assert b'left' in shared_strings_xml
         assert b'right' in shared_strings_xml
+
+
+def test_excel_rewrite_shared_parts(tmp_path: Path) -> None:
+    """Rewriting an archive with shared strings replaces only that entry."""
+    rewrite_workbook = cast(Callable[[Path], None],
+                            getattr(tableio_excel_openpyxl,
+                                    '_rewrite_saved_workbook'))
+    file_path = tmp_path / 'existing_shared.xlsx'
+    content_types_xml = _existing_content_types_xml()
+    workbook_rels_xml = _existing_workbook_rels_xml()
+    with ZipFile(file_path, 'w') as archive:
+        archive.writestr('[Content_Types].xml', content_types_xml)
+        archive.writestr('xl/_rels/workbook.xml.rels', workbook_rels_xml)
+        archive.writestr('xl/sharedStrings.xml', _shared_strings_xml())
+    rewrite_workbook(file_path)
+    with ZipFile(file_path, 'r') as archive:
+        assert archive.namelist().count('xl/sharedStrings.xml') == 1
+        assert archive.read('[Content_Types].xml') == content_types_xml
+        assert archive.read('xl/_rels/workbook.xml.rels') == \
+            workbook_rels_xml
+        shared_strings_root = ET.fromstring(
+            archive.read('xl/sharedStrings.xml'))
+    assert _shared_string_count(shared_strings_root) == 1
+
+
+def test_excel_rels_next_id() -> None:
+    """Shared-string relationship IDs ignore nonstandard ID strings."""
+    add_shared_rel = cast(Callable[[bytes], bytes],
+                          getattr(tableio_excel_openpyxl,
+                                  '_workbook_rels_with_shared_strings'))
+    rels_xml = (
+        b'<Relationships xmlns="http://schemas.openxmlformats.org/'
+        b'package/2006/relationships"><Relationship Id="external" '
+        b'Type="custom" Target="external.xml"/>'
+        b'<Relationship Id="rIdx" Type="custom" Target="bad.xml"/>'
+        b'<Relationship Id="rId7" Type="custom" Target="sheet.xml"/>'
+        b'</Relationships>'
+    )
+    root = ET.fromstring(add_shared_rel(rels_xml))
+    rels = root.findall(
+        '{http://schemas.openxmlformats.org/package/2006/'
+        'relationships}Relationship')
+    assert rels[-1].get('Id') == 'rId8'
+    assert rels[-1].get('Target') == 'sharedStrings.xml'
 
 
 def test_excel_bordered_workbook_is_validator_clean() -> None:
