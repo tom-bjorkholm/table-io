@@ -62,9 +62,9 @@ def test_default_all_options() -> None:
 
 def test_default_all_keeps_name_case() -> None:
     """Expanded defaults preserve explicit user-supplied name casing."""
-    config = tio_config_default(
-        Capabilities(), FileAccess.READ, format_name='excel',
-        implementation='openpyxl', include_all_options=True)
+    config = tio_config_default(Capabilities(), FileAccess.READ,
+                                format_name='excel', implementation='openpyxl',
+                                include_all_options=True)
     assert config.format_name == 'excel'
     assert config.implementation == 'openpyxl'
     assert config.csv is not None

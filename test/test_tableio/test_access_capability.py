@@ -19,9 +19,9 @@ from tableio import CAP_IGNORABLE, CAP_NEEDED, Capabilities, FileAccess, \
                  id='read'),
     pytest.param(FileAccess.CREATE, Capabilities(can_write=CAP_NEEDED),
                  id='create'),
-    pytest.param(
-        FileAccess.UPDATE,
-        Capabilities(can_read=CAP_NEEDED, can_write=CAP_NEEDED), id='update')
+    pytest.param(FileAccess.UPDATE,
+                 Capabilities(can_read=CAP_NEEDED, can_write=CAP_NEEDED),
+                 id='update')
 ])
 def test_access_capabilities(file_access: FileAccess,
                              expected: Capabilities) -> None:

@@ -382,9 +382,9 @@ def tio_config_trim(config: ConfigData,
                                        filtered_names),
                       line_length=_kept(config.line_length, 'line_length',
                                         filtered_names),
-                      table_max_line_length=_kept(
-                          config.table_max_line_length,
-                          'table_max_line_length', filtered_names),
+                      table_max_line_length=_kept(config.table_max_line_length,
+                                                  'table_max_line_length',
+                                                  filtered_names),
                       table_alignment=_kept(config.table_alignment,
                                             'table_alignment', filtered_names),
                       csv=csv, html=html, latex=latex)

@@ -197,9 +197,9 @@ def test_excel_write_table_listdata_applies_borders(
 def test_excel_box_rewrite_clears_old_borders(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting the same boxed area clears any stale cell borders."""
-    run_box_rewrite_clears_borders(
-        TableIOExcelOpenPyXL, '.xlsx',
-        inspect_box_rewrite_clears_borders_workbook, capsys)
+    run_box_rewrite_clears_borders(TableIOExcelOpenPyXL, '.xlsx',
+                                   inspect_box_rewrite_clears_borders_workbook,
+                                   capsys)
 
 
 def test_excel_read_formula_uses_cached_value(
@@ -312,6 +312,7 @@ def test_excel_styles_xml_with_sorted_fonts_keeps_unknown_tags_last(
 def test_excel_close_removes_temp_file_on_rewrite_failure(
         monkeypatch: pytest.MonkeyPatch, capsys: CaptureFixture[str]) -> None:
     """Workbook close cleans up the temporary `.xlsx` on rewrite failure."""
-    run_close_removes_temp_file_on_rewrite_failure(
-        TableIOExcelOpenPyXL, tableio_excel_openpyxl,
-        '_rewrite_saved_workbook', monkeypatch, capsys)
+    run_close_removes_temp_file_on_rewrite_failure(TableIOExcelOpenPyXL,
+                                                   tableio_excel_openpyxl,
+                                                   '_rewrite_saved_workbook',
+                                                   monkeypatch, capsys)

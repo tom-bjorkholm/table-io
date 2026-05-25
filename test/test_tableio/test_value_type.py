@@ -376,9 +376,9 @@ def test_row_format_each_cell_dict(data: list[FmtDictRow],
             ],
             id='values')
     ])
-def test_format_each_cell_list(
-        data: list[tuple[Value, ...]], fmt: Fmt,
-        expected: list[list[ValueFmt]], capsys: CaptureFixture[str]) -> None:
+def test_format_each_cell_list(data: list[tuple[Value, ...]], fmt: Fmt,
+                               expected: list[list[ValueFmt]],
+                               capsys: CaptureFixture[str]) -> None:
     """Test that format_each_cell_list applies the provided format."""
     assert format_each_cell_list(data, fmt) == expected
     check_capsys(capsys)

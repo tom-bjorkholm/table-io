@@ -347,9 +347,9 @@ def test_excel_xlsxwriter_write_table_listdata_applies_borders(
 def test_excel_xlsxwriter_box_rewrite_clears_old_borders(
         capsys: CaptureFixture[str]) -> None:
     """Rewriting the same boxed area clears any stale cell borders."""
-    run_box_rewrite_clears_borders(
-        TableIOExcelXlsxWriter, '.xlsx',
-        inspect_box_rewrite_clears_borders_workbook, capsys)
+    run_box_rewrite_clears_borders(TableIOExcelXlsxWriter, '.xlsx',
+                                   inspect_box_rewrite_clears_borders_workbook,
+                                   capsys)
 
 
 def test_excel_xlsxwriter_filtered_table_headers_are_normalized(

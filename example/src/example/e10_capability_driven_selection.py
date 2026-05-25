@@ -158,6 +158,6 @@ def e10_capability_driven_selection(format_name: str, output_file_name: str,
 
 
 if __name__ == '__main__':
-    cmd_parse_and_run_example(
-        example_name='e10_capability_driven_selection',
-        func=e10_capability_driven_selection, caps=PREFERRED_CAPS)
+    cmd_parse_and_run_example(example_name='e10_capability_driven_selection',
+                              func=e10_capability_driven_selection,
+                              caps=PREFERRED_CAPS)
