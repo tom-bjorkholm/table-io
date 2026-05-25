@@ -76,6 +76,7 @@ def test_check_access_caps_writes() -> None:
         'capabilities.\n')
 
 
-def test_no_error_output_writes() -> None:
-    """The default no-op error output accepts writes without storing them."""
-    assert NO_ERROR_OUTPUT.write('ignored') == len('ignored')
+def test_no_error_output_suppresses() -> None:
+    """The no-output marker suppresses helper error messages."""
+    with pytest.raises(TypeError, match='file_access'):
+        access_capabilities(cast(FileAccess, object()), NO_ERROR_OUTPUT)

@@ -31,8 +31,7 @@ def _config_error(name: str, message: str) -> None:
 
 def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
                          format_name: Optional[str],
-                         implementation: Optional[str],
-                         include_all_options: bool) -> None:
+                         implementation: Optional[str]) -> None:
     """Validate runtime values used for default selection."""
     if not isinstance(capabilities, Capabilities):
         _config_error('capabilities', 'must be a Capabilities object.')
@@ -42,8 +41,15 @@ def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
         _config_error('format_name', 'must be a string or None.')
     if implementation is not None and not isinstance(implementation, str):
         _config_error('implementation', 'must be a string or None.')
+
+
+def _check_default_flags(include_all_options: bool,
+                         impl_in_cfg: Optional[bool]) -> None:
+    """Validate flags used for default selection."""
     if not isinstance(include_all_options, bool):
         _config_error('include_all_options', 'must be a bool.')
+    if impl_in_cfg is not None and not isinstance(impl_in_cfg, bool):
+        _config_error('impl_in_cfg', 'must be a bool or None.')
 
 
 def _registered_formats_by_lower() -> dict[str, str]:
@@ -184,7 +190,8 @@ def _filtered_args(config: ConfigData, capabilities: Optional[Capabilities],
     return filtered
 
 
-def _all_option_config(format_name: str, implementation: str) -> ConfigData:
+def _all_option_config(format_name: str,
+                       implementation: Optional[str]) -> ConfigData:
     """Return a configuration object with all options visible."""
     csv = CsvConfigData(dialect=CsvDialect.UNIX, delimiter=',', quoting='all',
                         quotechar='"', lineterminator='\n', escapechar='\\')
@@ -198,10 +205,21 @@ def _all_option_config(format_name: str, implementation: str) -> ConfigData:
                       html=html, latex=latex)
 
 
-def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
+def _include_default_impl(implementation: Optional[str],
+                          include_all_options: bool,
+                          impl_in_cfg: Optional[bool]) -> bool:
+    """Return true if the default config should pin implementation."""
+    if impl_in_cfg is not None:
+        return impl_in_cfg
+    return implementation is not None or include_all_options
+
+
+# pylint: disable-next=too-many-arguments
+def tio_config_default(capabilities: Capabilities, file_access: FileAccess, *,
                        format_name: Optional[str] = None,
                        implementation: Optional[str] = None,
-                       include_all_options: bool = False) -> ConfigData:
+                       include_all_options: bool = False,
+                       impl_in_cfg: Optional[bool] = None) -> ConfigData:
     """Return recommended default configuration data.
 
     Default format and implementation selection first prefers implementations
@@ -211,6 +229,17 @@ def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
     If several implementations of the selected format match equally well,
     their TableIO implementation priority is used.
 
+    Usually it is better to not include the implementation name in the
+    configuration, as that allows the TableIO library to choose the best
+    implementation based on the capabilities and file access at runtime.
+    If you want to include the implementation name in the configuration,
+    you can set the impl_in_cfg parameter to True. If you set it to False,
+    the implementation name will always be omitted from the configuration.
+    If you set it to None, the implementation name will normally be omitted
+    from the configuration, but if include_all_options is True or if
+    implementation was explicitly provided, the implementation name will be
+    included.
+
     Args:
         capabilities: Runtime capabilities the application intends to use.
         file_access: Runtime file access requested by the application.
@@ -218,12 +247,21 @@ def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
         implementation: Optional preferred implementation name.
         include_all_options: Include visible non-None values for all
             configuration options, for teaching and configuration templates.
+        impl_in_cfg: Optional flag to include the implementation name in the
+            configuration. If None, the implementation name will normally be
+            omitted from the configuration, but if include_all_options is True
+            or if implementation was explicitly provided, the implementation
+            name will be included. If True, the implementation name will be
+            included in the configuration. If False, the implementation name
+            will always be omitted from the configuration.
     Returns:
         A configuration object containing durable user choices only.
     """
     _check_default_input(capabilities, file_access, format_name,
-                         implementation, include_all_options)
+                         implementation)
+    _check_default_flags(include_all_options, impl_in_cfg)
     match_caps = add_access_capabilities(file_access, capabilities)
+    selected_impl: Optional[str] = None
     selected_format, selected_impl = _best_default_names(match_caps,
                                                          format_name,
                                                          implementation)
@@ -231,6 +269,9 @@ def tio_config_default(capabilities: Capabilities, file_access: FileAccess,
         selected_format = format_name
     if implementation is not None:
         selected_impl = implementation
+    if not _include_default_impl(implementation, include_all_options,
+                                 impl_in_cfg):
+        selected_impl = None
     if include_all_options:
         config = _all_option_config(selected_format, selected_impl)
     else:

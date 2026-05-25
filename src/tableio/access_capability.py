@@ -4,16 +4,22 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-import os
+from enum import Enum, auto
 from typing import NoReturn, TextIO
 
 from tableio.capability import CAP_NEEDED, Capabilities
 from tableio.tableio_types import FileAccess
 
 
-# pylint: disable-next=consider-using-with
-NO_ERROR_OUTPUT: TextIO = open(os.devnull, 'w', encoding='utf-8')
-"""Text stream used when helper errors should not be printed."""
+class NoErrorOutput(Enum):
+    """Text stream marker when helper errors should not be printed."""
+
+    NO_OUTPUT = auto()
+    """Text stream marker when helper errors should not be printed."""
+
+
+NO_ERROR_OUTPUT = NoErrorOutput.NO_OUTPUT
+"""Text stream marker used when helper errors should not be printed."""
 
 
 class InsufficientCapabilities(ValueError):
@@ -32,13 +38,17 @@ class InsufficientCapabilities(ValueError):
         super().__init__(message)
 
 
-def _raise_error(error_file: TextIO, error: Exception) -> NoReturn:
+def _raise_error(error_file: TextIO | NoErrorOutput,
+                 error: Exception) -> NoReturn:
     """Write an error message and raise the error."""
+    if isinstance(error_file, NoErrorOutput):
+        raise error
     error_file.write(str(error) + '\n')
     raise error
 
 
-def _check_access_value(file_access: FileAccess, error_file: TextIO) -> None:
+def _check_access_value(file_access: FileAccess,
+                        error_file: TextIO | NoErrorOutput) -> None:
     """Raise if file access is not a supported FileAccess value."""
     if not isinstance(file_access, FileAccess):
         error = TypeError('file_access must be a FileAccess value.')
@@ -50,7 +60,7 @@ def _check_access_value(file_access: FileAccess, error_file: TextIO) -> None:
 
 
 def _check_capabilities_value(capabilities: Capabilities,
-                              error_file: TextIO) -> None:
+                              error_file: TextIO | NoErrorOutput) -> None:
     """Raise if capabilities is not a Capabilities object."""
     if not isinstance(capabilities, Capabilities):
         error = TypeError('capabilities must be a Capabilities object.')
@@ -58,7 +68,8 @@ def _check_capabilities_value(capabilities: Capabilities,
 
 
 def access_capabilities(file_access: FileAccess,
-                        error_file: TextIO = NO_ERROR_OUTPUT) -> Capabilities:
+                        error_file: TextIO | NoErrorOutput =
+                        NO_ERROR_OUTPUT) -> Capabilities:
     """Return the capabilities implied by a file access mode.
 
     Args:
@@ -80,7 +91,8 @@ def access_capabilities(file_access: FileAccess,
 
 def add_access_capabilities(file_access: FileAccess,
                             capabilities: Capabilities,
-                            error_file: TextIO = NO_ERROR_OUTPUT) \
+                            error_file: TextIO | NoErrorOutput =
+                            NO_ERROR_OUTPUT) \
         -> Capabilities:
     """Return capabilities with file access requirements added.
 
@@ -135,7 +147,8 @@ def _access_error_message(file_access: FileAccess) -> str:
 
 def check_access_capabilities(file_access: FileAccess,
                               capabilities: Capabilities,
-                              error_file: TextIO = NO_ERROR_OUTPUT) -> None:
+                              error_file: TextIO | NoErrorOutput =
+                              NO_ERROR_OUTPUT) -> None:
     """Raise if capabilities are not enough for requested access mode.
 
     Args:

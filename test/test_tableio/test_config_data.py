@@ -4,6 +4,7 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+import inspect
 from pathlib import Path
 from typing import Callable
 
@@ -22,16 +23,24 @@ def _issue_names(error: ConfigError) -> set[str]:
 
 
 def test_default_excel_writer() -> None:
-    """Default output configuration uses canonical registered names."""
+    """Default output configuration lets runtime choose implementation."""
     config = tio_config_default(Capabilities(), FileAccess.CREATE)
-    expected = ConfigData(format_name='Excel', implementation='XlsxWriter')
+    expected = ConfigData(format_name='Excel')
     assert config == expected
 
 
 def test_default_excel_reader() -> None:
-    """Default input configuration selects a reader implementation."""
+    """Default input configuration lets runtime choose implementation."""
     config = tio_config_default(Capabilities(), FileAccess.READ)
-    expected = ConfigData(format_name='Excel', implementation='OpenPyXL')
+    expected = ConfigData(format_name='Excel')
+    assert config == expected
+
+
+def test_default_impl_included() -> None:
+    """Default configuration can include selected implementation."""
+    config = tio_config_default(Capabilities(), FileAccess.CREATE,
+                                impl_in_cfg=True)
+    expected = ConfigData(format_name='Excel', implementation='XlsxWriter')
     assert config == expected
 
 
@@ -67,6 +76,7 @@ def test_default_all_options_filters() -> None:
     """Expanded defaults are valid when filtered for one backend."""
     config = tio_config_default(Capabilities(), FileAccess.CREATE,
                                 format_name='CSV', include_all_options=True)
+    assert config.implementation == 'csv'
     assert tio_config_optional_args(config) == {
         'character_encoding': 'utf-8',
         'csv_dialect': CsvDialect.UNIX,
@@ -94,10 +104,28 @@ def test_default_from_impl() -> None:
     assert config == ConfigData(format_name='ODS', implementation='odfdo')
 
 
+def test_default_impl_excluded() -> None:
+    """Explicit implementation pins can be excluded from configuration."""
+    config = tio_config_default(Capabilities(), FileAccess.CREATE,
+                                implementation='odfdo', impl_in_cfg=False)
+    assert config == ConfigData(format_name='ODS')
+
+
+def test_default_all_no_impl() -> None:
+    """Expanded defaults can still omit the selected implementation."""
+    config = tio_config_default(Capabilities(), FileAccess.CREATE,
+                                include_all_options=True, impl_in_cfg=False)
+    assert config.format_name == 'Excel'
+    assert config.implementation is None
+    assert config.csv is not None
+    assert config.html is not None
+    assert config.latex is not None
+
+
 def test_default_prefers_cap_support() -> None:
     """Ignorable used capabilities affect implementation selection."""
     caps = Capabilities(can_find_value_position=CAP_IGNORABLE)
-    config = tio_config_default(caps, FileAccess.CREATE)
+    config = tio_config_default(caps, FileAccess.CREATE, impl_in_cfg=True)
     expected = ConfigData(format_name='Excel', implementation='OpenPyXL')
     assert config == expected
 
@@ -124,6 +152,20 @@ def test_default_bad_include_all() -> None:
         tio_config_default(Capabilities(), FileAccess.CREATE,
                            include_all_options=1)  # type: ignore[arg-type]
     assert _issue_names(exc_info.value) == {'include_all_options'}
+
+
+def test_default_bad_impl_in_cfg() -> None:
+    """Default selection validates the implementation include flag."""
+    with pytest.raises(ConfigError) as exc_info:
+        tio_config_default(Capabilities(), FileAccess.CREATE,
+                           impl_in_cfg=1)  # type: ignore[arg-type]
+    assert _issue_names(exc_info.value) == {'impl_in_cfg'}
+
+
+def test_format_keyword_only() -> None:
+    """Format name must be passed by keyword."""
+    param = inspect.signature(tio_config_default).parameters['format_name']
+    assert param.kind == inspect.Parameter.KEYWORD_ONLY
 
 
 def test_optional_args_empty() -> None:

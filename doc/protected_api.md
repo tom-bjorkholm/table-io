@@ -3,6 +3,7 @@
 * [tableio.config\_data\_apply](#tableio.config_data_apply)
   * [\_config\_error](#tableio.config_data_apply._config_error)
   * [\_check\_default\_input](#tableio.config_data_apply._check_default_input)
+  * [\_check\_default\_flags](#tableio.config_data_apply._check_default_flags)
   * [\_registered\_formats\_by\_lower](#tableio.config_data_apply._registered_formats_by_lower)
   * [\_candidate\_formats](#tableio.config_data_apply._candidate_formats)
   * [\_candidate\_impls](#tableio.config_data_apply._candidate_impls)
@@ -16,6 +17,7 @@
   * [\_arg\_dict](#tableio.config_data_apply._arg_dict)
   * [\_filtered\_args](#tableio.config_data_apply._filtered_args)
   * [\_all\_option\_config](#tableio.config_data_apply._all_option_config)
+  * [\_include\_default\_impl](#tableio.config_data_apply._include_default_impl)
   * [tio\_config\_default](#tableio.config_data_apply.tio_config_default)
   * [tio\_config\_optional\_args](#tableio.config_data_apply.tio_config_optional_args)
   * [tio\_config\_create](#tableio.config_data_apply.tio_config_create)
@@ -286,6 +288,8 @@
     * [csv\_escapechar](#tableio.optional_args.OptionalArgsDict.csv_escapechar)
   * [mformat\_optargs\_from\_optionalargs](#tableio.optional_args.mformat_optargs_from_optionalargs)
 * [tableio.access\_capability](#tableio.access_capability)
+  * [NoErrorOutput](#tableio.access_capability.NoErrorOutput)
+    * [NO\_OUTPUT](#tableio.access_capability.NoErrorOutput.NO_OUTPUT)
   * [NO\_ERROR\_OUTPUT](#tableio.access_capability.NO_ERROR_OUTPUT)
   * [InsufficientCapabilities](#tableio.access_capability.InsufficientCapabilities)
     * [\_\_init\_\_](#tableio.access_capability.InsufficientCapabilities.__init__)
@@ -787,11 +791,21 @@ Raise one structured configuration error.
 ```python
 def _check_default_input(capabilities: Capabilities, file_access: FileAccess,
                          format_name: Optional[str],
-                         implementation: Optional[str],
-                         include_all_options: bool) -> None
+                         implementation: Optional[str]) -> None
 ```
 
 Validate runtime values used for default selection.
+
+<a id="tableio.config_data_apply._check_default_flags"></a>
+
+#### \_check\_default\_flags
+
+```python
+def _check_default_flags(include_all_options: bool,
+                         impl_in_cfg: Optional[bool]) -> None
+```
+
+Validate flags used for default selection.
 
 <a id="tableio.config_data_apply._registered_formats_by_lower"></a>
 
@@ -924,10 +938,23 @@ Return filtered optional arguments, or None when empty.
 #### \_all\_option\_config
 
 ```python
-def _all_option_config(format_name: str, implementation: str) -> ConfigData
+def _all_option_config(format_name: str,
+                       implementation: Optional[str]) -> ConfigData
 ```
 
 Return a configuration object with all options visible.
+
+<a id="tableio.config_data_apply._include_default_impl"></a>
+
+#### \_include\_default\_impl
+
+```python
+def _include_default_impl(implementation: Optional[str],
+                          include_all_options: bool,
+                          impl_in_cfg: Optional[bool]) -> bool
+```
+
+Return true if the default config should pin implementation.
 
 <a id="tableio.config_data_apply.tio_config_default"></a>
 
@@ -936,9 +963,11 @@ Return a configuration object with all options visible.
 ```python
 def tio_config_default(capabilities: Capabilities,
                        file_access: FileAccess,
+                       *,
                        format_name: Optional[str] = None,
                        implementation: Optional[str] = None,
-                       include_all_options: bool = False) -> ConfigData
+                       include_all_options: bool = False,
+                       impl_in_cfg: Optional[bool] = None) -> ConfigData
 ```
 
 Return recommended default configuration data.
@@ -950,6 +979,17 @@ match equally well, the preferred format order is Excel, ODS, then CSV.
 If several implementations of the selected format match equally well,
 their TableIO implementation priority is used.
 
+Usually it is better to not include the implementation name in the
+configuration, as that allows the TableIO library to choose the best
+implementation based on the capabilities and file access at runtime.
+If you want to include the implementation name in the configuration,
+you can set the impl_in_cfg parameter to True. If you set it to False,
+the implementation name will always be omitted from the configuration.
+If you set it to None, the implementation name will normally be omitted
+from the configuration, but if include_all_options is True or if
+implementation was explicitly provided, the implementation name will be
+included.
+
 **Arguments**:
 
 - `capabilities` - Runtime capabilities the application intends to use.
@@ -958,6 +998,13 @@ their TableIO implementation priority is used.
 - `implementation` - Optional preferred implementation name.
 - `include_all_options` - Include visible non-None values for all
   configuration options, for teaching and configuration templates.
+- `impl_in_cfg` - Optional flag to include the implementation name in the
+  configuration. If None, the implementation name will normally be
+  omitted from the configuration, but if include_all_options is True
+  or if implementation was explicitly provided, the implementation
+  name will be included. If True, the implementation name will be
+  included in the configuration. If False, the implementation name
+  will always be omitted from the configuration.
 
 **Returns**:
 
@@ -4669,11 +4716,27 @@ Convert the optional arguments to a dictionary of arguments for mformat.
 
 Helpers that connect file access modes to capability requests.
 
+<a id="tableio.access_capability.NoErrorOutput"></a>
+
+## NoErrorOutput Objects
+
+```python
+class NoErrorOutput(Enum)
+```
+
+Text stream marker when helper errors should not be printed.
+
+<a id="tableio.access_capability.NoErrorOutput.NO_OUTPUT"></a>
+
+#### NO\_OUTPUT
+
+Text stream marker when helper errors should not be printed.
+
 <a id="tableio.access_capability.NO_ERROR_OUTPUT"></a>
 
 #### NO\_ERROR\_OUTPUT
 
-Text stream used when helper errors should not be printed.
+Text stream marker used when helper errors should not be printed.
 
 <a id="tableio.access_capability.InsufficientCapabilities"></a>
 
@@ -4705,7 +4768,8 @@ Initialize the exception.
 #### \_raise\_error
 
 ```python
-def _raise_error(error_file: TextIO, error: Exception) -> NoReturn
+def _raise_error(error_file: TextIO | NoErrorOutput,
+                 error: Exception) -> NoReturn
 ```
 
 Write an error message and raise the error.
@@ -4715,7 +4779,8 @@ Write an error message and raise the error.
 #### \_check\_access\_value
 
 ```python
-def _check_access_value(file_access: FileAccess, error_file: TextIO) -> None
+def _check_access_value(file_access: FileAccess,
+                        error_file: TextIO | NoErrorOutput) -> None
 ```
 
 Raise if file access is not a supported FileAccess value.
@@ -4726,7 +4791,7 @@ Raise if file access is not a supported FileAccess value.
 
 ```python
 def _check_capabilities_value(capabilities: Capabilities,
-                              error_file: TextIO) -> None
+                              error_file: TextIO | NoErrorOutput) -> None
 ```
 
 Raise if capabilities is not a Capabilities object.
@@ -4736,8 +4801,9 @@ Raise if capabilities is not a Capabilities object.
 #### access\_capabilities
 
 ```python
-def access_capabilities(file_access: FileAccess,
-                        error_file: TextIO = NO_ERROR_OUTPUT) -> Capabilities
+def access_capabilities(
+        file_access: FileAccess,
+        error_file: TextIO | NoErrorOutput = NO_ERROR_OUTPUT) -> Capabilities
 ```
 
 Return the capabilities implied by a file access mode.
@@ -4764,7 +4830,7 @@ Return the capabilities implied by a file access mode.
 def add_access_capabilities(
         file_access: FileAccess,
         capabilities: Capabilities,
-        error_file: TextIO = NO_ERROR_OUTPUT) -> Capabilities
+        error_file: TextIO | NoErrorOutput = NO_ERROR_OUTPUT) -> Capabilities
 ```
 
 Return capabilities with file access requirements added.
@@ -4812,9 +4878,10 @@ Return the error message for missing access capabilities.
 #### check\_access\_capabilities
 
 ```python
-def check_access_capabilities(file_access: FileAccess,
-                              capabilities: Capabilities,
-                              error_file: TextIO = NO_ERROR_OUTPUT) -> None
+def check_access_capabilities(
+        file_access: FileAccess,
+        capabilities: Capabilities,
+        error_file: TextIO | NoErrorOutput = NO_ERROR_OUTPUT) -> None
 ```
 
 Raise if capabilities are not enough for requested access mode.
