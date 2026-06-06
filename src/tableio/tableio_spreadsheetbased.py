@@ -50,6 +50,16 @@ class _ScanResult(NamedTuple):
     next_read_row: int
 
 
+class _ReadLimits(NamedTuple):
+    """Resolved row and column limits for one section read."""
+
+    left: int
+    top: int
+    bottom: int
+    scan_right: int
+    fixed_right: Optional[int]
+
+
 class _SheetState(NamedTuple):
     """Sequential state tracked for one sheet during an open session."""
 
@@ -295,8 +305,7 @@ class TableIOSpreadsheetBased(TableIO):
                 if read_sheet is not write_sheet:
                     self._write_value_to_sheet(read_sheet, row, column, None)
 
-    def _read_limits(
-            self, box: Optional[Box]) -> tuple[int, int, int, Optional[int]]:
+    def _read_limits(self, box: Optional[Box]) -> _ReadLimits:
         """Return the row and column limits for a read operation."""
         read_sheet = self._read_sheet()
         left = 0 if box is None else box.left
@@ -304,8 +313,10 @@ class TableIOSpreadsheetBased(TableIO):
         bottom = box.bottom if box is not None and \
             box.bottom is not None else self._scan_limit_bottom(read_sheet,
                                                                 top)
-        right = box.right if box is not None else None
-        return left, top, bottom, right
+        fixed_right = box.right if box is not None else None
+        scan_right = self._scan_limit_right(read_sheet, left, fixed_right)
+        return _ReadLimits(left=left, top=top, bottom=bottom,
+                           scan_right=scan_right, fixed_right=fixed_right)
 
     def _scan_limit_bottom(self, sheet: object, top: int) -> int:
         """Return the exclusive bottom limit used when scanning rows."""
@@ -353,20 +364,26 @@ class TableIOSpreadsheetBased(TableIO):
     def _scan_section(self, box: Optional[Box]) -> _ScanResult:
         """Scan the next readable section on the active sheet."""
         sheet = self._read_sheet()
-        left, top, bottom, right = self._read_limits(box)
-        row = top
-        last_read_row = top - 1
-        while row < bottom and self._row_is_empty(sheet, row, left, right):
+        limits = self._read_limits(box)
+        left = limits.left
+        bottom = limits.bottom
+        scan_right = limits.scan_right
+        fixed_right = limits.fixed_right
+        row = limits.top
+        last_read_row = limits.top - 1
+        while row < bottom and self._row_is_empty(sheet, row, left,
+                                                  scan_right):
             last_read_row = row
             row += 1
         headings: list[str] = []
-        while row < bottom and self._row_is_heading(sheet, row, left, right,
-                                                    bottom):
-            heading = self._cell_value(sheet, row, left)
-            headings.append(value_to_str(heading, none_is_empty=True))
+        while row < bottom and self._row_is_heading(sheet, row, left,
+                                                    scan_right, bottom):
+            headings.append(value_to_str(self._cell_value(sheet, row, left),
+                                         none_is_empty=True))
             last_read_row = row
             row += 1
-            while row < bottom and self._row_is_empty(sheet, row, left, right):
+            while row < bottom and self._row_is_empty(sheet, row, left,
+                                                      scan_right):
                 last_read_row = row
                 row += 1
         table_top = row
@@ -374,17 +391,17 @@ class TableIOSpreadsheetBased(TableIO):
         table_right = left
         while row < bottom:
             nonempty_columns = self._row_nonempty_columns(sheet, row, left,
-                                                          right)
+                                                          scan_right)
             if not nonempty_columns:
                 last_read_row = row
                 row += 1
                 break
             last_read_row = row
             table_bottom = row + 1
-            if right is None:
+            if fixed_right is None:
                 table_right = max(table_right, max(nonempty_columns) + 1)
             else:
-                table_right = right
+                table_right = fixed_right
             row += 1
         return _ScanResult(headings=headings, table_top=table_top,
                            table_bottom=table_bottom, table_left=left,

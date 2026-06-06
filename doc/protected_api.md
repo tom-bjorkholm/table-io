@@ -621,6 +621,7 @@
 * [tableio.tableio\_spreadsheetbased](#tableio.tableio_spreadsheetbased)
   * [excel\_column\_name](#tableio.tableio_spreadsheetbased.excel_column_name)
   * [\_ScanResult](#tableio.tableio_spreadsheetbased._ScanResult)
+  * [\_ReadLimits](#tableio.tableio_spreadsheetbased._ReadLimits)
   * [\_SheetState](#tableio.tableio_spreadsheetbased._SheetState)
   * [TableIOSpreadsheetBased](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased)
     * [\_\_init\_\_](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__)
@@ -9061,6 +9062,16 @@ class _ScanResult(NamedTuple)
 
 Details gathered while scanning one worksheet section.
 
+<a id="tableio.tableio_spreadsheetbased._ReadLimits"></a>
+
+## \_ReadLimits Objects
+
+```python
+class _ReadLimits(NamedTuple)
+```
+
+Resolved row and column limits for one section read.
+
 <a id="tableio.tableio_spreadsheetbased._SheetState"></a>
 
 ## \_SheetState Objects
@@ -9376,7 +9387,7 @@ Clear values and simple formatting in a rectangle.
 #### \_read\_limits
 
 ```python
-def _read_limits(box: Optional[Box]) -> tuple[int, int, int, Optional[int]]
+def _read_limits(box: Optional[Box]) -> _ReadLimits
 ```
 
 Return the row and column limits for a read operation.

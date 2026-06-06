@@ -180,6 +180,7 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
             self._write_sheets['Sheet1']
         }
         self.is_open = False
+        self.last_used_column_count = 0
 
     @classmethod
     def get_description(cls) -> Descriptor:
@@ -302,6 +303,7 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
 
     def _last_used_column(self, sheet: object) -> int:
         """Return the last column index with any value."""
+        self.last_used_column_count += 1
         memory_sheet = sheet
         assert isinstance(memory_sheet, _MemorySheet)
         if not memory_sheet.values:
@@ -579,7 +581,9 @@ def test_spreadsheet_scan_helpers_cover_edge_cases(
             table_io.seed_value(3, 1, 'active')
             table_io.seed_value(4, 0, 'Alice')
             table_io.seed_value(4, 1, True)
+            table_io.last_used_column_count = 0
             scan = table_io.run_scan_section(None)
+            assert table_io.last_used_column_count == 1
             assert scan.headings == ['Report']
             assert scan.table_top == 3
             assert scan.table_bottom == 5
