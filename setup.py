@@ -21,8 +21,8 @@ setup(
     'wheel >= 0.47.0',
     'mformat-ext >= 0.6',
     'openpyxl >= 3.1.5',
-    'types-openpyxl >= 3.1.5.20260402',
-    'odfdo >= 3.22.7',
+    'types-openpyxl >= 3.1.5.20260518',
+    'odfdo >= 3.22.8',
     'xlsxwriter >= 3.2.9',
     'pylightxl >= 1.61'
   ]
