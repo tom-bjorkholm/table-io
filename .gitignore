@@ -34,3 +34,4 @@ non_cursor_AGENTS.md
 example/result/*
 depdoc/*
 tableio_changes.md
+dep_lib_doc/*
