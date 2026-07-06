@@ -93,13 +93,13 @@ The main features are:
 
 The best way to learn to use this package is to use the provided
 example programs:
-[https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/README.md](https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/README.md).
+[https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/README.md](https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/README.md).
 
 ## API documentation
 
-You can find the public API documentation at [https://bitbucket.org/tom-bjorkholm/table-io/src/master/doc/api.md](https://bitbucket.org/tom-bjorkholm/table-io/src/master/doc/api.md)
+You can find the public API documentation at [https://github.com/tom-bjorkholm/table-io/blob/master/doc/api.md](https://github.com/tom-bjorkholm/table-io/blob/master/doc/api.md)
 
-You can find the protected API documentation at [https://bitbucket.org/tom-bjorkholm/table-io/src/master/doc/protected_api.md](https://bitbucket.org/tom-bjorkholm/table-io/src/master/doc/protected_api.md)
+You can find the protected API documentation at [https://github.com/tom-bjorkholm/table-io/blob/master/doc/protected_api.md](https://github.com/tom-bjorkholm/table-io/blob/master/doc/protected_api.md)
 The protected API documentation is only for developers that want to
 extend the framework by adding their own classes as registered
 readers/writers to the factory.
@@ -109,9 +109,9 @@ a better start by reading the examples.
 
 ## Test summary
 
-- Test result: 1347 passed in 20s
+- Test result: 1347 passed in 19s
 - No flake8 warnings.
 - No mypy errors found.
 - No python layout warnings.
 - Built version(s): 1.0.1
-- Build and test using Python 3.14.5
+- Build and test using Python 3.14.6

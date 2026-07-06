@@ -35,7 +35,7 @@ helpers in `e20`.
 ## e00_really_simple_write_table.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e00_really_simple_write_table.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e00_really_simple_write_table.py>
 
 This is the best starting point if you only want to understand the
 smallest working write example. It shows how to call
@@ -55,7 +55,7 @@ just text output.
 ## e01_simple_read_write.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e01_simple_read_write.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e01_simple_read_write.py>
 
 This example extends `e00` into a complete round-trip: write a file,
 reopen it, read the table back and verify that the result matches the
@@ -71,7 +71,7 @@ understand when the file format itself does not preserve rich typing.
 ## e02_more_write.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e02_more_write.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e02_more_write.py>
 
 This example is the main introduction to formatted output. It shows
 several different ways to represent formatted data before writing it:
@@ -89,7 +89,7 @@ later use.
 ## e03_rrs_input_format.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e03_rrs_input_format.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e03_rrs_input_format.py>
 
 This example shows how to prepare a table for a real external consumer.
 The data matches the kind of Excel import expected by
@@ -107,7 +107,7 @@ data.
 ## e04_rrs_input_format_list.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e04_rrs_input_format_list.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e04_rrs_input_format_list.py>
 
 This example is intentionally equivalent to `e03`, but the input is
 given as a list of rows instead of a list of dictionaries. The purpose
@@ -124,7 +124,7 @@ the API.
 ## e05_read_write_valueconversion.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e05_read_write_valueconversion.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e05_read_write_valueconversion.py>
 
 This example teaches one of the most important ideas for robust file
 interop: the value you read back may carry the same information as the
@@ -148,7 +148,7 @@ example is worth understanding early.
 ## e06_box_read_write_update.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e06_box_read_write_update.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e06_box_read_write_update.py>
 
 This is the first example focused on rectangular box operations in a
 spreadsheet-style backend. It writes a larger 10x10 table, closes the
@@ -164,7 +164,7 @@ come from the data you are writing.
 ## e07_box_rewrite_with_format.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e07_box_rewrite_with_format.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e07_box_rewrite_with_format.py>
 
 This example shows another useful box pattern: write a table, keep the
 returned `Position`, calculate a box from that position, read the box
@@ -180,7 +180,7 @@ changes.
 ## e08_filter_args_tableio.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e08_filter_args_tableio.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e08_filter_args_tableio.py>
 
 This example demonstrates how to build one mixed `OptionalArgsDict`
 containing arguments for several formats and then filter it down to the
@@ -199,7 +199,7 @@ configuration layer in your application but still need to support several
 ## e09_multi_sheet.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e09_multi_sheet.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e09_multi_sheet.py>
 
 This example introduces multi-sheet spreadsheet workbooks. It starts on
 the default first sheet, writes a table there, creates and selects a
@@ -215,7 +215,7 @@ want to understand workbook-style usage rather than single-table files.
 ## e10_capability_driven_selection.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e10_capability_driven_selection.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e10_capability_driven_selection.py>
 
 This example explains how capability requests influence backend
 selection. It compares two capability sets: one where extra features
@@ -238,7 +238,7 @@ API surface.
 ## e11_find_value_read_cells_write_cells.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e11_find_value_read_cells_write_cells.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e11_find_value_read_cells_write_cells.py>
 
 This example demonstrates a very practical spreadsheet workflow: write a
 small table, search for a label cell with `find_value()`, use the found
@@ -256,7 +256,7 @@ then update other cells relative to that match.
 ## e12_find_value_multiple_matches.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e12_find_value_multiple_matches.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e12_find_value_multiple_matches.py>
 
 This example teaches two more advanced `find_value()` patterns. First,
 it searches for more than one cell at a time by looking for the 1x2
@@ -276,7 +276,7 @@ formatting.
 ## e13_table_borders.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e13_table_borders.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e13_table_borders.py>
 
 This example is the main beginner reference for *where* table borders
 are configured in the API. It shows the four table-writing calls that
@@ -294,7 +294,7 @@ features introduced earlier, such as `ValueFmt`, `FmtListRow`,
 ## e14_all_table_borders.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e14_all_table_borders.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e14_all_table_borders.py>
 
 This example is the visual companion to `e13`. Instead of focusing on
 which API call to use, it writes one sample table for every
@@ -311,7 +311,7 @@ spreadsheet viewers such as Excel.
 ## e20_register_custom_tableio.py
 
 Source:
-<https://bitbucket.org/tom-bjorkholm/table-io/src/master/example/src/example/e20_register_custom_tableio.py>
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e20_register_custom_tableio.py>
 
 This example introduces an advanced but very useful extension point:
 user code can define its own class derived from `TableIO`, register it
