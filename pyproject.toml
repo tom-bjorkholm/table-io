@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tableio"
-version = "1.0.1"
+version = "1.1"
 authors = [
   { name="Tom Björkholm", email="klausuler_linnet0q@icloud.com" },
 ]
@@ -15,9 +15,15 @@ license = "MIT"
 license-files = ["LICENSE.txt"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent"
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Typing :: Typed"
 ]
 dynamic = ["dependencies"]
 
 [project.urls]
 "Source code" = "https://github.com/tom-bjorkholm/table-io"
+"Documentation" = "https://github.com/tom-bjorkholm/table-io/blob/master/doc/"
