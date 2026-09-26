@@ -6,14 +6,14 @@
 
 from typing import Optional, cast, Sequence, Mapping, TypeVar, \
     NamedTuple, overload, TypeGuard, Generic
-from datetime import datetime
+from datetime import datetime, timedelta
 from tableio.color import Color
 
 # ----------------------------------------------------------------------------
 # types used to describe input and output data
 # ----------------------------------------------------------------------------
 
-type Value = Optional[str | bool | int | float | datetime]
+type Value = Optional[str | bool | int | float | datetime | timedelta]
 
 
 class Fmt(NamedTuple):

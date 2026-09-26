@@ -4,6 +4,8 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+import re
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Callable, Optional
 from xml.etree import ElementTree as ET
@@ -19,6 +21,8 @@ from tableio.color import Color
 from tableio.tableio import Descriptor, FileAccess
 from tableio.tableio_spreadsheetbased import TableIOSpreadsheetBased, \
     excel_column_name
+from tableio.optional_args import TimeDeltaFallback
+from tableio.timedelta_helpers import format_timedelta, hms_parts
 from tableio.value_type import Fmt, Value, get_checked_type
 from tableio.capability import CAP_ALL_IMPLEMENTED, Capabilities
 
@@ -47,6 +51,60 @@ _XML_NS = {
 
 for _prefix, _namespace in _XML_NS.items():
     ET.register_namespace(_prefix, _namespace)
+
+_DURATION_STYLE_NAME = 'N_tableio_duration'
+_DURATION_DATA_STYLE = (
+    f'<number:time-style style:name="{_DURATION_STYLE_NAME}" '
+    'number:truncate-on-overflow="false"><number:hours number:style="long"/>'
+    '<number:text>:</number:text><number:minutes number:style="long"/>'
+    '<number:text>:</number:text><number:seconds number:style="long"/>'
+    '</number:time-style>')
+"""ODF data style '[HH]:MM:SS' for durations (hours do not wrap at 24)."""
+
+_ODF_DURATION_RE = re.compile(
+    r'(?P<sign>-?)P(?:(?P<days>\d+)D)?(?:T(?:(?P<hours>\d+)H)?'
+    r'(?:(?P<minutes>\d+)M)?(?:(?P<seconds>\d+(?:[.,]\d+)?)S)?)?')
+"""Matches the ODF (ISO 8601) durations used for timedelta values."""
+
+
+def _odf_duration(value: timedelta) -> str:
+    """Return one timedelta as an ODF duration, like '-PT26H03M04.5S'.
+
+    odfdo is not used for this, as odfdo drops fractional seconds.
+    """
+    sign = '-' if value < timedelta(0) else ''
+    magnitude = abs(value)
+    hours, minutes, seconds, fraction = hms_parts(magnitude.days,
+                                                  magnitude.seconds,
+                                                  magnitude.microseconds)
+    return f'{sign}PT{hours:02d}H{minutes:02d}M{seconds:02d}{fraction}S'
+
+
+def _timedelta_from_odf(text: Optional[str]) -> Optional[timedelta]:
+    """Return one ODF duration as timedelta, None if not supported.
+
+    odfdo is not used for this, as odfdo misreads fractional seconds
+    ('PT1.5S' is read as 15 seconds).
+    """
+    match = _ODF_DURATION_RE.fullmatch(text or '')
+    if match is None:
+        return None
+    delta = timedelta(days=int(match['days'] or 0),
+                      hours=int(match['hours'] or 0),
+                      minutes=int(match['minutes'] or 0),
+                      seconds=float((match['seconds'] or '0')
+                                    .replace(',', '.')))
+    return -delta if match['sign'] else delta
+
+
+def _ods_cell(value: Value) -> Cell:
+    """Return one new ODS cell holding value."""
+    if not isinstance(value, timedelta):
+        return Cell(value)
+    cell = Cell(value, text=str(format_timedelta(
+        value, TimeDeltaFallback.HMS_STRING)))
+    cell.set_attribute('office:time-value', _odf_duration(value))
+    return cell
 
 
 def _manifest_xml_without_configuration_entries(data: bytes) -> bytes:
@@ -145,7 +203,7 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         self.table: Optional[Table] = None
         self._style_index: int = 1
         self._cell_style_names: dict[
-            tuple[bool, bool, Color, Optional[int], CellBorder],
+            tuple[bool, bool, Color, Optional[int], CellBorder, bool],
             str] = {}
         self._cell_style_states: dict[
             tuple[str, int, int], CellStyleState] = {}
@@ -402,10 +460,9 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         """Write one value to one ODS cell."""
         table = get_checked_type(sheet, Table)
         table.set_cell((column, row),
-                       Cell(self._spreadsheet_value_from_python(value)),
+                       _ods_cell(self._spreadsheet_value_from_python(value)),
                        clone=False)
-        self._cell_style_states.pop(
-            self._cell_style_state_key(table, row, column), None)
+        self._apply_cell_style(table, row, column, DEFAULT_CELL_STYLE)
 
     def _set_cell_format(self, sheet: object, row: int, column: int,
                          fmt: Optional[Fmt]) -> None:
@@ -454,8 +511,16 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
     def _cell_value(self, sheet: object, row: int, column: int) -> Value:
         """Return one ODS cell as a public Value."""
         table = get_checked_type(sheet, Table)
-        return self._python_value_from_spreadsheet(
-            table.get_value((column, row)))
+        typed_value = table.get_value((column, row), get_type=True)
+        assert isinstance(typed_value, tuple)
+        value, value_type = typed_value
+        if value_type == 'time':
+            cell = table.get_cell((column, row), clone=False)
+            duration = _timedelta_from_odf(
+                cell.get_attribute_string('office:time-value'))
+            if duration is not None:
+                return duration
+        return self._python_value_from_spreadsheet(value)
 
     def _filtered_range_infos(self) -> list[tuple[str, tuple[int, int,
                                                              int, int]]]:
@@ -576,14 +641,27 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         """Store and apply one composed ODS cell style."""
         key = self._cell_style_state_key(table, row, column)
         cell = table.get_cell((column, row), clone=False)
+        duration = cell.type == 'time'
         if style == DEFAULT_CELL_STYLE:
             self._cell_style_states.pop(key, None)
+        else:
+            self._cell_style_states[key] = style
+        if style == DEFAULT_CELL_STYLE and not duration:
             setattr(cell, 'style', None)
             return
-        self._cell_style_states[key] = style
         cell.style = self._cell_style_name(style.fmt,
                                            font_size=style.font_size,
-                                           borders=style.borders)
+                                           borders=style.borders,
+                                           duration=duration)
+
+    def _duration_data_style(self) -> str:
+        """Return the name of the duration data style, created on demand."""
+        assert self.document is not None
+        if self.document.get_style('time', _DURATION_STYLE_NAME) is None:
+            data_style = Element.from_tag(_DURATION_DATA_STYLE)
+            assert isinstance(data_style, Style)
+            self.document.insert_style(data_style, automatic=True)
+        return _DURATION_STYLE_NAME
 
     @staticmethod
     def _border_property_text(weight: BorderWeight) -> Optional[str]:
@@ -593,9 +671,14 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
         return _BORDER_TEXT[weight]
 
     def _cell_style_name(self, fmt: Fmt, font_size: Optional[int] = None,
-                         borders: CellBorder = NO_BORDERS) -> str:
-        """Return the cached style name for one cell format combination."""
-        key = (fmt.bold, fmt.italic, fmt.highlight, font_size, borders)
+                         borders: CellBorder = NO_BORDERS,
+                         duration: bool = False) -> str:
+        """Return the cached style name for one cell format combination.
+
+        With duration True the style also displays the cell as a duration.
+        """
+        key = (fmt.bold, fmt.italic, fmt.highlight, font_size, borders,
+               duration)
         cached = self._cell_style_names.get(key)
         if cached is not None:
             return cached
@@ -628,6 +711,9 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
                 table_props[property_name] = border_text
         if table_props:
             style.set_properties(table_props, area='table-cell')
+        if duration:
+            style.set_attribute('style:data-style-name',
+                                self._duration_data_style())
         self.document.insert_style(style, automatic=True)
         self._cell_style_names[key] = style_name
         return style_name

@@ -11,7 +11,7 @@ import pytest
 import tableio.config_data_validate as validate_module
 from tableio import CAP_NEEDED, Capabilities, ConfigData, ConfigError, \
     ConfigIssue, CsvConfigData, CsvDialect, FileAccess, HtmlConfigData, \
-    LatexConfigData, tio_config_validate
+    LatexConfigData, TimeDeltaFallback, tio_config_validate
 from tableio.factory import TableIOFactoryNoSuchError
 from tableio.optional_args import OptionalArgs
 from .file_access_test_helper import unsupported_file_access
@@ -149,6 +149,9 @@ def test_accepts_encoding() -> None:
          'implementation'),
         (ConfigData(line_length=cast(Optional[int], 'wide')),
          'line_length'),
+        (ConfigData(timedelta_fallback=cast(Optional[TimeDeltaFallback],
+                                            'HMS_STRING')),
+         'timedelta_fallback'),
         (ConfigData(csv=cast(Optional[CsvConfigData], object())), 'csv'),
         (ConfigData(csv=CsvConfigData(
             dialect=cast(Optional[CsvDialect], 'excel'))), 'csv.dialect'),

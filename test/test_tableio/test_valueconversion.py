@@ -4,7 +4,7 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from types import NoneType
 
 import pytest
@@ -12,8 +12,8 @@ from pytest import CaptureFixture
 
 from tableio.valueconversion import UnreasonableTypeConversion, \
     UnreasonableValueConversion, value2bool, value2date, value2datetime, \
-    value2float, value2int, value2none, value2str, value2time, value2type, \
-    value2type_of
+    value2float, value2int, value2none, value2str, value2time, \
+    value2timedelta, value2type, value2type_of
 
 from .check_capsys import check_capsys
 
@@ -27,9 +27,11 @@ from .check_capsys import check_capsys
         pytest.param(2.5, '2.5', id='float'),
         pytest.param(datetime(2026, 3, 25, 7, 8, 9), '2026-03-25T07:08:09',
                      id='datetime'),
+        pytest.param(timedelta(days=1, hours=2, minutes=3, seconds=4.5),
+                     '26:03:04.5', id='timedelta'),
     ],)
 def test_value2str_converts_supported_values(
-        value: str | bool | int | float | datetime, expected: str,
+        value: str | bool | int | float | datetime | timedelta, expected: str,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2str converts supported values to strings."""
     assert value2str(value) == expected
@@ -242,6 +244,45 @@ def test_value2datetime_rejects_unreasonable_values(
 
 
 @pytest.mark.parametrize(
+    ('value', 'expected'),
+    [
+        pytest.param(timedelta(hours=5), timedelta(hours=5), id='timedelta'),
+        pytest.param(90, timedelta(seconds=90), id='int-seconds'),
+        pytest.param(1.5, timedelta(seconds=1.5), id='float-seconds'),
+        pytest.param('26:03:04', timedelta(hours=26, minutes=3, seconds=4),
+                     id='hms'),
+        pytest.param('2 weeks 1 day 00:00:00', timedelta(days=15),
+                     id='wdhms-long'),
+        pytest.param('93784.0', timedelta(seconds=93784), id='str-seconds'),
+    ],)
+def test_value2timedelta(value: str | int | float | timedelta,
+                         expected: timedelta,
+                         capsys: CaptureFixture[str]) -> None:
+    """Test that value2timedelta converts supported values."""
+    assert value2timedelta(value) == expected
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
+    ('value', 'error'),
+    [
+        pytest.param(None, UnreasonableValueConversion, id='none'),
+        pytest.param('soon', UnreasonableValueConversion, id='bad-string'),
+        pytest.param(float('nan'), UnreasonableValueConversion, id='nan'),
+        pytest.param(True, UnreasonableTypeConversion, id='bool'),
+        pytest.param(datetime(2026, 3, 25), UnreasonableTypeConversion,
+                     id='datetime'),
+    ],)
+def test_value2timedelta_bad(value: str | bool | float | datetime | None,
+                             error: type[Exception],
+                             capsys: CaptureFixture[str]) -> None:
+    """Test that value2timedelta rejects unreasonable values."""
+    with pytest.raises(error, match='to type: timedelta'):
+        value2timedelta(value)
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize(
     ('value', 'format_string', 'expected'),
     [
         pytest.param(datetime(2026, 3, 25, 7, 8, 9), None, date(2026, 3, 25),
@@ -361,11 +402,13 @@ def test_value2none_rejects_unreasonable_values(
         pytest.param('2.5', float, 2.5, id='float'),
         pytest.param('2026-03-25T07:08:09', datetime,
                      datetime(2026, 3, 25, 7, 8, 9), id='datetime'),
+        pytest.param('-1 d 02:00:00', timedelta, -timedelta(days=1, hours=2),
+                     id='timedelta'),
         pytest.param('', NoneType, None, id='none'),
     ],)
 def test_value2type_converts_supported_values(
         value: str, to_type: type[object],
-        expected: str | bool | int | float | datetime | None,
+        expected: str | bool | int | float | datetime | timedelta | None,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2type dispatches to the right converter."""
     assert value2type(value, to_type) == expected
@@ -430,11 +473,14 @@ def test_value2type_rejects_unsupported_target_types(
         pytest.param('2.5', 1.25, 2.5, id='float'),
         pytest.param('2026-03-25T07:08:09', datetime(2030, 1, 1, 0, 0, 0),
                      datetime(2026, 3, 25, 7, 8, 9), id='datetime'),
+        pytest.param('00:01:30', timedelta(0), timedelta(seconds=90),
+                     id='timedelta'),
         pytest.param('', None, None, id='none'),
     ],)
 def test_value2type_of_converts_supported_values(
-        value: str, to_type_of: str | bool | int | float | datetime | None,
-        expected: str | bool | int | float | datetime | None,
+        value: str,
+        to_type_of: str | bool | int | float | datetime | timedelta | None,
+        expected: str | bool | int | float | datetime | timedelta | None,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2type_of uses the example value's type."""
     assert value2type_of(value, to_type_of) == expected

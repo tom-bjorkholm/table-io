@@ -21,9 +21,11 @@ from tableio.config_data_error import ConfigError, ConfigIssue
 from tableio.config_data_validate import tio_config_validate
 from tableio.factory import create_tableio, filter_args_tableio, \
     list_implementations_tableio, list_registered_tableio
-from tableio.optional_args import CsvDialect, OptionalArgs, OptionalArgsDict
+from tableio.optional_args import CsvDialect, OptionalArgs, \
+    OptionalArgsDict, TimeDeltaFallback
 from tableio.tableio import TableIO
 from tableio.tableio_types import TableBorderStyle, Box, FileAccess, Position
+from tableio.timedelta_helpers import format_timedelta, parse_timedelta
 from tableio.value_type import CellT, DictData, DictDataMap, Fmt, \
     FmtDictData, FmtDictRow, FmtListData, FmtListRow, ListData, \
     ListDataSeq, ReadResult, Value, ValueFmt
@@ -43,6 +45,8 @@ __all__ = ['create_tableio',
            'DictDataMap',
            'ReadResult',
            'Fmt',
+           'format_timedelta',
+           'parse_timedelta',
            'ValueFmt',
            'FmtListRow',
            'FmtDictRow',
@@ -63,6 +67,7 @@ __all__ = ['create_tableio',
            'list_registered_tableio',
            'list_implementations_tableio',
            'CsvDialect',
+           'TimeDeltaFallback',
            'ConfigData', 'ConfigError', 'ConfigIssue', 'ConfigSpec',
            'CsvConfigData', 'HtmlConfigData', 'LatexConfigData',
            'tio_config_create', 'tio_config_default',

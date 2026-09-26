@@ -22,6 +22,7 @@ from tableio.tableio_mformatbased import TableIOMformatBased, \
     _allow_overwrite
 from tableio.tableio import FileAccess, Descriptor
 from tableio.capability import SingleCapability
+from tableio.optional_args import TimeDeltaFallback
 
 
 class TableIOMformatMd(TableIOMformatBased):
@@ -29,7 +30,8 @@ class TableIOMformatMd(TableIOMformatBased):
 
     def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]] = None,
-                 character_encoding: str = 'utf-8'):
+                 character_encoding: str = 'utf-8',
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatMd writer class.
 
         Args:
@@ -46,8 +48,11 @@ class TableIOMformatMd(TableIOMformatBased):
                                   as backup.)
                                   (Default is to raise an exception.)
             character_encoding: The character encoding to use.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatMd(file_name,
                                      file_exists_callback=_allow_overwrite,
                                      character_encoding=character_encoding)
@@ -69,6 +74,7 @@ class TableIOMformatMd(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'character_encoding'])
 
 
@@ -80,7 +86,8 @@ class TableIOMformatHtml(TableIOMformatBased):
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  character_encoding: str = 'utf-8', title: str = 'HTML file',
-                 css_file: Optional[str] = None, lang: str = 'en'):
+                 css_file: Optional[str] = None, lang: str = 'en',
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatHtml writer class.
 
         Args:
@@ -100,8 +107,11 @@ class TableIOMformatHtml(TableIOMformatBased):
             title: The title of the HTML file.
             css_file: The CSS file to use.
             lang: The language of the HTML file.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatHtml(file_name,
                                        file_exists_callback=_allow_overwrite,
                                        character_encoding=character_encoding,
@@ -125,6 +135,7 @@ class TableIOMformatHtml(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'character_encoding',
                                          'title', 'css_file', 'lang'])
 
@@ -139,7 +150,8 @@ class TableIOMformatTxt(TableIOMformatBased):
                  character_encoding: str = 'utf-8', line_length: int = 79,
                  table_max_line_length: Optional[int] = None,
                  table_alignment: TableAlignmentSpec =
-                 TableAlignment.CENTER_BUT_DIGITS_RIGHT):
+                 TableAlignment.CENTER_BUT_DIGITS_RIGHT,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatTxt writer class.
 
         Args:
@@ -161,8 +173,11 @@ class TableIOMformatTxt(TableIOMformatBased):
                                    writing a table. If None,
                                    line_length is used.
             table_alignment: The alignment of cell values in tables.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatTxt(
             file_name, file_exists_callback=_allow_overwrite,
             character_encoding=character_encoding, line_length=line_length,
@@ -186,6 +201,7 @@ class TableIOMformatTxt(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'character_encoding',
                                          'line_length',
                                          'table_max_line_length',
@@ -206,7 +222,8 @@ class TableIOMformatLatex(TableIOMformatBased):
                  latex_heading_levels: Optional[dict[int, str]]
                  = None,
                  latex_replacements:
-                 Optional[list[dict[str, str]]] = None):
+                 Optional[list[dict[str, str]]] = None,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatLatex writer class.
 
         Args:
@@ -229,8 +246,11 @@ class TableIOMformatLatex(TableIOMformatBased):
             latex_preamble: Extra LaTeX preamble text.
             latex_heading_levels: Override heading level commands.
             latex_replacements: Custom text replacement stages.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatLatex(
             file_name, file_exists_callback=_allow_overwrite,
             character_encoding=character_encoding,
@@ -256,6 +276,7 @@ class TableIOMformatLatex(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'character_encoding',
                                          'document_class',
                                          'paper_size',
@@ -275,7 +296,8 @@ class TableIOMformatRst(TableIOMformatBased):
                  character_encoding: str = 'utf-8', line_length: int = 79,
                  table_max_line_length: Optional[int] = None,
                  table_alignment: TableAlignmentSpec =
-                 TableAlignment.LEFT):
+                 TableAlignment.LEFT,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatRst writer class.
 
         Args:
@@ -297,8 +319,11 @@ class TableIOMformatRst(TableIOMformatBased):
                                    writing a table. If None,
                                    line_length is used.
             table_alignment: The alignment of cell values in tables.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatRst(
             file_name, file_exists_callback=_allow_overwrite,
             character_encoding=character_encoding, line_length=line_length,
@@ -322,6 +347,7 @@ class TableIOMformatRst(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'character_encoding',
                                          'line_length',
                                          'table_max_line_length',
@@ -334,7 +360,8 @@ class TableIOMformatDocx(TableIOMformatBased):
     def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
-                 paper_size: PaperSize = PaperSize.A4):
+                 paper_size: PaperSize = PaperSize.A4,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatDocx writer class.
 
         Args:
@@ -351,8 +378,11 @@ class TableIOMformatDocx(TableIOMformatBased):
                                   as backup.)
                                   (Default is to raise an exception.)
             paper_size: Paper size for the document.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatDocx(file_name,
                                        file_exists_callback=_allow_overwrite,
                                        paper_size=paper_size)
@@ -374,6 +404,7 @@ class TableIOMformatDocx(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'paper_size'])
 
 
@@ -384,7 +415,8 @@ class TableIOMformatOdt(TableIOMformatBased):
                  file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
-                 lang: str = 'en-UK', paper_size: PaperSize = PaperSize.A4):
+                 lang: str = 'en-UK', paper_size: PaperSize = PaperSize.A4,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatOdt writer class.
 
         Args:
@@ -402,8 +434,11 @@ class TableIOMformatOdt(TableIOMformatBased):
                                   (Default is to raise an exception.)
             lang: The language of the document.
             paper_size: Paper size for the document.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatOdt(file_name,
                                       file_exists_callback=_allow_overwrite,
                                       lang=lang, paper_size=paper_size)
@@ -425,6 +460,7 @@ class TableIOMformatOdt(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'lang', 'paper_size'])
 
 
@@ -436,7 +472,8 @@ class TableIOMformatPdf(TableIOMformatBased):
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
                  paper_size: PaperSize = PaperSize.A4,
-                 title: Optional[str] = None):
+                 title: Optional[str] = None,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatPdf writer class.
 
         Args:
@@ -454,8 +491,11 @@ class TableIOMformatPdf(TableIOMformatBased):
                                   (Default is to raise an exception.)
             paper_size: Paper size for the document.
             title: PDF document metadata title.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatPdf(file_name,
                                       file_exists_callback=_allow_overwrite,
                                       paper_size=paper_size, title=title)
@@ -477,6 +517,7 @@ class TableIOMformatPdf(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'paper_size', 'title'])
 
 
@@ -486,7 +527,8 @@ class TableIOMformatRtf(TableIOMformatBased):
     def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
                  = None,
-                 paper_size: PaperSize = PaperSize.A4):
+                 paper_size: PaperSize = PaperSize.A4,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatRtf writer class.
 
         Args:
@@ -503,8 +545,11 @@ class TableIOMformatRtf(TableIOMformatBased):
                                   as backup.)
                                   (Default is to raise an exception.)
             paper_size: Paper size for the document.
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
-        super().__init__(file_name, file_access, file_exists_callback)
+        super().__init__(file_name, file_access, file_exists_callback,
+                         timedelta_fallback)
         self.mformat = MultiFormatRtf(file_name,
                                       file_exists_callback=_allow_overwrite,
                                       paper_size=paper_size)
@@ -526,4 +571,5 @@ class TableIOMformatRtf(TableIOMformatBased):
                           capabilities=cls.get_capabilities(),
                           mandatory_args=[],
                           optional_args=['file_exists_callback',
+                                         'timedelta_fallback',
                                          'paper_size'])

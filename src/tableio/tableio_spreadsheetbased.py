@@ -4,7 +4,7 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from typing import Callable, NamedTuple, Optional
 from mformat.mformat import PathLike
@@ -105,7 +105,7 @@ class TableIOSpreadsheetBased(TableIO):
             if value == value.to_integral_value():
                 return int(value)
             return float(value)
-        if isinstance(value, (str, bool, int, float)):
+        if isinstance(value, (str, bool, int, float, timedelta)):
             return value
         return str(value)
 

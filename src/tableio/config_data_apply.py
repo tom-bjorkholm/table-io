@@ -15,7 +15,8 @@ from tableio.config_data_error import ConfigError, ConfigIssue
 from tableio.config_data_validate import tio_config_validate
 from tableio.factory import create_tableio, filter_args_tableio, \
     list_implementations_tableio, list_registered_tableio, usage_tableio
-from tableio.optional_args import CsvDialect, OptionalArgs, OptionalArgsDict
+from tableio.optional_args import CsvDialect, OptionalArgs, \
+    OptionalArgsDict, TimeDeltaFallback
 from tableio.tableio import TableIO
 from tableio.tableio_types import FileAccess
 
@@ -122,7 +123,9 @@ def _base_arg_items(config: ConfigData) -> list[tuple[str, str, object]]:
         ('line_length', 'line_length', config.line_length),
         ('table_max_line_length', 'table_max_line_length',
          config.table_max_line_length),
-        ('table_alignment', 'table_alignment', config.table_alignment)
+        ('table_alignment', 'table_alignment', config.table_alignment),
+        ('timedelta_fallback', 'timedelta_fallback',
+         config.timedelta_fallback)
     ]
 
 
@@ -201,7 +204,8 @@ def _all_option_config(format_name: str,
                       title='HTML file', paper_size='A4', line_length=79,
                       table_max_line_length=140,
                       table_alignment='CENTER_BUT_DIGITS_RIGHT', csv=csv,
-                      html=html, latex=latex)
+                      html=html, latex=latex,
+                      timedelta_fallback=TimeDeltaFallback.HMS_STRING)
 
 
 def _include_default_impl(implementation: Optional[str],
@@ -386,6 +390,9 @@ def tio_config_trim(config: ConfigData,
                                                   filtered_names),
                       table_alignment=_kept(config.table_alignment,
                                             'table_alignment', filtered_names),
+                      timedelta_fallback=_kept(config.timedelta_fallback,
+                                               'timedelta_fallback',
+                                               filtered_names),
                       csv=csv, html=html, latex=latex)
 
 

@@ -6,7 +6,6 @@
 
 import io
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Callable, NamedTuple, Optional, Protocol
 
 from mformat.mformat import PathLike
@@ -37,7 +36,7 @@ class _FormatKey(NamedTuple):
     italic: bool
     highlight: Color
     font_size: Optional[int]
-    datetime_value: bool
+    num_format: Optional[str]
     borders: CellBorder
 
 
@@ -361,7 +360,7 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         """Write the current in-memory cell state to XlsxWriter."""
         value = sheet.values.get((row, column))
         style = sheet.styles.get((row, column))
-        cell_format = self._xlsx_format(style, isinstance(value, datetime))
+        cell_format = self._xlsx_format(style, self._number_format(value))
         worksheet = sheet.worksheet
         if value is None:
             worksheet.write_blank(row, column, None, cell_format)
@@ -387,21 +386,20 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         return 2
 
     def _xlsx_format(self, style: Optional[CellStyleState],
-                     datetime_value: bool) -> Optional[object]:
+                     num_format: Optional[str]) -> Optional[object]:
         """Return the cached XlsxWriter format for one cell style."""
         if style == DEFAULT_CELL_STYLE:
             style = None
-        if style is None and not datetime_value:
+        if style is None and num_format is None:
             return None
         if style is None:
             key = _FormatKey(bold=False, italic=False, highlight=Color.NONE,
-                             font_size=None, datetime_value=True,
+                             font_size=None, num_format=num_format,
                              borders=NO_BORDERS)
         else:
             key = _FormatKey(bold=style.fmt.bold, italic=style.fmt.italic,
                              highlight=style.fmt.highlight,
-                             font_size=style.font_size,
-                             datetime_value=datetime_value,
+                             font_size=style.font_size, num_format=num_format,
                              borders=style.borders)
         cached = self._format_cache.get(key)
         if cached is not None:
@@ -417,8 +415,8 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
             format_dict['pattern'] = 1
         if key.font_size is not None:
             format_dict['font_size'] = key.font_size
-        if key.datetime_value:
-            format_dict['num_format'] = self._datetime_number_format()
+        if key.num_format is not None:
+            format_dict['num_format'] = key.num_format
         for side_name, weight in [
                 ('left', key.borders.left),
                 ('right', key.borders.right),

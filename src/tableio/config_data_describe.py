@@ -13,7 +13,7 @@ from mformat.plain_text_table import TableAlignment
 
 from tableio.factory import list_implementations_tableio, \
     list_registered_tableio, usage_tableio
-from tableio.optional_args import CsvDialect
+from tableio.optional_args import CsvDialect, TimeDeltaFallback
 
 
 @dataclass
@@ -56,6 +56,11 @@ _CSV_QUOTING_VALUES = (
 def _csv_dialect_choices() -> tuple[str, ...]:
     """Return advertised CSV dialect choices."""
     return tuple(member.name for member in CsvDialect)
+
+
+def _timedelta_fallback_choices() -> tuple[str, ...]:
+    """Return advertised timedelta fallback choices."""
+    return tuple(member.name for member in TimeDeltaFallback)
 
 
 def _table_alignment_choices() -> tuple[str, ...]:
@@ -147,6 +152,13 @@ def tio_config_specs() -> dict[str, ConfigSpec]:
                              default_text='None means backend default.',
                              choices=_table_alignment_choices(),
                              optional_arg='table_alignment')),
+        _arg_spec(ConfigSpec(name='timedelta_fallback',
+                             description='How timedelta values are written '
+                             'by formats without native timedelta support.',
+                             value_type='Optional[TimeDeltaFallback]',
+                             default_text='None means backend default.',
+                             choices=_timedelta_fallback_choices(),
+                             optional_arg='timedelta_fallback')),
         _arg_spec(ConfigSpec(name='csv.dialect',
                              description='The CSV dialect template.',
                              value_type='Optional[CsvDialect]',

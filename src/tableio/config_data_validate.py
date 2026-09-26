@@ -17,7 +17,7 @@ from tableio.config_data_error import ConfigError, ConfigIssue
 from tableio.factory import TableIOFactoryNoCapabilityMatch, \
     TableIOFactoryNoSuchError, filter_args_tableio, \
     list_implementations_tableio
-from tableio.optional_args import CsvDialect
+from tableio.optional_args import CsvDialect, TimeDeltaFallback
 from tableio.tableio_types import FileAccess
 
 
@@ -156,6 +156,10 @@ def _validate_top_values(config: ConfigData, specs: dict[str, ConfigSpec],
     _validate_int_min(issues, 'table_max_line_length',
                       config.table_max_line_length, 10, True)
     _valid_choice(config.table_alignment, specs['table_alignment'], issues)
+    if config.timedelta_fallback is not None and \
+            not isinstance(config.timedelta_fallback, TimeDeltaFallback):
+        _add_issue(issues, 'timedelta_fallback',
+                   'must be a TimeDeltaFallback value or None.')
 
 
 def _validate_csv(config: ConfigData, specs: dict[str, ConfigSpec],

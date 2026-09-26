@@ -34,6 +34,12 @@
     * [write\_cells](#tableio.tableio.TableIO.write_cells)
     * [open](#tableio.tableio.TableIO.open)
     * [close](#tableio.tableio.TableIO.close)
+* [tableio.timedelta\_helpers](#tableio.timedelta_helpers)
+  * [DEFAULT\_TIMEDELTA\_FALLBACK](#tableio.timedelta_helpers.DEFAULT_TIMEDELTA_FALLBACK)
+  * [hms\_parts](#tableio.timedelta_helpers.hms_parts)
+  * [format\_timedelta](#tableio.timedelta_helpers.format_timedelta)
+  * [fallback\_value](#tableio.timedelta_helpers.fallback_value)
+  * [parse\_timedelta](#tableio.timedelta_helpers.parse_timedelta)
 * [tableio.color](#tableio.color)
   * [Color](#tableio.color.Color)
     * [NONE](#tableio.color.Color.NONE)
@@ -109,6 +115,13 @@
   * [CsvDialect](#tableio.optional_args.CsvDialect)
     * [EXCEL](#tableio.optional_args.CsvDialect.EXCEL)
     * [UNIX](#tableio.optional_args.CsvDialect.UNIX)
+  * [TimeDeltaFallback](#tableio.optional_args.TimeDeltaFallback)
+    * [FLOATSECONDS](#tableio.optional_args.TimeDeltaFallback.FLOATSECONDS)
+    * [HMS\_STRING](#tableio.optional_args.TimeDeltaFallback.HMS_STRING)
+    * [DHMS\_STRING](#tableio.optional_args.TimeDeltaFallback.DHMS_STRING)
+    * [DHMS\_STRING\_LONG](#tableio.optional_args.TimeDeltaFallback.DHMS_STRING_LONG)
+    * [WDHMS\_STRING](#tableio.optional_args.TimeDeltaFallback.WDHMS_STRING)
+    * [WDHMS\_STRING\_LONG](#tableio.optional_args.TimeDeltaFallback.WDHMS_STRING_LONG)
   * [OptionalArgsDict](#tableio.optional_args.OptionalArgsDict)
     * [csv\_dialect](#tableio.optional_args.OptionalArgsDict.csv_dialect)
     * [csv\_delimiter](#tableio.optional_args.OptionalArgsDict.csv_delimiter)
@@ -116,6 +129,7 @@
     * [csv\_quotechar](#tableio.optional_args.OptionalArgsDict.csv_quotechar)
     * [csv\_lineterminator](#tableio.optional_args.OptionalArgsDict.csv_lineterminator)
     * [csv\_escapechar](#tableio.optional_args.OptionalArgsDict.csv_escapechar)
+    * [timedelta\_fallback](#tableio.optional_args.OptionalArgsDict.timedelta_fallback)
   * [mformat\_optargs\_from\_optionalargs](#tableio.optional_args.mformat_optargs_from_optionalargs)
 * [tableio.access\_capability](#tableio.access_capability)
   * [NoErrorOutput](#tableio.access_capability.NoErrorOutput)
@@ -152,6 +166,7 @@
     * [csv](#tableio.config_data.ConfigData.csv)
     * [html](#tableio.config_data.ConfigData.html)
     * [latex](#tableio.config_data.ConfigData.latex)
+    * [timedelta\_fallback](#tableio.config_data.ConfigData.timedelta_fallback)
 * [tableio.factory](#tableio.factory)
   * [TableIOFactoryConflictError](#tableio.factory.TableIOFactoryConflictError)
   * [TableIOFactoryNoSuchError](#tableio.factory.TableIOFactoryNoSuchError)
@@ -256,6 +271,7 @@
   * [value2int](#tableio.valueconversion.value2int)
   * [value2float](#tableio.valueconversion.value2float)
   * [value2datetime](#tableio.valueconversion.value2datetime)
+  * [value2timedelta](#tableio.valueconversion.value2timedelta)
   * [value2date](#tableio.valueconversion.value2date)
   * [value2time](#tableio.valueconversion.value2time)
   * [value2none](#tableio.valueconversion.value2none)
@@ -1268,6 +1284,133 @@ Close the file.
 Avoid using this method directly.
 Use derived class as a context manager instead, using a with statement.
 
+<a id="tableio.timedelta_helpers"></a>
+
+# tableio.timedelta\_helpers
+
+Support functions for timedelta values in the tableio package.
+
+Implementations without native timedelta support use ``format_timedelta``
+(via ``fallback_value``) to write timedelta values as text or seconds.
+Applications use ``parse_timedelta`` to read such values back.
+
+<a id="tableio.timedelta_helpers.DEFAULT_TIMEDELTA_FALLBACK"></a>
+
+#### DEFAULT\_TIMEDELTA\_FALLBACK
+
+The fallback used when no timedelta fallback is specified.
+
+<a id="tableio.timedelta_helpers.hms_parts"></a>
+
+#### hms\_parts
+
+```python
+def hms_parts(days: int, seconds: int,
+              microseconds: int) -> tuple[int, int, int, str]
+```
+
+Split a non-negative duration into hours, minutes and seconds.
+
+**Arguments**:
+
+- `days` - The number of days, included in the returned hours.
+- `seconds` - The number of seconds (less than one day).
+- `microseconds` - The number of microseconds (less than one second).
+
+**Returns**:
+
+  The hours, minutes, whole seconds and the fraction text. The
+  fraction text is '' if microseconds is zero, otherwise a '.' and
+  up to six decimals without trailing zeros (for example '.5').
+
+<a id="tableio.timedelta_helpers.format_timedelta"></a>
+
+#### format\_timedelta
+
+```python
+def format_timedelta(td: timedelta,
+                     fallback: TimeDeltaFallback) -> str | float
+```
+
+Format a timedelta value according to the specified fallback behavior.
+
+To be called by an implementation that needs to format timedelta values
+according to the specified fallback behavior, because the implementation
+does not have native support for timedelta values.
+Negative values get a leading '-' for the whole duration (for example
+'-01:00:00' or '-1 d 02:00:00'). Fractional seconds are written with
+up to six decimals, only when non-zero (for example '00:00:01.5').
+The result can be converted back exactly with ``parse_timedelta``.
+
+**Arguments**:
+
+- `td` - The timedelta value to format.
+- `fallback` - The fallback behavior to use if native support is not
+  available.
+
+**Returns**:
+
+  The formatted timedelta as a string or float, depending on the
+  fallback enum value.
+
+<a id="tableio.timedelta_helpers.fallback_value"></a>
+
+#### fallback\_value
+
+```python
+def fallback_value(value: Value,
+                   fallback: Optional[TimeDeltaFallback]) -> Value
+```
+
+Return value with a timedelta replaced by its fallback format.
+
+**Arguments**:
+
+- `value` - The value to write. Only timedelta values are changed.
+- `fallback` - The fallback behavior, or None for the default
+  (``DEFAULT_TIMEDELTA_FALLBACK``).
+
+**Returns**:
+
+  The value to write instead of the original value.
+
+<a id="tableio.timedelta_helpers.parse_timedelta"></a>
+
+#### parse\_timedelta
+
+```python
+def parse_timedelta(value: str | int | float | timedelta) -> timedelta
+```
+
+Parse a value into a timedelta object.
+
+To be called by an application that knows that a value represents a
+timedelta, when the implementation for reading might not provide native
+support for timedelta values.
+Accepted values:
+- timedelta: returned unchanged.
+- int or float (not bool): a number of seconds.
+- str: any string written by the ``TimeDeltaFallback`` formats (for
+example '26:03:04', '-1 d 02:03:04', '1 week 2 days 00:00:01.5'),
+the ``str(timedelta)`` format (for example '-1 day, 23:00:00'), or
+a number of seconds (for example '93784.0'). Surrounding whitespace
+is ignored and unit names are case-insensitive.
+
+**Arguments**:
+
+- `value` - The value to parse, which can be a string, int, float, or
+  timedelta.
+
+**Returns**:
+
+  The parsed timedelta object.
+
+**Raises**:
+
+- `TypeError` - If the value is not a string, int, float, or timedelta.
+- `ValueError` - If the value cannot be parsed into a timedelta, or is
+  out of the range of timedelta.
+
 <a id="tableio.color"></a>
 
 # tableio.color
@@ -1413,7 +1556,8 @@ TableIO writer class for Markdown, based on MultiFormat.
 def __init__(file_name: PathLike,
              file_access: FileAccess,
              file_exists_callback: Optional[Callable[[str], None]] = None,
-             character_encoding: str = 'utf-8')
+             character_encoding: str = 'utf-8',
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatMd writer class.
@@ -1433,6 +1577,8 @@ Initialize the TableIOMformatMd writer class.
   as backup.)
   (Default is to raise an exception.)
 - `character_encoding` - The character encoding to use.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatMd.get_row_format_capability"></a>
 
@@ -1488,7 +1634,8 @@ def __init__(file_name: PathLike,
              character_encoding: str = 'utf-8',
              title: str = 'HTML file',
              css_file: Optional[str] = None,
-             lang: str = 'en')
+             lang: str = 'en',
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatHtml writer class.
@@ -1511,6 +1658,8 @@ Initialize the TableIOMformatHtml writer class.
 - `title` - The title of the HTML file.
 - `css_file` - The CSS file to use.
 - `lang` - The language of the HTML file.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatHtml.get_row_format_capability"></a>
 
@@ -1567,7 +1716,8 @@ def __init__(file_name: PathLike,
              line_length: int = 79,
              table_max_line_length: Optional[int] = None,
              table_alignment: TableAlignmentSpec = TableAlignment.
-             CENTER_BUT_DIGITS_RIGHT)
+             CENTER_BUT_DIGITS_RIGHT,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatTxt writer class.
@@ -1592,6 +1742,8 @@ Initialize the TableIOMformatTxt writer class.
   writing a table. If None,
   line_length is used.
 - `table_alignment` - The alignment of cell values in tables.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatTxt.get_row_format_capability"></a>
 
@@ -1650,7 +1802,8 @@ def __init__(file_name: PathLike,
              title: Optional[str] = None,
              latex_preamble: str = '',
              latex_heading_levels: Optional[dict[int, str]] = None,
-             latex_replacements: Optional[list[dict[str, str]]] = None)
+             latex_replacements: Optional[list[dict[str, str]]] = None,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatLatex writer class.
@@ -1676,6 +1829,8 @@ Initialize the TableIOMformatLatex writer class.
 - `latex_preamble` - Extra LaTeX preamble text.
 - `latex_heading_levels` - Override heading level commands.
 - `latex_replacements` - Custom text replacement stages.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatLatex.get_row_format_capability"></a>
 
@@ -1731,7 +1886,8 @@ def __init__(file_name: PathLike,
              character_encoding: str = 'utf-8',
              line_length: int = 79,
              table_max_line_length: Optional[int] = None,
-             table_alignment: TableAlignmentSpec = TableAlignment.LEFT)
+             table_alignment: TableAlignmentSpec = TableAlignment.LEFT,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatRst writer class.
@@ -1756,6 +1912,8 @@ Initialize the TableIOMformatRst writer class.
   writing a table. If None,
   line_length is used.
 - `table_alignment` - The alignment of cell values in tables.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatRst.get_row_format_capability"></a>
 
@@ -1808,7 +1966,8 @@ TableIO writer class for DOCX, based on MultiFormat.
 def __init__(file_name: PathLike,
              file_access: FileAccess,
              file_exists_callback: Optional[Callable[[str], None]] = None,
-             paper_size: PaperSize = PaperSize.A4)
+             paper_size: PaperSize = PaperSize.A4,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatDocx writer class.
@@ -1828,6 +1987,8 @@ Initialize the TableIOMformatDocx writer class.
   as backup.)
   (Default is to raise an exception.)
 - `paper_size` - Paper size for the document.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatDocx.get_row_format_capability"></a>
 
@@ -1881,7 +2042,8 @@ def __init__(file_name: PathLike,
              file_access: FileAccess,
              file_exists_callback: Optional[Callable[[str], None]] = None,
              lang: str = 'en-UK',
-             paper_size: PaperSize = PaperSize.A4)
+             paper_size: PaperSize = PaperSize.A4,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatOdt writer class.
@@ -1902,6 +2064,8 @@ Initialize the TableIOMformatOdt writer class.
   (Default is to raise an exception.)
 - `lang` - The language of the document.
 - `paper_size` - Paper size for the document.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatOdt.get_row_format_capability"></a>
 
@@ -1955,7 +2119,8 @@ def __init__(file_name: PathLike,
              file_access: FileAccess,
              file_exists_callback: Optional[Callable[[str], None]] = None,
              paper_size: PaperSize = PaperSize.A4,
-             title: Optional[str] = None)
+             title: Optional[str] = None,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatPdf writer class.
@@ -1976,6 +2141,8 @@ Initialize the TableIOMformatPdf writer class.
   (Default is to raise an exception.)
 - `paper_size` - Paper size for the document.
 - `title` - PDF document metadata title.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatPdf.get_row_format_capability"></a>
 
@@ -2028,7 +2195,8 @@ TableIO writer class for RTF, based on MultiFormat.
 def __init__(file_name: PathLike,
              file_access: FileAccess,
              file_exists_callback: Optional[Callable[[str], None]] = None,
-             paper_size: PaperSize = PaperSize.A4)
+             paper_size: PaperSize = PaperSize.A4,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatRtf writer class.
@@ -2048,6 +2216,8 @@ Initialize the TableIOMformatRtf writer class.
   as backup.)
   (Default is to raise an exception.)
 - `paper_size` - Paper size for the document.
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformat.TableIOMformatRtf.get_row_format_capability"></a>
 
@@ -2243,6 +2413,82 @@ Excel CSV file type/dialect.
 
 Unix CSV file type/dialect.
 
+<a id="tableio.optional_args.TimeDeltaFallback"></a>
+
+## TimeDeltaFallback Objects
+
+```python
+class TimeDeltaFallback(IntEnum)
+```
+
+The fallback behavior for timedelta values.
+
+How a timedelta value is written when an implementation does not support
+writing timedelta values. If an implementation does support timedelta
+values, the fallback behavior specified by this enum will be ignored.
+
+For all string formats: A negative value gets a leading '-' that applies
+to the whole duration (for example '-01:00:00' is minus one hour).
+Fractional seconds are written with up to six decimals, and only when
+non-zero (for example '00:00:01.5'). The 'HH' part is always at least two
+digits. Use ``tableio.parse_timedelta`` to read the values back.
+
+<a id="tableio.optional_args.TimeDeltaFallback.FLOATSECONDS"></a>
+
+#### FLOATSECONDS
+
+Convert the timedelta to a float of the total number of seconds.
+
+Microsecond precision is lost for very large durations (roughly
+above 100 years), as a float has limited precision.
+
+<a id="tableio.optional_args.TimeDeltaFallback.HMS_STRING"></a>
+
+#### HMS\_STRING
+
+Convert the timedelta to a string in the format 'HH:MM:SS'.
+
+Days are included in the hours, so 'HH' may exceed 24 (for example
+'26:03:04').
+This is the default fallback.
+
+<a id="tableio.optional_args.TimeDeltaFallback.DHMS_STRING"></a>
+
+#### DHMS\_STRING
+
+Convert the timedelta to a string in the format 'D d HH:MM:SS'.
+
+The 'D d' part will only be included if the number of days is non-zero.
+
+<a id="tableio.optional_args.TimeDeltaFallback.DHMS_STRING_LONG"></a>
+
+#### DHMS\_STRING\_LONG
+
+Convert the timedelta to a string in the format 'D days HH:MM:SS'.
+
+The 'D days' part will only be included if the number of days is non-zero.
+If the number of days is one, it will be written as '1 day'.
+
+<a id="tableio.optional_args.TimeDeltaFallback.WDHMS_STRING"></a>
+
+#### WDHMS\_STRING
+
+Convert the timedelta to a string in the format 'W w D d HH:MM:SS'.
+
+The 'W w' part will only be included if the number of weeks is non-zero.
+The 'D d' part will only be included if the number of days is non-zero.
+
+<a id="tableio.optional_args.TimeDeltaFallback.WDHMS_STRING_LONG"></a>
+
+#### WDHMS\_STRING\_LONG
+
+Convert the timedelta to a string as 'W weeks D days HH:MM:SS'.
+
+The 'W weeks' part will only be included if the number of weeks is
+non-zero. If the number of weeks is one, it will be written as '1 week'.
+The 'D days' part will only be included if the number of days is non-zero.
+If the number of days is one, it will be written as '1 day'.
+
 <a id="tableio.optional_args.OptionalArgsDict"></a>
 
 ## OptionalArgsDict Objects
@@ -2300,6 +2546,15 @@ The line terminator to use for CSV files. None for default.
 #### csv\_escapechar
 
 The escape character to use for CSV files. None for default.
+
+<a id="tableio.optional_args.OptionalArgsDict.timedelta_fallback"></a>
+
+#### timedelta\_fallback
+
+The fallback format to use for timedelta, when no native support.
+
+Silently ignored if the implementation provides native support for
+timedelta values. None for default (TimeDeltaFallback.HMS_STRING).
 
 <a id="tableio.optional_args.mformat_optargs_from_optionalargs"></a>
 
@@ -2650,6 +2905,15 @@ HTML-specific configuration values, or ``None`` when unset.
 #### latex
 
 LaTeX-specific configuration values, or ``None`` when unset.
+
+<a id="tableio.config_data.ConfigData.timedelta_fallback"></a>
+
+#### timedelta\_fallback
+
+How formats without native timedelta write it, or ``None``.
+
+``None`` means backend default (``TimeDeltaFallback.HMS_STRING``).
+Formats with native timedelta support ignore this value.
 
 <a id="tableio.factory"></a>
 
@@ -4291,8 +4555,10 @@ Helpers for converting one stored ``Value`` to an expected type.
 
 When a ``Value`` is stored in a file format with weaker typing, the original
 type may be lost. A ``datetime`` written to CSV, for example, is usually read
-back as a string. These helpers perform explicit and predictable conversions
-from one public ``Value`` representation to another expected concrete type.
+back as a string. The same applies to a ``timedelta`` written as a fallback
+string or number of seconds (see ``TimeDeltaFallback``). These helpers
+perform explicit and predictable conversions from one public ``Value``
+representation to another expected concrete type.
 
 <a id="tableio.valueconversion.UnreasonableTypeConversion"></a>
 
@@ -4345,7 +4611,9 @@ def value2str(value: Value, none_is_empty: bool = False) -> str
 Convert a value to a string.
 
 Datetime values are converted with ``isoformat()`` so the result remains
-easy to parse back to a datetime when needed.
+easy to parse back to a datetime when needed. Timedelta values are
+converted to the ``TimeDeltaFallback.HMS_STRING`` format (for example
+'26:03:04') that ``value2timedelta`` parses back.
 
 **Arguments**:
 
@@ -4490,6 +4758,35 @@ is delegated to ``datetime.strptime()``.
 
   The converted datetime value.
 
+<a id="tableio.valueconversion.value2timedelta"></a>
+
+#### value2timedelta
+
+```python
+def value2timedelta(value: Value) -> timedelta
+```
+
+Convert a value to a timedelta.
+
+Int and float values are a number of seconds. String values are parsed
+by ``parse_timedelta``, which accepts every ``TimeDeltaFallback`` string
+format, ``str(timedelta)`` format and a number of seconds.
+
+**Arguments**:
+
+- `value` - The value to convert.
+
+**Raises**:
+
+- `UnreasonableTypeConversion` - If the source type cannot reasonably be
+  converted to timedelta (bool or datetime).
+- `UnreasonableValueConversion` - If the source value is None, or of a
+  reasonable type but does not represent a timedelta.
+
+**Returns**:
+
+  The converted timedelta value.
+
 <a id="tableio.valueconversion.value2date"></a>
 
 #### value2date
@@ -4590,8 +4887,8 @@ function based on the type.
 **Arguments**:
 
 - `value` - The value to convert.
-- `to_type` - The type to convert to. Can be NoneType, datetime, int, str,
-  bool, or float.
+- `to_type` - The type to convert to. Can be NoneType, datetime,
+  timedelta, int, str, bool, or float.
 - `accept_none` - If True, None values are accepted.
 - `datetime_format_string` - Optional ``strptime`` format for string input.
 - `int_format_string` - Optional Python integer format specification used to
@@ -4623,7 +4920,8 @@ function based on the type.
 - `value` - The value to convert.
 - `to_type_of` - The a variable of the type to convert to. The value of
   this variable will not be used, only its type. Can be of
-  type NoneType, datetime, int, str, bool, or float.
+  type NoneType, datetime, timedelta, int, str, bool, or
+  float.
 - `accept_none` - If True, None values are accepted.
 - `datetime_format_string` - Optional ``strptime`` format for string input.
 - `int_format_string` - Optional Python integer format specification used to
@@ -5612,10 +5910,16 @@ def __init__(file_name: PathLike,
              csv_quoting: Optional[str] = None,
              csv_quotechar: Optional[str] = None,
              csv_lineterminator: Optional[str] = None,
-             csv_escapechar: Optional[str] = None)
+             csv_escapechar: Optional[str] = None,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOCsv reader/writer class.
+
+CSV has no native timedelta type, so timedelta values are written
+as specified by timedelta_fallback (None for default
+TimeDeltaFallback.HMS_STRING). When reading, such values are
+returned as strings, use ``tableio.parse_timedelta`` to convert them.
 
 <a id="tableio.tableio_csv.TableIOCsv.file_name_extension"></a>
 
@@ -5791,6 +6095,9 @@ for this class. Writing is supported, but not all features are supported.
 For example, box and filtered data range are not supported.
 Row formatting is supported, but value formatting is not.
 
+The mformat formats have no native timedelta type, so timedelta values
+are written as specified by the timedelta_fallback argument.
+
 Returned position is not reliable, as different MultiFormat derived
 classes have different behavior. Returned position is not useful, as
 neither reading nor boxed writing is supported, it is returned only
@@ -5803,7 +6110,8 @@ to satisfy the type hints of the TableIO class.
 ```python
 def __init__(file_name: PathLike,
              file_access: FileAccess,
-             file_exists_callback: Optional[Callable[[str], None]] = None)
+             file_exists_callback: Optional[Callable[[str], None]] = None,
+             timedelta_fallback: Optional[TimeDeltaFallback] = None)
 ```
 
 Initialize the TableIOMformatBased reader/writer class.
@@ -5821,6 +6129,8 @@ Initialize the TableIOMformatBased reader/writer class.
   (May for instance save existing file as
   backup.)
   (Default is to raise an exception.)
+- `timedelta_fallback` - The fallback format for timedelta values.
+  None for default (HMS_STRING).
 
 <a id="tableio.tableio_mformatbased.TableIOMformatBased.get_capabilities"></a>
 

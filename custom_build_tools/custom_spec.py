@@ -9,14 +9,15 @@ CUSTOM_BUILD_TOOLS_SRC = Path(__file__).resolve().parent / 'src'
 
 sys.path.insert(0, str(CUSTOM_BUILD_TOOLS_SRC))
 # pylint: disable=wrong-import-position,import-error
-from hooks import run_examples_hook
+from hooks import run_examples_hook  # noqa: E402
+
 
 def custom_spec() -> Optional[BuildSpec]:
     """Return custom build spec for this repository."""
-    return BuildSpec(
-        additional_venv_packages=[
-            'openxml-audit >= 0.7.5',
-            'python-calamine >= 0.6.2',
-            'odfpy >= 1.4.1'],
-        custom_after_test=[run_examples_hook],
-    )
+    # The example tests import shared test helpers from test/test_tableio
+    # (as package test_tableio), see example/test/conftest.py.
+    return BuildSpec(additional_venv_packages=['openxml-audit >= 0.7.5',
+                                               'python-calamine >= 0.6.2',
+                                               'odfpy >= 1.4.1'],
+                     custom_after_test=[run_examples_hook],
+                     mypy_paths=[Path('test')])

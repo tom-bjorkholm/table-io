@@ -13,7 +13,6 @@ import pytest
 from odfdo import Cell, Document, Element, Table
 from odfdo.body import Spreadsheet
 from odfdo.style import Style
-from openxml_audit import OdfValidator  # type: ignore[import-untyped]
 from pytest import CaptureFixture
 from tableio import tableio_ods_odfdo
 from tableio.capability import CAP_IMPLEMENTED
@@ -21,6 +20,7 @@ from tableio.tableio import FileAccess
 from tableio.tableio_ods_odfdo import TableIOOdsOdfdo
 from tableio.value_type import Fmt, get_checked_type
 from .check_capsys import check_capsys
+from .odf_validation_helper import odf_validation_result
 from .spreadsheet_test_helper import \
     run_bordered_workbook_is_validator_clean, \
     run_box_rewrite_clears_borders, \
@@ -296,7 +296,7 @@ def test_ods_written_workbook_is_validator_clean() -> None:
         file_path = Path(temp_dir) / 'validator_clean.ods'
         with TableIOOdsOdfdo(file_path, FileAccess.CREATE) as table_io:
             table_io.write_table_listdata([['left', 'right']])
-        result = OdfValidator().validate(file_path)
+        result = odf_validation_result(file_path)
         assert result.is_valid
 
 
@@ -304,7 +304,7 @@ def test_ods_bordered_workbook_is_validator_clean() -> None:
     """Bordered `.ods` output remains validator clean."""
     run_bordered_workbook_is_validator_clean(
         TableIOOdsOdfdo, '.ods',
-        lambda file_path: OdfValidator().validate(file_path).is_valid)
+        lambda file_path: odf_validation_result(file_path).is_valid)
 
 
 def _make_database_range(name: Optional[str], display_buttons: str,

@@ -12,7 +12,9 @@ from tableio.capability import Capabilities, SingleCapability, \
 from tableio.value_type import ListDataSeq, CellT, FmtListData, \
     row_fmt_from_cell_fmt_list, DictDataMap, FmtDictData, \
     row_fmt_from_cell_fmt_dict, ListData, Value, ReadResult, DictData, \
-    list_row_to_str_list, Fmt, FmtListRow
+    list_row_to_str_list, Fmt, FmtListRow, ListRowSeq
+from tableio.optional_args import TimeDeltaFallback
+from tableio.timedelta_helpers import fallback_value
 
 
 def _allow_overwrite(_: str) -> None:
@@ -38,6 +40,9 @@ class TableIOMformatBased(TableIO):
     For example, box and filtered data range are not supported.
     Row formatting is supported, but value formatting is not.
 
+    The mformat formats have no native timedelta type, so timedelta values
+    are written as specified by the timedelta_fallback argument.
+
     Returned position is not reliable, as different MultiFormat derived
     classes have different behavior. Returned position is not useful, as
     neither reading nor boxed writing is supported, it is returned only
@@ -46,7 +51,8 @@ class TableIOMformatBased(TableIO):
 
     def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
-                 = None):
+                 = None,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
         """Initialize the TableIOMformatBased reader/writer class.
 
         Args:
@@ -61,6 +67,8 @@ class TableIOMformatBased(TableIO):
                                   (May for instance save existing file as
                                   backup.)
                                   (Default is to raise an exception.)
+            timedelta_fallback: The fallback format for timedelta values.
+                                None for default (HMS_STRING).
         """
         if file_access != FileAccess.CREATE:
             msg = 'File access must be CREATE for mformat based classes.'
@@ -72,6 +80,8 @@ class TableIOMformatBased(TableIO):
         self.is_open: bool = False
         self.position_row: int = -1
         self.position_column: int = 0
+        self.timedelta_fallback: Optional[TimeDeltaFallback] = \
+            timedelta_fallback
 
     @classmethod
     def get_capabilities(cls) -> Capabilities:
@@ -179,18 +189,22 @@ class TableIOMformatBased(TableIO):
             msg = 'Box is not supported for this class.'
             raise CapabilityNotSupported(msg)
         assert self.mformat is not None
-        self.mformat.new_table(first_row=list_row_to_str_list(data[0].values,
-                                                              True),
+        self.mformat.new_table(first_row=self._str_row(data[0].values),
                                bold=data[0].fmt.bold,
                                italic=data[0].fmt.italic)
         for row in data[1:]:
-            self.mformat.add_table_row(row=list_row_to_str_list(row.values,
-                                                                True),
+            self.mformat.add_table_row(row=self._str_row(row.values),
                                        bold=row.fmt.bold,
                                        italic=row.fmt.italic)
         self.position_row += len(data) + 2
         self.position_column = len(data[0].values)
         return Position(row=self.position_row, column=self.position_column)
+
+    def _str_row(self, values: ListRowSeq[Value]) -> list[str]:
+        """Return one row as strings, with timedelta values as fallback."""
+        return list_row_to_str_list(
+            [fallback_value(value, self.timedelta_fallback)
+             for value in values], True)
 
     def _write_table_dictdata(self, data: DictDataMap[CellT],
                               impl_meta: TableIO.ImplMetaForDictWrite) \

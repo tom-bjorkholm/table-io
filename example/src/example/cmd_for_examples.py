@@ -12,7 +12,7 @@ from mformat.enum_str_util import from_str, possible_values
 from mformat.paper_size import PaperSize
 from mformat.document_class import DocumentClass
 from tableio import Capabilities, CsvDialect, OptionalArgs, \
-    OptionalArgsDict, list_implementations_tableio, \
+    OptionalArgsDict, TimeDeltaFallback, list_implementations_tableio, \
     list_registered_tableio
 
 
@@ -32,7 +32,8 @@ _CLI_INT_ARGS: list[str] = ['line_length', 'table_max_line_length']
 _CLI_ENUM_ARGS: list[tuple[str, type[IntEnum]]] = [
     ('csv_dialect', CsvDialect),
     ('paper_size', PaperSize),
-    ('document_class', DocumentClass)]
+    ('document_class', DocumentClass),
+    ('timedelta_fallback', TimeDeltaFallback)]
 _ALL_CLI_ARG_NAMES: list[str] = (
     _CLI_STR_ARGS + _CLI_INT_ARGS
     + [name for name, _ in _CLI_ENUM_ARGS])

@@ -15,7 +15,8 @@ from tableio.value_type import Value, ListData, ListDataSeq, CellT, \
 from tableio.capability import Capabilities, SingleCapability, Strictness, \
     CapabilityNotSupported
 from tableio.tableio_textbased import TableIOTextBased
-from tableio.optional_args import CsvDialect
+from tableio.optional_args import CsvDialect, TimeDeltaFallback
+from tableio.timedelta_helpers import fallback_value
 
 
 type _QuoteStyle = Literal[0, 1, 2, 3, 4, 5]
@@ -137,8 +138,15 @@ class TableIOCsv(TableIOTextBased):
                  csv_quoting: Optional[str] = None,
                  csv_quotechar: Optional[str] = None,
                  csv_lineterminator: Optional[str] = None,
-                 csv_escapechar: Optional[str] = None):
-        """Initialize the TableIOCsv reader/writer class."""
+                 csv_escapechar: Optional[str] = None,
+                 timedelta_fallback: Optional[TimeDeltaFallback] = None):
+        """Initialize the TableIOCsv reader/writer class.
+
+        CSV has no native timedelta type, so timedelta values are written
+        as specified by timedelta_fallback (None for default
+        TimeDeltaFallback.HMS_STRING). When reading, such values are
+        returned as strings, use ``tableio.parse_timedelta`` to convert them.
+        """
         super().__init__(file_name=file_name, file_access=file_access,
                          file_exists_callback=file_exists_callback,
                          character_encoding=character_encoding)
@@ -148,6 +156,8 @@ class TableIOCsv(TableIOTextBased):
                            lineterminator=csv_lineterminator,
                            escapechar=csv_escapechar)
         self.csv_dialect: csv.Dialect = _get_csv_dialect(self.csv_definitions)
+        self.timedelta_fallback: Optional[TimeDeltaFallback] = \
+            timedelta_fallback
         self.position_row: int = -1
         self.position_column: int = 0
 
@@ -161,7 +171,7 @@ class TableIOCsv(TableIOTextBased):
         """Get the description of the TableIOCsv reader/writer class."""
         opts = ['file_exists_callback', 'character_encoding', 'csv_dialect',
                 'csv_delimiter', 'csv_quoting', 'csv_quotechar',
-                'csv_lineterminator', 'csv_escapechar']
+                'csv_lineterminator', 'csv_escapechar', 'timedelta_fallback']
         return Descriptor(format_name='CSV', implementation='csv',
                           mandatory_args=[],
                           capabilities=cls.get_capabilities(),
@@ -189,6 +199,10 @@ class TableIOCsv(TableIOTextBased):
 
     def _write_file_suffix(self) -> None:
         """Write the CSV file suffix."""
+
+    def _csv_value(self, value: Value) -> Value:
+        """Return one value as written to CSV (timedelta as fallback)."""
+        return fallback_value(value, self.timedelta_fallback)
 
     def _write_heading(self, heading: str, level: int) -> Position:
         """Write a heading to the file.
@@ -236,7 +250,7 @@ class TableIOCsv(TableIOTextBased):
         self.position_row += self._ensure_empty_line_before()
         writer = csv.writer(self.file, dialect=self.csv_dialect)
         for row in ndata:
-            writer.writerow(row)
+            writer.writerow([self._csv_value(value) for value in row])
         self.position_row += len(ndata)
         self.position_column = len(ndata[-1])
         self.position_row += self._ensure_empty_line_before()
@@ -286,7 +300,8 @@ class TableIOCsv(TableIOTextBased):
         writer.writeheader()
         self.position_row += 1
         for row in ndata:
-            writer.writerow(row)
+            writer.writerow({key: self._csv_value(value)
+                             for key, value in row.items()})
         self.position_row += len(ndata)
         self.position_column = len(ndata[-1])
         self.position_row += self._ensure_empty_line_before()

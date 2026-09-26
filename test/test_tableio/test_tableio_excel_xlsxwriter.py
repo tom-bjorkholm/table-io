@@ -113,9 +113,9 @@ class _InspectableTableIOExcelXlsxWriter(TableIOExcelXlsxWriter):
         self._add_filtered_range(bounds, name)
 
     def run_xlsx_format(self, style: Optional[CellStyleState],
-                        datetime_value: bool) -> Optional[object]:
+                        num_format: Optional[str]) -> Optional[object]:
         """Expose the XlsxWriter format-cache helper for tests."""
-        return self._xlsx_format(style, datetime_value)
+        return self._xlsx_format(style, num_format)
 
 
 def test_excel_xlsxwriter_get_capabilities(
@@ -422,7 +422,7 @@ def test_excel_xlsxwriter_default_cell_style_needs_no_format(
     """The default style object is treated the same as no style."""
     table_io = _InspectableTableIOExcelXlsxWriter(Path('default_style'),
                                                   FileAccess.CREATE)
-    assert table_io.run_xlsx_format(DEFAULT_CELL_STYLE, False) is None
+    assert table_io.run_xlsx_format(DEFAULT_CELL_STYLE, None) is None
     check_capsys(capsys)
 
 

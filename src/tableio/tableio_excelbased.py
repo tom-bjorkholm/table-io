@@ -4,6 +4,7 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
+from datetime import datetime, timedelta
 from typing import Callable, Optional, Sequence
 from mformat.mformat import PathLike
 from tableio.tableio import FileAccess
@@ -27,6 +28,9 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
 
     _DATETIME_NUMBER_FORMAT = 'yyyy-mm-dd hh:mm:ss'
     """Excel number format used for datetime values."""
+
+    _TIMEDELTA_NUMBER_FORMAT = '[hh]:mm:ss'
+    """Excel number format used for timedelta (duration) values."""
 
     def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]]
@@ -54,9 +58,13 @@ class TableIOExcelBased(TableIOSpreadsheetBased):
         return '.xlsx'
 
     @classmethod
-    def _datetime_number_format(cls) -> str:
-        """Return the Excel number format used for datetime values."""
-        return cls._DATETIME_NUMBER_FORMAT
+    def _number_format(cls, value: object) -> Optional[str]:
+        """Return the Excel number format needed for one value, if any."""
+        if isinstance(value, datetime):
+            return cls._DATETIME_NUMBER_FORMAT
+        if isinstance(value, timedelta):
+            return cls._TIMEDELTA_NUMBER_FORMAT
+        return None
 
     @staticmethod
     def _excel_column_name(column: int) -> str:

@@ -20,6 +20,7 @@ _EXPECTED_NAMES = {
     'line_length',
     'table_max_line_length',
     'table_alignment',
+    'timedelta_fallback',
     'csv.dialect',
     'csv.delimiter',
     'csv.quoting',
@@ -82,6 +83,9 @@ def test_spec_choices() -> None:
         set(_choices(specs, 'csv.quoting'))
     assert set(_choices(specs, 'csv.dialect')) == {'EXCEL', 'UNIX'}
     assert 'CENTER_BUT_DIGITS_RIGHT' in _choices(specs, 'table_alignment')
+    assert set(_choices(specs, 'timedelta_fallback')) == {
+        'FLOATSECONDS', 'HMS_STRING', 'DHMS_STRING', 'DHMS_STRING_LONG',
+        'WDHMS_STRING', 'WDHMS_STRING_LONG'}
     assert {'A3', 'A4', 'A5', 'Legal', 'Letter'} == \
         set(_choices(specs, 'paper_size'))
     assert {'Article', 'Report', 'Book', 'Letter'} == \
@@ -97,6 +101,10 @@ def test_spec_relevance() -> None:
     assert specs['html.css_file'].optional_arg == 'css_file'
     assert 'ODS' in _formats(specs, 'language')
     assert specs['language'].optional_arg == 'lang'
+    assert {'CSV', 'md', 'HTML', 'pdf'} <= \
+        set(_formats(specs, 'timedelta_fallback'))
+    assert not {'Excel', 'ODS'} & set(_formats(specs, 'timedelta_fallback'))
+    assert specs['timedelta_fallback'].optional_arg == 'timedelta_fallback'
 
 
 def test_descriptions_from_specs() -> None:

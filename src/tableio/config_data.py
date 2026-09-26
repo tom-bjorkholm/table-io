@@ -6,7 +6,7 @@
 
 from dataclasses import dataclass
 from typing import Optional
-from tableio.optional_args import CsvDialect
+from tableio.optional_args import CsvDialect, TimeDeltaFallback
 
 
 @dataclass
@@ -115,3 +115,10 @@ class ConfigData:  # pylint: disable=too-many-instance-attributes
 
     latex: Optional[LatexConfigData] = None
     """LaTeX-specific configuration values, or ``None`` when unset."""
+
+    timedelta_fallback: Optional[TimeDeltaFallback] = None
+    """How formats without native timedelta write it, or ``None``.
+
+    ``None`` means backend default (``TimeDeltaFallback.HMS_STRING``).
+    Formats with native timedelta support ignore this value.
+    """

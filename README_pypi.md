@@ -81,6 +81,7 @@ The main features are:
   - int
   - float
   - datetime
+  - timedelta (see below)
 - writing a table as a filtered data range
 - writing a table to a specific location in a spreadsheet (specified by a box)
 - reading table data from a specific location in a spreadsheet (specified by a box)
@@ -88,6 +89,43 @@ The main features are:
 - finding location where some data is present in spreadsheet and doing modifications
   at that position or at positions relative to that position.
 - several border styles for tables
+
+## Timedelta (duration) values
+
+Excel (OpenPyXL, XlsxWriter, pylightxl) and ODS (odfdo) store `timedelta`
+values natively, as duration cells, and read them back as `timedelta`.
+(OpenPyXL reads durations with millisecond precision.)
+The cells are displayed as `[hh]:mm:ss` (hours do not wrap at 24, seconds
+are displayed rounded to whole seconds, the stored value is exact).
+Microsoft Excel has no duration type, it stores a duration as a number of
+days with a time number format. So by design Excel shows the cell as for
+instance `72:00:00`, but shows the value as a date and time (like
+`1/3/1900 12:00:00 AM`) in the formula bar when the cell is selected. Excel
+does the same for durations typed in by hand, and LibreOffice shows
+`72:00:00` in both places for the same file.
+Notice also that Microsoft Excel cannot display negative durations (it
+shows `####`). The stored value is still correct, it is read back
+correctly and LibreOffice displays it as for instance `-00:03:58`. If
+negative durations must be readable in Microsoft Excel, consider storing
+the magnitude and the sign in separate columns.
+
+Formats without native duration support (CSV and all write-only document
+formats) write a fallback representation, selected with the optional
+argument `timedelta_fallback` (a `TimeDeltaFallback` value):
+
+| TimeDeltaFallback     | Two days, three hours and 1.5 seconds |
+|-----------------------|---------------------------------------|
+| `HMS_STRING` (default)| `51:00:01.5`                          |
+| `DHMS_STRING`         | `2 d 03:00:01.5`                      |
+| `DHMS_STRING_LONG`    | `2 days 03:00:01.5`                   |
+| `WDHMS_STRING`        | `2 d 03:00:01.5` (with `W w` if a week or more) |
+| `WDHMS_STRING_LONG`   | `2 days 03:00:01.5` (with `W weeks` if a week or more) |
+| `FLOATSECONDS`        | `183601.5`                            |
+
+Negative durations get a leading `-`. When reading such a file the values
+are strings (CSV). Convert them with `parse_timedelta()`, that accepts all
+fallback formats (and `timedelta` values, so it works for all formats).
+`format_timedelta()` formats a `timedelta` in any of the fallback formats.
 
 ## Example programs
 
@@ -109,9 +147,10 @@ a better start by reading the examples.
 
 ## Test summary
 
-- Test result: 1347 passed in 20s
+- Test result: 1426 passed in 8s
 - No flake8 warnings.
 - No mypy errors found.
+- No pylint warnings.
 - No python layout warnings.
 - Built version(s): 1.1.1
-- Build and test using Python 3.14.6
+- Build and test using Python 3.14.7

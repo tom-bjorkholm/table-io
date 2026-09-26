@@ -12,8 +12,9 @@ import pytest
 
 from tableio import CAP_IGNORABLE, CAP_NEEDED, Capabilities, ConfigData, \
     ConfigError, CsvConfigData, CsvDialect, FileAccess, HtmlConfigData, \
-    LatexConfigData, tio_config_create, tio_config_default, \
-    tio_config_ignored_names, tio_config_optional_args, tio_config_trim
+    LatexConfigData, TimeDeltaFallback, tio_config_create, \
+    tio_config_default, tio_config_ignored_names, tio_config_optional_args, \
+    tio_config_trim
 from tableio.tableio_csv import TableIOCsv
 
 
@@ -56,7 +57,8 @@ def test_default_all_options() -> None:
         paper_size='A4', line_length=79, table_max_line_length=140,
         table_alignment='CENTER_BUT_DIGITS_RIGHT', csv=csv,
         html=HtmlConfigData(css_file='style.css'),
-        latex=LatexConfigData(document_class='Report', preamble=''))
+        latex=LatexConfigData(document_class='Report', preamble=''),
+        timedelta_fallback=TimeDeltaFallback.HMS_STRING)
     assert config == expected
 
 
@@ -84,7 +86,8 @@ def test_default_all_options_filters() -> None:
         'csv_quoting': 'all',
         'csv_quotechar': '"',
         'csv_lineterminator': '\n',
-        'csv_escapechar': '\\'
+        'csv_escapechar': '\\',
+        'timedelta_fallback': TimeDeltaFallback.HMS_STRING
     }
 
 
@@ -256,6 +259,30 @@ def test_create_runtime_callback(tmp_path: Path) -> None:
     tio_config_create(config, file_name, FileAccess.CREATE,
                       file_exists_callback=callback)
     assert called == [str(file_name)]
+
+
+def test_create_td_fallback(tmp_path: Path) -> None:
+    """Create passes the configured timedelta fallback to the backend."""
+    config = ConfigData(format_name='CSV',
+                        timedelta_fallback=TimeDeltaFallback.DHMS_STRING)
+    table = tio_config_create(config, tmp_path / 'created', FileAccess.CREATE)
+    assert isinstance(table, TableIOCsv)
+    assert table.timedelta_fallback == TimeDeltaFallback.DHMS_STRING
+
+
+@pytest.mark.parametrize(('format_name', 'relevant'),
+                         [('CSV', True), ('md', True), ('pdf', True),
+                          ('Excel', False), ('ODS', False)])
+def test_td_fallback_config(format_name: str, relevant: bool) -> None:
+    """The timedelta fallback is only relevant without native timedelta."""
+    fallback = TimeDeltaFallback.WDHMS_STRING
+    config = ConfigData(format_name=format_name, timedelta_fallback=fallback)
+    args = tio_config_optional_args(config) or {}
+    assert ('timedelta_fallback' in args) == relevant
+    expected_ignored = [] if relevant else ['timedelta_fallback']
+    assert tio_config_ignored_names(config) == expected_ignored
+    expected_kept = fallback if relevant else None
+    assert tio_config_trim(config).timedelta_fallback == expected_kept
 
 
 def test_ignored_non_none() -> None:

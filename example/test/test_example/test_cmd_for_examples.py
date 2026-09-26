@@ -9,7 +9,7 @@ from typing import Any
 from unittest.mock import patch, MagicMock
 import pytest
 from mformat.paper_size import PaperSize
-from tableio.optional_args import CsvDialect
+from tableio.optional_args import CsvDialect, TimeDeltaFallback
 from example.cmd_for_examples import (
     cmd_parse_and_run_example, _build_optional_args,
     _unpack_and_run_example)
@@ -62,6 +62,18 @@ class TestBuildOptionalArgs:
         result = _build_optional_args(ns)
         assert isinstance(result, dict)
         assert result['paper_size'] == PaperSize.A4
+
+    @pytest.mark.parametrize('input_str,expected', [
+        ('HMS_STRING', TimeDeltaFallback.HMS_STRING),
+        ('floatseconds', TimeDeltaFallback.FLOATSECONDS),
+        ('WDHMS_STRING_LONG', TimeDeltaFallback.WDHMS_STRING_LONG)])
+    def test_enum_td_fallback(self, input_str: str,
+                              expected: TimeDeltaFallback) -> None:
+        """Enum values for TimeDeltaFallback are parsed from strings."""
+        ns = argparse.Namespace(timedelta_fallback=[input_str])
+        result = _build_optional_args(ns)
+        assert isinstance(result, dict)
+        assert result['timedelta_fallback'] == expected
 
     def test_multiple_args(self) -> None:
         """Multiple arguments of mixed types are all included."""

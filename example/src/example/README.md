@@ -308,6 +308,27 @@ pattern: place each demo table under its own heading and shift it one
 column to the right so the left outer border is easier to see in
 spreadsheet viewers such as Excel.
 
+## e15_timedelta.py
+
+Source:
+<https://github.com/tom-bjorkholm/table-io/blob/master/example/src/example/e15_timedelta.py>
+
+This example shows how to write and read `timedelta` (duration) values,
+including durations longer than a day, fractions of a second and
+negative durations. Excel and ODS store `timedelta` values natively, so
+the values read back already are `timedelta` objects. Formats without
+native support (CSV and the write-only document formats) write a fallback
+text or number instead, chosen with the optional argument
+`timedelta_fallback` (a `TimeDeltaFallback` value, the default is
+`HMS_STRING` like `'51:00:00'`). The example can be run with
+`--timedelta-fallback` to try the different fallbacks.
+
+The example also shows how to read back values when the program does not
+know if the format had native support: `parse_timedelta()` (and
+`value2timedelta()` from the value conversion helpers) accept both
+`timedelta` values and every fallback representation. Finally it uses
+`format_timedelta()` to format a duration for a heading.
+
 ## e20_register_custom_tableio.py
 
 Source:

@@ -4,7 +4,7 @@
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from functools import partial
 from pathlib import Path
 from typing import Callable, NamedTuple, Optional, cast
@@ -13,7 +13,6 @@ from odfdo.style import Style
 from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from openxml_audit import (  # type: ignore[import-untyped]
-    OdfValidator,
     OpenXmlValidator,
     ValidationResult
 )
@@ -22,6 +21,7 @@ from python_calamine import (
     CalamineWorkbook,
     load_workbook as load_calamine_workbook
 )
+from test_tableio.odf_validation_helper import odf_validation_result
 from tableio.border_helper import BorderHelper, BorderWeight, CellBorder, \
     NO_BORDERS
 from tableio.capability import CAP_NEEDED, Capabilities
@@ -148,7 +148,7 @@ def _syntax_validation_result(file_path: Path) -> ValidationResult:
     suffix = _spreadsheet_suffix(file_path)
     if suffix == '.xlsx':
         return OpenXmlValidator().validate(file_path)
-    return OdfValidator().validate(file_path)
+    return odf_validation_result(file_path)
 
 
 def _raise_syntax_error(file_path: Path,
@@ -213,7 +213,7 @@ def _normalize_cell_value(value: object) -> Value:
         return value
     if isinstance(value, date):
         return datetime.combine(value, time())
-    if isinstance(value, (str, bool, int, float)):
+    if isinstance(value, (str, bool, int, float, timedelta)):
         return cast(Value, value)
     return str(value)
 

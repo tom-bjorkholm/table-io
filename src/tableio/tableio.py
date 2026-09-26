@@ -5,7 +5,7 @@
 # MIT License
 
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from types import TracebackType
 from typing import NamedTuple, Callable, Optional
@@ -650,7 +650,7 @@ class TableIO:
                     value: Value | ListDataSeq[Value]) -> ListData[Value]:
         """Return one scalar or rectangular value pattern as a list grid."""
         if value is None or isinstance(value, (str, bool, int, float,
-                                               datetime)):
+                                               datetime, timedelta)):
             return [[value]]
         self._check_listdimensions(value, is_table=False)
         return [list(row) for row in value]

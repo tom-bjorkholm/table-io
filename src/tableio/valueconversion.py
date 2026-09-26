@@ -3,16 +3,20 @@
 
 When a ``Value`` is stored in a file format with weaker typing, the original
 type may be lost. A ``datetime`` written to CSV, for example, is usually read
-back as a string. These helpers perform explicit and predictable conversions
-from one public ``Value`` representation to another expected concrete type.
+back as a string. The same applies to a ``timedelta`` written as a fallback
+string or number of seconds (see ``TimeDeltaFallback``). These helpers
+perform explicit and predictable conversions from one public ``Value``
+representation to another expected concrete type.
 """
 
 # Copyright (c) 2026 Tom Björkholm
 # MIT License
 
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 from types import NoneType
-from typing import Optional, cast
+from typing import Callable, Optional
+from tableio.optional_args import TimeDeltaFallback
+from tableio.timedelta_helpers import format_timedelta, parse_timedelta
 from tableio.value_type import Value, value_to_str
 
 _TRUE_STRINGS = frozenset({'true', '1', 'yes', 'on'})
@@ -49,7 +53,9 @@ def value2str(value: Value, none_is_empty: bool = False) -> str:
     """Convert a value to a string.
 
     Datetime values are converted with ``isoformat()`` so the result remains
-    easy to parse back to a datetime when needed.
+    easy to parse back to a datetime when needed. Timedelta values are
+    converted to the ``TimeDeltaFallback.HMS_STRING`` format (for example
+    '26:03:04') that ``value2timedelta`` parses back.
 
     Args:
         value: The value to convert.
@@ -64,6 +70,8 @@ def value2str(value: Value, none_is_empty: bool = False) -> str:
     """
     if isinstance(value, datetime):
         return value.isoformat()
+    if isinstance(value, timedelta):
+        return str(format_timedelta(value, TimeDeltaFallback.HMS_STRING))
     try:
         return value_to_str(value, none_is_empty=none_is_empty)
     except ValueError as err:
@@ -224,6 +232,33 @@ def value2datetime(value: Value,
     raise UnreasonableTypeConversion(value, datetime)
 
 
+def value2timedelta(value: Value) -> timedelta:
+    """Convert a value to a timedelta.
+
+    Int and float values are a number of seconds. String values are parsed
+    by ``parse_timedelta``, which accepts every ``TimeDeltaFallback`` string
+    format, ``str(timedelta)`` format and a number of seconds.
+
+    Args:
+        value: The value to convert.
+    Raises:
+        UnreasonableTypeConversion: If the source type cannot reasonably be
+            converted to timedelta (bool or datetime).
+        UnreasonableValueConversion: If the source value is None, or of a
+            reasonable type but does not represent a timedelta.
+    Returns:
+        The converted timedelta value.
+    """
+    if value is None:
+        raise UnreasonableValueConversion(value, timedelta)
+    if isinstance(value, (bool, datetime)):
+        raise UnreasonableTypeConversion(value, timedelta)
+    try:
+        return parse_timedelta(value)
+    except ValueError as err:
+        raise UnreasonableValueConversion(value, timedelta) from err
+
+
 def value2date(value: Value, format_string: Optional[str] = None) -> date:
     """Convert a value to a date.
 
@@ -333,8 +368,8 @@ def value2type[T](value: Value,  # noqa: D103
     function based on the type.
     Args:
         value: The value to convert.
-        to_type: The type to convert to. Can be NoneType, datetime, int, str,
-                 bool, or float.
+        to_type: The type to convert to. Can be NoneType, datetime,
+                 timedelta, int, str, bool, or float.
         accept_none: If True, None values are accepted.
         datetime_format_string: Optional ``strptime`` format for string input.
         int_format_string: Optional Python integer format specification used to
@@ -342,31 +377,20 @@ def value2type[T](value: Value,  # noqa: D103
     Returns:
         The converted value.
     """
-    if to_type is NoneType:
-        value2none(value)
-        return cast(T, None)
-    if to_type is datetime:
-        ret_dt = value2datetime(value, datetime_format_string)
-        assert isinstance(ret_dt, to_type)
-        return ret_dt
-    if to_type is int:
-        ret_int = value2int(value, none_is_zero=accept_none,
-                            format_string=int_format_string)
-        assert isinstance(ret_int, to_type)
-        return ret_int
-    if to_type is str:
-        ret_str = value2str(value, none_is_empty=accept_none)
-        assert isinstance(ret_str, to_type)
-        return ret_str
-    if to_type is bool:
-        ret_bool = value2bool(value, none_is_false=accept_none)
-        assert isinstance(ret_bool, to_type)
-        return ret_bool
-    if to_type is float:
-        ret_float = value2float(value, none_is_zero=accept_none)
-        assert isinstance(ret_float, to_type)
-        return ret_float
-    raise UnreasonableTypeConversion(value, to_type)
+    converters: dict[type[object], Callable[[], object]] = {
+        NoneType: lambda: value2none(value),
+        datetime: lambda: value2datetime(value, datetime_format_string),
+        timedelta: lambda: value2timedelta(value),
+        int: lambda: value2int(value, none_is_zero=accept_none,
+                               format_string=int_format_string),
+        str: lambda: value2str(value, none_is_empty=accept_none),
+        bool: lambda: value2bool(value, none_is_false=accept_none),
+        float: lambda: value2float(value, none_is_zero=accept_none)}
+    if to_type not in converters:
+        raise UnreasonableTypeConversion(value, to_type)
+    converted = converters[to_type]()
+    assert isinstance(converted, to_type)
+    return converted
 
 
 def value2type_of[T](value: Value,  # noqa: D103
@@ -381,7 +405,8 @@ def value2type_of[T](value: Value,  # noqa: D103
         value: The value to convert.
         to_type_of: The a variable of the type to convert to. The value of
                     this variable will not be used, only its type. Can be of
-                    type NoneType, datetime, int, str, bool, or float.
+                    type NoneType, datetime, timedelta, int, str, bool, or
+                    float.
         accept_none: If True, None values are accepted.
         datetime_format_string: Optional ``strptime`` format for string input.
         int_format_string: Optional Python integer format specification used to

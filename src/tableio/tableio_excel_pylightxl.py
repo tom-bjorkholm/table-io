@@ -10,6 +10,7 @@ from typing import Callable, Optional, Protocol, cast
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 from mformat.mformat import PathLike
+from openpyxl.styles.numbers import is_timedelta_format
 from openpyxl.writer.theme import theme_xml
 from pylightxl import Database, writexl  # type: ignore[import-untyped]
 from pylightxl import pylightxl as pylightxl_impl
@@ -27,10 +28,19 @@ _TIME_STYLE_CODES = {'18', '19', '20', '21'}
 _DATETIME_STYLE_CODE = '22'
 _DATETIME_NUMFMT_ID = '164'
 _DATETIME_DISPLAY_FORMAT = 'yyyy-mm-dd hh:mm:ss'
+_DURATION_STYLE_CODE = '46'
+"""Style code for durations (as built-in Excel number format 46).
+
+Written as the custom number format below, since not all spreadsheet
+programs display built-in format 46 as '[h]:mm:ss'.
+"""
+_DURATION_NUMFMT_ID = '165'
+_DURATION_DISPLAY_FORMAT = '[hh]:mm:ss'
 _STYLE_CODE_TO_INDEX = {
     '14': '1',
     '18': '2',
-    '22': '3'
+    '22': '3',
+    '46': '4'
 }
 _XML_NS = {
     'content': 'http://schemas.openxmlformats.org/package/2006/content-types',
@@ -174,6 +184,63 @@ def _datetime_to_excel_number(value: datetime) -> float:
         delta.microseconds / 86400000000
 
 
+def _timedelta_to_excel_number(value: timedelta) -> float:
+    """Return one Python timedelta converted to an Excel number of days."""
+    return value / timedelta(days=1)
+
+
+def _date_from_excel_number(number: int | float) -> datetime:
+    """Return one Excel serial number as a datetime at midnight."""
+    date_value = _datetime_from_excel_number(number)
+    return datetime(date_value.year, date_value.month, date_value.day)
+
+
+def _time_text_from_excel_number(number: int | float) -> str:
+    """Return the time of day of one Excel serial number as text."""
+    return _datetime_from_excel_number(number).strftime('%H:%M:%S')
+
+
+_NUMBER_CONVERTERS: dict[str, Callable[[int | float], Value]] = {
+    **{code: _date_from_excel_number for code in _DATE_STYLE_CODES},
+    **{code: _time_text_from_excel_number for code in _TIME_STYLE_CODES},
+    _DATETIME_STYLE_CODE: _datetime_from_excel_number,
+    _DURATION_STYLE_CODE: lambda number: timedelta(days=number)}
+"""Converters for numeric cells, keyed by pylightxl style code."""
+
+_TEXT_CONVERTERS: dict[str, Callable[[str], Value]] = {
+    **{code: lambda text: datetime.strptime(text, '%Y/%m/%d')
+       for code in _DATE_STYLE_CODES},
+    _DATETIME_STYLE_CODE:
+        lambda text: datetime.strptime(text, '%Y/%m/%d %H:%M:%S')}
+"""Converters for text cells, keyed by pylightxl style code."""
+
+
+def _duration_style_indices(styles_root: ET.Element) -> set[int]:
+    """Return the cellXfs indices using a custom duration number format.
+
+    pylightxl classifies custom formats like '[hh]:mm:ss' (as written by
+    openpyxl) as time of day, so these are detected here.
+    """
+    duration_ids = {
+        num_fmt.get('numFmtId')
+        for num_fmt in styles_root.findall('main:numFmts/main:numFmt', _XML_NS)
+        if is_timedelta_format(num_fmt.get('formatCode'))}
+    return {index for index, xf in enumerate(
+        styles_root.findall('main:cellXfs/main:xf', _XML_NS))
+        if xf.get('numFmtId') in duration_ids}
+
+
+def _read_styles(file_name: str, zip_file: ZipFile) -> dict[int, str]:
+    """Return pylightxl style codes, with duration formats detected."""
+    styles = cast(dict[int, str], pylightxl_impl.readxl_get_styles(file_name))
+    if 'xl/styles.xml' not in zip_file.namelist():
+        return styles
+    styles_root = ET.fromstring(zip_file.read('xl/styles.xml'))
+    for index in _duration_style_indices(styles_root):
+        styles[index] = _DURATION_STYLE_CODE
+    return styles
+
+
 def _sheet_data_from_xml(
         xml_data: bytes, shared_strings: dict[int, str],
         styles: dict[int, str]) -> dict[str, dict[str, object]]:
@@ -231,9 +298,9 @@ def _read_database(file_name: str) -> Database:
     checked_file_name = pylightxl_impl.readxl_check_excelfile(file_name)
     sheet_targets = _sheet_xml_targets(checked_file_name)
     shared_strings = pylightxl_impl.readxl_get_sharedStrings(checked_file_name)
-    styles = pylightxl_impl.readxl_get_styles(checked_file_name)
     database = Database()
     with ZipFile(checked_file_name, 'r') as zip_file:
+        styles = _read_styles(checked_file_name, zip_file)
         workbook_root = ET.fromstring(zip_file.read('xl/workbook.xml'))
         _load_named_ranges(workbook_root, database)
         for sheet_name, (_, target) in sorted(sheet_targets.items(),
@@ -253,17 +320,21 @@ def _style_index_for_code(style_code: str) -> Optional[str]:
         return _STYLE_CODE_TO_INDEX['18']
     if style_code == _DATETIME_STYLE_CODE:
         return _STYLE_CODE_TO_INDEX['22']
+    if style_code == _DURATION_STYLE_CODE:
+        return _STYLE_CODE_TO_INDEX['46']
     return None
 
 
 def _styles_xml() -> bytes:
-    """Return a minimal styles.xml supporting date, time and datetime tags."""
+    """Return a minimal styles.xml for date, time, datetime and duration."""
     text = '\n'.join([
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
         '<styleSheet xmlns="http://schemas.openxmlformats.org/'
         'spreadsheetml/2006/main">',
-        f'<numFmts count="1"><numFmt numFmtId="{_DATETIME_NUMFMT_ID}" '
-        f'formatCode="{_DATETIME_DISPLAY_FORMAT}"/></numFmts>',
+        f'<numFmts count="2"><numFmt numFmtId="{_DATETIME_NUMFMT_ID}" '
+        f'formatCode="{_DATETIME_DISPLAY_FORMAT}"/>'
+        f'<numFmt numFmtId="{_DURATION_NUMFMT_ID}" '
+        f'formatCode="{_DURATION_DISPLAY_FORMAT}"/></numFmts>',
         '<fonts count="1"><font><sz val="11"/><name val="Calibri"/>'
         '<family val="2"/></font></fonts>',
         '<fills count="2"><fill><patternFill patternType="none"/>'
@@ -272,14 +343,16 @@ def _styles_xml() -> bytes:
         '<diagonal/></border></borders>',
         '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" '
         'borderId="0"/></cellStyleXfs>',
-        '<cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" '
+        '<cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" '
         'borderId="0" xfId="0"/><xf numFmtId="14" fontId="0" '
         'fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
         '<xf numFmtId="18" fontId="0" fillId="0" borderId="0" '
         'xfId="0" applyNumberFormat="1"/><xf numFmtId="'
         f'{_DATETIME_NUMFMT_ID}" '
         'fontId="0" fillId="0" borderId="0" xfId="0" '
-        'applyNumberFormat="1"/></cellXfs>',
+        f'applyNumberFormat="1"/><xf numFmtId="{_DURATION_NUMFMT_ID}" '
+        'fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+        '</cellXfs>',
         '<cellStyles count="1"><cellStyle name="Normal" xfId="0" '
         'builtinId="0"/></cellStyles>',
         '<dxfs count="0"/>',
@@ -360,7 +433,7 @@ class TableIOExcelPylightxl(TableIOExcelBased):
         """Load compact style metadata from the open database."""
         assert self.database is not None
         style_codes = _DATE_STYLE_CODES | _TIME_STYLE_CODES | {
-            _DATETIME_STYLE_CODE
+            _DATETIME_STYLE_CODE, _DURATION_STYLE_CODE
         }
         for sheet_name in _worksheet_names(self.database):
             worksheet = _database_worksheet(self.database, sheet_name)
@@ -625,6 +698,9 @@ class TableIOExcelPylightxl(TableIOExcelBased):
         if isinstance(value, datetime):
             write_value = _datetime_to_excel_number(value)
             style_codes[address] = _DATETIME_STYLE_CODE
+        if isinstance(value, timedelta):
+            write_value = _timedelta_to_excel_number(value)
+            style_codes[address] = _DURATION_STYLE_CODE
         worksheet.update_address(address, write_value)
         if address in _worksheet_cells(worksheet):
             _worksheet_cells(worksheet)[address]['s'] = \
@@ -681,19 +757,11 @@ class TableIOExcelPylightxl(TableIOExcelBased):
     @classmethod
     def _parse_typed_cell_value(cls, value: object, style_code: str) -> Value:
         """Convert one stored pylightxl cell value to the public Value type."""
-        if style_code in _DATE_STYLE_CODES and isinstance(value, str):
-            return datetime.strptime(value, '%Y/%m/%d')
-        if style_code in _DATE_STYLE_CODES and isinstance(value, (int, float)):
-            date_value = _datetime_from_excel_number(value)
-            return datetime(date_value.year, date_value.month, date_value.day)
-        if style_code in _TIME_STYLE_CODES and isinstance(value, (int, float)):
-            time_value = _datetime_from_excel_number(value)
-            return time_value.strftime('%H:%M:%S')
-        if style_code == _DATETIME_STYLE_CODE and isinstance(value, str):
-            return datetime.strptime(value, '%Y/%m/%d %H:%M:%S')
-        if style_code == _DATETIME_STYLE_CODE and \
-                isinstance(value, (int, float)):
-            return _datetime_from_excel_number(value)
+        if isinstance(value, str) and style_code in _TEXT_CONVERTERS:
+            return _TEXT_CONVERTERS[style_code](value)
+        if isinstance(value, (int, float)) and \
+                style_code in _NUMBER_CONVERTERS:
+            return _NUMBER_CONVERTERS[style_code](value)
         return cls._python_value_from_spreadsheet(value)
 
     def _filtered_range_infos(self) -> list[tuple[str, tuple[int, int,
