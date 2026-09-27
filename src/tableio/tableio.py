@@ -51,6 +51,7 @@ class TableIO:
                                           self.file_name_extension())
         self._file_exists_check()
         self.heading_written: bool = False
+        self._is_closed: bool = False
 
     @classmethod
     def get_description(cls) -> Descriptor:
@@ -401,6 +402,10 @@ class TableIO:
         Anything found in the leftmost column that does form a table of at
         least 2 cells in size is considered to be a heading and is returned
         as a list of headings.
+        Notice: In spreadsheet formats a read also moves the default write
+        position (without box) of the sheet to the row after the last row
+        read, so a following write without a box overwrites the content
+        after that row. CSV always writes at the end of the file.
         Args:
             box: The box to read the data from.
         Raises:
@@ -421,6 +426,10 @@ class TableIO:
         Anything found in the leftmost column that does form a table of
         at least 2 cells in size is considered to be a heading and is
         returned as a list of headings.
+        Notice: In spreadsheet formats a read also moves the default write
+        position (without box) of the sheet to the row after the last row
+        read, so a following write without a box overwrites the content
+        after that row. CSV always writes at the end of the file.
         Args:
             box: The box to read the data from.
         Raises:
@@ -581,7 +590,13 @@ class TableIO:
 
         Avoid using this method directly.
         Use derived class as a context manager instead, using a with statement.
+        Calling close() again after the first call does nothing, also when
+        the first call raised an exception. A closed instance is not
+        intended to be opened again; create a new instance instead.
         """
+        if self._is_closed:
+            return
+        self._is_closed = True
         try:
             self._end_state()
             self._write_file_suffix()

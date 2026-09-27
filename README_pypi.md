@@ -147,7 +147,7 @@ a better start by reading the examples.
 
 ## Test summary
 
-- Test result: 1426 passed in 8s
+- Test result: 1567 passed in 10s
 - No flake8 warnings.
 - No mypy errors found.
 - No pylint warnings.

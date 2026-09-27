@@ -60,6 +60,10 @@ class _WorksheetLike(Protocol):
                     cell_format: Optional[object] = None) -> object:
         """Write one blank cell."""
 
+    def write_string(self, row: int, col: int, string: str,
+                     cell_format: Optional[object] = None) -> object:
+        """Write one string cell (never a formula or URL)."""
+
 
 class _WorkbookLike(Protocol):
     """Protocol for the subset of Workbook methods used here."""
@@ -311,9 +315,9 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         sheet.column_widths[column] = width
         sheet.worksheet.set_column(column, column, width)
 
-    def _filter_range_name_in_use(self, name: str) -> bool:
-        """Return whether one filter range name is already used."""
-        return name in self._filter_names
+    def _workbook_filter_names(self) -> set[str]:
+        """Return the filter range names used in the workbook."""
+        return self._filter_names
 
     def _read_table_listdata(self, box: Optional[object] = None) -> \
             ReadResult[list[list[Value]]]:
@@ -364,6 +368,9 @@ class TableIOExcelXlsxWriter(TableIOExcelBased):
         worksheet = sheet.worksheet
         if value is None:
             worksheet.write_blank(row, column, None, cell_format)
+            return
+        if isinstance(value, str):
+            worksheet.write_string(row, column, value, cell_format)
             return
         worksheet.write(row, column, value, cell_format)
 

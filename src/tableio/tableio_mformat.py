@@ -53,7 +53,7 @@ class TableIOMformatMd(TableIOMformatBased):
         """
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
-        self.mformat = MultiFormatMd(file_name,
+        self.mformat = MultiFormatMd(self.file_name,
                                      file_exists_callback=_allow_overwrite,
                                      character_encoding=character_encoding)
 
@@ -112,7 +112,7 @@ class TableIOMformatHtml(TableIOMformatBased):
         """
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
-        self.mformat = MultiFormatHtml(file_name,
+        self.mformat = MultiFormatHtml(self.file_name,
                                        file_exists_callback=_allow_overwrite,
                                        character_encoding=character_encoding,
                                        title=title, css_file=css_file,
@@ -179,7 +179,7 @@ class TableIOMformatTxt(TableIOMformatBased):
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
         self.mformat = MultiFormatTxt(
-            file_name, file_exists_callback=_allow_overwrite,
+            self.file_name, file_exists_callback=_allow_overwrite,
             character_encoding=character_encoding, line_length=line_length,
             table_max_line_length=table_max_line_length,
             table_alignment=table_alignment)
@@ -252,7 +252,7 @@ class TableIOMformatLatex(TableIOMformatBased):
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
         self.mformat = MultiFormatLatex(
-            file_name, file_exists_callback=_allow_overwrite,
+            self.file_name, file_exists_callback=_allow_overwrite,
             character_encoding=character_encoding,
             document_class=document_class, paper_size=paper_size, title=title,
             latex_preamble=latex_preamble,
@@ -325,7 +325,7 @@ class TableIOMformatRst(TableIOMformatBased):
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
         self.mformat = MultiFormatRst(
-            file_name, file_exists_callback=_allow_overwrite,
+            self.file_name, file_exists_callback=_allow_overwrite,
             character_encoding=character_encoding, line_length=line_length,
             table_max_line_length=table_max_line_length,
             table_alignment=table_alignment)
@@ -383,7 +383,7 @@ class TableIOMformatDocx(TableIOMformatBased):
         """
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
-        self.mformat = MultiFormatDocx(file_name,
+        self.mformat = MultiFormatDocx(self.file_name,
                                        file_exists_callback=_allow_overwrite,
                                        paper_size=paper_size)
 
@@ -439,7 +439,7 @@ class TableIOMformatOdt(TableIOMformatBased):
         """
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
-        self.mformat = MultiFormatOdt(file_name,
+        self.mformat = MultiFormatOdt(self.file_name,
                                       file_exists_callback=_allow_overwrite,
                                       lang=lang, paper_size=paper_size)
 
@@ -496,7 +496,7 @@ class TableIOMformatPdf(TableIOMformatBased):
         """
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
-        self.mformat = MultiFormatPdf(file_name,
+        self.mformat = MultiFormatPdf(self.file_name,
                                       file_exists_callback=_allow_overwrite,
                                       paper_size=paper_size, title=title)
 
@@ -550,7 +550,7 @@ class TableIOMformatRtf(TableIOMformatBased):
         """
         super().__init__(file_name, file_access, file_exists_callback,
                          timedelta_fallback)
-        self.mformat = MultiFormatRtf(file_name,
+        self.mformat = MultiFormatRtf(self.file_name,
                                       file_exists_callback=_allow_overwrite,
                                       paper_size=paper_size)
 

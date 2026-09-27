@@ -422,12 +422,31 @@ def test_value2type_converts_supported_values(
         pytest.param(None, bool, False, id='none-to-bool'),
         pytest.param(None, int, 0, id='none-to-int'),
         pytest.param(None, float, 0.0, id='none-to-float'),
+        pytest.param(None, timedelta, timedelta(0), id='none-to-timedelta'),
     ],)
 def test_value2type_accept_none_passthrough(
-        value: None, to_type: type[object], expected: str | bool | int | float,
+        value: None, to_type: type[object],
+        expected: str | bool | int | float | timedelta,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2type forwards accept_none to converters."""
     assert value2type(value, to_type, accept_none=True) == expected
+    check_capsys(capsys)
+
+
+@pytest.mark.parametrize('accept_none', [False, True])
+def test_none_to_datetime(accept_none: bool,
+                          capsys: CaptureFixture[str]) -> None:
+    """Test that None is never converted to datetime."""
+    with pytest.raises(UnreasonableValueConversion):
+        value2type(None, datetime, accept_none=accept_none)
+    check_capsys(capsys)
+
+
+def test_none_to_timedelta(capsys: CaptureFixture[str]) -> None:
+    """Test that None is rejected for timedelta without accept_none."""
+    with pytest.raises(UnreasonableValueConversion):
+        value2type(None, timedelta)
+    assert value2timedelta(None, none_is_zero=True) == timedelta(0)
     check_capsys(capsys)
 
 
@@ -494,10 +513,11 @@ def test_value2type_of_converts_supported_values(
         pytest.param(None, False, False, id='none-to-bool'),
         pytest.param(None, 0, 0, id='none-to-int'),
         pytest.param(None, 0.0, 0.0, id='none-to-float'),
+        pytest.param(None, timedelta(1), timedelta(0), id='none-to-timedelta'),
     ],)
 def test_value2type_of_accept_none_passthrough(
-        value: None, to_type_of: str | bool | int | float,
-        expected: str | bool | int | float,
+        value: None, to_type_of: str | bool | int | float | timedelta,
+        expected: str | bool | int | float | timedelta,
         capsys: CaptureFixture[str]) -> None:
     """Test that value2type_of forwards accept_none to converters."""
     assert value2type_of(value, to_type_of, accept_none=True) == expected

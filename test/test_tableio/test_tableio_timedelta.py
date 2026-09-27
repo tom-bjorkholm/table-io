@@ -10,6 +10,7 @@ from typing import Optional
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile
 import pytest
+from odfdo import Cell, Document, Table
 from openpyxl import load_workbook
 from openpyxl.styles.numbers import is_timedelta_format
 from openxml_audit import OpenXmlValidator  # type: ignore[import-untyped]
@@ -172,12 +173,41 @@ def test_ods_duration_display(tmp_path: Path) -> None:
      ('P2DT3H', timedelta(days=2, hours=3)),
      ('P1D', timedelta(days=1)),
      ('PT', timedelta(0)),
-     ('P1Y', None), ('P1W', None), ('1:00:00', None), ('', None),
-     (None, None)])
+     ('P0Y0M0DT0H0M1.5S', timedelta(seconds=1.5)),
+     ('-P0Y0M1D', timedelta(days=-1)),
+     ('P1Y', None), ('P1M', None), ('P0Y1MT1H', None), ('P1W', None),
+     ('1:00:00', None), ('', None), (None, None)])
 def test_ods_duration_text(text: Optional[str],
                            expected: Optional[timedelta]) -> None:
     """ODF durations, including fractional seconds, are parsed correctly."""
     assert _timedelta_from_odf(text) == expected
+
+
+def _write_ods_durations(file_name: Path, durations: list[str]) -> None:
+    """Write an ODS file with one time-typed cell per duration text."""
+    document = Document('spreadsheet')
+    body = document.body
+    body.clear()
+    table = Table('Sheet1')
+    body.append(table)
+    table.set_cell((0, 0), Cell('duration'))
+    for row, duration in enumerate(durations, start=1):
+        cell = Cell()
+        cell.set_attribute('office:value-type', 'time')
+        cell.set_attribute('office:time-value', duration)
+        cell.text = f'text {duration}'
+        table.set_cell((0, row), cell)
+    document.save(file_name)
+
+
+def test_ods_odd_durations(tmp_path: Path) -> None:
+    """Unsupported durations are read as their text, not misread."""
+    file_name = tmp_path / 'durations.ods'
+    _write_ods_durations(file_name, ['P0Y0M0DT0H0M1.5S', 'P1M', 'garbage'])
+    with TableIOOdsOdfdo(file_name, FileAccess.READ) as table_io:
+        cells = table_io.read_cells(Box(1, 0, 4, 1))
+    assert cells == [[timedelta(seconds=1.5)], ['text P1M'],
+                     ['text garbage']]
 
 
 @pytest.mark.parametrize(

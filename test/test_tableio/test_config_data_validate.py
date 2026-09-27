@@ -41,6 +41,25 @@ def test_error_summary() -> None:
         'csv.quoting: must be known.')
 
 
+@pytest.mark.parametrize(
+    ('issues', 'message', 'expected'),
+    [
+        pytest.param((), None, 'Invalid TableIO configuration',
+                     id='no-issues-default-message'),
+        pytest.param((), 'Bad config', 'Bad config',
+                     id='no-issues-custom-message'),
+        pytest.param((ConfigIssue('csv.dialect', 'must be known.'),),
+                     'Bad config', 'Bad config: csv.dialect: must be known.',
+                     id='issue-custom-message')
+    ])
+def test_error_message_mix(issues: tuple[ConfigIssue, ...],
+                           message: Optional[str], expected: str) -> None:
+    """The ConfigError summary combines message and issues."""
+    error = ConfigError(issues, message)
+    assert error.issues == issues
+    assert str(error) == expected
+
+
 def test_accepts_default() -> None:
     """The default configuration is valid with the registered backends."""
     tio_config_validate(ConfigData())

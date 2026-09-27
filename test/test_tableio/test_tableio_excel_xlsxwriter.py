@@ -95,6 +95,15 @@ class _FailingWorksheet:
         _ = cell_format
         return 0
 
+    def write_string(self, row: int, col: int, string: str,
+                     cell_format: Optional[object] = None) -> object:
+        """Ignore string writes because the failure happens earlier."""
+        _ = row
+        _ = col
+        _ = string
+        _ = cell_format
+        return 0
+
 
 class _InspectableTableIOExcelXlsxWriter(TableIOExcelXlsxWriter):
     """Expose protected XlsxWriter helpers needed by the tests."""
@@ -111,6 +120,10 @@ class _InspectableTableIOExcelXlsxWriter(TableIOExcelXlsxWriter):
                                name: str) -> None:
         """Expose filtered-range creation for tests."""
         self._add_filtered_range(bounds, name)
+
+    def run_delete_filter(self, name: str) -> None:
+        """Expose filtered-range deletion for tests."""
+        self._delete_filtered_range(name)
 
     def run_xlsx_format(self, style: Optional[CellStyleState],
                         num_format: Optional[str]) -> Optional[object]:
@@ -459,3 +472,29 @@ def test_excel_xlsxwriter_bordered_workbook_is_validator_clean() -> None:
     run_bordered_workbook_is_validator_clean(
         TableIOExcelXlsxWriter, '.xlsx',
         lambda file_path: OpenXmlValidator().validate(file_path).is_valid)
+
+
+def test_keeps_foreign_meta(capsys: CaptureFixture[str]) -> None:
+    """Deleting a filtered range keeps unknown names and foreign metadata."""
+    with TemporaryDirectory() as temp_dir:
+        with _InspectableTableIOExcelXlsxWriter(Path(temp_dir) / 'foreign',
+                                                FileAccess.CREATE) as table_io:
+            assert isinstance(table_io, _InspectableTableIOExcelXlsxWriter)
+            table_io.write_table_listdata([['a', 'b'], [1, 2]],
+                                          filtered_data_range=True)
+            sheet = table_io.sheet_state
+            assert sheet is not None
+            name = next(iter(sheet.filtered_ranges))
+            table_io.run_delete_filter('missing')
+            assert list(sheet.filtered_ranges) == [name]
+            worksheet = sheet.worksheet
+            worksheet.table_cells[(1, 1)] = 'X1:X2'
+            worksheet.filter_cells[(0, 1)] = ('worksheet', 'X1:X2')
+            table_io.run_delete_filter(name)
+            assert not sheet.filtered_ranges
+            assert not worksheet.tables
+            assert worksheet.table_cells == {(1, 1): 'X1:X2'}
+            assert worksheet.filter_cells == {(0, 1): ('worksheet', 'X1:X2')}
+            worksheet.table_cells.clear()
+            worksheet.filter_cells.clear()
+    check_capsys(capsys)

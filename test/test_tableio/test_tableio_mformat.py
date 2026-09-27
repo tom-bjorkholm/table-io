@@ -280,6 +280,24 @@ def test_file_exists_callback(capsys: CaptureFixture[str]) -> None:
     check_capsys(capsys)
 
 
+@pytest.mark.parametrize(
+    ('cls', 'ext'),
+    [pytest.param(c, e, id=e.lstrip('.')) for c, e in _ALL_CLASSES])
+def test_upper_extension(cls: _MformatCls, ext: str,
+                         capsys: CaptureFixture[str]) -> None:
+    """The file-exists check applies to the file that is written."""
+    with TemporaryDirectory() as td:
+        given = Path(td) / f'case{ext.upper()}'
+        written = Path(f'{given}{ext}')
+        with cls(given, FileAccess.CREATE) as w:
+            w.write_table_listdata([['a', 'b'], ['c', 'd']])
+        assert w.file_name == str(written)
+        assert written.exists() and not given.exists()
+        with pytest.raises(FileExistsError):
+            cls(given, FileAccess.CREATE)
+    check_capsys(capsys)
+
+
 def test_protected_fmtlist_writer_rejects_box(
         capsys: CaptureFixture[str]) -> None:
     """The internal formatted-list writer rejects boxed writes."""

@@ -83,6 +83,16 @@ class TableIOMformatBased(TableIO):
         self.timedelta_fallback: Optional[TimeDeltaFallback] = \
             timedelta_fallback
 
+    @staticmethod
+    def file_name_with_extension(file_name: PathLike, extension: str) -> str:
+        """Return the file name with the extension, as MultiFormat does.
+
+        MultiFormat adds the extension unless the file name ends with it
+        (case-sensitive), so the same rule is used here to make the
+        file-exists check apply to the file that is actually written.
+        """
+        return MultiFormat.file_name_with_extension(file_name, extension)
+
     @classmethod
     def get_capabilities(cls) -> Capabilities:
         """Return the capabilities of the reader/writer class."""

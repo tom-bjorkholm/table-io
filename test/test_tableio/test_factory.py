@@ -192,6 +192,30 @@ class TestImplPrio:
         impl = ImplPrio('A', 'x', 10)
         assert impl.__eq__(42) is NotImplemented  # pylint: disable=unnecessary-dunder-call # noqa: E501
 
+    @pytest.mark.parametrize('left, right', [
+        (ImplPrio('a', 'b', 1), ImplPrio('z', 'a', 0)),
+        (ImplPrio('z', 'a', 0), ImplPrio('a', 'b', 1)),
+        (ImplPrio('A', 'y', 10), ImplPrio('B', 'x', 10)),
+        (ImplPrio('A', 'x', 10), ImplPrio('A', 'x', 10))
+    ], ids=['prio-over-names', 'names-under-prio', 'fmt-over-impl',
+            'equal'])
+    def test_all_operators(self, left: ImplPrio, right: ImplPrio) -> None:
+        """All comparison operators agree with the priority ordering."""
+        key_left = (left.priority, left.format_name, left.implementation)
+        key_right = (right.priority, right.format_name,
+                     right.implementation)
+        assert (left < right) == (key_left < key_right)
+        assert (left <= right) == (key_left <= key_right)
+        assert (left > right) == (key_left > key_right)
+        assert (left >= right) == (key_left >= key_right)
+        assert (left == right) == (key_left == key_right)
+
+    @pytest.mark.parametrize('operator', ['__le__', '__gt__', '__ge__'])
+    def test_order_non_implprio(self, operator: str) -> None:
+        """Ordering with non-ImplPrio returns NotImplemented."""
+        impl = ImplPrio('A', 'x', 10)
+        assert getattr(impl, operator)(42) is NotImplemented
+
     def test_sorting_reverse(self) -> None:
         """Sorted reverse gives highest priority first."""
         items = [

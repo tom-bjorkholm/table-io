@@ -62,9 +62,10 @@ _DURATION_DATA_STYLE = (
 """ODF data style '[HH]:MM:SS' for durations (hours do not wrap at 24)."""
 
 _ODF_DURATION_RE = re.compile(
-    r'(?P<sign>-?)P(?:(?P<days>\d+)D)?(?:T(?:(?P<hours>\d+)H)?'
+    r'(?P<sign>-?)P(?:(?P<years>\d+)Y)?(?:(?P<months>\d+)M)?'
+    r'(?:(?P<days>\d+)D)?(?:T(?:(?P<hours>\d+)H)?'
     r'(?:(?P<minutes>\d+)M)?(?:(?P<seconds>\d+(?:[.,]\d+)?)S)?)?')
-"""Matches the ODF (ISO 8601) durations used for timedelta values."""
+"""Matches the ODF (ISO 8601, xsd:duration) durations."""
 
 
 def _odf_duration(value: timedelta) -> str:
@@ -83,11 +84,12 @@ def _odf_duration(value: timedelta) -> str:
 def _timedelta_from_odf(text: Optional[str]) -> Optional[timedelta]:
     """Return one ODF duration as timedelta, None if not supported.
 
-    odfdo is not used for this, as odfdo misreads fractional seconds
-    ('PT1.5S' is read as 15 seconds).
+    Durations with non-zero years or months have no exact timedelta and
+    are not supported. odfdo is not used for this, as odfdo misreads
+    fractional seconds ('PT1.5S' is read as 15 seconds) and months.
     """
     match = _ODF_DURATION_RE.fullmatch(text or '')
-    if match is None:
+    if match is None or int(match['years'] or 0) or int(match['months'] or 0):
         return None
     delta = timedelta(days=int(match['days'] or 0),
                       hours=int(match['hours'] or 0),
@@ -95,6 +97,19 @@ def _timedelta_from_odf(text: Optional[str]) -> Optional[timedelta]:
                       seconds=float((match['seconds'] or '0')
                                     .replace(',', '.')))
     return -delta if match['sign'] else delta
+
+
+def _duration_cell_value(cell: Cell) -> Value:
+    """Return one ODF time cell as timedelta, or as its text if unsupported.
+
+    The text is returned for durations that have no exact timedelta
+    (non-zero years or months) and for invalid durations.
+    """
+    duration = _timedelta_from_odf(
+        cell.get_attribute_string('office:time-value'))
+    if duration is not None:
+        return duration
+    return cell.text
 
 
 def _ods_cell(value: Value) -> Cell:
@@ -511,16 +526,10 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
     def _cell_value(self, sheet: object, row: int, column: int) -> Value:
         """Return one ODS cell as a public Value."""
         table = get_checked_type(sheet, Table)
-        typed_value = table.get_value((column, row), get_type=True)
-        assert isinstance(typed_value, tuple)
-        value, value_type = typed_value
-        if value_type == 'time':
-            cell = table.get_cell((column, row), clone=False)
-            duration = _timedelta_from_odf(
-                cell.get_attribute_string('office:time-value'))
-            if duration is not None:
-                return duration
-        return self._python_value_from_spreadsheet(value)
+        cell = table.get_cell((column, row), clone=False)
+        if cell.type == 'time':
+            return _duration_cell_value(cell)
+        return self._python_value_from_spreadsheet(cell.get_value())
 
     def _filtered_range_infos(self) -> list[tuple[str, tuple[int, int,
                                                              int, int]]]:
@@ -548,6 +557,14 @@ class TableIOOdsOdfdo(TableIOSpreadsheetBased):
             ret.setdefault(str(named_range.name),
                            (top, left, bottom + 1, right + 1))
         return list(ret.items())
+
+    def _workbook_filter_names(self) -> set[str]:
+        """Return database range and named range names of the document."""
+        names = {str(database_range.get_attribute_string('table:name'))
+                 for database_range in self._database_ranges()}
+        names.update(str(named_range.name) for named_range
+                     in self._spreadsheet_body().get_named_ranges())
+        return names
 
     def _delete_filtered_range(self, name: str) -> None:
         """Delete one filtered range by name."""

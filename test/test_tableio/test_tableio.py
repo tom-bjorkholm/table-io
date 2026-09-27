@@ -612,6 +612,25 @@ def test_close_calls_close_once_when_finalize_fails(
     check_capsys(capsys)
 
 
+@pytest.mark.parametrize('fail_attr',
+                         [None, 'fail_end_state', 'fail_write_file_suffix'])
+def test_second_close_noop(fail_attr: Optional[str],
+                           capsys: CaptureFixture[str]) -> None:
+    """Test that close after a successful or failed close does nothing."""
+    table_io = RecordingTableIO('sample')
+    if fail_attr is not None:
+        setattr(table_io, fail_attr, True)
+        with pytest.raises(RuntimeError, match='failed'):
+            table_io.close()
+    else:
+        table_io.close()
+    events = list(table_io.events)
+    table_io.close()
+    assert table_io.events == events
+    assert table_io.close_count == 1
+    check_capsys(capsys)
+
+
 def test_close_keeps_finalize_error_primary_when_close_also_fails(
         capsys: CaptureFixture[str]) -> None:
     """Test that cleanup close errors become notes on the primary error."""

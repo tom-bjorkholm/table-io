@@ -75,6 +75,11 @@ class TableIOSpreadsheetBased(TableIO):
     and ODS backends: sequential reads, boxed reads and writes, headings,
     filtered ranges, and the conversion between list or dict tables and the
     rectangular grid stored in the document.
+    Each sheet has a default read position and a default write position
+    (used when no box is given). In UPDATE mode the write position starts
+    after the last used row. Every read (also a boxed read) moves the write
+    position to the row after the last row read, so a following write
+    without a box overwrites the content after that row.
     """
 
     def __init__(self, file_name: PathLike, file_access: FileAccess,
@@ -248,6 +253,13 @@ class TableIOSpreadsheetBased(TableIO):
         raise NotImplementedError(err)
         # pylint: disable=unreachable
         return []
+
+    def _workbook_filter_names(self) -> set[str]:
+        """Return the names of filtered ranges on all sheets."""
+        err = 'Subclass must implement _workbook_filter_names method'
+        raise NotImplementedError(err)
+        # pylint: disable=unreachable
+        return set()
 
     def _delete_filtered_range(self, name: str) -> None:
         """Delete one backend filtered range by name."""
@@ -502,11 +514,12 @@ class TableIOSpreadsheetBased(TableIO):
             raise ValueError(msg)
 
     def _filter_range_name_in_use(self, name: str) -> bool:
-        """Return whether the backend already contains the filter name."""
-        for existing_name, _ in self._filtered_range_infos():
-            if existing_name == name:
-                return True
-        return False
+        """Return whether any sheet uses the filter name (ignoring case).
+
+        Filter range names must be unique in the whole workbook.
+        """
+        return name.casefold() in {
+            existing.casefold() for existing in self._workbook_filter_names()}
 
     def _next_filter_range_name(self) -> str:
         """Return a backend-unique name for one filtered data range."""

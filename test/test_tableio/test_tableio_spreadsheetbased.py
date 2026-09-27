@@ -145,6 +145,10 @@ class _MinimalSpreadsheetTableIO(TableIOSpreadsheetBased):
         """Expose the inherited _filtered_range_infos method for tests."""
         return self._filtered_range_infos()
 
+    def run_filter_names(self) -> set[str]:
+        """Expose the inherited _workbook_filter_names method for tests."""
+        return self._workbook_filter_names()
+
     def run_delete_filtered_range(self, name: str) -> None:
         """Expose the inherited _delete_filtered_range method for tests."""
         self._delete_filtered_range(name)
@@ -321,6 +325,11 @@ class _RecordingSpreadsheetTableIO(TableIOSpreadsheetBased):
         """Return the configured filtered ranges for the selected sheet."""
         memory_sheet = self._write_sheets[self._selected_sheet_name]
         return list(memory_sheet.filtered_ranges.items())
+
+    def _workbook_filter_names(self) -> set[str]:
+        """Return the filtered range names of all sheets."""
+        return {name for sheet in self._write_sheets.values()
+                for name in sheet.filtered_ranges}
 
     def _delete_filtered_range(self, name: str) -> None:
         """Delete one filtered range from the selected sheet."""
@@ -520,6 +529,9 @@ def test_spreadsheet_base_abstract_hooks_raise_not_implemented(
                        match='_filtered_range_infos method'):
         table_io.run_filtered_range_infos()
     with pytest.raises(NotImplementedError,
+                       match='_workbook_filter_names method'):
+        table_io.run_filter_names()
+    with pytest.raises(NotImplementedError,
                        match='_delete_filtered_range method'):
         table_io.run_delete_filtered_range('TableIOFilter_1')
     with pytest.raises(NotImplementedError,
@@ -624,6 +636,19 @@ def test_spreadsheet_filter_range_helpers_remove_overlaps_and_pick_next_name(
             }
             table_io.run_write_filtered_data_range((0, 0, 2, 2))
             assert sheet.filtered_ranges['TableIOFilter_1'] == (0, 0, 2, 2)
+    check_capsys(capsys)
+
+
+def test_filter_name_global(capsys: CaptureFixture[str]) -> None:
+    """Filter names used on other sheets, in any case, are not reused."""
+    with TemporaryDirectory() as temp_dir:
+        table_io = _RecordingSpreadsheetTableIO(Path(temp_dir) / 'sample')
+        with table_io:
+            table_io.write_sheet_data().filtered_ranges[
+                'tableiofilter_1'] = (0, 0, 2, 2)
+            table_io.select_sheet('Other', create=True)
+            assert table_io.run_filter_range_name_in_use('TableIOFilter_1')
+            assert table_io.run_next_filter_range_name() == 'TableIOFilter_2'
     check_capsys(capsys)
 
 

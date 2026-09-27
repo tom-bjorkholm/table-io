@@ -232,7 +232,7 @@ def value2datetime(value: Value,
     raise UnreasonableTypeConversion(value, datetime)
 
 
-def value2timedelta(value: Value) -> timedelta:
+def value2timedelta(value: Value, none_is_zero: bool = False) -> timedelta:
     """Convert a value to a timedelta.
 
     Int and float values are a number of seconds. String values are parsed
@@ -241,15 +241,21 @@ def value2timedelta(value: Value) -> timedelta:
 
     Args:
         value: The value to convert.
+        none_is_zero: If True, None values are converted to timedelta(0).
+                      If False, None values raise
+                      UnreasonableValueConversion.
     Raises:
         UnreasonableTypeConversion: If the source type cannot reasonably be
             converted to timedelta (bool or datetime).
-        UnreasonableValueConversion: If the source value is None, or of a
-            reasonable type but does not represent a timedelta.
+        UnreasonableValueConversion: If the source value is None (and
+            none_is_zero is False), or of a reasonable type but does not
+            represent a timedelta.
     Returns:
         The converted timedelta value.
     """
     if value is None:
+        if none_is_zero:
+            return timedelta(0)
         raise UnreasonableValueConversion(value, timedelta)
     if isinstance(value, (bool, datetime)):
         raise UnreasonableTypeConversion(value, timedelta)
@@ -370,7 +376,10 @@ def value2type[T](value: Value,  # noqa: D103
         value: The value to convert.
         to_type: The type to convert to. Can be NoneType, datetime,
                  timedelta, int, str, bool, or float.
-        accept_none: If True, None values are accepted.
+        accept_none: If True, None values are converted to the zero or
+                     empty value of the type (0, 0.0, '', False,
+                     timedelta(0)). datetime has no such value, so None
+                     is never accepted for datetime.
         datetime_format_string: Optional ``strptime`` format for string input.
         int_format_string: Optional Python integer format specification used to
                            validate string input after parsing.
@@ -380,7 +389,7 @@ def value2type[T](value: Value,  # noqa: D103
     converters: dict[type[object], Callable[[], object]] = {
         NoneType: lambda: value2none(value),
         datetime: lambda: value2datetime(value, datetime_format_string),
-        timedelta: lambda: value2timedelta(value),
+        timedelta: lambda: value2timedelta(value, none_is_zero=accept_none),
         int: lambda: value2int(value, none_is_zero=accept_none,
                                format_string=int_format_string),
         str: lambda: value2str(value, none_is_empty=accept_none),
@@ -407,7 +416,8 @@ def value2type_of[T](value: Value,  # noqa: D103
                     this variable will not be used, only its type. Can be of
                     type NoneType, datetime, timedelta, int, str, bool, or
                     float.
-        accept_none: If True, None values are accepted.
+        accept_none: If True, None values are converted to the zero or
+                     empty value of the type (see value2type).
         datetime_format_string: Optional ``strptime`` format for string input.
         int_format_string: Optional Python integer format specification used to
                            validate string input after parsing.

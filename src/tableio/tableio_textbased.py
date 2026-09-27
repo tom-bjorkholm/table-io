@@ -25,6 +25,9 @@ class TableIOTextBased(TableIO):
     in a single place.
     """
 
+    newline_mode: Optional[str] = None
+    """The newline argument used when opening the file (see open())."""
+
     def __init__(self, file_name: PathLike, file_access: FileAccess,
                  file_exists_callback: Optional[Callable[[str], None]] = None,
                  character_encoding: str = 'utf-8'):
@@ -44,7 +47,8 @@ class TableIOTextBased(TableIO):
             raise RuntimeError(f'File {self.file_name} already open')
         file = open(file=self.file_name,  # pylint: disable=consider-using-with
                     mode=_OPEN_MODES[self.file_access],
-                    encoding=self.character_encoding)
+                    encoding=self.character_encoding,
+                    newline=self.newline_mode)
         assert isinstance(file, io.TextIOWrapper)
         self.file = file
 
@@ -114,6 +118,10 @@ class TableIOTextBased(TableIO):
         self.file.seek(cur_pos, io.SEEK_SET)
         return last_chars
 
+    def _line_end(self) -> str:
+        """Return the line end written to the file for new lines."""
+        return '\n'
+
     def _ensure_empty_line_before(self) -> int:
         """Ensure an empty line before the write position.
 
@@ -123,14 +131,13 @@ class TableIOTextBased(TableIO):
         Returns the number of new lines inserted.
         """
         assert self.file is not None
-        last_chars = self._get_last_chars_written(2)
-        if last_chars in ('\n\n', '\r\n\r\n', '\n', '\r\n', ''):
+        line_end = self._line_end()
+        last_chars = self._get_last_chars_written(2 * len(line_end))
+        if last_chars in ('', line_end, line_end * 2):
             # no previous line or previous line is an empty line
             return 0
-        if last_chars[-1] == '\n':
-            # previous line ends with a newline
-            self.file.write('\n')
+        if last_chars.endswith(line_end):
+            self.file.write(line_end)
             return 1
-        # previous line does not end with a newline
-        self.file.write('\n\n')
+        self.file.write(line_end * 2)
         return 2

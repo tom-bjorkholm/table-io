@@ -16,7 +16,7 @@ from odfdo.style import Style
 from pytest import CaptureFixture
 from tableio import tableio_ods_odfdo
 from tableio.capability import CAP_IMPLEMENTED
-from tableio.tableio import FileAccess
+from tableio.tableio import Box, FileAccess
 from tableio.tableio_ods_odfdo import TableIOOdsOdfdo
 from tableio.value_type import Fmt, get_checked_type
 from .check_capsys import check_capsys
@@ -636,6 +636,28 @@ def test_ods_filtered_range_infos_ignores_non_matching_range_metadata(
                 'DbFilter': (0, 2, 2, 4),
                 'NamedFilter': (0, 0, 2, 2)
             }
+    check_capsys(capsys)
+
+
+def test_ods_same_bounds(capsys: CaptureFixture[str]) -> None:
+    """Filters with equal bounds count as one table and are all replaced."""
+    with TemporaryDirectory() as temp_dir:
+        with ExposedTableIOOdsOdfdo(Path(temp_dir) / 'same_bounds',
+                                    FileAccess.CREATE) as opened:
+            table_io = cast(ExposedTableIOOdsOdfdo, opened)
+            table_io.write_table_listdata([['a', 'b'], [1, 2]])
+            db_range = _make_database_range('DbFilter', 'true',
+                                            'Sheet1.A1:Sheet1.B2')
+            table_io.database_range_container().append(db_range)
+            body = table_io.spreadsheet_body()
+            body.set_named_range('NamedFilter', (0, 0, 1, 1), 'Sheet1',
+                                 usage='filter')
+            table_io.write_table_listdata([['c', 'd'], [3, 4]],
+                                          filtered_data_range=True,
+                                          box=Box(0, 0, None, None))
+            infos = table_io.filtered_range_infos()
+            assert [bounds for _, bounds in infos] == [(0, 0, 2, 2)]
+            assert infos[0][0] not in ('DbFilter', 'NamedFilter')
     check_capsys(capsys)
 
 

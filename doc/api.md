@@ -101,6 +101,7 @@
     * [get\_description](#tableio.tableio_mformat.TableIOMformatRtf.get_description)
 * [tableio.tableio\_textbased](#tableio.tableio_textbased)
   * [TableIOTextBased](#tableio.tableio_textbased.TableIOTextBased)
+    * [newline\_mode](#tableio.tableio_textbased.TableIOTextBased.newline_mode)
     * [\_\_init\_\_](#tableio.tableio_textbased.TableIOTextBased.__init__)
     * [open](#tableio.tableio_textbased.TableIOTextBased.open)
 * [tableio.tableio\_excel\_pylightxl](#tableio.tableio_excel_pylightxl)
@@ -175,7 +176,11 @@
     * [format\_name](#tableio.factory.ImplPrio.format_name)
     * [implementation](#tableio.factory.ImplPrio.implementation)
     * [priority](#tableio.factory.ImplPrio.priority)
+    * [sort\_key](#tableio.factory.ImplPrio.sort_key)
     * [\_\_lt\_\_](#tableio.factory.ImplPrio.__lt__)
+    * [\_\_le\_\_](#tableio.factory.ImplPrio.__le__)
+    * [\_\_gt\_\_](#tableio.factory.ImplPrio.__gt__)
+    * [\_\_ge\_\_](#tableio.factory.ImplPrio.__ge__)
     * [\_\_eq\_\_](#tableio.factory.ImplPrio.__eq__)
   * [BestMatch](#tableio.factory.BestMatch)
     * [strict\_matches](#tableio.factory.BestMatch.strict_matches)
@@ -362,6 +367,7 @@
     * [set\_column](#tableio.tableio_excel_xlsxwriter._WorksheetLike.set_column)
     * [write](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write)
     * [write\_blank](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write_blank)
+    * [write\_string](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write_string)
   * [\_WorkbookLike](#tableio.tableio_excel_xlsxwriter._WorkbookLike)
     * [add\_worksheet](#tableio.tableio_excel_xlsxwriter._WorkbookLike.add_worksheet)
     * [add\_format](#tableio.tableio_excel_xlsxwriter._WorkbookLike.add_format)
@@ -380,7 +386,9 @@
     * [lineterminator](#tableio.tableio_csv.CsvDefinitions.lineterminator)
     * [escapechar](#tableio.tableio_csv.CsvDefinitions.escapechar)
   * [TableIOCsv](#tableio.tableio_csv.TableIOCsv)
+    * [newline\_mode](#tableio.tableio_csv.TableIOCsv.newline_mode)
     * [\_\_init\_\_](#tableio.tableio_csv.TableIOCsv.__init__)
+    * [open](#tableio.tableio_csv.TableIOCsv.open)
     * [file\_name\_extension](#tableio.tableio_csv.TableIOCsv.file_name_extension)
     * [get\_description](#tableio.tableio_csv.TableIOCsv.get_description)
     * [get\_capabilities](#tableio.tableio_csv.TableIOCsv.get_capabilities)
@@ -398,6 +406,7 @@
 * [tableio.tableio\_mformatbased](#tableio.tableio_mformatbased)
   * [TableIOMformatBased](#tableio.tableio_mformatbased.TableIOMformatBased)
     * [\_\_init\_\_](#tableio.tableio_mformatbased.TableIOMformatBased.__init__)
+    * [file\_name\_with\_extension](#tableio.tableio_mformatbased.TableIOMformatBased.file_name_with_extension)
     * [get\_capabilities](#tableio.tableio_mformatbased.TableIOMformatBased.get_capabilities)
     * [get\_row\_format\_capability](#tableio.tableio_mformatbased.TableIOMformatBased.get_row_format_capability)
     * [open](#tableio.tableio_mformatbased.TableIOMformatBased.open)
@@ -514,6 +523,9 @@ def tio_config_create(
 ```
 
 Create a TableIO object from configuration and runtime values.
+
+The implementation is selected using the capabilities together with the
+capabilities implied by file_access, as done by the validation.
 
 **Arguments**:
 
@@ -1046,6 +1058,10 @@ reading is restricted to the box.
 Anything found in the leftmost column that does form a table of at
 least 2 cells in size is considered to be a heading and is returned
 as a list of headings.
+Notice: In spreadsheet formats a read also moves the default write
+position (without box) of the sheet to the row after the last row
+read, so a following write without a box overwrites the content
+after that row. CSV always writes at the end of the file.
 
 **Arguments**:
 
@@ -1076,6 +1092,10 @@ reading is restricted to the box.
 Anything found in the leftmost column that does form a table of
 at least 2 cells in size is considered to be a heading and is
 returned as a list of headings.
+Notice: In spreadsheet formats a read also moves the default write
+position (without box) of the sheet to the row after the last row
+read, so a following write without a box overwrites the content
+after that row. CSV always writes at the end of the file.
 
 **Arguments**:
 
@@ -1283,6 +1303,9 @@ Close the file.
 
 Avoid using this method directly.
 Use derived class as a context manager instead, using a with statement.
+Calling close() again after the first call does nothing, also when
+the first call raised an exception. A closed instance is not
+intended to be opened again; create a new instance instead.
 
 <a id="tableio.timedelta_helpers"></a>
 
@@ -2272,6 +2295,12 @@ This intermediate base class for text-based formats exists
 so that common functionality for text-based formats can be implemented
 in a single place.
 
+<a id="tableio.tableio_textbased.TableIOTextBased.newline_mode"></a>
+
+#### newline\_mode
+
+The newline argument used when opening the file (see open()).
+
 <a id="tableio.tableio_textbased.TableIOTextBased.__init__"></a>
 
 #### \_\_init\_\_
@@ -2972,7 +3001,6 @@ with those name(s) do not support the requested capabilities.
 ## ImplPrio Objects
 
 ```python
-@total_ordering
 class ImplPrio(NamedTuple)
 ```
 
@@ -2996,12 +3024,55 @@ The name of the implementation.
 
 The priority of the implementation.
 
+<a id="tableio.factory.ImplPrio.sort_key"></a>
+
+#### sort\_key
+
+```python
+def sort_key() -> tuple[int, str, str]
+```
+
+Return the ordering key: priority, format name, implementation.
+
+All comparison operators are defined from this key, as the
+inherited tuple comparisons use the field order instead.
+
 <a id="tableio.factory.ImplPrio.__lt__"></a>
 
 #### \_\_lt\_\_
 
 ```python
 def __lt__(other: object) -> bool
+```
+
+Compare two implementation priorities.
+
+<a id="tableio.factory.ImplPrio.__le__"></a>
+
+#### \_\_le\_\_
+
+```python
+def __le__(other: object) -> bool
+```
+
+Compare two implementation priorities.
+
+<a id="tableio.factory.ImplPrio.__gt__"></a>
+
+#### \_\_gt\_\_
+
+```python
+def __gt__(other: object) -> bool
+```
+
+Compare two implementation priorities.
+
+<a id="tableio.factory.ImplPrio.__ge__"></a>
+
+#### \_\_ge\_\_
+
+```python
+def __ge__(other: object) -> bool
 ```
 
 Compare two implementation priorities.
@@ -4763,7 +4834,7 @@ is delegated to ``datetime.strptime()``.
 #### value2timedelta
 
 ```python
-def value2timedelta(value: Value) -> timedelta
+def value2timedelta(value: Value, none_is_zero: bool = False) -> timedelta
 ```
 
 Convert a value to a timedelta.
@@ -4775,13 +4846,17 @@ format, ``str(timedelta)`` format and a number of seconds.
 **Arguments**:
 
 - `value` - The value to convert.
+- `none_is_zero` - If True, None values are converted to timedelta(0).
+  If False, None values raise
+  UnreasonableValueConversion.
 
 **Raises**:
 
 - `UnreasonableTypeConversion` - If the source type cannot reasonably be
   converted to timedelta (bool or datetime).
-- `UnreasonableValueConversion` - If the source value is None, or of a
-  reasonable type but does not represent a timedelta.
+- `UnreasonableValueConversion` - If the source value is None (and
+  none_is_zero is False), or of a reasonable type but does not
+  represent a timedelta.
 
 **Returns**:
 
@@ -4889,7 +4964,10 @@ function based on the type.
 - `value` - The value to convert.
 - `to_type` - The type to convert to. Can be NoneType, datetime,
   timedelta, int, str, bool, or float.
-- `accept_none` - If True, None values are accepted.
+- `accept_none` - If True, None values are converted to the zero or
+  empty value of the type (0, 0.0, '', False,
+  timedelta(0)). datetime has no such value, so None
+  is never accepted for datetime.
 - `datetime_format_string` - Optional ``strptime`` format for string input.
 - `int_format_string` - Optional Python integer format specification used to
   validate string input after parsing.
@@ -4922,7 +5000,8 @@ function based on the type.
   this variable will not be used, only its type. Can be of
   type NoneType, datetime, timedelta, int, str, bool, or
   float.
-- `accept_none` - If True, None values are accepted.
+- `accept_none` - If True, None values are converted to the zero or
+  empty value of the type (see value2type).
 - `datetime_format_string` - Optional ``strptime`` format for string input.
 - `int_format_string` - Optional Python integer format specification used to
   validate string input after parsing.
@@ -5717,6 +5796,19 @@ def write_blank(row: int,
 
 Write one blank cell.
 
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.write_string"></a>
+
+#### write\_string
+
+```python
+def write_string(row: int,
+                 col: int,
+                 string: str,
+                 cell_format: Optional[object] = None) -> object
+```
+
+Write one string cell (never a formula or URL).
+
 <a id="tableio.tableio_excel_xlsxwriter._WorkbookLike"></a>
 
 ## \_WorkbookLike Objects
@@ -5893,8 +5985,18 @@ the first line as the keys.
 This class adds extensions to the CSV format to support several tables in
 a file (separated by empty lines), and optional headings (lines starting
 with #) before each table.
+Tables and headings are always written at the end of the file (also in
+UPDATE mode), as text in the middle of a file cannot be replaced.
+Reading starts at the beginning of the file and continues after the
+previous read, independent of any writes.
 Notice: For best compatibility with other software use the strict CSV
 format by only writing a single table in a file and not using headings.
+
+<a id="tableio.tableio_csv.TableIOCsv.newline_mode"></a>
+
+#### newline\_mode
+
+Open without newline translation, as required by the csv module.
 
 <a id="tableio.tableio_csv.TableIOCsv.__init__"></a>
 
@@ -5920,6 +6022,20 @@ CSV has no native timedelta type, so timedelta values are written
 as specified by timedelta_fallback (None for default
 TimeDeltaFallback.HMS_STRING). When reading, such values are
 returned as strings, use ``tableio.parse_timedelta`` to convert them.
+
+<a id="tableio.tableio_csv.TableIOCsv.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open the file.
+
+In UPDATE mode the write position is after the existing lines.
+Avoid using this method directly.
+Use derived class as a context manager instead, using a with statement.
 
 <a id="tableio.tableio_csv.TableIOCsv.file_name_extension"></a>
 
@@ -6055,6 +6171,11 @@ This class holds the public spreadsheet semantics shared between Excel
 and ODS backends: sequential reads, boxed reads and writes, headings,
 filtered ranges, and the conversion between list or dict tables and the
 rectangular grid stored in the document.
+Each sheet has a default read position and a default write position
+(used when no box is given). In UPDATE mode the write position starts
+after the last used row. Every read (also a boxed read) moves the write
+position to the row after the last row read, so a following write
+without a box overwrites the content after that row.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__"></a>
 
@@ -6131,6 +6252,21 @@ Initialize the TableIOMformatBased reader/writer class.
   (Default is to raise an exception.)
 - `timedelta_fallback` - The fallback format for timedelta values.
   None for default (HMS_STRING).
+
+<a id="tableio.tableio_mformatbased.TableIOMformatBased.file_name_with_extension"></a>
+
+#### file\_name\_with\_extension
+
+```python
+@staticmethod
+def file_name_with_extension(file_name: PathLike, extension: str) -> str
+```
+
+Return the file name with the extension, as MultiFormat does.
+
+MultiFormat adds the extension unless the file name ends with it
+(case-sensitive), so the same rule is used here to make the
+file-exists check apply to the file that is actually written.
 
 <a id="tableio.tableio_mformatbased.TableIOMformatBased.get_capabilities"></a>
 
@@ -6266,8 +6402,9 @@ class TableIOExcelOpenPyXL(TableIOExcelBased)
 TableIO reader/writer class for Excel files using OpenPyXL.
 
 The implementation operates on one current worksheet at a time. In
-UPDATE mode the default write position is after the last used row in
-the selected worksheet.
+UPDATE mode the default write position is initially after the last
+used row in the selected worksheet; a read moves it to the row after
+the last row read (see TableIOSpreadsheetBased).
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__"></a>
 

@@ -7,6 +7,8 @@
 from typing import Callable, NoReturn, Optional, TypeVar, cast
 
 from mformat.mformat import PathLike
+from mformat.paper_size import PaperSize
+from mformat.plain_text_table import TableAlignment
 from tableio.access_capability import add_access_capabilities
 from tableio.capability import Capabilities, capability_match
 from tableio.config_data import ConfigData, CsvConfigData, HtmlConfigData, \
@@ -112,6 +114,16 @@ def _best_default_names(capabilities: Capabilities, format_name: Optional[str],
     _config_error(name, 'does not match registered TableIO backends.')
 
 
+def _paper_size(value: Optional[str]) -> Optional[PaperSize]:
+    """Return a validated paper size text as the backend enum value."""
+    return None if value is None else PaperSize.from_str(value)
+
+
+def _table_alignment(value: Optional[str]) -> Optional[TableAlignment]:
+    """Return a validated table alignment text as the backend enum value."""
+    return None if value is None else TableAlignment[value.upper()]
+
+
 def _base_arg_items(config: ConfigData) -> list[tuple[str, str, object]]:
     """Return configured top-level optional argument values."""
     return [
@@ -119,11 +131,12 @@ def _base_arg_items(config: ConfigData) -> list[tuple[str, str, object]]:
          config.character_encoding),
         ('language', 'lang', config.language),
         ('title', 'title', config.title),
-        ('paper_size', 'paper_size', config.paper_size),
+        ('paper_size', 'paper_size', _paper_size(config.paper_size)),
         ('line_length', 'line_length', config.line_length),
         ('table_max_line_length', 'table_max_line_length',
          config.table_max_line_length),
-        ('table_alignment', 'table_alignment', config.table_alignment),
+        ('table_alignment', 'table_alignment',
+         _table_alignment(config.table_alignment)),
         ('timedelta_fallback', 'timedelta_fallback',
          config.timedelta_fallback)
     ]
@@ -310,6 +323,8 @@ def tio_config_create(
         TableIO:
     """Create a TableIO object from configuration and runtime values.
 
+    The implementation is selected using the capabilities together with the
+    capabilities implied by file_access, as done by the validation.
     Args:
         config: Durable configuration data.
         file_name: Runtime file name to open.
@@ -321,16 +336,18 @@ def tio_config_create(
     """
     tio_config_validate(config, capabilities=capabilities,
                         file_access=file_access)
+    match_caps = add_access_capabilities(file_access,
+                                         capabilities or Capabilities())
     extra_args = None
     if file_exists_callback is not None:
         extra_args = cast(OptionalArgsDict, {
             'file_exists_callback': file_exists_callback
         })
-    args = _filtered_args(config, capabilities, extra_args)
+    args = _filtered_args(config, match_caps, extra_args)
     return create_tableio(format_name=config.format_name, file_name=file_name,
                           file_access=file_access, args=args,
                           implementation=config.implementation,
-                          capabilities=capabilities)
+                          capabilities=match_caps)
 
 
 def tio_config_ignored_names(config: ConfigData,

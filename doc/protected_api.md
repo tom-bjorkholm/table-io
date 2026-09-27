@@ -9,6 +9,8 @@
   * [\_candidate\_impls](#tableio.config_data_apply._candidate_impls)
   * [\_match\_group](#tableio.config_data_apply._match_group)
   * [\_best\_default\_names](#tableio.config_data_apply._best_default_names)
+  * [\_paper\_size](#tableio.config_data_apply._paper_size)
+  * [\_table\_alignment](#tableio.config_data_apply._table_alignment)
   * [\_base\_arg\_items](#tableio.config_data_apply._base_arg_items)
   * [\_csv\_arg\_items](#tableio.config_data_apply._csv_arg_items)
   * [\_html\_arg\_items](#tableio.config_data_apply._html_arg_items)
@@ -128,6 +130,7 @@
   * [\_ODF\_DURATION\_RE](#tableio.tableio_ods_odfdo._ODF_DURATION_RE)
   * [\_odf\_duration](#tableio.tableio_ods_odfdo._odf_duration)
   * [\_timedelta\_from\_odf](#tableio.tableio_ods_odfdo._timedelta_from_odf)
+  * [\_duration\_cell\_value](#tableio.tableio_ods_odfdo._duration_cell_value)
   * [\_ods\_cell](#tableio.tableio_ods_odfdo._ods_cell)
   * [\_manifest\_xml\_without\_configuration\_entries](#tableio.tableio_ods_odfdo._manifest_xml_without_configuration_entries)
   * [\_referenced\_style\_names](#tableio.tableio_ods_odfdo._referenced_style_names)
@@ -169,6 +172,7 @@
     * [\_last\_used\_column](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._last_used_column)
     * [\_cell\_value](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._cell_value)
     * [\_filtered\_range\_infos](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._filtered_range_infos)
+    * [\_workbook\_filter\_names](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._workbook_filter_names)
     * [\_delete\_filtered\_range](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._delete_filtered_range)
     * [\_add\_filtered\_range](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._add_filtered_range)
     * [\_column\_width\_string](#tableio.tableio_ods_odfdo.TableIOOdsOdfdo._column_width_string)
@@ -231,11 +235,13 @@
     * [get\_description](#tableio.tableio_mformat.TableIOMformatRtf.get_description)
 * [tableio.tableio\_textbased](#tableio.tableio_textbased)
   * [TableIOTextBased](#tableio.tableio_textbased.TableIOTextBased)
+    * [newline\_mode](#tableio.tableio_textbased.TableIOTextBased.newline_mode)
     * [\_\_init\_\_](#tableio.tableio_textbased.TableIOTextBased.__init__)
     * [open](#tableio.tableio_textbased.TableIOTextBased.open)
     * [\_close](#tableio.tableio_textbased.TableIOTextBased._close)
     * [\_get\_last\_chars\_written\_impl](#tableio.tableio_textbased.TableIOTextBased._get_last_chars_written_impl)
     * [\_get\_last\_chars\_written](#tableio.tableio_textbased.TableIOTextBased._get_last_chars_written)
+    * [\_line\_end](#tableio.tableio_textbased.TableIOTextBased._line_end)
     * [\_ensure\_empty\_line\_before](#tableio.tableio_textbased.TableIOTextBased._ensure_empty_line_before)
 * [tableio.tableio\_excel\_pylightxl](#tableio.tableio_excel_pylightxl)
   * [\_DURATION\_STYLE\_CODE](#tableio.tableio_excel_pylightxl._DURATION_STYLE_CODE)
@@ -299,6 +305,7 @@
     * [\_cell\_value](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._cell_value)
     * [\_parse\_typed\_cell\_value](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._parse_typed_cell_value)
     * [\_filtered\_range\_infos](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._filtered_range_infos)
+    * [\_workbook\_filter\_names](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._workbook_filter_names)
     * [\_delete\_filtered\_range](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._delete_filtered_range)
     * [\_add\_filtered\_range](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._add_filtered_range)
     * [\_set\_column\_width\_if\_wider](#tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._set_column_width_if_wider)
@@ -372,7 +379,11 @@
     * [format\_name](#tableio.factory.ImplPrio.format_name)
     * [implementation](#tableio.factory.ImplPrio.implementation)
     * [priority](#tableio.factory.ImplPrio.priority)
+    * [sort\_key](#tableio.factory.ImplPrio.sort_key)
     * [\_\_lt\_\_](#tableio.factory.ImplPrio.__lt__)
+    * [\_\_le\_\_](#tableio.factory.ImplPrio.__le__)
+    * [\_\_gt\_\_](#tableio.factory.ImplPrio.__gt__)
+    * [\_\_ge\_\_](#tableio.factory.ImplPrio.__ge__)
     * [\_\_eq\_\_](#tableio.factory.ImplPrio.__eq__)
   * [BestMatch](#tableio.factory.BestMatch)
     * [strict\_matches](#tableio.factory.BestMatch.strict_matches)
@@ -582,6 +593,7 @@
     * [set\_column](#tableio.tableio_excel_xlsxwriter._WorksheetLike.set_column)
     * [write](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write)
     * [write\_blank](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write_blank)
+    * [write\_string](#tableio.tableio_excel_xlsxwriter._WorksheetLike.write_string)
   * [\_WorkbookLike](#tableio.tableio_excel_xlsxwriter._WorkbookLike)
     * [add\_worksheet](#tableio.tableio_excel_xlsxwriter._WorkbookLike.add_worksheet)
     * [add\_format](#tableio.tableio_excel_xlsxwriter._WorkbookLike.add_format)
@@ -612,7 +624,7 @@
     * [\_delete\_filtered\_range](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._delete_filtered_range)
     * [\_add\_filtered\_range](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._add_filtered_range)
     * [\_set\_column\_width\_if\_wider](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._set_column_width_if_wider)
-    * [\_filter\_range\_name\_in\_use](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._filter_range_name_in_use)
+    * [\_workbook\_filter\_names](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._workbook_filter_names)
     * [\_read\_table\_listdata](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_table_dictdata)
     * [\_cell\_fmt](#tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._cell_fmt)
@@ -635,7 +647,12 @@
   * [\_get\_csv\_dialect](#tableio.tableio_csv._get_csv_dialect)
   * [\_is\_heading\_line](#tableio.tableio_csv._is_heading_line)
   * [TableIOCsv](#tableio.tableio_csv.TableIOCsv)
+    * [newline\_mode](#tableio.tableio_csv.TableIOCsv.newline_mode)
     * [\_\_init\_\_](#tableio.tableio_csv.TableIOCsv.__init__)
+    * [open](#tableio.tableio_csv.TableIOCsv.open)
+    * [\_count\_lines](#tableio.tableio_csv.TableIOCsv._count_lines)
+    * [\_line\_end](#tableio.tableio_csv.TableIOCsv._line_end)
+    * [\_seek\_write\_position](#tableio.tableio_csv.TableIOCsv._seek_write_position)
     * [file\_name\_extension](#tableio.tableio_csv.TableIOCsv.file_name_extension)
     * [get\_description](#tableio.tableio_csv.TableIOCsv.get_description)
     * [get\_capabilities](#tableio.tableio_csv.TableIOCsv.get_capabilities)
@@ -647,6 +664,8 @@
     * [\_write\_table\_fmtlistdata](#tableio.tableio_csv.TableIOCsv._write_table_fmtlistdata)
     * [\_write\_table\_dictdata](#tableio.tableio_csv.TableIOCsv._write_table_dictdata)
     * [\_write\_table\_fmtdictdata](#tableio.tableio_csv.TableIOCsv._write_table_fmtdictdata)
+    * [\_read\_line](#tableio.tableio_csv.TableIOCsv._read_line)
+    * [\_read\_record\_lines](#tableio.tableio_csv.TableIOCsv._read_record_lines)
     * [\_read\_raw\_sections](#tableio.tableio_csv.TableIOCsv._read_raw_sections)
     * [\_read\_table\_listdata](#tableio.tableio_csv.TableIOCsv._read_table_listdata)
     * [\_read\_table\_dictdata](#tableio.tableio_csv.TableIOCsv._read_table_dictdata)
@@ -684,6 +703,7 @@
     * [\_last\_used\_column](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._last_used_column)
     * [\_cell\_value](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._cell_value)
     * [\_filtered\_range\_infos](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._filtered_range_infos)
+    * [\_workbook\_filter\_names](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._workbook_filter_names)
     * [\_delete\_filtered\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._delete_filtered_range)
     * [\_add\_filtered\_range](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._add_filtered_range)
     * [\_set\_column\_width\_if\_wider](#tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._set_column_width_if_wider)
@@ -734,6 +754,7 @@
   * [\_allow\_overwrite](#tableio.tableio_mformatbased._allow_overwrite)
   * [TableIOMformatBased](#tableio.tableio_mformatbased.TableIOMformatBased)
     * [\_\_init\_\_](#tableio.tableio_mformatbased.TableIOMformatBased.__init__)
+    * [file\_name\_with\_extension](#tableio.tableio_mformatbased.TableIOMformatBased.file_name_with_extension)
     * [get\_capabilities](#tableio.tableio_mformatbased.TableIOMformatBased.get_capabilities)
     * [get\_row\_format\_capability](#tableio.tableio_mformatbased.TableIOMformatBased.get_row_format_capability)
     * [open](#tableio.tableio_mformatbased.TableIOMformatBased.open)
@@ -763,6 +784,7 @@
 * [tableio.reg\_pkg\_formats](#tableio.reg_pkg_formats)
   * [register\_formats\_in\_pkg](#tableio.reg_pkg_formats.register_formats_in_pkg)
 * [tableio.tableio\_excel\_openpyxl](#tableio.tableio_excel_openpyxl)
+  * [\_set\_cell\_value](#tableio.tableio_excel_openpyxl._set_cell_value)
   * [\_xml\_tag](#tableio.tableio_excel_openpyxl._xml_tag)
   * [\_font\_child\_sort\_key](#tableio.tableio_excel_openpyxl._font_child_sort_key)
   * [\_styles\_xml\_with\_sorted\_fonts](#tableio.tableio_excel_openpyxl._styles_xml_with_sorted_fonts)
@@ -805,6 +827,7 @@
     * [\_cell\_value](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._cell_value)
     * [\_table\_bounds](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._table_bounds)
     * [\_filtered\_range\_infos](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._filtered_range_infos)
+    * [\_workbook\_filter\_names](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._workbook_filter_names)
     * [\_delete\_filtered\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._delete_filtered_range)
     * [\_normalize\_filtered\_table\_header](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._normalize_filtered_table_header)
     * [\_add\_filtered\_range](#tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._add_filtered_range)
@@ -901,6 +924,26 @@ def _best_default_names(capabilities: Capabilities, format_name: Optional[str],
 ```
 
 Return canonical default format and implementation names.
+
+<a id="tableio.config_data_apply._paper_size"></a>
+
+#### \_paper\_size
+
+```python
+def _paper_size(value: Optional[str]) -> Optional[PaperSize]
+```
+
+Return a validated paper size text as the backend enum value.
+
+<a id="tableio.config_data_apply._table_alignment"></a>
+
+#### \_table\_alignment
+
+```python
+def _table_alignment(value: Optional[str]) -> Optional[TableAlignment]
+```
+
+Return a validated table alignment text as the backend enum value.
 
 <a id="tableio.config_data_apply._base_arg_items"></a>
 
@@ -1092,6 +1135,9 @@ def tio_config_create(
 ```
 
 Create a TableIO object from configuration and runtime values.
+
+The implementation is selected using the capabilities together with the
+capabilities implied by file_access, as done by the validation.
 
 **Arguments**:
 
@@ -1915,6 +1961,10 @@ reading is restricted to the box.
 Anything found in the leftmost column that does form a table of at
 least 2 cells in size is considered to be a heading and is returned
 as a list of headings.
+Notice: In spreadsheet formats a read also moves the default write
+position (without box) of the sheet to the row after the last row
+read, so a following write without a box overwrites the content
+after that row. CSV always writes at the end of the file.
 
 **Arguments**:
 
@@ -1945,6 +1995,10 @@ reading is restricted to the box.
 Anything found in the leftmost column that does form a table of
 at least 2 cells in size is considered to be a heading and is
 returned as a list of headings.
+Notice: In spreadsheet formats a read also moves the default write
+position (without box) of the sheet to the row after the last row
+read, so a following write without a box overwrites the content
+after that row. CSV always writes at the end of the file.
 
 **Arguments**:
 
@@ -2152,6 +2206,9 @@ Close the file.
 
 Avoid using this method directly.
 Use derived class as a context manager instead, using a with statement.
+Calling close() again after the first call does nothing, also when
+the first call raised an exception. A closed instance is not
+intended to be opened again; create a new instance instead.
 
 <a id="tableio.tableio.TableIO._end_state"></a>
 
@@ -2867,7 +2924,7 @@ ODF data style '[HH]:MM:SS' for durations (hours do not wrap at 24).
 
 #### \_ODF\_DURATION\_RE
 
-Matches the ODF (ISO 8601) durations used for timedelta values.
+Matches the ODF (ISO 8601, xsd:duration) durations.
 
 <a id="tableio.tableio_ods_odfdo._odf_duration"></a>
 
@@ -2891,8 +2948,22 @@ def _timedelta_from_odf(text: Optional[str]) -> Optional[timedelta]
 
 Return one ODF duration as timedelta, None if not supported.
 
-odfdo is not used for this, as odfdo misreads fractional seconds
-('PT1.5S' is read as 15 seconds).
+Durations with non-zero years or months have no exact timedelta and
+are not supported. odfdo is not used for this, as odfdo misreads
+fractional seconds ('PT1.5S' is read as 15 seconds) and months.
+
+<a id="tableio.tableio_ods_odfdo._duration_cell_value"></a>
+
+#### \_duration\_cell\_value
+
+```python
+def _duration_cell_value(cell: Cell) -> Value
+```
+
+Return one ODF time cell as timedelta, or as its text if unsupported.
+
+The text is returned for durations that have no exact timedelta
+(non-zero years or months) and for invalid durations.
 
 <a id="tableio.tableio_ods_odfdo._ods_cell"></a>
 
@@ -3331,6 +3402,16 @@ def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
 ```
 
 Return filtered ranges for the active table.
+
+<a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._workbook_filter_names"></a>
+
+#### \_workbook\_filter\_names
+
+```python
+def _workbook_filter_names() -> set[str]
+```
+
+Return database range and named range names of the document.
 
 <a id="tableio.tableio_ods_odfdo.TableIOOdsOdfdo._delete_filtered_range"></a>
 
@@ -4223,6 +4304,12 @@ This intermediate base class for text-based formats exists
 so that common functionality for text-based formats can be implemented
 in a single place.
 
+<a id="tableio.tableio_textbased.TableIOTextBased.newline_mode"></a>
+
+#### newline\_mode
+
+The newline argument used when opening the file (see open()).
+
 <a id="tableio.tableio_textbased.TableIOTextBased.__init__"></a>
 
 #### \_\_init\_\_
@@ -4313,6 +4400,16 @@ Get the last characters written to the file.
 Keep the file pointer at the same position, i.e. at the end of the
 file, so that we can continue writing after the last characters.
 Returns the last characters written to the file.
+
+<a id="tableio.tableio_textbased.TableIOTextBased._line_end"></a>
+
+#### \_line\_end
+
+```python
+def _line_end() -> str
+```
+
+Return the line end written to the file for new lines.
 
 <a id="tableio.tableio_textbased.TableIOTextBased._ensure_empty_line_before"></a>
 
@@ -4962,6 +5059,16 @@ def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
 ```
 
 Return no filtered ranges because pylightxl ignores them.
+
+<a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._workbook_filter_names"></a>
+
+#### \_workbook\_filter\_names
+
+```python
+def _workbook_filter_names() -> set[str]
+```
+
+Return no filter names because pylightxl ignores them.
 
 <a id="tableio.tableio_excel_pylightxl.TableIOExcelPylightxl._delete_filtered_range"></a>
 
@@ -5642,7 +5749,6 @@ with those name(s) do not support the requested capabilities.
 ## ImplPrio Objects
 
 ```python
-@total_ordering
 class ImplPrio(NamedTuple)
 ```
 
@@ -5666,12 +5772,55 @@ The name of the implementation.
 
 The priority of the implementation.
 
+<a id="tableio.factory.ImplPrio.sort_key"></a>
+
+#### sort\_key
+
+```python
+def sort_key() -> tuple[int, str, str]
+```
+
+Return the ordering key: priority, format name, implementation.
+
+All comparison operators are defined from this key, as the
+inherited tuple comparisons use the field order instead.
+
 <a id="tableio.factory.ImplPrio.__lt__"></a>
 
 #### \_\_lt\_\_
 
 ```python
 def __lt__(other: object) -> bool
+```
+
+Compare two implementation priorities.
+
+<a id="tableio.factory.ImplPrio.__le__"></a>
+
+#### \_\_le\_\_
+
+```python
+def __le__(other: object) -> bool
+```
+
+Compare two implementation priorities.
+
+<a id="tableio.factory.ImplPrio.__gt__"></a>
+
+#### \_\_gt\_\_
+
+```python
+def __gt__(other: object) -> bool
+```
+
+Compare two implementation priorities.
+
+<a id="tableio.factory.ImplPrio.__ge__"></a>
+
+#### \_\_ge\_\_
+
+```python
+def __ge__(other: object) -> bool
 ```
 
 Compare two implementation priorities.
@@ -7560,7 +7709,7 @@ is delegated to ``datetime.strptime()``.
 #### value2timedelta
 
 ```python
-def value2timedelta(value: Value) -> timedelta
+def value2timedelta(value: Value, none_is_zero: bool = False) -> timedelta
 ```
 
 Convert a value to a timedelta.
@@ -7572,13 +7721,17 @@ format, ``str(timedelta)`` format and a number of seconds.
 **Arguments**:
 
 - `value` - The value to convert.
+- `none_is_zero` - If True, None values are converted to timedelta(0).
+  If False, None values raise
+  UnreasonableValueConversion.
 
 **Raises**:
 
 - `UnreasonableTypeConversion` - If the source type cannot reasonably be
   converted to timedelta (bool or datetime).
-- `UnreasonableValueConversion` - If the source value is None, or of a
-  reasonable type but does not represent a timedelta.
+- `UnreasonableValueConversion` - If the source value is None (and
+  none_is_zero is False), or of a reasonable type but does not
+  represent a timedelta.
 
 **Returns**:
 
@@ -7686,7 +7839,10 @@ function based on the type.
 - `value` - The value to convert.
 - `to_type` - The type to convert to. Can be NoneType, datetime,
   timedelta, int, str, bool, or float.
-- `accept_none` - If True, None values are accepted.
+- `accept_none` - If True, None values are converted to the zero or
+  empty value of the type (0, 0.0, '', False,
+  timedelta(0)). datetime has no such value, so None
+  is never accepted for datetime.
 - `datetime_format_string` - Optional ``strptime`` format for string input.
 - `int_format_string` - Optional Python integer format specification used to
   validate string input after parsing.
@@ -7719,7 +7875,8 @@ function based on the type.
   this variable will not be used, only its type. Can be of
   type NoneType, datetime, timedelta, int, str, bool, or
   float.
-- `accept_none` - If True, None values are accepted.
+- `accept_none` - If True, None values are converted to the zero or
+  empty value of the type (see value2type).
 - `datetime_format_string` - Optional ``strptime`` format for string input.
 - `int_format_string` - Optional Python integer format specification used to
   validate string input after parsing.
@@ -8636,6 +8793,19 @@ def write_blank(row: int,
 
 Write one blank cell.
 
+<a id="tableio.tableio_excel_xlsxwriter._WorksheetLike.write_string"></a>
+
+#### write\_string
+
+```python
+def write_string(row: int,
+                 col: int,
+                 string: str,
+                 cell_format: Optional[object] = None) -> object
+```
+
+Write one string cell (never a formula or URL).
+
 <a id="tableio.tableio_excel_xlsxwriter._WorkbookLike"></a>
 
 ## \_WorkbookLike Objects
@@ -8951,15 +9121,15 @@ def _set_column_width_if_wider(column: int, width: float) -> None
 
 Widen one worksheet column if the target width is larger.
 
-<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._filter_range_name_in_use"></a>
+<a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._workbook_filter_names"></a>
 
-#### \_filter\_range\_name\_in\_use
+#### \_workbook\_filter\_names
 
 ```python
-def _filter_range_name_in_use(name: str) -> bool
+def _workbook_filter_names() -> set[str]
 ```
 
-Return whether one filter range name is already used.
+Return the filter range names used in the workbook.
 
 <a id="tableio.tableio_excel_xlsxwriter.TableIOExcelXlsxWriter._read_table_listdata"></a>
 
@@ -9193,8 +9363,18 @@ the first line as the keys.
 This class adds extensions to the CSV format to support several tables in
 a file (separated by empty lines), and optional headings (lines starting
 with #) before each table.
+Tables and headings are always written at the end of the file (also in
+UPDATE mode), as text in the middle of a file cannot be replaced.
+Reading starts at the beginning of the file and continues after the
+previous read, independent of any writes.
 Notice: For best compatibility with other software use the strict CSV
 format by only writing a single table in a file and not using headings.
+
+<a id="tableio.tableio_csv.TableIOCsv.newline_mode"></a>
+
+#### newline\_mode
+
+Open without newline translation, as required by the csv module.
 
 <a id="tableio.tableio_csv.TableIOCsv.__init__"></a>
 
@@ -9220,6 +9400,50 @@ CSV has no native timedelta type, so timedelta values are written
 as specified by timedelta_fallback (None for default
 TimeDeltaFallback.HMS_STRING). When reading, such values are
 returned as strings, use ``tableio.parse_timedelta`` to convert them.
+
+<a id="tableio.tableio_csv.TableIOCsv.open"></a>
+
+#### open
+
+```python
+def open() -> None
+```
+
+Open the file.
+
+In UPDATE mode the write position is after the existing lines.
+Avoid using this method directly.
+Use derived class as a context manager instead, using a with statement.
+
+<a id="tableio.tableio_csv.TableIOCsv._count_lines"></a>
+
+#### \_count\_lines
+
+```python
+def _count_lines() -> int
+```
+
+Return the number of lines in the file.
+
+<a id="tableio.tableio_csv.TableIOCsv._line_end"></a>
+
+#### \_line\_end
+
+```python
+def _line_end() -> str
+```
+
+Return the line terminator of the CSV dialect.
+
+<a id="tableio.tableio_csv.TableIOCsv._seek_write_position"></a>
+
+#### \_seek\_write\_position
+
+```python
+def _seek_write_position() -> None
+```
+
+Move the file pointer to the end of the file for writing.
 
 <a id="tableio.tableio_csv.TableIOCsv.file_name_extension"></a>
 
@@ -9423,6 +9647,29 @@ CSV does not support the box, nor formatting, nor filtered data range.
 
   The position of the last cell written.
 
+<a id="tableio.tableio_csv.TableIOCsv._read_line"></a>
+
+#### \_read\_line
+
+```python
+def _read_line() -> str
+```
+
+Read one physical line (with line end) and count it.
+
+<a id="tableio.tableio_csv.TableIOCsv._read_record_lines"></a>
+
+#### \_read\_record\_lines
+
+```python
+def _read_record_lines(first_line: str) -> list[str]
+```
+
+Return the physical lines of the CSV record starting first_line.
+
+The csv reader requests continuation lines only while a quoted
+value is open, so line breaks inside quoted values are kept.
+
 <a id="tableio.tableio_csv.TableIOCsv._read_raw_sections"></a>
 
 #### \_read\_raw\_sections
@@ -9431,13 +9678,14 @@ CSV does not support the box, nor formatting, nor filtered data range.
 def _read_raw_sections() -> tuple[list[str], list[str]]
 ```
 
-Read heading and data lines from the current position.
+Read heading and data lines from the current read position.
 
 Skips leading empty lines. Lines matching the heading
 pattern (one or more '#' followed by a space) that appear
 before the first data line are collected as headings with
 the leading '#' characters and space stripped. Data lines
-are collected until an empty line or end of file.
+(with line ends, a quoted value may span several lines) are
+collected until an empty line or end of file.
 
 **Returns**:
 
@@ -9639,6 +9887,11 @@ This class holds the public spreadsheet semantics shared between Excel
 and ODS backends: sequential reads, boxed reads and writes, headings,
 filtered ranges, and the conversion between list or dict tables and the
 rectangular grid stored in the document.
+Each sheet has a default read position and a default write position
+(used when no box is given). In UPDATE mode the write position starts
+after the last used row. Every read (also a boxed read) moves the write
+position to the row after the last row read, so a following write
+without a box overwrites the content after that row.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased.__init__"></a>
 
@@ -9861,6 +10114,16 @@ def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
 
 Return the backend filtered ranges with zero-based bounds.
 
+<a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._workbook_filter_names"></a>
+
+#### \_workbook\_filter\_names
+
+```python
+def _workbook_filter_names() -> set[str]
+```
+
+Return the names of filtered ranges on all sheets.
+
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._delete_filtered_range"></a>
 
 #### \_delete\_filtered\_range
@@ -10080,7 +10343,9 @@ Reject writes that would leave part of an existing table behind.
 def _filter_range_name_in_use(name: str) -> bool
 ```
 
-Return whether the backend already contains the filter name.
+Return whether any sheet uses the filter name (ignoring case).
+
+Filter range names must be unique in the whole workbook.
 
 <a id="tableio.tableio_spreadsheetbased.TableIOSpreadsheetBased._next_filter_range_name"></a>
 
@@ -10431,6 +10696,21 @@ Initialize the TableIOMformatBased reader/writer class.
   (Default is to raise an exception.)
 - `timedelta_fallback` - The fallback format for timedelta values.
   None for default (HMS_STRING).
+
+<a id="tableio.tableio_mformatbased.TableIOMformatBased.file_name_with_extension"></a>
+
+#### file\_name\_with\_extension
+
+```python
+@staticmethod
+def file_name_with_extension(file_name: PathLike, extension: str) -> str
+```
+
+Return the file name with the extension, as MultiFormat does.
+
+MultiFormat adds the extension unless the file name ends with it
+(case-sensitive), so the same rule is used here to make the
+file-exists check apply to the file that is actually written.
 
 <a id="tableio.tableio_mformatbased.TableIOMformatBased.get_capabilities"></a>
 
@@ -10825,6 +11105,16 @@ Get formats defined in the package to register with the factory.
 
 TableIO reader/writer class for Excel files using OpenPyXL.
 
+<a id="tableio.tableio_excel_openpyxl._set_cell_value"></a>
+
+#### \_set\_cell\_value
+
+```python
+def _set_cell_value(cell: Cell | MergedCell, value: Value) -> None
+```
+
+Set one cell value, keeping text starting with '=' as text.
+
 <a id="tableio.tableio_excel_openpyxl._xml_tag"></a>
 
 #### \_xml\_tag
@@ -10989,8 +11279,9 @@ class TableIOExcelOpenPyXL(TableIOExcelBased)
 TableIO reader/writer class for Excel files using OpenPyXL.
 
 The implementation operates on one current worksheet at a time. In
-UPDATE mode the default write position is after the last used row in
-the selected worksheet.
+UPDATE mode the default write position is initially after the last
+used row in the selected worksheet; a read moves it to the row after
+the last row read (see TableIOSpreadsheetBased).
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL.__init__"></a>
 
@@ -11263,6 +11554,16 @@ def _filtered_range_infos() -> list[tuple[str, tuple[int, int, int, int]]]
 ```
 
 Return the worksheet tables and their bounds.
+
+<a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._workbook_filter_names"></a>
+
+#### \_workbook\_filter\_names
+
+```python
+def _workbook_filter_names() -> set[str]
+```
+
+Return the table names of all worksheets.
 
 <a id="tableio.tableio_excel_openpyxl.TableIOExcelOpenPyXL._delete_filtered_range"></a>
 

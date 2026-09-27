@@ -6,7 +6,6 @@
 #
 
 from typing import Optional, NamedTuple
-from functools import total_ordering
 import warnings
 from mformat.mformat import PathLike
 from tableio.access_capability import check_access_capabilities
@@ -53,7 +52,6 @@ class TableIOFactoryNoCapabilityMatch(ValueError):
     """
 
 
-@total_ordering
 class ImplPrio(NamedTuple):
     """Priority of an implementation."""
 
@@ -66,25 +64,43 @@ class ImplPrio(NamedTuple):
     priority: int
     """The priority of the implementation."""
 
+    def sort_key(self) -> tuple[int, str, str]:
+        """Return the ordering key: priority, format name, implementation.
+
+        All comparison operators are defined from this key, as the
+        inherited tuple comparisons use the field order instead.
+        """
+        return (self.priority, self.format_name, self.implementation)
+
     def __lt__(self, other: object) -> bool:
         """Compare two implementation priorities."""
         if not isinstance(other, ImplPrio):
             return NotImplemented
-        if self.priority < other.priority:
-            return True
-        if self.priority > other.priority:
-            return False
-        if self.format_name < other.format_name:
-            return True
-        if self.format_name > other.format_name:
-            return False
-        return self.implementation < other.implementation
+        return self.sort_key() < other.sort_key()
+
+    def __le__(self, other: object) -> bool:
+        """Compare two implementation priorities."""
+        if not isinstance(other, ImplPrio):
+            return NotImplemented
+        return self.sort_key() <= other.sort_key()
+
+    def __gt__(self, other: object) -> bool:
+        """Compare two implementation priorities."""
+        if not isinstance(other, ImplPrio):
+            return NotImplemented
+        return self.sort_key() > other.sort_key()
+
+    def __ge__(self, other: object) -> bool:
+        """Compare two implementation priorities."""
+        if not isinstance(other, ImplPrio):
+            return NotImplemented
+        return self.sort_key() >= other.sort_key()
 
     def __eq__(self, other: object) -> bool:
         """Compare two implementation priorities."""
         if not isinstance(other, ImplPrio):
             return NotImplemented
-        return not self < other and not other < self
+        return self.sort_key() == other.sort_key()
 
 
 class BestMatch(NamedTuple):

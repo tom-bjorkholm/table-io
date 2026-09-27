@@ -140,6 +140,10 @@ class _InspectableTableIOExcelPylightxl(TableIOExcelPylightxl):
         """Expose filtered-range deletion for tests."""
         self._delete_filtered_range(name)
 
+    def run_filter_names(self) -> set[str]:
+        """Expose workbook filter-name lookup for tests."""
+        return self._workbook_filter_names()
+
     def run_add_filtered_range(self, bounds: tuple[int, int, int, int],
                                name: str) -> None:
         """Expose filtered-range creation for tests."""
@@ -177,6 +181,22 @@ class _InspectableTableIOExcelPylightxl(TableIOExcelPylightxl):
     def run_rewrite_workbook_xml(self, file_name: Path) -> None:
         """Expose workbook XML rewrite for tests."""
         self._rewrite_workbook_xml(file_name)
+
+    def run_write_value(self, sheet: object, row: int, column: int,
+                        value: object) -> None:
+        """Expose single-cell writing for tests."""
+        self._write_value_to_sheet(sheet, row, column, value)
+
+
+class _DiscardingWorksheet:  # pylint: disable=too-few-public-methods
+    """Worksheet double whose update_address stores nothing."""
+
+    def __init__(self) -> None:
+        """Initialize the empty cell dictionary."""
+        self._data: dict[str, dict[str, object]] = {}
+
+    def update_address(self, address: str, value: object) -> None:
+        """Ignore the update, like a backend that drops the value."""
 
 
 def test_pylightxl_capabilities(capsys: CaptureFixture[str]) -> None:
@@ -570,6 +590,7 @@ def test_excel_pylightxl_open_adds_default_sheet_for_empty_reader_result(
         assert table_io.list_sheets() == ['Sheet1']
         assert table_io.run_last_used_column() == -1
         table_io.run_delete_filtered_range('ignored')
+        assert table_io.run_filter_names() == set()
         table_io.run_add_filtered_range((0, 0, 1, 1), 'ignored')
         table_io.worksheet = object()
         assert table_io.run_current_sheet_name() == 'Sheet1'
@@ -645,4 +666,39 @@ def test_excel_pylightxl_xml_rewrite_helpers_cover_existing_metadata(
         assert 'A1' not in rewritten_worksheet_xml
         assert 'spreadsheetml.styles+xml' in rewritten_content_types
         assert 'Target="styles.xml"' in rewritten_workbook_rels
+    check_capsys(capsys)
+
+
+def test_pylightxl_no_styles(capsys: CaptureFixture[str]) -> None:
+    """A workbook archive without xl/styles.xml can still be read."""
+    with TemporaryDirectory() as temp_dir:
+        source = Path(temp_dir) / 'source.xlsx'
+        workbook = Workbook()
+        worksheet = workbook.active
+        assert isinstance(worksheet, Worksheet)
+        worksheet.append(['name', 'count'])
+        worksheet.append(['alpha', 3])
+        workbook.save(source)
+        workbook.close()
+        with ZipFile(source) as zip_file:
+            members = {name: zip_file.read(name)
+                       for name in zip_file.namelist()
+                       if name != 'xl/styles.xml'}
+        file_name = Path(temp_dir) / 'no_styles.xlsx'
+        _write_zip_members(file_name, members)
+        with TableIOExcelPylightxl(file_name, FileAccess.READ) as table_io:
+            result = table_io.read_table_listdata()
+        assert result.data == [['name', 'count'], ['alpha', 3]]
+    check_capsys(capsys)
+
+
+def test_pylightxl_unstored(capsys: CaptureFixture[str]) -> None:
+    """Writing a value the worksheet does not store is harmless."""
+    with TemporaryDirectory() as temp_dir:
+        with _InspectableTableIOExcelPylightxl(Path(temp_dir) / 'discard',
+                                               FileAccess.CREATE) as table_io:
+            assert isinstance(table_io, _InspectableTableIOExcelPylightxl)
+            sheet = _DiscardingWorksheet()
+            table_io.run_write_value(sheet, 0, 0, datetime(2026, 1, 2))
+            assert not sheet._data  # pylint: disable=protected-access
     check_capsys(capsys)

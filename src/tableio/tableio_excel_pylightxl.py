@@ -703,8 +703,9 @@ class TableIOExcelPylightxl(TableIOExcelBased):
             style_codes[address] = _DURATION_STYLE_CODE
         worksheet.update_address(address, write_value)
         if address in _worksheet_cells(worksheet):
-            _worksheet_cells(worksheet)[address]['s'] = \
-                style_codes.get(address, '')
+            # Text starting with '=' is stored as text, not as a formula.
+            _worksheet_cells(worksheet)[address].update(
+                v=write_value, f='', s=style_codes.get(address, ''))
 
     def _set_cell_format(self, sheet: object, row: int, column: int,
                          fmt: Optional[Fmt]) -> None:
@@ -768,6 +769,10 @@ class TableIOExcelPylightxl(TableIOExcelBased):
                                                              int, int]]]:
         """Return no filtered ranges because pylightxl ignores them."""
         return []
+
+    def _workbook_filter_names(self) -> set[str]:
+        """Return no filter names because pylightxl ignores them."""
+        return set()
 
     def _delete_filtered_range(self, name: str) -> None:
         """Ignore filtered-range deletion because none are written."""

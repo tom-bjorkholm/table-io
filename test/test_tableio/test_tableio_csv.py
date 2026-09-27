@@ -8,7 +8,7 @@ import csv
 import io
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Callable, cast
+from typing import Callable, Optional, cast
 
 import pytest
 from pytest import CaptureFixture
@@ -873,4 +873,120 @@ def test_csv_init_invalid_quoting_raises_at_construction(
         with pytest.raises(ValueError, match='Unknown quoting'):
             TableIOCsv(Path(td) / 'bad', FileAccess.CREATE,
                        csv_quoting='invalid')
+    check_capsys(capsys)
+
+
+def test_csv_no_fieldnames(monkeypatch: pytest.MonkeyPatch,
+                           capsys: CaptureFixture[str]) -> None:
+    """Test dict reads when the header row has no fields."""
+    with TemporaryDirectory() as td:
+        file_name = Path(td) / 'empty_header.csv'
+        file_name.write_text('', encoding='utf-8')
+        with TableIOCsv(file_name, FileAccess.READ) as r:
+            assert isinstance(r, TableIOCsv)
+            monkeypatch.setattr(r, '_read_raw_sections',
+                                lambda: (['Title'], ['']))
+            result = r.read_table_dictdata()
+            assert result.data == []
+            assert result.headings == ['Title']
+            assert r.position_column == 0
+    check_capsys(capsys)
+
+
+_TRICKY_ROWS: list[list[Value]] = [
+    ['plain', 'a\nb'], ['x\n\ny', 'z\r\nw'], ['q"uote', 'd,elim']]
+
+
+@pytest.mark.parametrize('dialect', [CsvDialect.UNIX, CsvDialect.EXCEL])
+@pytest.mark.parametrize('quoting', [None, 'minimal', 'all', 'strings'])
+def test_csv_line_breaks(dialect: CsvDialect, quoting: Optional[str],
+                         capsys: CaptureFixture[str]) -> None:
+    """Test that quoted line breaks, quotes and delimiters round-trip."""
+    with TemporaryDirectory() as td:
+        with TableIOCsv(Path(td) / 'tricky', FileAccess.CREATE,
+                        csv_dialect=dialect, csv_quoting=quoting) as w:
+            w.write_heading('First')
+            w.write_table_listdata(_TRICKY_ROWS)
+            w.write_table_listdata([['e', 'f']])
+        with TableIOCsv(w.file_name, FileAccess.READ, csv_dialect=dialect,
+                        csv_quoting=quoting) as r:
+            first = r.read_table_listdata()
+            second = r.read_table_listdata()
+        assert (first.headings, first.data) == (['First'], _TRICKY_ROWS)
+        assert (second.headings, second.data) == ([], [['e', 'f']])
+    check_capsys(capsys)
+
+
+def test_csv_excel_line_ends(capsys: CaptureFixture[str]) -> None:
+    """Test that the EXCEL dialect writes CRLF lines and blank separators."""
+    with TemporaryDirectory() as td:
+        with TableIOCsv(Path(td) / 'crlf', FileAccess.CREATE,
+                        csv_dialect=CsvDialect.EXCEL) as w:
+            w.write_heading('H')
+            w.write_table_listdata([['a', 'b']])
+            w.write_table_listdata([['c', 'd']])
+        assert Path(w.file_name).read_bytes() == \
+            b'# H\r\n\r\na,b\r\n\r\nc,d\r\n\r\n'
+    check_capsys(capsys)
+
+
+def test_csv_update_appends(capsys: CaptureFixture[str]) -> None:
+    """Test that UPDATE keeps existing content and appends new tables."""
+    with TemporaryDirectory() as td:
+        with TableIOCsv(Path(td) / 'upd', FileAccess.CREATE) as w:
+            w.write_heading('First')
+            w.write_table_listdata([['a', 'b'], ['1', '2']])
+        with TableIOCsv(w.file_name, FileAccess.UPDATE) as u:
+            position = u.write_heading('Second', level=2)
+            assert position.row == 6
+            u.write_table_listdata([['c', 'd'], ['3', '4']])
+        with TableIOCsv(w.file_name, FileAccess.READ) as r:
+            first = r.read_table_listdata()
+            second = r.read_table_listdata()
+        assert (first.headings, first.data) == \
+            (['First'], [['a', 'b'], ['1', '2']])
+        assert (second.headings, second.data) == \
+            (['Second'], [['c', 'd'], ['3', '4']])
+    check_capsys(capsys)
+
+
+def test_csv_update_rw(capsys: CaptureFixture[str]) -> None:
+    """Test that reads and writes in UPDATE mode are independent."""
+    with TemporaryDirectory() as td:
+        with TableIOCsv(Path(td) / 'rw', FileAccess.CREATE) as w:
+            w.write_table_listdata([['a', 'b']])
+            w.write_table_listdata([['c', 'd']])
+        with TableIOCsv(w.file_name, FileAccess.UPDATE) as u:
+            assert u.read_table_listdata().data == [['a', 'b']]
+            u.write_table_listdata([['e', 'f']])
+            assert u.read_table_listdata().data == [['c', 'd']]
+            assert u.read_table_listdata().data == [['e', 'f']]
+            assert u.read_table_listdata().data == []
+        assert Path(w.file_name).read_text(encoding='utf-8') == \
+            '"a","b"\n\n"c","d"\n\n"e","f"\n\n'
+    check_capsys(capsys)
+
+
+def test_csv_create_read(capsys: CaptureFixture[str]) -> None:
+    """Test that CREATE mode can read back what was written."""
+    with TemporaryDirectory() as td:
+        with TableIOCsv(Path(td) / 'cr', FileAccess.CREATE) as w:
+            w.write_table_dictdata([{'k': 'v', 'l': 'w'}], ['k', 'l'])
+            result = w.read_table_dictdata()
+            w.write_table_listdata([['x', 'y']])
+            assert w.read_table_listdata().data == [['x', 'y']]
+        assert (result.data, result.last_read_row) == \
+            ([{'k': 'v', 'l': 'w'}], 2)
+    check_capsys(capsys)
+
+
+def test_csv_eof_in_quote(capsys: CaptureFixture[str]) -> None:
+    """Test that a quoted value open at end of file is read to the end."""
+    with TemporaryDirectory() as td:
+        file_name = Path(td) / 'open_quote.csv'
+        file_name.write_text('"a","b\nc\n', encoding='utf-8')
+        with TableIOCsv(file_name, FileAccess.READ) as r:
+            result = r.read_table_listdata()
+        assert result.data == [['a', 'b\nc\n']]
+        assert result.last_read_row == 1
     check_capsys(capsys)

@@ -9,12 +9,13 @@ from pathlib import Path
 from typing import Callable, Optional, cast
 
 import pytest
+from mformat.plain_text_table import TableAlignment
 
 from tableio import CAP_IGNORABLE, CAP_NEEDED, Capabilities, ConfigData, \
     ConfigError, CsvConfigData, CsvDialect, FileAccess, HtmlConfigData, \
     LatexConfigData, TimeDeltaFallback, tio_config_create, \
     tio_config_default, tio_config_ignored_names, tio_config_optional_args, \
-    tio_config_trim
+    tio_config_trim, create_tableio, list_registered_tableio
 from tableio.tableio_csv import TableIOCsv
 
 
@@ -233,8 +234,48 @@ def test_optional_args_text() -> None:
     assert tio_config_optional_args(config) == {
         'line_length': 72,
         'table_max_line_length': 60,
-        'table_alignment': 'CENTER'
+        'table_alignment': TableAlignment.CENTER
     }
+
+
+@pytest.mark.parametrize('format_name', list_registered_tableio())
+def test_create_all_options(format_name: str, tmp_path: Path) -> None:
+    """A default config with all options creates a working writer."""
+    config = tio_config_default(Capabilities(), FileAccess.CREATE,
+                                format_name=format_name,
+                                include_all_options=True)
+    with tio_config_create(config, tmp_path / 'all',
+                           FileAccess.CREATE) as table_io:
+        table_io.write_table_listdata([['a', 'b'], ['c', 'd']])
+    assert Path(table_io.file_name).exists()
+
+
+@pytest.mark.parametrize(
+    'config',
+    [ConfigData(format_name=fmt, paper_size=value)
+     for fmt in ('LaTeX', 'docx', 'odt', 'pdf', 'rtf')
+     for value in ('A4', 'letter', 'LEGAL')] +
+    [ConfigData(format_name=fmt, table_alignment=value)
+     for fmt in ('txt', 'reST')
+     for value in ('CENTER', 'left_but_digits_right')])
+def test_create_choice_text(config: ConfigData, tmp_path: Path) -> None:
+    """Choice values in any case are usable for creating a writer."""
+    with tio_config_create(config, tmp_path / 'choice',
+                           FileAccess.CREATE) as table_io:
+        table_io.write_table_listdata([['a', 'b'], ['1', '22']])
+    assert Path(table_io.file_name).exists()
+
+
+@pytest.mark.parametrize('file_access', [FileAccess.READ, FileAccess.UPDATE])
+def test_create_access_impl(file_access: FileAccess, tmp_path: Path) -> None:
+    """Create picks an implementation able to handle the file access."""
+    file_name = tmp_path / 'read.xlsx'
+    with create_tableio('Excel', file_name, FileAccess.CREATE,
+                        implementation='OpenPyXL') as table_io:
+        table_io.write_table_listdata([['a', 'b'], [1, 2]])
+    with tio_config_create(ConfigData(format_name='excel'), file_name,
+                           file_access) as table_io:
+        assert table_io.read_table_listdata().data == [['a', 'b'], [1, 2]]
 
 
 def test_create_config_values(tmp_path: Path) -> None:

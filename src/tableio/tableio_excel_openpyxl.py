@@ -9,6 +9,7 @@ from typing import Callable, Optional
 from xml.etree import ElementTree as ET
 from zipfile import ZipFile, ZipInfo
 from openpyxl import Workbook, load_workbook
+from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.styles import Border, Font, PatternFill, Side
 from openpyxl.utils.cell import get_column_letter, range_boundaries
 from openpyxl.worksheet.table import Table
@@ -63,6 +64,13 @@ _FONT_CHILD_ORDER = [
     'charset',
     'scheme'
 ]
+
+
+def _set_cell_value(cell: Cell | MergedCell, value: Value) -> None:
+    """Set one cell value, keeping text starting with '=' as text."""
+    cell.value = value
+    if isinstance(value, str):
+        cell.data_type = 's'
 
 
 def _xml_tag(namespace: str, tag_name: str) -> str:
@@ -238,8 +246,9 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
     """TableIO reader/writer class for Excel files using OpenPyXL.
 
     The implementation operates on one current worksheet at a time. In
-    UPDATE mode the default write position is after the last used row in
-    the selected worksheet.
+    UPDATE mode the default write position is initially after the last
+    used row in the selected worksheet; a read moves it to the row after
+    the last row read (see TableIOSpreadsheetBased).
     """
 
     def __init__(self, file_name: PathLike, file_access: FileAccess,
@@ -404,7 +413,7 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         worksheet = get_checked_type(sheet, Worksheet)
         cell = worksheet.cell(row=row + 1, column=column + 1)
         cell.style = 'Normal'
-        cell.value = self._spreadsheet_value_from_python(value)
+        _set_cell_value(cell, self._spreadsheet_value_from_python(value))
 
     def _set_cell_format(self, sheet: object, row: int, column: int,
                          fmt: Optional[Fmt]) -> None:
@@ -488,6 +497,12 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
             ret.append((table_name, self._table_bounds(table.ref)))
         return ret
 
+    def _workbook_filter_names(self) -> set[str]:
+        """Return the table names of all worksheets."""
+        assert self.workbook is not None
+        return {name for worksheet in self.workbook.worksheets
+                for name in worksheet.tables}
+
     def _delete_filtered_range(self, name: str) -> None:
         """Delete one worksheet table by name."""
         assert self.worksheet is not None
@@ -505,11 +520,11 @@ class TableIOExcelOpenPyXL(TableIOExcelBased):
         for column_offset, header_value in enumerate(headers):
             column = left + column_offset
             cell = self.worksheet.cell(row=top + 1, column=column + 1)
-            cell.value = header_value
+            _set_cell_value(cell, header_value)
             if self.read_worksheet is not self.worksheet:
                 read_cell = self.read_worksheet.cell(row=top + 1,
                                                      column=column + 1)
-                read_cell.value = header_value
+                _set_cell_value(read_cell, header_value)
 
     def _add_filtered_range(self, bounds: tuple[int, int, int, int],
                             name: str) -> None:

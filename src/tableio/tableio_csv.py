@@ -5,7 +5,9 @@
 # MIT License
 
 import csv
-from typing import Literal, Optional, Callable, NamedTuple
+import io
+from itertools import chain
+from typing import Literal, Optional, Callable, NamedTuple, Iterator
 from mformat.mformat import PathLike
 from tableio.tableio import FileAccess, Descriptor, Position, Box, TableIO
 from tableio.value_type import Value, ListData, ListDataSeq, CellT, \
@@ -125,9 +127,16 @@ class TableIOCsv(TableIOTextBased):
     This class adds extensions to the CSV format to support several tables in
     a file (separated by empty lines), and optional headings (lines starting
     with #) before each table.
+    Tables and headings are always written at the end of the file (also in
+    UPDATE mode), as text in the middle of a file cannot be replaced.
+    Reading starts at the beginning of the file and continues after the
+    previous read, independent of any writes.
     Notice: For best compatibility with other software use the strict CSV
     format by only writing a single table in a file and not using headings.
     """
+
+    newline_mode: Optional[str] = ''
+    """Open without newline translation, as required by the csv module."""
 
     def __init__(self,  # pylint: disable=too-many-arguments,too-many-positional-arguments # noqa: E501
                  file_name: PathLike, file_access: FileAccess,
@@ -160,6 +169,36 @@ class TableIOCsv(TableIOTextBased):
             timedelta_fallback
         self.position_row: int = -1
         self.position_column: int = 0
+        self.read_row: int = -1
+        self._read_offset: int = 0
+
+    def open(self) -> None:
+        """Open the file.
+
+        In UPDATE mode the write position is after the existing lines.
+        Avoid using this method directly.
+        Use derived class as a context manager instead, using a with statement.
+        """
+        super().open()
+        self.read_row = -1
+        self._read_offset = 0
+        if self.file_access == FileAccess.UPDATE:
+            self.position_row = self._count_lines() - 1
+
+    def _count_lines(self) -> int:
+        """Return the number of lines in the file."""
+        assert self.file is not None
+        self.file.seek(0, io.SEEK_SET)
+        return sum(1 for _ in iter(self.file.readline, ''))
+
+    def _line_end(self) -> str:
+        """Return the line terminator of the CSV dialect."""
+        return self.csv_dialect.lineterminator
+
+    def _seek_write_position(self) -> None:
+        """Move the file pointer to the end of the file for writing."""
+        assert self.file is not None
+        self.file.seek(0, io.SEEK_END)
 
     @classmethod
     def file_name_extension(cls) -> str:
@@ -222,8 +261,10 @@ class TableIOCsv(TableIOTextBased):
             The position of the last cell written.
         """
         assert self.file is not None
+        self._seek_write_position()
         self.position_row += self._ensure_empty_line_before()
-        self.file.write(f'{"#" * level} {heading}\n\n')
+        line_end = self._line_end()
+        self.file.write(f'{"#" * level} {heading}{line_end}{line_end}')
         self.position_row += 2
         self.position_column = 0
         return Position(row=self.position_row, column=self.position_column)
@@ -247,6 +288,7 @@ class TableIOCsv(TableIOTextBased):
             err = 'Box is not allowed in CSV.'
             raise CapabilityNotSupported(err)
         ndata = strip_format_list(data)
+        self._seek_write_position()
         self.position_row += self._ensure_empty_line_before()
         writer = csv.writer(self.file, dialect=self.csv_dialect)
         for row in ndata:
@@ -293,6 +335,7 @@ class TableIOCsv(TableIOTextBased):
         if impl_meta.common_impl.box is not None:
             err = 'Box is not allowed in CSV.'
             raise CapabilityNotSupported(err)
+        self._seek_write_position()
         self.position_row += self._ensure_empty_line_before()
         ndata: DictDataMap[Value] = strip_format_dict(data)
         writer = csv.DictWriter(self.file, fieldnames=impl_meta.column_order,
@@ -325,34 +368,59 @@ class TableIOCsv(TableIOTextBased):
         ndata: DictDataMap[Value] = row_strip_format_dict(data)
         return self._write_table_dictdata(ndata, impl_meta=impl_meta)
 
+    def _read_line(self) -> str:
+        """Read one physical line (with line end) and count it."""
+        assert self.file is not None
+        line = self.file.readline()
+        if line:
+            self.read_row += 1
+        return line
+
+    def _read_record_lines(self, first_line: str) -> list[str]:
+        """Return the physical lines of the CSV record starting first_line.
+
+        The csv reader requests continuation lines only while a quoted
+        value is open, so line breaks inside quoted values are kept.
+        """
+        lines = [first_line]
+
+        def continuation_lines() -> Iterator[str]:
+            """Yield and record the lines following first_line."""
+            for line in iter(self._read_line, ''):
+                lines.append(line)
+                yield line
+
+        next(csv.reader(chain([first_line], continuation_lines()),
+                        dialect=self.csv_dialect), None)
+        return lines
+
     def _read_raw_sections(self) -> tuple[list[str], list[str]]:
-        """Read heading and data lines from the current position.
+        """Read heading and data lines from the current read position.
 
         Skips leading empty lines. Lines matching the heading
         pattern (one or more '#' followed by a space) that appear
         before the first data line are collected as headings with
         the leading '#' characters and space stripped. Data lines
-        are collected until an empty line or end of file.
+        (with line ends, a quoted value may span several lines) are
+        collected until an empty line or end of file.
         Returns:
             A tuple of (headings, data_lines).
         """
         assert self.file is not None
+        self.file.seek(self._read_offset, io.SEEK_SET)
         headings: list[str] = []
         data_lines: list[str] = []
-        in_data = False
-        for line in self.file:
-            self.position_row += 1
+        for line in iter(self._read_line, ''):
             stripped = line.rstrip('\r\n')
             if not stripped:
-                if in_data:
+                if data_lines:
                     break
                 continue
-            if _is_heading_line(stripped) and not in_data:
-                heading = stripped.lstrip('#').strip()
-                headings.append(heading)
+            if _is_heading_line(stripped) and not data_lines:
+                headings.append(stripped.lstrip('#').strip())
                 continue
-            in_data = True
-            data_lines.append(stripped)
+            data_lines.extend(self._read_record_lines(line))
+        self._read_offset = self.file.tell()
         return headings, data_lines
 
     def _read_table_listdata(self, box: Optional[Box] = None) \
@@ -381,12 +449,12 @@ class TableIOCsv(TableIOTextBased):
         headings, data_lines = self._read_raw_sections()
         if not data_lines:
             return ReadResult(data=[], headings=headings,
-                              last_read_row=self.position_row)
+                              last_read_row=self.read_row)
         reader = csv.reader(data_lines, dialect=self.csv_dialect)
         data: ListData[Value] = [list(row) for row in reader]
         self.position_column = len(data[-1])
         return ReadResult(data=data, headings=headings,
-                          last_read_row=self.position_row)
+                          last_read_row=self.read_row)
 
     def _read_table_dictdata(self, box: Optional[Box] = None) \
             -> ReadResult[DictData[Value]]:
@@ -415,10 +483,10 @@ class TableIOCsv(TableIOTextBased):
         headings, data_lines = self._read_raw_sections()
         if not data_lines:
             return ReadResult(data=[], headings=headings,
-                              last_read_row=self.position_row)
+                              last_read_row=self.read_row)
         reader = csv.DictReader(data_lines, dialect=self.csv_dialect)
         data: DictData[Value] = [dict(row) for row in reader]
         if reader.fieldnames is not None:
             self.position_column = len(reader.fieldnames)
         return ReadResult(data=data, headings=headings,
-                          last_read_row=self.position_row)
+                          last_read_row=self.read_row)
