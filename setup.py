@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
   name='tableio',
-  version='1.1.1',
+  version='1.2',
   description='Uniform way to write table data to and read from different ' \
     'file formats',
   author='Tom Björkholm',
@@ -17,8 +17,8 @@ setup(
   install_requires=[
     'mformat-ext >= 0.7',
     'openpyxl >= 3.1.5',
-    'types-openpyxl >= 3.1.5.20260518',
-    'odfdo >= 3.22.10',
+    'types-openpyxl >= 3.1.5.20260827',
+    'odfdo >= 3.26.3',
     'xlsxwriter >= 3.2.9',
     'pylightxl >= 1.61'
   ]

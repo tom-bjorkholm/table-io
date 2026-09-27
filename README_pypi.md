@@ -147,10 +147,10 @@ a better start by reading the examples.
 
 ## Test summary
 
-- Test result: 1567 passed in 10s
+- Test result: 1567 passed in 9s
 - No flake8 warnings.
 - No mypy errors found.
 - No pylint warnings.
 - No python layout warnings.
-- Built version(s): 1.1.1
+- Built version(s): 1.2
 - Build and test using Python 3.14.7
