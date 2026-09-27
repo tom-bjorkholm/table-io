@@ -98,5 +98,5 @@ information about the build system. This README can also be viewed at
 - No mypy errors found.
 - No pylint warnings.
 - No python layout warnings.
-- Built version(s): 1.2
+- Built version(s): 1.2.1
 - Build and test using Python 3.14.7
