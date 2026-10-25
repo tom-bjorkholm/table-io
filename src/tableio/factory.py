@@ -6,7 +6,6 @@
 #
 
 from typing import Optional, NamedTuple
-import warnings
 from mformat.mformat import PathLike
 from tableio.access_capability import check_access_capabilities
 from tableio.tableio import TableIO, Descriptor, FileAccess
@@ -625,26 +624,6 @@ class TableIOFactory:
                                        upper=upper, capabilities=capabilities,
                                        empty_is_ok=empty_is_ok,
                                        alphabetical=alphabetical)
-
-    # pylint: disable=too-many-arguments,too-many-positional-arguments
-    # python-layout: disable-next=empty-open
-    def i_get_registered_implementations(
-            self, format_name: Optional[str] = None, lower: bool = False,
-            upper: bool = False, capabilities: Optional[Capabilities] = None,
-            empty_is_ok: bool = False, alphabetical: bool = True) -> list[str]:
-        """Internally get a list of registered implementations (deprecated).
-
-        .. deprecated:: 0.7.1
-            Use :meth:`i_get_reg_impls` instead.
-        """
-        warnings.warn("i_get_registered_implementations is deprecated. "
-                      "Use i_get_reg_impls instead.", DeprecationWarning,
-                      stacklevel=3)
-        return self.i_get_reg_impls(format_name=format_name, lower=lower,
-                                    upper=upper, capabilities=capabilities,
-                                    empty_is_ok=empty_is_ok,
-                                    alphabetical=alphabetical)
-        # pylint: enable=too-many-arguments,too-many-positional-arguments
 
     # pylint: disable-next=too-many-arguments,too-many-positional-arguments
     def i_get_reg_impls(self, format_name: Optional[str] = None,

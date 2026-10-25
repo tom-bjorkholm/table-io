@@ -414,7 +414,6 @@
     * [get\_registered\_formats](#tableio.factory.TableIOFactory.get_registered_formats)
     * [i\_get\_registered\_formats](#tableio.factory.TableIOFactory.i_get_registered_formats)
     * [get\_registered\_implementations](#tableio.factory.TableIOFactory.get_registered_implementations)
-    * [i\_get\_registered\_implementations](#tableio.factory.TableIOFactory.i_get_registered_implementations)
     * [i\_get\_reg\_impls](#tableio.factory.TableIOFactory.i_get_reg_impls)
     * [\_implementation\_matches](#tableio.factory.TableIOFactory._implementation_matches)
     * [\_implementation\_names](#tableio.factory.TableIOFactory._implementation_names)
@@ -6382,25 +6381,6 @@ implementation names.)
 - `TableIOFactoryNoCapabilityMatch` - If empty_is_ok is False and
   no implementations match the
   capabilities.
-
-<a id="tableio.factory.TableIOFactory.i_get_registered_implementations"></a>
-
-#### i\_get\_registered\_implementations
-
-```python
-def i_get_registered_implementations(
-        format_name: Optional[str] = None,
-        lower: bool = False,
-        upper: bool = False,
-        capabilities: Optional[Capabilities] = None,
-        empty_is_ok: bool = False,
-        alphabetical: bool = True) -> list[str]
-```
-
-Internally get a list of registered implementations (deprecated).
-
-.. deprecated:: 0.7.1
-    Use :meth:`i_get_reg_impls` instead.
 
 <a id="tableio.factory.TableIOFactory.i_get_reg_impls"></a>
 
