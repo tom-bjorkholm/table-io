@@ -152,5 +152,5 @@ a better start by reading the examples.
 - No mypy errors found.
 - No pylint warnings.
 - No python layout warnings.
-- Built version(s): 1.3
+- Built version(s): 1.3.1
 - Build and test using Python 3.15.1
